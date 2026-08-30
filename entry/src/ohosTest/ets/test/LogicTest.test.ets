@@ -9,6 +9,7 @@ import { mapUser, mapRepo, mapCalendar, mapHomeOverview, mapNotifications } from
 import { buildNotificationsPath } from '../../../main/ets/services/NotificationsService';
 import { buildTopicQuery } from '../../../main/ets/services/ExploreService';
 import { mapSearchResult } from '../../../main/ets/models/ExploreModels';
+import { mapUserProfile, isSelfProfile } from '../../../main/ets/models/ProfileModels';
 
 type JsonMap = Record<string, Object>;
 
@@ -154,6 +155,43 @@ export default function logicTest(testsuiteName: string) {
       expect(result.repositoryCount).assertEqual(2);
       expect(result.repos.length).assertEqual(2);
       expect(result.repos[1].nameWithOwner).assertEqual('c/d');
+    });
+
+    it('mapUserProfile_and_selfCheck', 0, () => {
+      const followers: JsonMap = { 'totalCount': 3 };
+      const following: JsonMap = { 'totalCount': 4 };
+      const status: JsonMap = { 'message': 'building', 'emoji': '🚀' };
+      const repoNode: JsonMap = { 'id': 'R5', 'nameWithOwner': 'a/b', 'stargazerCount': 1 };
+      const reposWrap: JsonMap = { 'nodes': [repoNode] };
+      const userNode: JsonMap = {
+        'id': 'U1',
+        'login': 'zm_bad',
+        'name': '周铭',
+        'company': '@example',
+        'location': 'SH',
+        'websiteUrl': 'https://zmbad.me',
+        'viewerIsFollowing': true,
+        'status': status,
+        'followers': followers,
+        'following': following,
+        'repositories': reposWrap,
+        'starredRepositories': reposWrap
+      };
+      const viewer: JsonMap = { 'login': 'other' };
+      const data: JsonMap = { 'viewer': viewer, 'user': userNode };
+      const profile = mapUserProfile(data);
+      expect(profile.user.login).assertEqual('zm_bad');
+      expect(profile.viewerLogin).assertEqual('other');
+      expect(profile.userId).assertEqual('U1');
+      expect(profile.company).assertEqual('@example');
+      expect(profile.statusEmoji).assertEqual('🚀');
+      expect(profile.viewerIsFollowing).assertTrue();
+      expect(profile.repos.length).assertEqual(1);
+      expect(profile.stars.length).assertEqual(1);
+      // 自关注判断
+      expect(isSelfProfile('zm_bad', 'zm_bad')).assertTrue();
+      expect(isSelfProfile('other', 'zm_bad')).assertFalse();
+      expect(isSelfProfile('', 'zm_bad')).assertFalse();
     });
 
     it('mapNotifications_parseAndInvalid', 0, () => {
