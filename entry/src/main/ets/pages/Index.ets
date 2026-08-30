@@ -10,6 +10,7 @@ import { ExploreView } from './Explore';
 import { CopilotView } from './Copilot';
 import { ProfileView } from './Profile';
 import { RepoDetailView } from './RepoDetail';
+import { IssuesListView } from './IssuesList';
 
 @Entry
 @Component
@@ -85,11 +86,34 @@ struct Index {
   }
 
   @Builder
+  issuesListDestination() {
+    NavDestination() {
+      IssuesListView({
+        owner: this.repoOwner,
+        name: this.repoName,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      const full = context.pathInfo.param as string;
+      const parts: string[] = full.split('/');
+      if (parts.length >= 2) {
+        this.repoOwner = parts[0];
+        this.repoName = parts[1];
+      }
+    })
+    .title('Issues')
+  }
+
+  @Builder
   destinationMap(name: string) {
     if (name === 'userProfile') {
       this.userProfileDestination()
     } else if (name === 'repoDetail') {
       this.repoDetailDestination()
+    } else if (name === 'issuesList') {
+      this.issuesListDestination()
     }
   }
 

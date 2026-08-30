@@ -11,6 +11,7 @@ import { buildTopicQuery } from '../../../main/ets/services/ExploreService';
 import { mapSearchResult } from '../../../main/ets/models/ExploreModels';
 import { mapUserProfile, isSelfProfile } from '../../../main/ets/models/ProfileModels';
 import { mapRepoDetail, nextStarAction } from '../../../main/ets/models/RepoDetailModels';
+import { mapIssue, mapIssuesPage, issueOrderField } from '../../../main/ets/models/IssuesModels';
 
 type JsonMap = Record<string, Object>;
 
@@ -245,6 +246,51 @@ export default function logicTest(testsuiteName: string) {
       // Star 切换方向
       expect(nextStarAction(true)).assertFalse();
       expect(nextStarAction(false)).assertTrue();
+    });
+
+    it('mapIssuesPage_and_orderField', 0, () => {
+      expect(issueOrderField('created')).assertEqual('CREATED_AT');
+      expect(issueOrderField('updated')).assertEqual('UPDATED_AT');
+      expect(issueOrderField('comments')).assertEqual('COMMENTS');
+      expect(issueOrderField('other')).assertEqual('CREATED_AT');
+      const author: JsonMap = { 'login': 'zm_bad' };
+      const labelName: JsonMap = { 'name': 'bug' };
+      const labelsNodes: JsonMap[] = [labelName];
+      const labels: JsonMap = { 'nodes': labelsNodes };
+      const comments: JsonMap = { 'totalCount': 3 };
+      const prSource: JsonMap = { 'number': 12 };
+      const timelineNode: JsonMap = { 'source': prSource };
+      const timelineNodes: JsonMap[] = [timelineNode];
+      const timeline: JsonMap = { 'nodes': timelineNodes };
+      const issueNode: JsonMap = {
+        'id': 'I1',
+        'number': 4,
+        'title': 'fix bug',
+        'state': 'OPEN',
+        'createdAt': '2026-08-30T00:00:00Z',
+        'author': author,
+        'labels': labels,
+        'comments': comments,
+        'timelineItems': timeline
+      };
+      const issue = mapIssue(issueNode);
+      expect(issue.number).assertEqual(4);
+      expect(issue.authorLogin).assertEqual('zm_bad');
+      expect(issue.labels[0]).assertEqual('bug');
+      expect(issue.commentCount).assertEqual(3);
+      expect(issue.linkedPrCount).assertEqual(1);
+      const pageInfo: JsonMap = { 'hasNextPage': true, 'endCursor': 'cur1' };
+      const issuesWrap: JsonMap = { 'totalCount': 9, 'pageInfo': pageInfo, 'nodes': [issueNode] };
+      const labelListNode: JsonMap = { 'name': 'docs' };
+      const labelListNodes: JsonMap[] = [labelListNode];
+      const labelsList: JsonMap = { 'nodes': labelListNodes };
+      const repo: JsonMap = { 'issues': issuesWrap, 'labels': labelsList };
+      const page = mapIssuesPage({ 'repository': repo });
+      expect(page.totalCount).assertEqual(9);
+      expect(page.hasNextPage).assertTrue();
+      expect(page.endCursor).assertEqual('cur1');
+      expect(page.issues.length).assertEqual(1);
+      expect(page.repoLabels[0]).assertEqual('docs');
     });
 
     it('mapNotifications_parseAndInvalid', 0, () => {
