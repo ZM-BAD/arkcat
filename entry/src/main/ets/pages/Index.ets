@@ -9,6 +9,7 @@ import { InboxView } from './Inbox';
 import { ExploreView } from './Explore';
 import { CopilotView } from './Copilot';
 import { ProfileView } from './Profile';
+import { RepoDetailView } from './RepoDetail';
 
 @Entry
 @Component
@@ -17,6 +18,8 @@ struct Index {
   @State checked: boolean = false;
   @State currentTab: number = 0;
   @State profileLogin: string = '';
+  @State repoOwner: string = '';
+  @State repoName: string = '';
   private pathStack: NavPathStack = new NavPathStack();
 
   aboutToAppear(): void {
@@ -60,9 +63,33 @@ struct Index {
   }
 
   @Builder
+  repoDetailDestination() {
+    NavDestination() {
+      RepoDetailView({
+        owner: this.repoOwner,
+        name: this.repoName,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      // 路由参数格式：owner/name
+      const full = context.pathInfo.param as string;
+      const parts: string[] = full.split('/');
+      if (parts.length >= 2) {
+        this.repoOwner = parts[0];
+        this.repoName = parts[1];
+      }
+    })
+    .title('Repository')
+  }
+
+  @Builder
   destinationMap(name: string) {
     if (name === 'userProfile') {
       this.userProfileDestination()
+    } else if (name === 'repoDetail') {
+      this.repoDetailDestination()
     }
   }
 
@@ -80,7 +107,7 @@ struct Index {
       .tabBar(this.tabItem('🔔', $r('app.string.tab_inbox'), 1))
 
       TabContent() {
-        ExploreView({ token: this.token })
+        ExploreView({ token: this.token, pathStack: this.pathStack })
       }
       .tabBar(this.tabItem('🧭', $r('app.string.tab_explore'), 2))
 
