@@ -2,7 +2,7 @@
 
 > BFS Level: 3
 > 关联截图: 点击任意仓库进入
-> 状态: ✅ approved
+> 状态: ✅ implemented（2026-08-31，代码完成；真实数据验收待 GitHub PAT）
 
 ---
 
@@ -126,3 +126,4 @@ mutation ForkRepo($repositoryId: ID!) {
 ## 七、备注
 
 - 11/14 可行
+- 2026-08-31：实现合并自 feature/spec-00X 分支（--no-ff）至 develop，仪器测试 19/19 通过；真实数据类验收项需在应用内配置有效 GitHub PAT 后复核

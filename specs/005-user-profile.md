@@ -3,7 +3,7 @@
 > BFS Level: 3
 > 关联截图: Home → 点击头像
 > 上游 Spec: 001
-> 状态: ✅ approved
+> 状态: ✅ implemented（2026-08-31，代码完成；真实数据验收待 GitHub PAT）
 
 ---
 
@@ -150,3 +150,4 @@ query UserProfile($login: String!) {
 
 - 12/14 可行
 - 自关注检查：对比 `viewer.login === user.login`
+- 2026-08-31：实现合并自 feature/spec-00X 分支（--no-ff）至 develop，仪器测试 19/19 通过；真实数据类验收项需在应用内配置有效 GitHub PAT 后复核

@@ -2,7 +2,7 @@
 
 > BFS Level: 1
 > 关联截图: Home Tab 底部导航第一个 Tab
-> 状态: ✅ implemented
+> 状态: ✅ implemented（2026-08-31，代码完成+模拟器冒烟；真实数据验收待 GitHub PAT）
 
 ---
 
@@ -112,3 +112,4 @@ query HomePage {
 
 - Feed 动态流的统一聚合接口在公开 GraphQL 未文档化，MVP 用 Pinned + Starred 拼接
 - 后续抓包官方 App 补全
+- 2026-08-31：实现合并自 feature/spec-00X 分支（--no-ff）至 develop，仪器测试 19/19 通过；真实数据类验收项需在应用内配置有效 GitHub PAT 后复核

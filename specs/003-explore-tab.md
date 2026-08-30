@@ -2,7 +2,7 @@
 
 > BFS Level: 1
 > 关联截图: 底部导航第三个 Tab
-> 状态: ✅ approved
+> 状态: ✅ implemented（2026-08-31，代码完成+模拟器冒烟；真实数据验收待 GitHub PAT）
 
 ---
 
@@ -89,3 +89,4 @@ query TopicRepositories($topic: String!, $first: Int = 20) {
 ## 七、备注
 
 - 7/8 可行，Collections 隐藏
+- 2026-08-31：Topic 检索经 GraphQL search 实现；Collections 按边界隐藏（模拟器截图验证）

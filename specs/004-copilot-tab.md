@@ -2,7 +2,7 @@
 
 > BFS Level: 1
 > 关联截图: 底部导航第四个 Tab
-> 状态: ✅ approved
+> 状态: ✅ implemented（2026-08-31，Empty State 验收通过）
 
 ---
 
@@ -74,3 +74,4 @@ GitHub Copilot AI 助手对话页。用户通过自然语言与 Copilot 对话�
 
 - 4/7 可行，全部 Chat 功能不可实现
 - Empty State 文案：「Copilot 功能暂不支持（无公开 API），请使用 GitHub 官方 App」
+- 2026-08-31：Empty State、说明文案、Tab 切换三项 TDD 均在模拟器验收通过
