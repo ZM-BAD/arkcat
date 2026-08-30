@@ -6,6 +6,7 @@ import { TokenStore } from '../services/TokenStore';
 import { TokenSetup } from './TokenSetup';
 import { HomeView } from './Home';
 import { InboxView } from './Inbox';
+import { ExploreView } from './Explore';
 
 @Entry
 @Component
@@ -75,7 +76,7 @@ struct Index {
       .tabBar(this.tabItem('🔔', $r('app.string.tab_inbox'), 1))
 
       TabContent() {
-        this.tabPlaceholder('🧭', 'Explore')
+        ExploreView({ token: this.token })
       }
       .tabBar(this.tabItem('🧭', $r('app.string.tab_explore'), 2))
 
