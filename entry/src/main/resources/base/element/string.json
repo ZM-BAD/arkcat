@@ -11,6 +11,86 @@
     {
       "name": "EntryAbility_label",
       "value": "StarRaft"
+    },
+    {
+      "name": "tab_home",
+      "value": "首页"
+    },
+    {
+      "name": "tab_inbox",
+      "value": "通知"
+    },
+    {
+      "name": "tab_explore",
+      "value": "发现"
+    },
+    {
+      "name": "tab_copilot",
+      "value": "助手"
+    },
+    {
+      "name": "token_setup_title",
+      "value": "配置 GitHub Token"
+    },
+    {
+      "name": "token_setup_desc",
+      "value": "StarRaft 直连 GitHub API，需要一个 Personal Access Token（read:user、repo、notifications 权限即可）"
+    },
+    {
+      "name": "token_input_placeholder",
+      "value": "粘贴 ghp_ 开头的 Token"
+    },
+    {
+      "name": "token_save",
+      "value": "保存并进入"
+    },
+    {
+      "name": "token_invalid",
+      "value": "Token 不能为空"
+    },
+    {
+      "name": "home_search_hint",
+      "value": "搜索功能将在后续版本提供"
+    },
+    {
+      "name": "home_pinned_section",
+      "value": "Pinned 仓库"
+    },
+    {
+      "name": "home_calendar_section",
+      "value": "贡献日历"
+    },
+    {
+      "name": "home_contributions_total",
+      "value": "过去一年 %d 次贡献"
+    },
+    {
+      "name": "state_loading",
+      "value": "加载中…"
+    },
+    {
+      "name": "state_network_error",
+      "value": "网络请求失败，请检查 Token 与网络后重试"
+    },
+    {
+      "name": "state_retry",
+      "value": "重试"
+    },
+    {
+      "name": "state_empty",
+      "value": "暂无数据"
+    },
+    {
+      "name": "followers_suffix",
+      "value": "%d followers · %d following"
+    },
+    {
+      "name": "repo_stars_fmt",
+      "value": "★ %d"
+    },
+    {
+      "name": "repo_forks_fmt",
+      "value": "⑂ %d"
     }
   ]
 }

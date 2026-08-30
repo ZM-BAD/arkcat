@@ -1,0 +1,12 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "StarRaft entry test module"
+    },
+    {
+      "name": "TestAbility_desc",
+      "value": "StarRaft Hypium instrument test entry"
+    }
+  ]
+}
