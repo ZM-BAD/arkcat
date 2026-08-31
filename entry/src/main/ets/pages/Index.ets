@@ -13,6 +13,7 @@ import { ProfileView } from './Profile';
 import { RepoDetailView } from './RepoDetail';
 import { IssuesListView } from './IssuesList';
 import { SettingsView } from './Settings';
+import { SearchView } from './Search';
 
 @Entry
 @Component
@@ -120,6 +121,17 @@ struct Index {
   }
 
   @Builder
+  searchDestination() {
+    NavDestination() {
+      SearchView({
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .title('')
+  }
+
+  @Builder
   destinationMap(name: string) {
     if (name === 'userProfile') {
       this.userProfileDestination()
@@ -129,6 +141,8 @@ struct Index {
       this.issuesListDestination()
     } else if (name === 'settings') {
       this.settingsDestination()
+    } else if (name === 'search') {
+      this.searchDestination()
     }
   }
 

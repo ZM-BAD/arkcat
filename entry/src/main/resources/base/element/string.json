@@ -547,6 +547,98 @@
     {
       "name": "settings_version",
       "value": "StarRaft v1.0.0"
+    },
+    {
+      "name": "search_placeholder",
+      "value": "Search or jump to..."
+    },
+    {
+      "name": "search_suggestion_code",
+      "value": "Code with \"%1$s\""
+    },
+    {
+      "name": "search_suggestion_repositories",
+      "value": "Repositories with \"%1$s\""
+    },
+    {
+      "name": "search_suggestion_issues",
+      "value": "Issues with \"%1$s\""
+    },
+    {
+      "name": "search_suggestion_prs",
+      "value": "Pull Requests with \"%1$s\""
+    },
+    {
+      "name": "search_suggestion_people",
+      "value": "People with \"%1$s\""
+    },
+    {
+      "name": "search_suggestion_orgs",
+      "value": "Organizations with \"%1$s\""
+    },
+    {
+      "name": "search_empty_query",
+      "value": "Type a keyword to search"
+    },
+    {
+      "name": "search_category_code",
+      "value": "Code"
+    },
+    {
+      "name": "search_matches_more",
+      "value": "Show %1$d more matches"
+    },
+    {
+      "name": "search_no_results",
+      "value": "No results found"
+    },
+    {
+      "name": "markdown_badge",
+      "value": "Markdown"
+    },
+    {
+      "name": "repo_action_watch",
+      "value": "Watch"
+    },
+    {
+      "name": "repo_more",
+      "value": "More"
+    },
+    {
+      "name": "repo_current_branch",
+      "value": "Current branch"
+    },
+    {
+      "name": "repo_change",
+      "value": "CHANGE"
+    },
+    {
+      "name": "repo_edit",
+      "value": "EDIT"
+    },
+    {
+      "name": "repo_latest",
+      "value": "Latest"
+    },
+    {
+      "name": "repo_commits",
+      "value": "Commits"
+    },
+    {
+      "name": "repo_actions",
+      "value": "Actions"
+    },
+    {
+      "name": "repo_releases",
+      "value": "Releases"
+    },
+    {
+      "name": "explore_unstar",
+      "value": "UNSTAR"
+    },
+    {
+      "name": "repo_pr_link",
+      "value": "Pull Requests"
     }
   ]
 }

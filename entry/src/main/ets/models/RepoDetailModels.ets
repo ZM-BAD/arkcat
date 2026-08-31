@@ -16,9 +16,17 @@ export interface LanguageSlice {
   percent: number;
 }
 
+/** 最新 Release 摘要 */
+export interface ReleaseEntry {
+  tagName: string;
+  publishedAt: string;
+  isLatest: boolean;
+}
+
 /** 仓库详情聚合 */
 export interface RepoDetail {
   repoId: string;
+  name: string;
   nameWithOwner: string;
   description: string;
   stargazerCount: number;
@@ -31,6 +39,13 @@ export interface RepoDetail {
   files: FileEntry[];
   languages: LanguageSlice[];
   lastCommitMessage: string;
+  ownerAvatarUrl: string;
+  ownerLogin: string;
+  issueCount: number;
+  prCount: number;
+  releaseCount: number;
+  latestRelease: ReleaseEntry | null;
+  defaultBranchRefName: string;
 }
 
 /** GraphQL Repository 响应 → RepoDetail */
@@ -89,8 +104,29 @@ export function mapRepoDetail(data: JsonMap): RepoDetail {
     }
   }
   const watchers = Json.obj(repo, 'watchers');
+  const owner = Json.obj(repo, 'owner');
+  const issues = Json.obj(repo, 'issues');
+  const prs = Json.obj(repo, 'pullRequests');
+  const releasesRaw = Json.obj(repo, 'releases');
+  let releaseCount = 0;
+  let latestRelease: ReleaseEntry | null = null;
+  if (releasesRaw !== null) {
+    releaseCount = Json.num(releasesRaw, 'totalCount');
+    const releaseNodes = Json.arr(releasesRaw, 'nodes');
+    for (const nodeItem of releaseNodes) {
+      const node = nodeItem as JsonMap;
+      if (latestRelease === null || Json.bool(node, 'isLatest')) {
+        latestRelease = {
+          tagName: Json.str(node, 'tagName'),
+          publishedAt: Json.str(node, 'publishedAt'),
+          isLatest: Json.bool(node, 'isLatest')
+        };
+      }
+    }
+  }
   return {
     repoId: Json.str(repo, 'id'),
+    name: Json.str(repo, 'name'),
     nameWithOwner: Json.str(repo, 'nameWithOwner'),
     description: Json.str(repo, 'description'),
     stargazerCount: Json.num(repo, 'stargazerCount'),
@@ -102,7 +138,14 @@ export function mapRepoDetail(data: JsonMap): RepoDetail {
     readmeText: readmeObj ? Json.str(readmeObj, 'text') : '',
     files: files,
     languages: languages,
-    lastCommitMessage: lastCommitMessage
+    lastCommitMessage: lastCommitMessage,
+    ownerAvatarUrl: owner ? Json.str(owner, 'avatarUrl') : '',
+    ownerLogin: owner ? Json.str(owner, 'login') : '',
+    issueCount: issues ? Json.num(issues, 'totalCount') : 0,
+    prCount: prs ? Json.num(prs, 'totalCount') : 0,
+    releaseCount: releaseCount,
+    latestRelease: latestRelease,
+    defaultBranchRefName: branch ? Json.str(branch, 'name') : 'main'
   };
 }
 

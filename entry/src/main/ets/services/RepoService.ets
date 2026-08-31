@@ -8,12 +8,14 @@ const REPO_QUERY = `
 query RepositoryDetail($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
     id
+    name
     nameWithOwner
     description
     stargazerCount
     forkCount
     viewerHasStarred
     watchers { totalCount }
+    owner { avatarUrl login }
     licenseInfo { name spdxId }
     repositoryTopics(first: 10) { nodes { topic { name } } }
     readme: object(expression: "HEAD:README.md") { ... on Blob { text } }
@@ -27,6 +29,12 @@ query RepositoryDetail($owner: String!, $name: String!) {
     defaultBranchRef {
       name
       target { ... on Commit { history(first: 1) { nodes { messageHeadline } } } }
+    }
+    issues { totalCount }
+    pullRequests { totalCount }
+    releases(first: 5, orderBy: { field: CREATED_AT, direction: DESC }) {
+      totalCount
+      nodes { tagName publishedAt isLatest }
     }
   }
 }`;

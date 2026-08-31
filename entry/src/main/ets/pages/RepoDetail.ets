@@ -1,13 +1,15 @@
 /**
- * Repo Detail 页（Spec 006）：About（描述/计数/License/Topics/README 摘要）
- * + Star/Fork 操作 + 文件列表 + 语言占比条。
- * 子 Tab 按边界裁剪：Packages/Settings 不展示，Actions 略，Issues 由 Spec 007 接管。
+ * Repo Detail 页（Spec 006）：官方布局对齐。
+ * 头部（业主/描述/stars/forks）+ 操作区（STAR+fork/🔔）+ 计数入口（Issues/PR/Actions/Releases）
+ * + More 折叠区（分支/Code/Commits/README·EDIT）+ README 简化富文本。
+ * Packages/Settings 按边界不展示；文件列表/语言占比收进 More（查询保留）。
  */
 import { promptAction } from '@kit.ArkUI';
-import { RepoDetail, FileEntry, LanguageSlice } from '../models/RepoDetailModels';
+import { RepoDetail, FileEntry, LanguageSlice, ReleaseEntry } from '../models/RepoDetailModels';
 import { RepoService } from '../services/RepoService';
 import { StateView } from '../components/StateView';
 import { resText } from '../utils/I18n';
+import { timeParts, TimeParts } from '../utils/Format';
 
 @ComponentV2
 export struct RepoDetailView {
@@ -19,6 +21,7 @@ export struct RepoDetailView {
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
   @Local busy: boolean = false;
+  @Local moreExpanded: boolean = false;
 
   aboutToAppear(): void {
     this.refresh();
@@ -51,6 +54,7 @@ export struct RepoDetailView {
       .then((starred: boolean) => {
         const updated: RepoDetail = {
           repoId: detail.repoId,
+          name: detail.name,
           nameWithOwner: detail.nameWithOwner,
           description: detail.description,
           stargazerCount: detail.stargazerCount + (starred ? 1 : -1),
@@ -62,7 +66,14 @@ export struct RepoDetailView {
           readmeText: detail.readmeText,
           files: detail.files,
           languages: detail.languages,
-          lastCommitMessage: detail.lastCommitMessage
+          lastCommitMessage: detail.lastCommitMessage,
+          ownerAvatarUrl: detail.ownerAvatarUrl,
+          ownerLogin: detail.ownerLogin,
+          issueCount: detail.issueCount,
+          prCount: detail.prCount,
+          releaseCount: detail.releaseCount,
+          latestRelease: detail.latestRelease,
+          defaultBranchRefName: detail.defaultBranchRefName
         };
         this.detail = updated;
         const ui = this.getUIContext();
@@ -83,6 +94,11 @@ export struct RepoDetailView {
   /** 带 %1$s 格式化：资源模板 + 参数 → 当前语言文案 */
   private fmt(res: Resource, arg: string): string {
     return resText(this.getUIContext(), res, arg);
+  }
+
+  /** 资源 → 当前语言的纯文案 */
+  private stringOf(res: Resource): string {
+    return resText(this.getUIContext(), res);
   }
 
   private onFork(): void {
@@ -108,157 +124,287 @@ export struct RepoDetailView {
     this.pathStack.pushPathByName('issuesList', `${this.owner}/${this.name}`);
   }
 
+  private comingSoon(): void {
+    promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+  }
+
+  /** Release 相对时间文案 */
+  private releaseAge(release: ReleaseEntry | null): string {
+    if (release === null) {
+      return '';
+    }
+    const parts = timeParts(release.publishedAt, Date.now());
+    return this.timeText(parts);
+  }
+
+  /** 相对时间结构化数据 → 当前语言文案（%1$d 位置占位） */
+  private timeText(parts: TimeParts | null): string {
+    if (parts === null) {
+      return '';
+    }
+    const ui = this.getUIContext();
+    switch (parts.unit) {
+      case 'just_now':
+        return resText(ui, $r('app.string.time_just_now'));
+      case 'minute':
+        return resText(ui, $r('app.string.time_minutes_ago'), parts.value);
+      case 'hour':
+        return resText(ui, $r('app.string.time_hours_ago'), parts.value);
+      case 'day':
+        return resText(ui, $r('app.string.time_days_ago'), parts.value);
+      case 'month':
+        return resText(ui, $r('app.string.time_months_ago'), parts.value);
+    }
+  }
+
   @Builder
-  aboutCard() {
+  headerBox() {
     Column({ space: 8 }) {
+      Row({ space: 6 }) {
+        Image(this.detail?.ownerAvatarUrl ?? '')
+          .width(20)
+          .height(20)
+          .borderRadius(10)
+          .backgroundColor($r('app.color.heat_empty'))
+        Text(this.detail?.ownerLogin ?? '')
+          .fontSize($r('app.float.caption_font_size'))
+          .fontColor($r('app.color.text_primary'))
+      }
+      .width('100%')
+
+      Text(this.detail?.name ?? '')
+        .fontSize(26)
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.text_primary'))
+        .width('100%')
+
       if (this.detail !== null && this.detail.description !== '') {
-        Text(this.detail?.description ?? '')
+        Text(this.detail.description)
           .fontSize($r('app.float.body_font_size'))
           .fontColor($r('app.color.text_primary'))
           .width('100%')
       }
-      Row({ space: 16 }) {
-        Text(`⭐ ${this.detail?.stargazerCount ?? 0}`)
+
+      Row({ space: 14 }) {
+        Text(this.starLine())
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
-          .onClick(() => this.onStar())
-        Text(`⑂ ${this.detail?.forkCount ?? 0}`)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .onClick(() => this.onFork())
-        Text(`👁 ${this.detail?.watcherCount ?? 0}`)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-        if (this.detail?.viewerHasStarred ?? false) {
-          Text($r('app.string.repo_starred_label'))
+      }
+      .width('100%')
+    }
+    .padding({ left: 16, right: 16, top: 8, bottom: 8 })
+    .width('100%')
+  }
+
+  /** ★ stars · ⑂ forks 行 */
+  private starLine(): string {
+    const ui = this.getUIContext();
+    const stars = resText(ui, $r('app.string.repo_stars_fmt'), this.detail?.stargazerCount ?? 0);
+    const forks = resText(ui, $r('app.string.repo_forks_fmt'), this.detail?.forkCount ?? 0);
+    return `${stars}  ${forks}`;
+  }
+
+  /** 操作区：STAR 大按钮 + fork/🔔 两个圆钮 */
+  @Builder
+  actionBar() {
+    Row({ space: 8 }) {
+      Button(this.detail?.viewerHasStarred ?? false
+        ? this.stringOf($r('app.string.explore_unstar'))
+        : this.stringOf($r('app.string.explore_star')))
+        .layoutWeight(1)
+        .height(44)
+        .backgroundColor(Color.Transparent)
+        .fontColor($r('app.color.link_blue'))
+        .fontSize($r('app.float.body_font_size'))
+        .borderRadius(8)
+        .border({ width: 1, color: '#D0D7DE' })
+        .onClick(() => this.onStar())
+      Text('⑂')
+        .fontSize(18)
+        .width(44)
+        .height(44)
+        .textAlign(TextAlign.Center)
+        .borderRadius(8)
+        .border({ width: 1, color: '#D0D7DE' })
+        .onClick(() => this.onFork())
+      Text('🔔')
+        .fontSize(18)
+        .width(44)
+        .height(44)
+        .textAlign(TextAlign.Center)
+        .borderRadius(8)
+        .border({ width: 1, color: '#D0D7DE' })
+        .onClick(() => this.comingSoon())
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16, top: 8 })
+  }
+
+  /** 计数入口：彩块图标 + 标签 + 计数 */
+  @Builder
+  countRow(icon: string, color: string, labelRes: Resource, count: number, onClick: () => void) {
+    Row({ space: 12 }) {
+      Text(icon)
+        .fontSize(16)
+        .fontColor(Color.White)
+        .width(34)
+        .height(34)
+        .textAlign(TextAlign.Center)
+        .backgroundColor(color)
+        .borderRadius(8)
+      Text(labelRes)
+        .fontSize($r('app.float.body_font_size'))
+        .fontWeight(FontWeight.Medium)
+        .fontColor($r('app.color.text_primary'))
+        .layoutWeight(1)
+      Text(`${count}`)
+        .fontSize($r('app.float.body_font_size'))
+        .fontColor($r('app.color.text_secondary'))
+    }
+    .width('100%')
+    .padding(10)
+    .borderRadius(10)
+    .backgroundColor($r('app.color.card_background'))
+    .margin({ bottom: 6 })
+    .onClick(onClick)
+  }
+
+  /** Release 最新卡片（tag · 相对时间 · Latest） */
+  @Builder
+  releaseCard() {
+    if (this.detail?.latestRelease !== null && this.detail?.latestRelease !== undefined) {
+      Column({ space: 4 }) {
+        Text(this.detail.latestRelease?.tagName ?? '')
+          .fontSize($r('app.float.body_font_size'))
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.text_primary'))
+        Row({ space: 6 }) {
+          Text(this.releaseAge(this.detail.latestRelease))
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor($r('app.color.text_secondary'))
+          Text($r('app.string.repo_latest'))
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.primary'))
         }
       }
+      .padding(12)
+      .borderRadius(10)
+      .backgroundColor($r('app.color.card_background'))
       .width('100%')
+      .margin({ left: 56, bottom: 6 })
+      .onClick(() => this.comingSoon())
+    }
+  }
 
-      if (this.detail !== null && this.detail.licenseName !== '') {
-        Text(this.fmt($r('app.string.repo_license_fmt'), this.detail?.licenseName ?? ''))
-          .fontSize($r('app.float.caption_font_size'))
+  /** More 折叠区：分支/Code/Commits/README·EDIT */
+  @Builder
+  moreSection() {
+    Column() {
+      Row({ space: 8 }) {
+        Text('···')
+          .fontSize(18)
           .fontColor($r('app.color.text_secondary'))
-          .width('100%')
-      }
-
-      if ((this.detail?.topics.length ?? 0) > 0) {
-        Flex({ wrap: FlexWrap.Wrap }) {
-          ForEach(this.detail?.topics ?? [], (topic: string) => {
-            Text(topic)
-              .fontSize($r('app.float.caption_font_size'))
-              .fontColor($r('app.color.link_blue'))
-              .padding({ left: 10, right: 10, top: 4, bottom: 4 })
-              .borderRadius(12)
-              .backgroundColor('#DBEAFE')
-              .margin({ right: 6, bottom: 6 })
-          }, (topic: string) => topic)
-        }
-        .width('100%')
-      }
-
-      if (this.detail !== null && this.detail.lastCommitMessage !== '') {
-        Text(this.fmt($r('app.string.repo_last_commit_fmt'), this.detail?.lastCommitMessage ?? ''))
-          .fontSize($r('app.float.caption_font_size'))
+        Text($r('app.string.repo_more'))
+          .fontSize($r('app.float.body_font_size'))
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.text_primary'))
+        Blank()
+        Text(this.moreExpanded ? '⌃' : '⌄')
+          .fontSize(16)
           .fontColor($r('app.color.text_secondary'))
-          .maxLines(1)
-          .width('100%')
-      }
-    }
-    .padding($r('app.float.card_padding'))
-    .borderRadius($r('app.float.card_radius'))
-    .backgroundColor($r('app.color.card_background'))
-    .width('100%')
-  }
-
-  @Builder
-  readmeCard() {
-    Column({ space: 8 }) {
-      Text($r('app.string.repo_readme_title'))
-        .fontSize($r('app.float.body_font_size'))
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.text_primary'))
-      Text(this.detail?.readmeText ?? '')
-        .fontSize($r('app.float.caption_font_size'))
-        .fontColor($r('app.color.text_secondary'))
-        .maxLines(10)
-        .lineHeight(18)
-        .width('100%')
-      Text($r('app.string.repo_code_viewer_coming'))
-        .fontSize($r('app.float.caption_font_size'))
-        .fontColor($r('app.color.link_blue'))
-        .onClick(() => {
-          promptAction.showToast({ message: $r('app.string.repo_code_viewer_toast') });
-        })
-    }
-    .alignItems(HorizontalAlign.Start)
-    .padding($r('app.float.card_padding'))
-    .borderRadius($r('app.float.card_radius'))
-    .backgroundColor($r('app.color.card_background'))
-    .width('100%')
-  }
-
-  @Builder
-  filesCard() {
-    Column({ space: 4 }) {
-      Text($r('app.string.repo_files_title'))
-        .fontSize($r('app.float.body_font_size'))
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.text_primary'))
-        .margin({ bottom: 4 })
-      ForEach(this.detail?.files ?? [], (file: FileEntry) => {
-        Row({ space: 6 }) {
-          Text(file.type === 'tree' ? '📁' : '📄').fontSize(14)
-          Text(file.name)
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_primary'))
-            .maxLines(1)
-          Blank()
-        }
-        .width('100%')
-        .padding({ top: 6, bottom: 6 })
-      }, (file: FileEntry) => file.name)
-      Text($r('app.string.repo_browser_coming'))
-        .fontSize($r('app.float.caption_font_size'))
-        .fontColor($r('app.color.link_blue'))
-        .margin({ top: 4 })
-    }
-    .alignItems(HorizontalAlign.Start)
-    .padding($r('app.float.card_padding'))
-    .borderRadius($r('app.float.card_radius'))
-    .backgroundColor($r('app.color.card_background'))
-    .width('100%')
-  }
-
-  @Builder
-  languagesCard() {
-    Column({ space: 8 }) {
-      Text($r('app.string.repo_languages_title'))
-        .fontSize($r('app.float.body_font_size'))
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.text_primary'))
-      Row() {
-        ForEach(this.detail?.languages ?? [], (lang: LanguageSlice) => {
-          Column()
-            .layoutWeight(lang.percent > 0 ? lang.percent : 1)
-            .height(8)
-            .backgroundColor(lang.color !== '' ? lang.color : $r('app.color.repo_language_blue'))
-        }, (lang: LanguageSlice) => lang.name)
       }
       .width('100%')
-      .borderRadius(4)
-      .clip(true)
+      .height(48)
+      .padding({ left: 16, right: 16 })
+      .onClick(() => {
+        this.moreExpanded = !this.moreExpanded;
+      })
 
-      Row({ space: 12 }) {
-        ForEach(this.detail?.languages ?? [], (lang: LanguageSlice) => {
-          Text(`${lang.name} ${lang.percent}%`)
+      if (this.moreExpanded) {
+        Row({ space: 12 }) {
+          Text('⑂')
+            .fontSize(16)
+            .fontColor($r('app.color.text_secondary'))
+          Text($r('app.string.repo_current_branch'))
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))
-        }, (lang: LanguageSlice) => `legend-${lang.name}`)
+          Text(`${this.detail?.defaultBranchRefName ?? 'main'} ✓`)
+            .fontSize($r('app.float.body_font_size'))
+            .fontColor($r('app.color.text_primary'))
+          Blank()
+          Text($r('app.string.repo_change'))
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor($r('app.color.link_blue'))
+            .onClick(() => this.comingSoon())
+        }
+        .width('100%')
+        .height(44)
+        .padding({ left: 16, right: 16 })
+
+        Row({ space: 12 }) {
+          Text('▣')
+            .fontSize(16)
+            .fontColor($r('app.color.text_secondary'))
+          Text($r('app.string.repo_files_title'))
+            .fontSize($r('app.float.body_font_size'))
+            .fontColor($r('app.color.text_primary'))
+        }
+        .width('100%')
+        .height(44)
+        .padding({ left: 16, right: 16 })
+        .onClick(() => this.comingSoon())
+
+        Row({ space: 12 }) {
+          Text('▤')
+            .fontSize(16)
+            .fontColor($r('app.color.text_secondary'))
+          Text($r('app.string.repo_commits'))
+            .fontSize($r('app.float.body_font_size'))
+            .fontColor($r('app.color.text_primary'))
+        }
+        .width('100%')
+        .height(44)
+        .padding({ left: 16, right: 16 })
+        .onClick(() => this.comingSoon())
+
+        Row({ space: 12 }) {
+          Text('®')
+            .fontSize(16)
+            .fontColor($r('app.color.text_secondary'))
+          Text($r('app.string.repo_readme_title'))
+            .fontSize($r('app.float.body_font_size'))
+            .fontColor($r('app.color.text_primary'))
+          Blank()
+          Text($r('app.string.repo_edit'))
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor($r('app.color.link_blue'))
+            .onClick(() => this.comingSoon())
+        }
+        .width('100%')
+        .height(44)
+        .padding({ left: 16, right: 16 })
       }
-      .width('100%')
+    }
+    .width('100%')
+    .backgroundColor($r('app.color.card_background'))
+    .borderRadius(10)
+  }
+
+  /** README 简化富文本：标题行加粗 + 普通行 */
+  @Builder
+  readmeCard() {
+    Column({ space: 6 }) {
+      Text('📖')
+        .fontSize(16)
+        .fontColor($r('app.color.text_secondary'))
+        .width('100%')
+        .margin({ bottom: 4 })
+      Text(this.detail?.readmeText ?? '')
+        .fontSize($r('app.float.body_font_size'))
+        .fontColor($r('app.color.text_primary'))
+        .maxLines(20)
+        .lineHeight(20)
+        .width('100%')
     }
     .alignItems(HorizontalAlign.Start)
     .padding($r('app.float.card_padding'))
@@ -275,33 +421,37 @@ export struct RepoDetailView {
           .onClick(() => {
             this.pathStack.pop();
           })
-        Text(this.detail?.nameWithOwner ?? `${this.owner}/${this.name}`)
-          .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.text_primary'))
-          .maxLines(1)
-          .layoutWeight(1)
-        Text($r('app.string.repo_issues_link'))
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.link_blue'))
-          .onClick(() => this.openIssues())
+        Blank()
+        Text('＋')
+          .fontSize(20)
+          .fontColor($r('app.color.primary'))
+          .padding(6)
+          .onClick(() => this.comingSoon())
+        Text('⋯')
+          .fontSize(20)
+          .padding(6)
+          .onClick(() => this.comingSoon())
       }
       .width('100%')
       .height(48)
-      .padding({ left: 16, right: 16 })
+      .padding({ left: 16, right: 8 })
 
       Scroll() {
-        Column({ space: 12 }) {
+        Column({ space: 10 }) {
           if (this.detail !== null) {
-            this.aboutCard()
+            this.headerBox()
+            this.actionBar()
+
+            this.countRow('◷', '#57606A', $r('app.string.repo_issues_link'), this.detail.issueCount, () => this.openIssues())
+            this.countRow('⑂', '#3C78D8', $r('app.string.repo_pr_link'), this.detail.prCount, () => this.comingSoon())
+            this.countRow('▶', '#E3B341', $r('app.string.repo_actions'), 0, () => this.comingSoon())
+            this.countRow('▸', '#24292F', $r('app.string.repo_releases'), this.detail.releaseCount, () => this.comingSoon())
+            this.releaseCard()
+
+            this.moreSection()
+
             if (this.detail.readmeText !== '') {
               this.readmeCard()
-            }
-            if (this.detail.files.length > 0) {
-              this.filesCard()
-            }
-            if (this.detail.languages.length > 0) {
-              this.languagesCard()
             }
           } else {
             StateView({
@@ -311,7 +461,7 @@ export struct RepoDetailView {
             })
           }
         }
-        .padding($r('app.float.page_padding'))
+        .padding({ left: 16, right: 16 })
         .width('100%')
       }
       .layoutWeight(1)

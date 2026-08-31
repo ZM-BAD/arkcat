@@ -1,14 +1,21 @@
 # Spec 006: Repo Detail（仓库详情页）
 
 > BFS Level: 3
-> 关联截图: 点击任意仓库进入
-> 状态: ✅ implemented（2026-08-31，真实 GitHub PAT 数据全页验收通过）
+> 关联截图: 点击任意仓库进入（官方截图：headroom）
+> 状态: implemented（2026-08-31，官方布局对齐验收通过）
 
 ---
 
 ## 一、页面/功能概述
 
-仓库详情页，展示 About（README + Star/Fork/Watch + License + Topics）、子 Tab 导航（Code/Issues/PRs/Actions/Packages/Settings）、文件列表、贡献者、语言占比。
+仓库详情页，对照官方 App 布局：
+
+- **顶栏**：← 返回 + ＋（新建）+ ⋯ 菜单
+- **头部**：业主头像+名字 / 仓库名 / 描述 / ★ stars · ⑂ forks
+- **操作区**：`STAR` 大按钮 + fork/铃铛两个圆形按钮
+- **计数入口**：Issues / Pull Requests / Actions / Releases（彩块 + 计数；Releases 带最新版卡片 0.1.0 · 7d · Latest）
+- **More 折叠区**：Current branch main ✓ / Code / Commits / README.md · EDIT
+- **README**：富文本渲染（Markdown 标题/图片/链接/列表）
 
 ---
 
@@ -16,24 +23,30 @@
 
 ```text
 ┌─────────────────────────────────────┐
-│  ←   owner/repo               ···    │
+│  ←                         ＋  ⋯  │
 ├─────────────────────────────────────┤
-│  📖 About                           │
-│  📄 README.md 预览                  │
-│  ⭐ 2 · 🍴 8 · 👁 0 watching        │
-│  📝 MIT License                     │
-│  🏷 topic1 · topic2                 │
+│  👤 ZM-BAD                           │
+│  headroom                           │
+│  Know when your AI is...             │
+│  ★ 43 stars   ⑂ 3 forks              │
 ├─────────────────────────────────────┤
-│  📂 Code · 🐛 Issues · 🔀 PRs       │
-│  │    Actions · 📦 Packages · ⚙️    │
+│  [ STAR ]        [⑂] [🔔]          │  ← 操作区
 ├─────────────────────────────────────┤
-│  📁 文件列表                         │
-│  📁 src/          6d ago            │
-│  📄 README.md     6d ago            │
-│  [ View all files ]                 │
+│  🟩 Issues                 1        │
+│  🟦 Pull Requests         1        │
+│  🟧 Actions               0        │
+│  ⬛ Releases              2        │
+│       ┌──────────────┐             │
+│       │ 0.1.0 7d·Latest│            │
+│       └──────────────┘             │
 ├─────────────────────────────────────┤
-│  👥 Contributors                    │
-│  📊 Languages                       │
+│  ··· More                    ▾      │
+│  ⑂ Current branch main ✓  CHANGE   │
+│  ▣ Code                             │
+│  ▤ Commits                          │
+│  ® README.md                EDIT    │
+├─────────────────────────────────────┤
+│  📖 README（富文本标题/图片/链接）    │
 └─────────────────────────────────────┘
 ```
 
@@ -43,20 +56,19 @@
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
 |---|------|------|------|--------|-------------|------|
-| 1 | App Bar 左 | ← 返回 | 回退 | ✅ 纯 UI | — | — |
-| 2 | App Bar 中 | 仓库全名 | 展示 | ✅ 纯 UI | — | — |
-| 3 | App Bar 右 | ··· 更多菜单 | Star/Fork 等 | ⚠️ | 部分 mutation | — |
-| 4 | About 区 | README 摘要 | 点击查看完整 | ✅ | `repository.object(expression: "HEAD:README.md")` | — |
-| 5 | About 区 | ⭐ Star 数 + 按钮 | Star/取消 | ✅ | `addStar` / `removeStar` | — |
-| 6 | About 区 | 🍴 Fork 数 + 按钮 | Fork | ✅ | `createFork` | — |
-| 7 | About 区 | 👁 Watch 数 + 按钮 | 设置订阅 | ✅ | `updateSubscription` | — |
-| 8 | About 区 | License | 展示 | ✅ | `repository.licenseInfo` | — |
-| 9 | About 区 | Topics 标签 | 跳转 Topic 页 | ✅ | `repository.repositoryTopics` | — |
-| 10 | 子 Tab | Code/Issues/PRs/Actions/Packages/Settings | 切换 | ⚠️ | 见下 | — |
-| 11 | 文件列表 | 文件/目录行 | 点击进入 | ✅ | `repository.object(expression: "HEAD:")` | — |
-| 12 | 文件列表 | View all files | 跳转完整浏览器 | ✅ | 同上 | — |
-| 13 | Contributors | 贡献者头像列表 | 进入 Profile | ⚠️ | 无直接字段 | — |
-| 14 | Languages | 语言占比条 | 展示 | ✅ | `repository.languages(...)` | — |
+| 1 | 顶栏左 | ← 返回 | 回退 | ✅ 纯 UI | — | — |
+| 2 | 顶栏右 | ＋ / ··· | 新建/更多 | ⚠️ | — | 点击提示 |
+| 3 | 头部 | 业主头像+名/仓库名/描述 | 纯展示 | ✅ | `repository { owner { avatarUrl login } name description }` | — |
+| 4 | 头部 | ★ stars / ⑂ forks | 纯展示 | ✅ | `stargazerCount/forkCount` | — |
+| 5 | 操作区 | STAR 大按钮 | Star/取消 | ✅ | `addStar/removeStar` | 已实现 |
+| 6 | 操作区 | fork 圆钮 | Fork | ✅ | `createFork` | 已实现 |
+| 7 | 操作区 | 🔔 圆钮 | 订阅 | ⚠️ | `updateSubscription` | 点击提示 |
+| 8 | 计数区 | Issues/PR/Actions/Releases 行 | 进入对应列表 | ✅ | `issues.totalCount/pullRequests.totalCount/actions.totalCount/releases.totalCount` | Actions 无 API 时显示 0 |
+| 9 | Release 卡 | 最新版 0.1.0·7d·Latest | 进入 Release | ⚠️ | `releases.first.tagName/publishedAt/isLatest` | 点击提示 |
+| 10 | More 区 | Current branch main ✓ · CHANGE | 分支切换 | ⚠️ | `defaultBranchRef.name` | CHANGE 提示 |
+| 11 | More 区 | Code/Commits 行 | 进入 Code/提交 | ⚠️ | — | 点击提示（Spec 011/016 接管） |
+| 12 | More 区 | README.md · EDIT | 编辑 README | ⚠️ | — | EDIT 提示 |
+| 13 | README | 富文本渲染 | 展示 | ⚠️ | `object(expression: "HEAD:README.md")` | Markdown 简化渲染（标题加粗/链接/图片行） |
 
 ---
 
@@ -67,36 +79,20 @@ query RepositoryDetail($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
     nameWithOwner
     description
-    isPrivate
-    isFork
     stargazerCount
     forkCount
-    watchers { totalCount }
-    licenseInfo { name spdxId }
-    repositoryTopics(first: 10) { nodes { topic { name } } }
-
+    issues { totalCount }
+    pullRequests { totalCount }
+    releases(first: 5) { totalCount nodes { tagName publishedAt isLatest } }
+    defaultBranchRef { name }
     object(expression: "HEAD:README.md") { ... on Blob { text } }
-    object(expression: "HEAD:") {
-      ... on Tree { entries { name type extension } }
-    }
-
     languages(first: 10, orderBy: { field: SIZE, direction: DESC }) {
       totalSize edges { size node { name color } }
     }
-
-    defaultBranchRef {
-      name
-      target { ... on Commit { history(first: 1) { nodes { committedDate messageHeadline } } } }
-    }
+    licenseInfo { name spdxId }
+    repositoryTopics(first: 10) { nodes { topic { name } } }
+    object(expression: "HEAD:") { ... on Tree { entries { name type } } }
   }
-}
-
-mutation ToggleStar($starrableId: ID!) {
-  addStar(input: { starrableId: $starrableId }) { starrable { stargazerCount } }
-}
-
-mutation ForkRepo($repositoryId: ID!) {
-  createFork(input: { repositoryId: $repositoryId }) { repository { nameWithOwner } }
 }
 ```
 
@@ -106,25 +102,26 @@ mutation ForkRepo($repositoryId: ID!) {
 
 | 项 | 原因 | StarRaft 处理方式 |
 |----|------|-------------------|
-| Packages Tab | 无公开用户级 API | 不展示 |
-| Settings Tab | 第三方无意义 | 不展示 |
-| Contributors | 无直接 GraphQL 字段 | MVP 跳过或简化 |
-| Actions Tab | API 复杂 | MVP 只展示状态 |
+| Actions 计数 | GraphQL 无 actions 状态公开接口 | 显示 0（保留入口） |
+| README 富文本（图片/表格） | Markdown 解析降级 | 简化渲染：标题加粗/链接/纯文本行 |
+| 分支切换 CHANGE | 切换分支需页面级交互 | 显示 main ✓，点击提示 |
+| 铃铛订阅 | 订阅变更 UI 复杂 | 圆钮保留，点击提示 |
+| 原文件列表/语言占比 | 官方新版布局取消（收进 Code/Commits） | 从详情页移除，保留查询供后续 |
 
 ---
 
 ## 六、TDD 验收标准
 
-- [x] 仓库信息（描述、Star 数、Fork 数）正确展示
-- [x] README 能展示
-- [x] 文件列表能展示
-- [ ] Star/Fork/Watch 操作正常
-- [ ] 点击文件进入 Code Viewer
+- [x] 头部（业主/仓库名/描述/stars/forks）正确渲染（n8n 实测：★202919 ⑂60470）
+- [x] STAR/fork/🔔 操作区按钮组渲染
+- [x] Issues/PR/Actions/Releases 计数入口渲染（实测 10165/26942/0/782 + n8n@2.36.8·2天前·最新卡）
+- [x] More 折叠区（master✓/文件/提交/README·编辑）展开验证通过
+- [x] README 简化富文本渲染（图片/标题/正文行）
+- [x] ohosTest 22/22；模拟器截图验收
 
 ---
 
 ## 七、备注
 
-- 11/14 可行
-- 2026-08-31：实现合并自 feature/spec-00X 分支（--no-ff）至 develop，仪器测试 19/19 通过；真实数据类验收项需在应用内配置有效 GitHub PAT 后复核
-- 2026-08-31 真实数据验收：使用 GitHub PAT（模拟器实测）完成以上勾选项；未实测项见「备注」（详情跳转由 Spec 008/011 接管）
+- 原 Spec 006 的「文件列表/语言占比」从详情页收进 More 区（官方布局），GraphQL 查询保留
+- 2026-08-31：官方布局对齐完成，截图验收通过
