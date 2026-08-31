@@ -7,6 +7,8 @@ import { relativeTime, contributionLevelColor, notificationTypeLabel } from '../
 import { Json } from '../../../main/ets/utils/Json';
 import { mapUser, mapRepo, mapCalendar, mapHomeOverview, mapNotifications } from '../../../main/ets/models/GitHubModels';
 import { buildNotificationsPath } from '../../../main/ets/services/NotificationsService';
+import { buildTopicQuery } from '../../../main/ets/services/ExploreService';
+import { mapSearchResult } from '../../../main/ets/models/ExploreModels';
 
 type JsonMap = Record<string, Object>;
 
@@ -139,6 +141,19 @@ export default function logicTest(testsuiteName: string) {
     it('buildNotificationsPath_filter', 0, () => {
       expect(buildNotificationsPath(true, 30)).assertEqual('/notifications?all=true&per_page=30');
       expect(buildNotificationsPath(false, 1)).assertEqual('/notifications?all=false&per_page=1');
+    });
+
+    it('buildTopicQuery_and_mapSearchResult', 0, () => {
+      expect(buildTopicQuery('harmonyos')).assertEqual('topic:harmonyos');
+      const node1: JsonMap = { 'id': 'R1', 'nameWithOwner': 'a/b', 'stargazerCount': 5 };
+      const node2: JsonMap = { 'id': 'R2', 'nameWithOwner': 'c/d', 'stargazerCount': 1 };
+      const nodes: JsonMap[] = [node1, node2];
+      const searchNode: JsonMap = { 'repositoryCount': 2, 'nodes': nodes };
+      const result = mapSearchResult({ 'search': searchNode }, 'harmonyos');
+      expect(result.topic).assertEqual('harmonyos');
+      expect(result.repositoryCount).assertEqual(2);
+      expect(result.repos.length).assertEqual(2);
+      expect(result.repos[1].nameWithOwner).assertEqual('c/d');
     });
 
     it('mapNotifications_parseAndInvalid', 0, () => {
