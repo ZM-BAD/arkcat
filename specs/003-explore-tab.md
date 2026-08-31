@@ -2,7 +2,7 @@
 
 > BFS Level: 1
 > 关联截图: 底部导航第三个 Tab
-> 状态: ✅ implemented（2026-08-31，代码完成+模拟器冒烟；真实数据验收待 GitHub PAT）
+> 状态: ✅ implemented（2026-08-31，真实 GitHub PAT 数据全页验收通过）
 
 ---
 

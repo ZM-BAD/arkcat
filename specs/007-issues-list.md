@@ -3,7 +3,7 @@
 > BFS Level: 3
 > 关联截图: Repo Detail → Issues Tab
 > 上游 Spec: 006
-> 状态: ✅ implemented（2026-08-31，代码完成；真实数据验收待 GitHub PAT）
+> 状态: ✅ implemented（2026-08-31，真实 GitHub PAT 数据全页验收通过）
 
 ---
 
