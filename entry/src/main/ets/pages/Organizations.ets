@@ -1,0 +1,169 @@
+/**
+ * 工作区 Organizations 页（Spec 022）：viewer 所属组织。
+ * 行结构：组织头像 + 名称（大字）/ 登录名（灰小字）；点击进入组织主页（userProfile 路由）。
+ * 空态为纯文字居中（官方截图无插图）。
+ */
+import { WorkOrgItem, WorkOrgsPage } from '../models/WorkModels';
+import { WorkService } from '../services/WorkService';
+import { StateView } from '../components/StateView';
+
+@ComponentV2
+export struct OrganizationsView {
+  @Param token: string = '';
+  @Param pathStack: NavPathStack = new NavPathStack();
+  @Local orgs: WorkOrgItem[] = [];
+  @Local cursor: string = '';
+  @Local hasNextPage: boolean = false;
+  @Local loading: boolean = true;
+  @Local errorMsg: string = '';
+
+  aboutToAppear(): void {
+    this.refresh();
+  }
+
+  private refresh(): void {
+    this.loading = true;
+    this.errorMsg = '';
+    WorkService.fetchOrganizations(this.token, '')
+      .then((page: WorkOrgsPage) => {
+        this.orgs = page.orgs;
+        this.cursor = page.endCursor;
+        this.hasNextPage = page.hasNextPage;
+        this.loading = false;
+      })
+      .catch((e: Error) => {
+        this.errorMsg = e.message;
+        this.loading = false;
+      });
+  }
+
+  private loadMore(): void {
+    if (!this.hasNextPage || this.loading) {
+      return;
+    }
+    this.loading = true;
+    WorkService.fetchOrganizations(this.token, this.cursor)
+      .then((page: WorkOrgsPage) => {
+        this.orgs = this.orgs.concat(page.orgs);
+        this.cursor = page.endCursor;
+        this.hasNextPage = page.hasNextPage;
+        this.loading = false;
+      })
+      .catch((e: Error) => {
+        this.errorMsg = e.message;
+        this.loading = false;
+      });
+  }
+
+  @Builder
+  orgRow(org: WorkOrgItem) {
+    Row({ space: 12 }) {
+      if (org.avatarUrl !== '') {
+        Image(org.avatarUrl)
+          .width(40)
+          .height(40)
+          .borderRadius(20)
+          .backgroundColor($r('app.color.heat_empty'))
+      } else {
+        Text('◯')
+          .fontSize(28)
+          .width(40)
+          .height(40)
+          .borderRadius(20)
+          .textAlign(TextAlign.Center)
+          .backgroundColor($r('app.color.heat_empty'))
+      }
+      Column({ space: 2 }) {
+        Text(org.name)
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.text_primary'))
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .width('100%')
+        Text(`@${org.login}`)
+          .fontSize($r('app.float.caption_font_size'))
+          .fontColor($r('app.color.text_secondary'))
+          .width('100%')
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+    }
+    .width('100%')
+    .height(64)
+    .padding({ left: 12, right: 12 })
+    .onClick(() => {
+      this.pathStack.pushPathByName('userProfile', org.login);
+    })
+  }
+
+  @Builder
+  emptyState() {
+    Column() {
+      Blank()
+      Text($r('app.string.work_orgs_empty'))
+        .fontSize(22)
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.text_primary'))
+        .textAlign(TextAlign.Center)
+        .width('100%')
+      Blank()
+    }
+    .width('100%')
+    .height('100%')
+  }
+
+  build() {
+    Column() {
+      Row({ space: 8 }) {
+        Text('←')
+          .fontSize(20)
+          .onClick(() => {
+            this.pathStack.pop();
+          })
+        Text($r('app.string.nav_organizations_title'))
+          .fontSize($r('app.float.title_font_size'))
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.text_primary'))
+          .layoutWeight(1)
+      }
+      .width('100%')
+      .height(48)
+      .padding({ left: 16, right: 12 })
+
+      if (this.orgs.length > 0) {
+        Scroll() {
+          Column() {
+            ForEach(this.orgs, (org: WorkOrgItem) => {
+              this.orgRow(org)
+            }, (org: WorkOrgItem) => org.login)
+            if (this.hasNextPage) {
+              Text($r('app.string.issues_load_more'))
+                .fontSize($r('app.float.body_font_size'))
+                .fontColor($r('app.color.link_blue'))
+                .padding(12)
+                .onClick(() => this.loadMore())
+            }
+          }
+          .padding({ left: 16, right: 16, bottom: 16 })
+          .width('100%')
+        }
+        .layoutWeight(1)
+        .scrollBar(BarState.Off)
+        .align(Alignment.Top)
+      } else if (this.loading || this.errorMsg !== '') {
+        StateView({
+          loading: this.loading,
+          error: this.errorMsg,
+          onRetry: () => this.refresh()
+        })
+        .layoutWeight(1)
+      } else {
+        this.emptyState()
+      }
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor($r('app.color.bg_page'))
+  }
+}

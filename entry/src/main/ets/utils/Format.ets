@@ -10,7 +10,7 @@ const HOUR_MS = 60 * MINUTE_MS;
 const DAY_MS = 24 * HOUR_MS;
 
 /** 相对时间的单位；just_now 表示 1 分钟内 */
-export type TimeUnit = 'just_now' | 'minute' | 'hour' | 'day' | 'month';
+export type TimeUnit = 'just_now' | 'minute' | 'hour' | 'day' | 'month' | 'year';
 
 /** 相对时间的结构化结果：value + unit，UI 层负责翻译 */
 export interface TimeParts {
@@ -45,7 +45,20 @@ export function timeParts(iso: string, nowMs: number): TimeParts | null {
   if (days <= 30) {
     return { value: days, unit: 'day' };
   }
-  return { value: Math.floor(days / 30), unit: 'month' };
+  const months = Math.floor(days / 30);
+  if (months >= 12) {
+    return { value: Math.floor(months / 12), unit: 'year' };
+  }
+  return { value: months, unit: 'month' };
+}
+
+/** 星标数的紧凑格式（Spec 023）：≥1000 显示 xx.xk（整数去 .0），否则原样 */
+export function compactCount(n: number): string {
+  if (n < 1000) {
+    return `${n}`;
+  }
+  const k = Math.round(n / 100) / 10;
+  return `${k}k`;
 }
 
 /** 贡献等级（0-4）对应的 GitHub 热力图颜色，API 未返回颜色时兜底 */

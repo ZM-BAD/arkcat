@@ -639,6 +639,158 @@
     {
       "name": "repo_pr_link",
       "value": "Pull Requests"
+    },
+    {
+      "name": "nav_discussions_title",
+      "value": "Discussions"
+    },
+    {
+      "name": "nav_projects_title",
+      "value": "Projects"
+    },
+    {
+      "name": "nav_top_repos_title",
+      "value": "Top Repositories"
+    },
+    {
+      "name": "nav_organizations_title",
+      "value": "Organizations"
+    },
+    {
+      "name": "nav_starred_title",
+      "value": "Starred Repositories"
+    },
+    {
+      "name": "nav_edit_work_title",
+      "value": "Edit My Work"
+    },
+    {
+      "name": "edit_work_title",
+      "value": "Edit My Work"
+    },
+    {
+      "name": "edit_work_save",
+      "value": "SAVE"
+    },
+    {
+      "name": "work_filter_all",
+      "value": "All"
+    },
+    {
+      "name": "work_scope_created",
+      "value": "Created by me"
+    },
+    {
+      "name": "work_scope_assigned",
+      "value": "Assigned to me"
+    },
+    {
+      "name": "work_scope_mentioned",
+      "value": "Mentioned"
+    },
+    {
+      "name": "work_visibility",
+      "value": "Visibility"
+    },
+    {
+      "name": "work_visibility_public",
+      "value": "Public"
+    },
+    {
+      "name": "work_visibility_private",
+      "value": "Private"
+    },
+    {
+      "name": "work_issues_empty",
+      "value": "There aren't any issues."
+    },
+    {
+      "name": "work_prs_empty",
+      "value": "There aren't any pull requests."
+    },
+    {
+      "name": "work_discussions_empty",
+      "value": "There aren't any discussions."
+    },
+    {
+      "name": "work_projects_empty",
+      "value": "There aren't any projects."
+    },
+    {
+      "name": "work_top_repos_empty",
+      "value": "There aren't any repositories."
+    },
+    {
+      "name": "work_orgs_empty",
+      "value": "There aren't any organizations."
+    },
+    {
+      "name": "work_use_fewer_filters",
+      "value": "Use fewer filters or reset all filters"
+    },
+    {
+      "name": "work_reset_all_filters",
+      "value": "RESET ALL FILTERS"
+    },
+    {
+      "name": "pr_state_merged",
+      "value": "Merged"
+    },
+    {
+      "name": "work_pr_checks",
+      "value": "Checks"
+    },
+    {
+      "name": "work_pr_checks_failed",
+      "value": "Checks failed"
+    },
+    {
+      "name": "work_pr_checks_pending",
+      "value": "Checks pending"
+    },
+    {
+      "name": "work_discussions_unanswered",
+      "value": "Unanswered"
+    },
+    {
+      "name": "work_project_filter_all",
+      "value": "All projects"
+    },
+    {
+      "name": "work_project_filter_mine",
+      "value": "Owned by me"
+    },
+    {
+      "name": "work_projects_sort_label",
+      "value": "Sort: %1$s"
+    },
+    {
+      "name": "work_projects_sort_visited",
+      "value": "Most recently visited"
+    },
+    {
+      "name": "work_starred_my_lists",
+      "value": "My lists"
+    },
+    {
+      "name": "work_starred_new",
+      "value": "+ NEW"
+    },
+    {
+      "name": "work_starred_first_list_title",
+      "value": "Create your first list"
+    },
+    {
+      "name": "work_starred_first_list_desc",
+      "value": "Lists make it easier to organize and curate repositories you have starred."
+    },
+    {
+      "name": "work_starred_create_list",
+      "value": "CREATE A LIST"
+    },
+    {
+      "name": "time_years_ago",
+      "value": "%1$d years ago"
     }
   ]
 }

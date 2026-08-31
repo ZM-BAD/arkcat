@@ -3,8 +3,15 @@
  * 运行于模拟器（aa test），与主代码同一编译单元，可直接 import main ets。
  */
 import { describe, it, expect } from '@ohos/hypium';
-import { timeParts, contributionLevelColor, notificationTypeKey } from '../../../main/ets/utils/Format';
+import { timeParts, contributionLevelColor, notificationTypeKey, compactCount } from '../../../main/ets/utils/Format';
 import { Json } from '../../../main/ets/utils/Json';
+import { WorkSection, defaultWorkSections, visibleWorkSections, workSectionsToStorage, workSectionsFromStorage } from '../../../main/ets/utils/WorkConfig';
+import {
+  buildWorkIssuesQuery, buildWorkPrsQuery, buildWorkDiscussionsQuery, buildTopReposPrivacy,
+  mapWorkIssue, workIssueIconKey, mapWorkPr, workPrIconKey,
+  mapWorkStarredPage, filterWorkProjects, WorkProjectItem,
+  mapWorkProjectsPage, mapWorkTopReposPage, mapWorkOrgsPage
+} from '../../../main/ets/models/WorkModels';
 import { mapUser, mapRepo, mapCalendar, mapViewerBasic, mapNotifications, issueNumberFromUrl } from '../../../main/ets/models/GitHubModels';
 import { buildNotificationsPath } from '../../../main/ets/services/NotificationsService';
 import { buildCodeQuery, mapCodeSearch } from '../../../main/ets/services/SearchService';
@@ -371,6 +378,155 @@ export default function logicTest(testsuiteName: string) {
       expect(list[0].repoFullName).assertEqual('a/b');
       expect(list[0].subjectType).assertEqual('Issue');
       expect(list[0].unread).assertTrue();
+    });
+
+    it('timeParts_years_and_compactCount', 0, () => {
+      // 2024-06 → 2026-08：26 个月 ≥ 12 → 2 年
+      const years = timeParts('2024-06-01T12:00:00Z', NOW);
+      expect(years?.unit).assertEqual('year');
+      expect(years?.value).assertEqual(2);
+      // 13 个月整仍属 month 粒度边界内
+      const months = timeParts('2026-06-01T12:00:00Z', NOW);
+      expect(months?.unit).assertEqual('month');
+      expect(compactCount(999)).assertEqual('999');
+      expect(compactCount(1000)).assertEqual('1k');
+      expect(compactCount(50500)).assertEqual('50.5k');
+      expect(compactCount(118900)).assertEqual('118.9k');
+    });
+
+    it('workConfig_visibleAndStorage', 0, () => {
+      const all = defaultWorkSections();
+      expect(all.length).assertEqual(7);
+      expect(visibleWorkSections(all).length).assertEqual(7);
+      const partial: WorkSection[] = [
+        { id: 'starred', visible: true },
+        { id: 'issues', visible: false }
+      ];
+      const shown = visibleWorkSections(partial);
+      expect(shown.length).assertEqual(1);
+      expect(shown[0].id).assertEqual('starred');
+      // 序列化往返
+      const round = workSectionsFromStorage(workSectionsToStorage(partial));
+      expect(round.length).assertEqual(2);
+      expect(round[0].id).assertEqual('starred');
+      expect(round[1].visible).assertFalse();
+      // 坏数据回退默认；重复 id 去重
+      expect(workSectionsFromStorage('not json').length).assertEqual(7);
+      expect(workSectionsFromStorage('[]').length).assertEqual(7);
+    });
+
+    it('workQueries_builders', 0, () => {
+      expect(buildWorkIssuesQuery('all', 'created', 'all')).assertEqual('is:issue author:@me sort:updated-desc');
+      expect(buildWorkIssuesQuery('open', 'assigned', 'public')).assertEqual('is:issue is:open assignee:@me is:public sort:updated-desc');
+      expect(buildWorkPrsQuery('merged', 'created', 'private')).assertEqual('is:pr is:merged author:@me is:private sort:updated-desc');
+      expect(buildWorkDiscussionsQuery('open', 'mentioned', true)).assertEqual('is:discussion is:open mentions:@me is:unanswered');
+      expect(buildWorkDiscussionsQuery('all', 'created', false)).assertEqual('is:discussion author:@me');
+      expect(buildTopReposPrivacy('all')).assertEqual('');
+      expect(buildTopReposPrivacy('public')).assertEqual('PUBLIC');
+      expect(buildTopReposPrivacy('private')).assertEqual('PRIVATE');
+    });
+
+    it('mapWorkIssue_and_workPr', 0, () => {
+      const repo: JsonMap = { 'nameWithOwner': 'a/b' };
+      const label: JsonMap = { 'name': 'bug', 'color': '#D73A4A' };
+      const labelsWrap: JsonMap = { 'nodes': [label] };
+      const comments: JsonMap = { 'totalCount': 3 };
+      const issueNode: JsonMap = {
+        'id': 'I1', 'number': 5, 'title': 'fix', 'state': 'CLOSED', 'stateReason': 'NOT_PLANNED',
+        'createdAt': '2026-08-01T00:00:00Z', 'repository': repo,
+        'labels': labelsWrap, 'comments': comments
+      };
+      const issue = mapWorkIssue(issueNode);
+      expect(issue.iconKey).assertEqual('not_planned');
+      expect(issue.repoFullName).assertEqual('a/b');
+      expect(issue.labels[0].color).assertEqual('#D73A4A');
+      expect(issue.commentCount).assertEqual(3);
+      expect(workIssueIconKey('OPEN', '')).assertEqual('open');
+      expect(workIssueIconKey('CLOSED', 'COMPLETED')).assertEqual('completed');
+      // PR：merged 且无 statusCheckRollup → checksState 空
+      const prComments: JsonMap = { 'totalCount': 2 };
+      const reviewsWrap: JsonMap = { 'totalCount': 1 };
+      const prNode: JsonMap = {
+        'id': 'P1', 'number': 8, 'title': 'feat', 'state': 'MERGED', 'merged': true,
+        'createdAt': '2026-08-01T00:00:00Z', 'repository': repo,
+        'comments': prComments, 'reviewRequests': reviewsWrap
+      };
+      const pr = mapWorkPr(prNode);
+      expect(pr.iconKey).assertEqual('merged');
+      expect(pr.checksState).assertEqual('');
+      expect(pr.reviewCount).assertEqual(1);
+      expect(workPrIconKey('OPEN', false)).assertEqual('open');
+      expect(workPrIconKey('CLOSED', false)).assertEqual('closed');
+    });
+
+    it('mapWorkStarred_page', 0, () => {
+      const owner: JsonMap = { 'login': 'zm_bad', 'avatarUrl': 'u' };
+      const lang: JsonMap = { 'name': 'Dart', 'color': '#00B4AB' };
+      const repoNode: JsonMap = {
+        'id': 'R1', 'name': 'ficl', 'description': 'proxy', 'stargazerCount': 50500,
+        'owner': owner, 'primaryLanguage': lang
+      };
+      const repoNode2: JsonMap = {
+        'id': 'R2', 'name': 'nolang', 'description': '', 'stargazerCount': 3, 'owner': owner
+      };
+      const starredWrap: JsonMap = { 'nodes': [repoNode, repoNode2] };
+      const viewer: JsonMap = {
+        'login': 'zm_bad', 'starredRepositories': starredWrap
+      };
+      const data: JsonMap = { 'viewer': viewer };
+      const page = mapWorkStarredPage(data);
+      expect(page.viewerLogin).assertEqual('zm_bad');
+      expect(page.repos.length).assertEqual(2);
+      expect(page.repos[0].language).assertEqual('Dart');
+      expect(page.repos[1].language).assertEqual('');
+      expect(page.repos[0].stargazerCount).assertEqual(50500);
+    });
+
+    it('filterWorkProjects_scoping', 0, () => {
+      const p1: WorkProjectItem = { 'id': 'A', 'number': 1, 'title': 'a', 'closed': false, 'updatedAt': '2026-08-01T00:00:00Z', 'ownerLogin': 'me' };
+      const p2: WorkProjectItem = { 'id': 'B', 'number': 2, 'title': 'b', 'closed': true, 'updatedAt': '2026-08-02T00:00:00Z', 'ownerLogin': 'me' };
+      const p3: WorkProjectItem = { 'id': 'C', 'number': 3, 'title': 'c', 'closed': false, 'updatedAt': '2026-08-03T00:00:00Z', 'ownerLogin': 'other' };
+      const all = filterWorkProjects([p1, p2, p3], false, 'me', false);
+      expect(all.length).assertEqual(2);
+      expect(all[0].id).assertEqual('C');
+      const mine = filterWorkProjects([p1, p2, p3], true, 'me', false);
+      expect(mine.length).assertEqual(1);
+      expect(mine[0].id).assertEqual('A');
+      const closed = filterWorkProjects([p1, p2], false, 'me', true);
+      expect(closed.length).assertEqual(1);
+      expect(closed[0].id).assertEqual('B');
+    });
+
+    it('mapWorkViewerConnections(projects/tops/orgs)', 0, () => {
+      const projOwner: JsonMap = { 'login': 'me' };
+      const projNode: JsonMap = {
+        'title': 'roadmap', 'number': 1, 'closed': false,
+        'updatedAt': '2026-08-01T00:00:00Z', 'owner': projOwner
+      };
+      const projPageInfo: JsonMap = { 'hasNextPage': false, 'endCursor': 'cur' };
+      const repoOwner: JsonMap = { 'login': 'me', 'avatarUrl': 'u' };
+      const repoNode: JsonMap = { 'name': 'repo', 'owner': repoOwner };
+      const orgNode: JsonMap = { 'login': 'org1', 'name': 'Org One', 'avatarUrl': 'u' };
+      const projWrap: JsonMap = { 'nodes': [projNode], 'pageInfo': projPageInfo };
+      const reposWrap: JsonMap = { 'nodes': [repoNode] };
+      const orgsWrap: JsonMap = { 'nodes': [orgNode] };
+      const viewer: JsonMap = {
+        'login': 'me',
+        'projectsV2': projWrap,
+        'repositories': reposWrap,
+        'organizations': orgsWrap
+      };
+      const projPage = mapWorkProjectsPage({ 'viewer': viewer });
+      expect(projPage.viewerLogin).assertEqual('me');
+      expect(projPage.projects.length).assertEqual(1);
+      expect(projPage.projects[0].ownerLogin).assertEqual('me');
+      const topPage = mapWorkTopReposPage({ 'viewer': viewer });
+      expect(topPage.repos.length).assertEqual(1);
+      expect(topPage.repos[0].name).assertEqual('repo');
+      const orgPage = mapWorkOrgsPage({ 'viewer': viewer });
+      expect(orgPage.orgs.length).assertEqual(1);
+      expect(orgPage.orgs[0].login).assertEqual('org1');
+      expect(orgPage.orgs[0].name).assertEqual('Org One');
     });
   });
 }

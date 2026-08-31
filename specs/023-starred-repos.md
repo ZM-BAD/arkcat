@@ -1,0 +1,116 @@
+# Spec 023: Starred Repositories（工作区星标仓库页）
+
+> BFS Level: 3
+> 关联截图: GitHub 官方 App「Starred Repositories」页（Home My Work 入口，用户提供，2026-08-31）
+> 上游 Spec: 013（入口）
+> 状态: ✅ implemented（2026-08-31，构建通过 / 仪器测试 29/29 / 模拟器验收通过）
+
+---
+
+## 一、页面/功能概述
+
+Home My Work「Starred」入口进入的星标仓库列表页。顶部 App Bar 展示副标题（viewer login）+ 主标题「Starred Repositories」；下方「My lists」区（+ NEW 预留）与「Create your first list」空态卡；再下方「Starred」分组的星标仓库列表（owner 头像 + 加粗仓库名 + 断行描述 + ★ 星数（紧凑格式 50.5k/118.9k）+ 主语言点）。数据源 `viewer.starredRepositories`。
+
+---
+
+## 二、整体 UI 结构
+
+```text
+┌─────────────────────────────────────┐
+│  ←  ZM-BAD                          │ ← 副标题（灰色小字）
+│     Starred Repositories    🔍 ⋯   │ ← 主标题 + 操作
+├─────────────────────────────────────┤
+│  ☰  My lists                + NEW   │ ← 列表入口（预留）
+│  ┌─────────────────────────────┐    │
+│  │  Create your first list     │    │ ← 空态卡（无 lists 时）
+│  │  Lists make it easier ...   │    │
+│  │  [ CREATE A LIST ]          │    │
+│  └─────────────────────────────┘    │
+├─────────────────────────────────────┤
+│  ☆  Starred                          │ ← 分组头
+│  ◯  chen08209                    ⋯  │ ← 仓库行
+│     FIClash                          │
+│     A multi-platform proxy client…   │
+│     ★ 50.5k   ● Dart                 │
+│  ◯  harry0703                     ⋯  │
+│     MoneyPrinterTurbo                │
+│     利用 AI 大模型…（中文描述原样展示）│
+│     ★ 118.9k  ● Python               │
+│  （… 分页 Load more）                 │
+└─────────────────────────────────────┘
+```
+
+---
+
+## 三、元素清单
+
+| # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
+|---|------|------|------|--------|-------------|------|
+| 1 | App Bar 左 | ← 返回 | 回退 | ✅ | —（纯 UI） | — |
+| 2 | App Bar | 副标题（viewer login）+ 主标题「Starred Repositories」 | 标题展示 | ✅ | `viewer.login` | 双行字号 |
+| 3 | App Bar 右 | 🔍 搜索 | 跳转全局搜索页 | ✅ | —（纯 UI） | 复用路由 search |
+| 4 | App Bar 右 | ⋯ 更多 | 预留 | ✅ | —（纯 UI） | 点击提示 |
+| 5 | My lists 行 | ☰ My lists + + NEW | 列表入口 | ⚠️ | 预留（lists API 后续 Spec） | MVP 点击提示；后续接入 REST/GraphQL lists |
+| 6 | My lists 区 | Create your first list 空态卡（标题+副文案+按钮） | 空态展示 | ✅ | —（纯 UI） | 按钮点击提示 |
+| 7 | Starred 区 | ☆ Starred 分组头 | 分组标题 | ✅ | —（纯 UI） | — |
+| 8 | 仓库行 | owner 头像 + login | 展示 | ✅ | `owner { login avatarUrl }` | — |
+| 9 | 仓库行 | 仓库名（加粗）+ 描述（断行） | 展示 | ✅ | `name / description` | 描述原样展示（含多语言） |
+| 10 | 仓库行 | ★ 星数（紧凑格式）+ 主语言点/名称 | 展示 | ✅ | `stargazerCount / primaryLanguage { name color }` | 星数 ≥1000 显示 xx.xk |
+| 11 | 仓库行 | 行点击 | 进入仓库详情 | ✅ | —（纯 UI） | 路由复用 repoDetail |
+| 12 | 列表底部 | Load more 分页 | 翻页 | ✅ | `starredRepositories.pageInfo` | — |
+
+> 可行性比例声明：11/12 可行。
+
+---
+
+## 四、核心 GraphQL 片段
+
+```graphql
+query WorkStarred($first: Int = 30, $after: String) {
+  viewer {
+    login
+    starredRepositories(first: $first, after: $after) {
+      totalCount
+      pageInfo { hasNextPage endCursor }
+      nodes {
+        id name nameWithOwner description stargazerCount
+        owner { login avatarUrl }
+        primaryLanguage { name color }
+      }
+    }
+  }
+}
+```
+
+---
+
+## 五、边界 / 不可行项
+
+| 项 | 原因 | StarRaft 处理方式 |
+|----|------|-------------------|
+| My lists 数据与创建流程 | GitHub Lists 功能（API 可用性待验证，截图为空态） | MVP：展示 My lists 行 + 空态卡，+ NEW / CREATE A LIST 点击提示；列表数据后续 Spec 接入 |
+| 星数超 100 万的显示 | 截图仅展示 k 级别 | `compactCount`：≥1000 显示 xx.xk（一位小数，整数值去小数位），≥1000000 显示 x.x m 暂不实现（亿级无需，备注） |
+| 行内 ⋯（取消加星等操作） | 截图可见 ⋯ 按钮 | MVP 点击提示；取消星标等操作后续 Spec |
+
+---
+
+## 六、TDD 验收标准
+
+- [x] 测试 1：`compactCount` 纯函数：50500→"50.5k"、118900→"118.9k"、1000→"1k"、999→"999"
+- [x] 测试 2：`mapStarredRepo` / `mapWorkStarredPage` 纯函数：语言缺失回退空串；分页字段正确
+- [x] 测试 3：模拟器实测 — Starred 分组行结构（头像/名/描述/星数/语言）与截图一致
+- [x] 测试 4：模拟器实测 — My lists 空态卡展示；+ NEW 与 CREATE A LIST 点击提示
+- [x] 测试 5：grep 检查 StarredRepositories.ets 无中文字符串字面量残留
+- [x] 测试 6：`bash scripts/check-spec.sh` 通过
+- [x] 测试 7：`devecocli build` 全量构建通过
+
+---
+
+## 七、备注
+
+- 仓库行用 `name` 而非 nameWithOwner（owner 已在左侧单独展示，与截图一致）。
+- 主语言缺失（无语言仓库）时隐藏语言点与名称，与官方一致。
+- 入口复用 013 的 Starred 彩色图标（黄 `#E3B341`）。
+- 描述文本原样展示（用户截图中有中文描述，不翻译）。
+
+- 模拟器实测：Starred 真实数据渲染（tokio-rs/tokio ★33k Rust 等）+ My lists 空态卡展示通过。

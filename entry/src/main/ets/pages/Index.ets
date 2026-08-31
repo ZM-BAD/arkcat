@@ -14,6 +14,14 @@ import { RepoDetailView } from './RepoDetail';
 import { IssuesListView } from './IssuesList';
 import { SettingsView } from './Settings';
 import { SearchView } from './Search';
+import { EditMyWorkView } from './EditMyWork';
+import { WorkIssuesView } from './WorkIssues';
+import { WorkPrsView } from './WorkPrs';
+import { DiscussionsView } from './Discussions';
+import { ProjectsView } from './Projects';
+import { TopRepositoriesView } from './TopRepositories';
+import { OrganizationsView } from './Organizations';
+import { StarredRepositoriesView } from './StarredRepositories';
 
 @Entry
 @Component
@@ -25,6 +33,8 @@ struct Index {
   @State repoOwner: string = '';
   @State repoName: string = '';
   @State inboxHasUnread: boolean = false;
+  /** My Work 配置变更计数器：Edit My Work SAVE 后递增，泵到 HomeView 触发重渲染 */
+  @State homeWorkVersion: number = 0;
   private pathStack: NavPathStack = new NavPathStack();
 
   aboutToAppear(): void {
@@ -132,6 +142,96 @@ struct Index {
   }
 
   @Builder
+  editMyWorkDestination() {
+    NavDestination() {
+      EditMyWorkView({
+        pathStack: this.pathStack,
+        onSaved: (): void => {
+          this.homeWorkVersion += 1;
+        }
+      })
+    }
+    .title($r('app.string.nav_edit_work_title'))
+  }
+
+  @Builder
+  workIssuesDestination() {
+    NavDestination() {
+      WorkIssuesView({
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .title($r('app.string.nav_issues_title'))
+  }
+
+  @Builder
+  workPrsDestination() {
+    NavDestination() {
+      WorkPrsView({
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .title($r('app.string.home_work_pull_requests'))
+  }
+
+  @Builder
+  discussionsDestination() {
+    NavDestination() {
+      DiscussionsView({
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .title($r('app.string.nav_discussions_title'))
+  }
+
+  @Builder
+  projectsDestination() {
+    NavDestination() {
+      ProjectsView({
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .title($r('app.string.nav_projects_title'))
+  }
+
+  @Builder
+  topReposDestination() {
+    NavDestination() {
+      TopRepositoriesView({
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .title($r('app.string.nav_top_repos_title'))
+  }
+
+  @Builder
+  organizationsDestination() {
+    NavDestination() {
+      OrganizationsView({
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .title($r('app.string.nav_organizations_title'))
+  }
+
+  @Builder
+  starredDestination() {
+    NavDestination() {
+      StarredRepositoriesView({
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .title($r('app.string.nav_starred_title'))
+  }
+
+  @Builder
   destinationMap(name: string) {
     if (name === 'userProfile') {
       this.userProfileDestination()
@@ -143,6 +243,22 @@ struct Index {
       this.settingsDestination()
     } else if (name === 'search') {
       this.searchDestination()
+    } else if (name === 'editMyWork') {
+      this.editMyWorkDestination()
+    } else if (name === 'workIssues') {
+      this.workIssuesDestination()
+    } else if (name === 'workPrs') {
+      this.workPrsDestination()
+    } else if (name === 'discussions') {
+      this.discussionsDestination()
+    } else if (name === 'projects') {
+      this.projectsDestination()
+    } else if (name === 'topRepos') {
+      this.topReposDestination()
+    } else if (name === 'organizations') {
+      this.organizationsDestination()
+    } else if (name === 'starred') {
+      this.starredDestination()
     }
   }
 
@@ -150,7 +266,7 @@ struct Index {
   mainTabs() {
     Tabs({ barPosition: BarPosition.End }) {
       TabContent() {
-        HomeView({ token: this.token, pathStack: this.pathStack })
+        HomeView({ token: this.token, pathStack: this.pathStack, workVersion: this.homeWorkVersion })
       }
       .tabBar(this.tabItem('🏠', $r('app.string.tab_home'), 0))
 

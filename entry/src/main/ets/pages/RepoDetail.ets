@@ -154,6 +154,8 @@ export struct RepoDetailView {
         return resText(ui, $r('app.string.time_days_ago'), parts.value);
       case 'month':
         return resText(ui, $r('app.string.time_months_ago'), parts.value);
+      case 'year':
+        return resText(ui, $r('app.string.time_years_ago'), parts.value);
     }
   }
 
