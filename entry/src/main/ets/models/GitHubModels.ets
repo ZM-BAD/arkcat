@@ -65,6 +65,20 @@ export interface NotificationItem {
   reason: string;
   unread: boolean;
   updatedAt: string;
+  subjectUrl: string;
+}
+
+/**
+ * 从 subject.url 提取 Issue/PR 编号（纯函数，Spec 002 卡片编号行）。
+ * 支持完整 URL（https://api.github.com/repos/a/b/issues/82）与相对路径（/repos/a/b/pull/456）。
+ * 匹配 /issues/<n>、/pull/<n>、/discussions/<n>、/releases/<n>；无匹配返回''。
+ */
+export function issueNumberFromUrl(url: string): string {
+  const m = /\/(?:issues|pull|commit|discussions|releases)\/([0-9]+)(?:\/|$)/.exec(url);
+  if (m !== null && m[1] !== undefined) {
+    return m[1];
+  }
+  return '';
 }
 
 /** GraphQL viewer 响应 → UserSummary */
@@ -142,7 +156,8 @@ export function mapNotification(raw: JsonMap): NotificationItem {
     subjectType: subject ? Json.str(subject, 'type') : '',
     reason: Json.str(raw, 'reason'),
     unread: Json.bool(raw, 'unread'),
-    updatedAt: Json.str(raw, 'updated_at')
+    updatedAt: Json.str(raw, 'updated_at'),
+    subjectUrl: subject ? Json.str(subject, 'url') : ''
   };
 }
 

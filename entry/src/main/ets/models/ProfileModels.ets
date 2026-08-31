@@ -13,6 +13,7 @@ export interface UserProfile {
   company: string;
   location: string;
   websiteUrl: string;
+  twitterUsername: string;
   statusEmoji: string;
   statusMessage: string;
   viewerIsFollowing: boolean;
@@ -20,6 +21,9 @@ export interface UserProfile {
   pinned: RepoSummary[];
   repos: RepoSummary[];
   stars: RepoSummary[];
+  repositoriesCount: number;
+  organizationsCount: number;
+  starredCount: number;
 }
 
 /** GraphQL UserProfile 响应 → UserProfile */
@@ -49,6 +53,8 @@ export function mapUserProfile(data: JsonMap): UserProfile {
       stars.push(mapRepo(node as JsonMap));
     }
   }
+  const repositoriesRaw = Json.obj(userNode, 'repositories');
+  const organizationsRaw = Json.obj(userNode, 'organizations');
   return {
     user: mapUser(userNode),
     userId: Json.str(userNode, 'id'),
@@ -56,13 +62,17 @@ export function mapUserProfile(data: JsonMap): UserProfile {
     company: Json.str(userNode, 'company'),
     location: Json.str(userNode, 'location'),
     websiteUrl: Json.str(userNode, 'websiteUrl'),
+    twitterUsername: Json.str(userNode, 'twitterUsername'),
     statusEmoji: status ? Json.str(status, 'emoji') : '',
     statusMessage: status ? Json.str(status, 'message') : '',
     viewerIsFollowing: Json.bool(userNode, 'viewerIsFollowing'),
     calendar: mapCalendar(collection ?? ({} as JsonMap)),
     pinned: pinned,
     repos: repos,
-    stars: stars
+    stars: stars,
+    repositoriesCount: repositoriesRaw ? Json.num(repositoriesRaw, 'totalCount') : 0,
+    organizationsCount: organizationsRaw ? Json.num(organizationsRaw, 'totalCount') : 0,
+    starredCount: starsRaw ? Json.num(starsRaw, 'totalCount') : 0
   };
 }
 

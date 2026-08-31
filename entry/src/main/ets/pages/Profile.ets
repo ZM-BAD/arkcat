@@ -58,13 +58,17 @@ export struct ProfileView {
           company: profile.company,
           location: profile.location,
           websiteUrl: profile.websiteUrl,
+          twitterUsername: profile.twitterUsername,
           statusEmoji: profile.statusEmoji,
           statusMessage: profile.statusMessage,
           viewerIsFollowing: following,
           calendar: profile.calendar,
           pinned: profile.pinned,
           repos: profile.repos,
-          stars: profile.stars
+          stars: profile.stars,
+          repositoriesCount: profile.repositoriesCount,
+          organizationsCount: profile.organizationsCount,
+          starredCount: profile.starredCount
         };
         this.profile = updated;
         const ui = this.getUIContext();
@@ -82,11 +86,6 @@ export struct ProfileView {
   /** 带 %1$s 格式化：资源模板 + 参数 → 当前语言文案 */
   private fmt(res: Resource, arg: string): string {
     return resText(this.getUIContext(), res, arg);
-  }
-
-  /** 资源 → 当前语言的纯文案 */
-  private stringOf(res: Resource): string {
-    return resText(this.getUIContext(), res);
   }
 
   @Builder
@@ -152,9 +151,9 @@ export struct ProfileView {
       }
 
       Column({ space: 4 }) {
-        this.metaRow('🏢', this.profile?.company ?? '')
         this.metaRow('📍', this.profile?.location ?? '')
         this.metaRow('🔗', this.profile?.websiteUrl ?? '')
+        this.metaRow('𝕏', this.profile?.twitterUsername !== '' ? `@${this.profile?.twitterUsername ?? ''}` : '')
       }
       .width('100%')
       .alignItems(HorizontalAlign.Start)
@@ -176,19 +175,6 @@ export struct ProfileView {
       this.profile?.user.followers ?? 0, this.profile?.user.following ?? 0);
   }
 
-  @Builder
-  tabBarLabel(label: string, index: number) {
-    Text(label)
-      .fontSize($r('app.float.body_font_size'))
-      .fontColor(this.tab === index ? $r('app.color.primary') : $r('app.color.text_secondary'))
-      .padding({ left: 14, right: 14, top: 8, bottom: 8 })
-      .borderWidth({ bottom: 2 })
-      .borderColor(this.tab === index ? $r('app.color.primary') : Color.Transparent)
-      .onClick(() => {
-        this.tab = index;
-      })
-  }
-
   build() {
     Column() {
       Row() {
@@ -203,6 +189,20 @@ export struct ProfileView {
           .fontWeight(FontWeight.Bold)
           .fontColor($r('app.color.text_primary'))
         Blank()
+        // 🔗 分享：系统分享能力后续 Spec（Spec 005 边界）
+        Text('🔗')
+          .fontSize(18)
+          .padding(6)
+          .onClick(() => {
+            promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+          })
+        // ⚙ 设置：进入 Settings 页（Spec 014）
+        Text('⚙')
+          .fontSize(18)
+          .padding(6)
+          .onClick(() => {
+            this.pathStack.pushPathByName('settings', this.login);
+          })
         // ··· 菜单：Follow/Unfollow（自关注时隐藏，见 Spec 边界）
         if (this.profile !== null && !isSelfProfile(this.profile.viewerLogin, this.profile.user.login)) {
           Text('···')
@@ -218,28 +218,45 @@ export struct ProfileView {
       }
       .width('100%')
       .height(48)
-      .padding({ left: 16, right: 16 })
+      .padding({ left: 16, right: 8 })
 
       Scroll() {
         Column({ space: 12 }) {
           if (this.profile !== null) {
             this.headerCard()
 
-            Row({ space: 4 }) {
-              this.tabBarLabel(this.stringOf($r('app.string.profile_tab_overview')), 0)
-              this.tabBarLabel(this.stringOf($r('app.string.profile_tab_repos')), 1)
-              this.tabBarLabel(this.stringOf($r('app.string.profile_tab_stars')), 2)
+            // Pinned 横滑双列（Spec 005 官方布局）
+            Text($r('app.string.home_pinned_section'))
+              .fontSize($r('app.float.title_font_size'))
+              .fontWeight(FontWeight.Bold)
+              .fontColor($r('app.color.text_primary'))
+              .width('100%')
+            Scroll() {
+              Row({ space: 8 }) {
+                ForEach(this.profile.pinned, (repo: RepoSummary) => {
+                  RepoCard({
+                    repo: repo,
+                    onOpen: (): void => {
+                      this.pathStack.pushPathByName('repoDetail', repo.nameWithOwner);
+                    }
+                  })
+                    .width(200)
+                }, (repo: RepoSummary) => repo.id !== '' ? repo.id : repo.nameWithOwner)
+              }
+              .alignItems(VerticalAlign.Top)
             }
+            .scrollable(ScrollDirection.Horizontal)
             .width('100%')
+            .scrollBar(BarState.Off)
 
+            // 三计数入口（Spec 005 官方布局）
+            this.countEntry('▤', '#57606A', $r('app.string.profile_repositories'), this.profile.repositoriesCount, 0)
+            this.countEntry('◫', '#E87B2E', $r('app.string.profile_organizations'), this.profile.organizationsCount, 1)
+            this.countEntry('★', '#E3B341', $r('app.string.profile_starred'), this.profile.starredCount, 2)
+
+            // 展开视图（三计数入口对应内容；0=Overview 日历）
             if (this.tab === 0) {
               ContributionCalendar({ calendar: this.profile.calendar })
-              Text($r('app.string.home_pinned_section'))
-                .fontSize($r('app.float.title_font_size'))
-                .fontWeight(FontWeight.Bold)
-                .fontColor($r('app.color.text_primary'))
-                .width('100%')
-              this.repoList(this.profile.pinned)
             } else if (this.tab === 1) {
               this.repoList(this.profile.repos)
             } else {
@@ -263,5 +280,36 @@ export struct ProfileView {
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
+  }
+
+  /** 计数入口：彩块图标 + 标签 + 计数；点击切换展开视图 */
+  @Builder
+  countEntry(icon: string, color: string, labelRes: Resource, count: number, tabIndex: number) {
+    Row({ space: 12 }) {
+      Text(icon)
+        .fontSize(18)
+        .fontColor(Color.White)
+        .width(30)
+        .height(30)
+        .textAlign(TextAlign.Center)
+        .backgroundColor(color)
+        .borderRadius(8)
+      Text(labelRes)
+        .fontSize($r('app.float.body_font_size'))
+        .fontWeight(this.tab === tabIndex ? FontWeight.Bold : FontWeight.Normal)
+        .fontColor($r('app.color.text_primary'))
+        .layoutWeight(1)
+      Text(`${count}`)
+        .fontSize($r('app.float.body_font_size'))
+        .fontColor($r('app.color.text_secondary'))
+    }
+    .width('100%')
+    .padding(10)
+    .borderRadius(10)
+    .backgroundColor(this.tab === tabIndex ? '#DBEFE3' : $r('app.color.card_background'))
+    .margin({ bottom: 6 })
+    .onClick(() => {
+      this.tab = tabIndex;
+    })
   }
 }

@@ -1,0 +1,245 @@
+/**
+ * Settings 页（Spec 014）：官方式分组（Notifications/General/Subscriptions/More Options）。
+ * 真功能：Theme（导入 preferences 持久化）、Language（i18n 切换，重启生效）、Sign Out（清 Token）。
+ * 其余分组行为入口 + 点击提示后续。
+ */
+import { promptAction } from '@kit.ArkUI';
+import { i18n } from '@kit.LocalizationKit';
+import { preferences } from '@kit.ArkData';
+import { common } from '@kit.AbilityKit';
+import { TokenStore } from '../services/TokenStore';
+import { resText } from '../utils/I18n';
+const PREFS_NAME = 'starraft_settings';
+const KEY_THEME = 'theme_mode';
+const KEY_LANG = 'app_language';
+
+@ComponentV2
+export struct SettingsView {
+  @Param pathStack: NavPathStack = new NavPathStack();
+  @Local themeMode: string = 'system';
+  @Local language: string = 'zh';
+
+  aboutToAppear(): void {
+    this.loadSettings();
+  }
+
+  private loadSettings(): void {
+    const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext | undefined;
+    if (ctx === undefined) {
+      return;
+    }
+    preferences.getPreferences(ctx, PREFS_NAME)
+      .then((pref: preferences.Preferences) => {
+        this.themeMode = pref.getSync(KEY_THEME, 'system') as string;
+        this.language = pref.getSync(KEY_LANG, 'zh') as string;
+      })
+      .catch(() => {
+      });
+  }
+
+  private saveSetting(key: string, value: string): void {
+    const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext | undefined;
+    if (ctx === undefined) {
+      return;
+    }
+    preferences.getPreferences(ctx, PREFS_NAME)
+      .then((pref: preferences.Preferences) => {
+        pref.putSync(key, value);
+        pref.flushSync();
+      })
+      .catch(() => {
+      });
+  }
+
+  /** Theme 选择：system/light/dark（真功能，持久化） */
+  private pickTheme(): void {
+    const ui = this.getUIContext();
+    ui.getPromptAction().showActionMenu(
+      {
+        title: resText(ui, $r('app.string.settings_theme')),
+        buttons: [
+          { text: resText(ui, $r('app.string.settings_theme_follow_system')), color: '#0969DA' },
+          { text: resText(ui, $r('app.string.settings_theme_light')), color: '#0969DA' },
+          { text: resText(ui, $r('app.string.settings_theme_dark')), color: '#0969DA' }
+        ]
+      },
+      (err, data) => {
+        if (err) {
+          return;
+        }
+        const idx: number = data.index;
+        this.themeMode = idx === 1 ? 'light' : idx === 2 ? 'dark' : 'system';
+        this.saveSetting(KEY_THEME, this.themeMode);
+      });
+  }
+
+  /** Language 选择：en/zh（真功能，冷启动生效） */
+  private pickLanguage(): void {
+    const ui = this.getUIContext();
+    ui.getPromptAction().showActionMenu(
+      {
+        title: resText(ui, $r('app.string.settings_language')),
+        buttons: [
+          { text: resText(ui, $r('app.string.settings_language_zh')), color: '#0969DA' },
+          { text: resText(ui, $r('app.string.settings_language_en')), color: '#0969DA' }
+        ]
+      },
+      (err, data) => {
+        if (err) {
+          return;
+        }
+        const idx: number = data.index;
+        this.language = idx === 1 ? 'en' : 'zh';
+        this.saveSetting(KEY_LANG, this.language);
+        try {
+          i18n.System.setAppPreferredLanguage(this.language);
+        } catch (e) {
+        }
+        promptAction.showToast({ message: $r('app.string.settings_language_restart') });
+      });
+  }
+
+  /** Sign Out：确认后清 Token（真功能） */
+  private signOut(): void {
+    const ui = this.getUIContext();
+    ui.getPromptAction().showDialog(
+      {
+        title: $r('app.string.settings_sign_out_confirm'),
+        message: $r('app.string.settings_sign_out_confirm_desc'),
+        buttons: [
+          {
+            text: resText(ui, $r('app.string.settings_cancel')),
+            color: '#57606A'
+          },
+          {
+            text: resText(ui, $r('app.string.settings_confirm')),
+            color: '#D1242F'
+          }
+        ]
+      },
+      (err, data) => {
+        if (err) {
+          return;
+        }
+        if (data.index === 1) {
+          TokenStore.remove()
+            .then(() => {
+              this.pathStack.clear();
+            })
+            .catch(() => {
+            });
+        }
+      });
+  }
+
+  private comingSoon(): void {
+    promptAction.showToast({ message: $r('app.string.settings_feature_coming') });
+  }
+
+  /** 资源 → 当前语言纯文案 */
+  private stringOf(res: Resource): string {
+    return resText(this.getUIContext(), res);
+  }
+
+  /** 分组标题（灰底浅色） */
+  @Builder
+  sectionTitle(labelRes: Resource) {
+    Text(labelRes)
+      .fontSize($r('app.float.caption_font_size'))
+      .fontColor($r('app.color.text_secondary'))
+      .width('100%')
+      .padding({ left: 4, bottom: 4 })
+      .margin({ top: 12 })
+  }
+
+  /** 行：左文案 + 可选右侧值 */
+  @Builder
+  row(labelRes: Resource, value: string, onClick: () => void) {
+    Row() {
+      Text(labelRes)
+        .fontSize($r('app.float.body_font_size'))
+        .fontColor($r('app.color.text_primary'))
+      Blank()
+      if (value !== '') {
+        Text(value)
+          .fontSize($r('app.float.body_font_size'))
+          .fontColor($r('app.color.text_secondary'))
+      }
+      Text('>')
+        .fontSize(14)
+        .fontColor($r('app.color.text_secondary'))
+        .margin({ left: 6 })
+    }
+    .width('100%')
+    .height(46)
+    .padding({ left: 16, right: 16 })
+    .backgroundColor($r('app.color.card_background'))
+    .borderRadius(10)
+    .margin({ bottom: 2 })
+    .onClick(onClick)
+  }
+
+  build() {
+    Column() {
+      Row({ space: 8 }) {
+        Text('←')
+          .fontSize(20)
+          .onClick(() => {
+            this.pathStack.pop();
+          })
+        Text($r('app.string.profile_settings'))
+          .fontSize($r('app.float.title_font_size'))
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.text_primary'))
+        Blank()
+      }
+      .width('100%')
+      .height(48)
+      .padding({ left: 16, right: 16 })
+
+      Scroll() {
+        Column() {
+          this.sectionTitle($r('app.string.settings_notifications'))
+          this.row($r('app.string.settings_notification_options'), '', () => this.comingSoon())
+
+          this.sectionTitle($r('app.string.settings_general'))
+          this.row($r('app.string.settings_theme'),
+            this.themeMode === 'system' ? this.stringOf($r('app.string.settings_theme_follow_system')) : this.themeMode,
+            () => this.pickTheme())
+          this.row($r('app.string.settings_code_options'), '', () => this.comingSoon())
+          this.row($r('app.string.settings_language'),
+            this.language === 'zh' ? this.stringOf($r('app.string.settings_language_zh')) : this.stringOf($r('app.string.settings_language_en')),
+            () => this.pickLanguage())
+          this.row($r('app.string.settings_accounts'), '', () => this.comingSoon())
+          this.row($r('app.string.settings_app_lock'), '', () => this.comingSoon())
+
+          this.sectionTitle($r('app.string.settings_subscriptions'))
+          this.row($r('app.string.settings_copilot'), this.stringOf($r('app.string.settings_copilot_free')), () => this.comingSoon())
+
+          this.sectionTitle($r('app.string.settings_more_options'))
+          this.row($r('app.string.settings_share_feedback'), '', () => this.comingSoon())
+          this.row($r('app.string.settings_get_help'), '', () => this.comingSoon())
+          this.row($r('app.string.settings_terms'), '', () => this.comingSoon())
+          this.row($r('app.string.settings_privacy'), '', () => this.comingSoon())
+          this.row($r('app.string.settings_open_source'), '', () => this.comingSoon())
+          this.row($r('app.string.settings_sign_out'), '', () => this.signOut())
+
+          Text($r('app.string.settings_version'))
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor($r('app.color.text_secondary'))
+            .width('100%')
+            .textAlign(TextAlign.Center)
+            .margin({ top: 24, bottom: 24 })
+        }
+        .padding({ left: 16, right: 16 })
+        .width('100%')
+      }
+      .layoutWeight(1)
+      .scrollBar(BarState.Off)
+      .align(Alignment.Top)
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor($r('app.color.bg_page'))
+  }
+}

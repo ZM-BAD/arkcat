@@ -17,6 +17,7 @@ query UserProfile($login: String!) {
     company
     location
     websiteUrl
+    twitterUsername
     viewerIsFollowing
     status { message emoji }
     followers { totalCount }
@@ -34,17 +35,20 @@ query UserProfile($login: String!) {
       }
     }
     repositories(first: 30, orderBy: { field: UPDATED_AT, direction: DESC }) {
+      totalCount
       nodes { ... on Repository {
         id nameWithOwner description stargazerCount forkCount
         primaryLanguage { name color }
       } }
     }
     starredRepositories(first: 30) {
+      totalCount
       nodes { ... on Repository {
         id nameWithOwner description stargazerCount forkCount
         primaryLanguage { name color }
       } }
     }
+    organizations(first: 30) { totalCount }
   }
 }`;
 

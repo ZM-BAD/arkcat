@@ -105,14 +105,6 @@
       "value": "⑂ %1$d"
     },
     {
-      "name": "inbox_filter_all",
-      "value": "All"
-    },
-    {
-      "name": "inbox_filter_unread",
-      "value": "Unread"
-    },
-    {
       "name": "inbox_empty",
       "value": "No notifications"
     },
@@ -153,10 +145,6 @@
       "value": "Security alert"
     },
     {
-      "name": "explore_search_placeholder",
-      "value": "Search repositories / developers"
-    },
-    {
       "name": "explore_topics_title",
       "value": "Topics"
     },
@@ -175,18 +163,6 @@
     {
       "name": "copilot_hint",
       "value": "No public API is available. Please use the official GitHub app."
-    },
-    {
-      "name": "profile_tab_overview",
-      "value": "Overview"
-    },
-    {
-      "name": "profile_tab_repos",
-      "value": "Repos"
-    },
-    {
-      "name": "profile_tab_stars",
-      "value": "Stars"
     },
     {
       "name": "profile_follow",
@@ -399,6 +375,178 @@
     {
       "name": "home_new_coming",
       "value": "Creating content will be available in a future version"
+    },
+    {
+      "name": "inbox_menu_inbox",
+      "value": "Inbox"
+    },
+    {
+      "name": "inbox_menu_focused",
+      "value": "Focused"
+    },
+    {
+      "name": "inbox_menu_unread",
+      "value": "Unread"
+    },
+    {
+      "name": "inbox_menu_repository",
+      "value": "Repository"
+    },
+    {
+      "name": "explore_discover",
+      "value": "Discover"
+    },
+    {
+      "name": "explore_trending",
+      "value": "Trending Repositories"
+    },
+    {
+      "name": "explore_awesome",
+      "value": "Awesome Lists"
+    },
+    {
+      "name": "explore_activity",
+      "value": "Activity"
+    },
+    {
+      "name": "explore_star",
+      "value": "STAR"
+    },
+    {
+      "name": "profile_settings",
+      "value": "Settings"
+    },
+    {
+      "name": "profile_repositories",
+      "value": "Repositories"
+    },
+    {
+      "name": "profile_organizations",
+      "value": "Organizations"
+    },
+    {
+      "name": "profile_starred",
+      "value": "Starred"
+    },
+    {
+      "name": "settings_notifications",
+      "value": "Notifications"
+    },
+    {
+      "name": "settings_notification_options",
+      "value": "Notification Options"
+    },
+    {
+      "name": "settings_general",
+      "value": "General"
+    },
+    {
+      "name": "settings_theme",
+      "value": "Theme"
+    },
+    {
+      "name": "settings_theme_follow_system",
+      "value": "Follow system"
+    },
+    {
+      "name": "settings_theme_light",
+      "value": "Light"
+    },
+    {
+      "name": "settings_theme_dark",
+      "value": "Dark"
+    },
+    {
+      "name": "settings_code_options",
+      "value": "Code Options"
+    },
+    {
+      "name": "settings_language",
+      "value": "Language"
+    },
+    {
+      "name": "settings_language_en",
+      "value": "English"
+    },
+    {
+      "name": "settings_language_zh",
+      "value": "简体中文"
+    },
+    {
+      "name": "settings_accounts",
+      "value": "Accounts"
+    },
+    {
+      "name": "settings_app_lock",
+      "value": "App Lock"
+    },
+    {
+      "name": "settings_subscriptions",
+      "value": "Subscriptions"
+    },
+    {
+      "name": "settings_copilot",
+      "value": "Copilot"
+    },
+    {
+      "name": "settings_copilot_free",
+      "value": "Copilot Free"
+    },
+    {
+      "name": "settings_more_options",
+      "value": "More Options"
+    },
+    {
+      "name": "settings_share_feedback",
+      "value": "Share Feedback"
+    },
+    {
+      "name": "settings_get_help",
+      "value": "Get Help"
+    },
+    {
+      "name": "settings_terms",
+      "value": "Terms of Service"
+    },
+    {
+      "name": "settings_privacy",
+      "value": "Privacy Policy & Analytics"
+    },
+    {
+      "name": "settings_open_source",
+      "value": "Open Source Libraries"
+    },
+    {
+      "name": "settings_sign_out",
+      "value": "Sign Out"
+    },
+    {
+      "name": "settings_feature_coming",
+      "value": "This feature will be available in a future version"
+    },
+    {
+      "name": "settings_language_restart",
+      "value": "Language switch takes effect after restart"
+    },
+    {
+      "name": "settings_sign_out_confirm",
+      "value": "Sign out of StarRaft?"
+    },
+    {
+      "name": "settings_sign_out_confirm_desc",
+      "value": "You will need to enter your GitHub token again to sign in."
+    },
+    {
+      "name": "settings_cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "settings_confirm",
+      "value": "Sign Out"
+    },
+    {
+      "name": "settings_version",
+      "value": "StarRaft v1.0.0"
     }
   ]
 }

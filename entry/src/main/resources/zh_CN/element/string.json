@@ -105,14 +105,6 @@
       "value": "⑂ %1$d"
     },
     {
-      "name": "inbox_filter_all",
-      "value": "全部"
-    },
-    {
-      "name": "inbox_filter_unread",
-      "value": "未读"
-    },
-    {
       "name": "inbox_empty",
       "value": "暂无通知"
     },
@@ -153,10 +145,6 @@
       "value": "安全"
     },
     {
-      "name": "explore_search_placeholder",
-      "value": "搜索仓库 / 开发者"
-    },
-    {
       "name": "explore_topics_title",
       "value": "Topics"
     },
@@ -175,18 +163,6 @@
     {
       "name": "copilot_hint",
       "value": "无公开 API，请使用 GitHub 官方 App"
-    },
-    {
-      "name": "profile_tab_overview",
-      "value": "Overview"
-    },
-    {
-      "name": "profile_tab_repos",
-      "value": "Repos"
-    },
-    {
-      "name": "profile_tab_stars",
-      "value": "Stars"
     },
     {
       "name": "profile_follow",
@@ -399,6 +375,178 @@
     {
       "name": "home_new_coming",
       "value": "新建功能将在后续版本提供"
+    },
+    {
+      "name": "inbox_menu_inbox",
+      "value": "收件箱"
+    },
+    {
+      "name": "inbox_menu_focused",
+      "value": "重点"
+    },
+    {
+      "name": "inbox_menu_unread",
+      "value": "未读"
+    },
+    {
+      "name": "inbox_menu_repository",
+      "value": "仓库"
+    },
+    {
+      "name": "explore_discover",
+      "value": "发现"
+    },
+    {
+      "name": "explore_trending",
+      "value": "趋势仓库"
+    },
+    {
+      "name": "explore_awesome",
+      "value": "精选列表"
+    },
+    {
+      "name": "explore_activity",
+      "value": "动态"
+    },
+    {
+      "name": "explore_star",
+      "value": "加星"
+    },
+    {
+      "name": "profile_settings",
+      "value": "设置"
+    },
+    {
+      "name": "profile_repositories",
+      "value": "仓库"
+    },
+    {
+      "name": "profile_organizations",
+      "value": "组织"
+    },
+    {
+      "name": "profile_starred",
+      "value": "已加星"
+    },
+    {
+      "name": "settings_notifications",
+      "value": "通知"
+    },
+    {
+      "name": "settings_notification_options",
+      "value": "通知选项"
+    },
+    {
+      "name": "settings_general",
+      "value": "通用"
+    },
+    {
+      "name": "settings_theme",
+      "value": "主题"
+    },
+    {
+      "name": "settings_theme_follow_system",
+      "value": "跟随系统"
+    },
+    {
+      "name": "settings_theme_light",
+      "value": "浅色"
+    },
+    {
+      "name": "settings_theme_dark",
+      "value": "深色"
+    },
+    {
+      "name": "settings_code_options",
+      "value": "代码选项"
+    },
+    {
+      "name": "settings_language",
+      "value": "语言"
+    },
+    {
+      "name": "settings_language_en",
+      "value": "English"
+    },
+    {
+      "name": "settings_language_zh",
+      "value": "简体中文"
+    },
+    {
+      "name": "settings_accounts",
+      "value": "账号"
+    },
+    {
+      "name": "settings_app_lock",
+      "value": "应用锁"
+    },
+    {
+      "name": "settings_subscriptions",
+      "value": "订阅"
+    },
+    {
+      "name": "settings_copilot",
+      "value": "Copilot"
+    },
+    {
+      "name": "settings_copilot_free",
+      "value": "Copilot Free"
+    },
+    {
+      "name": "settings_more_options",
+      "value": "更多选项"
+    },
+    {
+      "name": "settings_share_feedback",
+      "value": "分享反馈"
+    },
+    {
+      "name": "settings_get_help",
+      "value": "获取帮助"
+    },
+    {
+      "name": "settings_terms",
+      "value": "服务条款"
+    },
+    {
+      "name": "settings_privacy",
+      "value": "隐私政策与分析"
+    },
+    {
+      "name": "settings_open_source",
+      "value": "开源库"
+    },
+    {
+      "name": "settings_sign_out",
+      "value": "退出登录"
+    },
+    {
+      "name": "settings_feature_coming",
+      "value": "该功能将在后续版本提供"
+    },
+    {
+      "name": "settings_language_restart",
+      "value": "语言切换将在重启后生效"
+    },
+    {
+      "name": "settings_sign_out_confirm",
+      "value": "退出 StarRaft？"
+    },
+    {
+      "name": "settings_sign_out_confirm_desc",
+      "value": "重新登录时需要再次输入 GitHub Token。"
+    },
+    {
+      "name": "settings_cancel",
+      "value": "取消"
+    },
+    {
+      "name": "settings_confirm",
+      "value": "退出登录"
+    },
+    {
+      "name": "settings_version",
+      "value": "StarRaft v1.0.0"
     }
   ]
 }
