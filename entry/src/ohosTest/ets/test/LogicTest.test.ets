@@ -6,6 +6,7 @@ import { describe, it, expect } from '@ohos/hypium';
 import { relativeTime, contributionLevelColor, notificationTypeLabel } from '../../../main/ets/utils/Format';
 import { Json } from '../../../main/ets/utils/Json';
 import { mapUser, mapRepo, mapCalendar, mapHomeOverview, mapNotifications } from '../../../main/ets/models/GitHubModels';
+import { buildNotificationsPath } from '../../../main/ets/services/NotificationsService';
 
 type JsonMap = Record<string, Object>;
 
@@ -133,6 +134,11 @@ export default function logicTest(testsuiteName: string) {
       expect(overview.pinned.length).assertEqual(1);
       expect(overview.pinned[0].nameWithOwner).assertEqual('zm_bad/starraft');
       expect(overview.calendar.totalContributions).assertEqual(4);
+    });
+
+    it('buildNotificationsPath_filter', 0, () => {
+      expect(buildNotificationsPath(true, 30)).assertEqual('/notifications?all=true&per_page=30');
+      expect(buildNotificationsPath(false, 1)).assertEqual('/notifications?all=false&per_page=1');
     });
 
     it('mapNotifications_parseAndInvalid', 0, () => {
