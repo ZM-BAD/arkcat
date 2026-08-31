@@ -64,9 +64,9 @@ GitHub Copilot AI 助手对话页。用户通过自然语言与 Copilot 对话�
 
 ## 六、TDD 验收标准
 
-- [ ] Copilot Tab 展示 Empty State 页面
-- [ ] Empty State 说明「此功能需使用 GitHub 官方 App」
-- [ ] 底部导航 Copilot Tab 正常切换
+- [x] Copilot Tab 展示 Empty State 页面
+- [x] Empty State 说明「此功能需使用 GitHub 官方 App」
+- [x] 底部导航 Copilot Tab 正常切换
 
 ---
 
@@ -75,3 +75,4 @@ GitHub Copilot AI 助手对话页。用户通过自然语言与 Copilot 对话�
 - 4/7 可行，全部 Chat 功能不可实现
 - Empty State 文案：「Copilot 功能暂不支持（无公开 API），请使用 GitHub 官方 App」
 - 2026-08-31：Empty State、说明文案、Tab 切换三项 TDD 均在模拟器验收通过
+- 2026-08-31 真实数据验收：使用 GitHub PAT（模拟器实测）完成以上勾选项；未实测项见「备注」（详情跳转由 Spec 008/011 接管）

@@ -115,9 +115,9 @@ mutation ForkRepo($repositoryId: ID!) {
 
 ## 六、TDD 验收标准
 
-- [ ] 仓库信息（描述、Star 数、Fork 数）正确展示
-- [ ] README 能展示
-- [ ] 文件列表能展示
+- [x] 仓库信息（描述、Star 数、Fork 数）正确展示
+- [x] README 能展示
+- [x] 文件列表能展示
 - [ ] Star/Fork/Watch 操作正常
 - [ ] 点击文件进入 Code Viewer
 
@@ -127,3 +127,4 @@ mutation ForkRepo($repositoryId: ID!) {
 
 - 11/14 可行
 - 2026-08-31：实现合并自 feature/spec-00X 分支（--no-ff）至 develop，仪器测试 19/19 通过；真实数据类验收项需在应用内配置有效 GitHub PAT 后复核
+- 2026-08-31 真实数据验收：使用 GitHub PAT（模拟器实测）完成以上勾选项；未实测项见「备注」（详情跳转由 Spec 008/011 接管）

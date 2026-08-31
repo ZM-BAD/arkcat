@@ -79,8 +79,8 @@ PUT /notifications
 
 ## 六、TDD 验收标准
 
-- [ ] 通知列表能展示
-- [ ] All/Unread 筛选正确切换
+- [x] 通知列表能展示
+- [x] All/Unread 筛选正确切换
 - [ ] 点击通知跳转到对应 Issue/PR 详情
 - [ ] 进入 Inbox 后通知标记为已读
 
@@ -90,3 +90,4 @@ PUT /notifications
 
 - 全部可实现，无不可行项
 - 2026-08-31：实现合并自 feature/spec-00X 分支（--no-ff）至 develop，仪器测试 19/19 通过；真实数据类验收项需在应用内配置有效 GitHub PAT 后复核
+- 2026-08-31 真实数据验收：使用 GitHub PAT（模拟器实测）完成以上勾选项；未实测项见「备注」（详情跳转由 Spec 008/011 接管）

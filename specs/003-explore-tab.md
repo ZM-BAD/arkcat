@@ -81,8 +81,8 @@ query TopicRepositories($topic: String!, $first: Int = 20) {
 
 ## 六、TDD 验收标准
 
-- [ ] 点击 Topic 标签能展示该主题下的仓库列表
-- [ ] Collections 区块不展示（已隐藏）
+- [x] 点击 Topic 标签能展示该主题下的仓库列表
+- [x] Collections 区块不展示（已隐藏）
 
 ---
 
@@ -90,3 +90,4 @@ query TopicRepositories($topic: String!, $first: Int = 20) {
 
 - 7/8 可行，Collections 隐藏
 - 2026-08-31：Topic 检索经 GraphQL search 实现；Collections 按边界隐藏（模拟器截图验证）
+- 2026-08-31 真实数据验收：使用 GitHub PAT（模拟器实测）完成以上勾选项；未实测项见「备注」（详情跳转由 Spec 008/011 接管）
