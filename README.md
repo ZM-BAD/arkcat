@@ -152,4 +152,7 @@ bash scripts/install-hooks.sh
 
 ## 📄 License
 
-Apache-2.0
+**StarRaft is a free, open-source, non-commercial HarmonyOS client for GitHub. It is not affiliated with, endorsed by, or sponsored by GitHub, Inc. GitHub and the GitHub logo are trademarks of GitHub, Inc. StarRaft contains no official GitHub assets or artwork.**
+
+- Project code: [GPL-3.0](./LICENSE)
+- Icons (Octicons, under [`assets/octicons/`](assets/octicons/README.md)): MIT License — see [`assets/octicons/LICENSE`](assets/octicons/LICENSE)

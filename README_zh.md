@@ -152,4 +152,7 @@ bash scripts/install-hooks.sh
 
 ## 📄 许可证
 
-Apache-2.0
+**StarRaft 是一款免费、开源、非商业用途的纯血鸿蒙 GitHub 客户端。它与 GitHub, Inc. 无任何关联，未获得其认可或赞助。GitHub 及 GitHub 徽标是 GitHub, Inc. 的商标。StarRaft 不包含任何 GitHub 官方素材或美术资源。**
+
+- 项目代码：[GPL-3.0](./LICENSE)
+- 图标（Octicons，位于 [`assets/octicons/`](assets/octicons/README.md)）：MIT 许可 —— 详见 [`assets/octicons/LICENSE`](assets/octicons/LICENSE)
