@@ -7,6 +7,7 @@ import { TokenSetup } from './TokenSetup';
 import { HomeView } from './Home';
 import { InboxView } from './Inbox';
 import { ExploreView } from './Explore';
+import { CopilotView } from './Copilot';
 
 @Entry
 @Component
@@ -81,7 +82,7 @@ struct Index {
       .tabBar(this.tabItem('🧭', $r('app.string.tab_explore'), 2))
 
       TabContent() {
-        this.tabPlaceholder('🤖', 'Copilot')
+        CopilotView()
       }
       .tabBar(this.tabItem('🤖', $r('app.string.tab_copilot'), 3))
     }
