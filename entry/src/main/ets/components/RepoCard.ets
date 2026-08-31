@@ -7,6 +7,7 @@ import { RepoSummary } from '../models/GitHubModels';
 @ComponentV2
 export struct RepoCard {
   @Param repo: RepoSummary | null = null;
+  @Event onOpen: () => void = () => {};
 
   build() {
     Column({ space: 6 }) {
@@ -55,5 +56,6 @@ export struct RepoCard {
     .borderRadius($r('app.float.card_radius'))
     .backgroundColor($r('app.color.card_background'))
     .width('100%')
+    .onClick(() => this.onOpen())
   }
 }

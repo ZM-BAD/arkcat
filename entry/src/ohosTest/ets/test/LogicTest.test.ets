@@ -10,6 +10,7 @@ import { buildNotificationsPath } from '../../../main/ets/services/Notifications
 import { buildTopicQuery } from '../../../main/ets/services/ExploreService';
 import { mapSearchResult } from '../../../main/ets/models/ExploreModels';
 import { mapUserProfile, isSelfProfile } from '../../../main/ets/models/ProfileModels';
+import { mapRepoDetail, nextStarAction } from '../../../main/ets/models/RepoDetailModels';
 
 type JsonMap = Record<string, Object>;
 
@@ -192,6 +193,58 @@ export default function logicTest(testsuiteName: string) {
       expect(isSelfProfile('zm_bad', 'zm_bad')).assertTrue();
       expect(isSelfProfile('other', 'zm_bad')).assertFalse();
       expect(isSelfProfile('', 'zm_bad')).assertFalse();
+    });
+
+    it('mapRepoDetail_starToggle', 0, () => {
+      const license: JsonMap = { 'name': 'MIT License', 'spdxId': 'MIT' };
+      const topicName: JsonMap = { 'name': 'arkts' };
+      const topicNode: JsonMap = { 'topic': topicName };
+      const topicsWrap: JsonMap = { 'nodes': [topicNode] };
+      const readmeBlob: JsonMap = { 'text': '# StarRaft' };
+      const entry1: JsonMap = { 'name': 'entry', 'type': 'tree' };
+      const entry2: JsonMap = { 'name': 'README.md', 'type': 'blob' };
+      const entries: JsonMap[] = [entry1, entry2];
+      const tree: JsonMap = { 'entries': entries };
+      const langNode1: JsonMap = { 'name': 'ArkTS', 'color': '#0EA5E9' };
+      const edge1: JsonMap = { 'size': 750, 'node': langNode1 };
+      const langNode2: JsonMap = { 'name': 'Python', 'color': '#3572A5' };
+      const edge2: JsonMap = { 'size': 250, 'node': langNode2 };
+      const edges: JsonMap[] = [edge1, edge2];
+      const langs: JsonMap = { 'totalSize': 1000, 'edges': edges };
+      const commitNode: JsonMap = { 'messageHeadline': 'feat: init' };
+      const history: JsonMap = { 'nodes': [commitNode] };
+      const target: JsonMap = { 'history': history };
+      const branch: JsonMap = { 'name': 'main', 'target': target };
+      const watchers: JsonMap = { 'totalCount': 9 };
+      const repo: JsonMap = {
+        'id': 'R1',
+        'nameWithOwner': 'zm_bad/starraft',
+        'description': 'gh client',
+        'stargazerCount': 2,
+        'forkCount': 1,
+        'viewerHasStarred': true,
+        'watchers': watchers,
+        'licenseInfo': license,
+        'repositoryTopics': topicsWrap,
+        'readme': readmeBlob,
+        'fileTree': tree,
+        'languages': langs,
+        'defaultBranchRef': branch
+      };
+      const detail = mapRepoDetail({ 'repository': repo });
+      expect(detail.repoId).assertEqual('R1');
+      expect(detail.licenseName).assertEqual('MIT License');
+      expect(detail.topics[0]).assertEqual('arkts');
+      expect(detail.readmeText).assertEqual('# StarRaft');
+      expect(detail.files.length).assertEqual(2);
+      expect(detail.files[0].type).assertEqual('tree');
+      // 语言占比：750/1000 → 75%
+      expect(detail.languages[0].percent).assertEqual(75);
+      expect(detail.languages[1].percent).assertEqual(25);
+      expect(detail.lastCommitMessage).assertEqual('feat: init');
+      // Star 切换方向
+      expect(nextStarAction(true)).assertFalse();
+      expect(nextStarAction(false)).assertTrue();
     });
 
     it('mapNotifications_parseAndInvalid', 0, () => {

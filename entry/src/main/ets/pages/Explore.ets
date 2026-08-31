@@ -12,6 +12,7 @@ import { StateView } from '../components/StateView';
 @ComponentV2
 export struct ExploreView {
   @Param token: string = '';
+  @Param pathStack: NavPathStack = new NavPathStack();
   @Local selectedTopic: string = '';
   @Local result: TopicSearchResult | null = null;
   @Local loading: boolean = false;
@@ -97,7 +98,12 @@ export struct ExploreView {
 
             if (this.result !== null && !this.loading && this.errorMsg === '') {
               ForEach(this.result.repos, (repo: RepoSummary) => {
-                RepoCard({ repo: repo })
+                RepoCard({
+                  repo: repo,
+                  onOpen: (): void => {
+                    this.pathStack.pushPathByName('repoDetail', repo.nameWithOwner);
+                  }
+                })
                   .margin({ bottom: 8 })
               }, (repo: RepoSummary) => repo.id !== '' ? repo.id : repo.nameWithOwner)
             } else {

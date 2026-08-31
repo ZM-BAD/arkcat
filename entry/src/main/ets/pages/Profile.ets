@@ -76,7 +76,12 @@ export struct ProfileView {
   @Builder
   repoList(repos: RepoSummary[]) {
     ForEach(repos, (repo: RepoSummary) => {
-      RepoCard({ repo: repo })
+      RepoCard({
+        repo: repo,
+        onOpen: (): void => {
+          this.pathStack.pushPathByName('repoDetail', repo.nameWithOwner);
+        }
+      })
         .margin({ bottom: 8 })
     }, (repo: RepoSummary) => repo.id !== '' ? repo.id : repo.nameWithOwner)
   }

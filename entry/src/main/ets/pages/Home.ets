@@ -79,7 +79,12 @@ export struct HomeView {
       .margin({ top: 16, bottom: 8 })
 
     ForEach(this.overview?.pinned ?? [], (repo: RepoSummary) => {
-      RepoCard({ repo: repo })
+      RepoCard({
+        repo: repo,
+        onOpen: (): void => {
+          this.pathStack.pushPathByName('repoDetail', repo.nameWithOwner);
+        }
+      })
         .margin({ bottom: 8 })
     }, (repo: RepoSummary) => repo.id !== '' ? repo.id : repo.nameWithOwner)
   }
