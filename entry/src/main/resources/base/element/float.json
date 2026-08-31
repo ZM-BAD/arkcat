@@ -23,6 +23,46 @@
     {
       "name": "button_bottom_margin",
       "value": "50vp"
+    },
+    {
+      "name": "page_padding",
+      "value": "16vp"
+    },
+    {
+      "name": "card_padding",
+      "value": "12vp"
+    },
+    {
+      "name": "card_radius",
+      "value": "12vp"
+    },
+    {
+      "name": "card_gap",
+      "value": "8vp"
+    },
+    {
+      "name": "title_font_size",
+      "value": "18fp"
+    },
+    {
+      "name": "body_font_size",
+      "value": "14fp"
+    },
+    {
+      "name": "caption_font_size",
+      "value": "12fp"
+    },
+    {
+      "name": "avatar_size_medium",
+      "value": "56vp"
+    },
+    {
+      "name": "avatar_size_small",
+      "value": "24vp"
+    },
+    {
+      "name": "heat_cell_size",
+      "value": "12vp"
     }
   ]
 }

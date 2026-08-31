@@ -4,6 +4,7 @@ build/
 /node_modules/
 /oh_modules/
 /local.properties
+entry/.test/
 
 # 编辑器
 .idea/

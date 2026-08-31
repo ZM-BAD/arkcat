@@ -19,6 +19,30 @@
     {
       "name": "divider",
       "value": "#D0D7DE"
+    },
+    {
+      "name": "bg_page",
+      "value": "#F6F8FA"
+    },
+    {
+      "name": "card_background",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "badge_red",
+      "value": "#D1242F"
+    },
+    {
+      "name": "heat_empty",
+      "value": "#EBEDF0"
+    },
+    {
+      "name": "repo_language_blue",
+      "value": "#3178C6"
+    },
+    {
+      "name": "link_blue",
+      "value": "#0969DA"
     }
   ]
 }
