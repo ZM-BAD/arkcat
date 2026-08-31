@@ -9,6 +9,7 @@ import { ProfileService } from '../services/ProfileService';
 import { ContributionCalendar } from '../components/ContributionCalendar';
 import { RepoCard } from '../components/RepoCard';
 import { StateView } from '../components/StateView';
+import { OctIcon } from '../components/OctIcon';
 import { RepoSummary } from '../models/GitHubModels';
 import { resText } from '../utils/I18n';
 
@@ -178,9 +179,14 @@ export struct ProfileView {
   build() {
     Column() {
       Row() {
-        Text('←')
-          .fontSize(20)
-          .onClick(() => {
+        Stack() {
+  OctIcon({
+          res: $r('app.media.oct_arrow_left_24'),
+          iconSize: 20,
+          iconColor: $r('app.color.text_primary')
+  })
+}
+.onClick((): void => {
             this.pathStack.pop();
           })
         Blank()

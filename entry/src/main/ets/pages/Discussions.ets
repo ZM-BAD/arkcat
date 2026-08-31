@@ -3,6 +3,7 @@
  * 状态/归属下拉 + Unanswered 快捷标 + 分类胶囊。
  */
 import { promptAction } from '@kit.ArkUI';
+import { OctIcon } from '../components/OctIcon';
 import { WorkDiscussionItem, WorkDiscussionsPage } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
@@ -141,9 +142,11 @@ export struct DiscussionsView {
   discussionCard(item: WorkDiscussionItem) {
     Column({ space: 6 }) {
       Row() {
-        Text('💬')
-          .fontSize(18)
-          .fontColor(item.iconKey === 'open' ? '#8250DF' : '#8C959F')
+        OctIcon({
+          res: $r('app.media.oct_comment_discussion_16'),
+          iconSize: 18,
+          iconColor: item.iconKey === 'open' ? '#8250DF' : '#8C959F'
+        })
         Text(`${item.repoFullName} #${item.number}`)
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
@@ -176,12 +179,15 @@ export struct DiscussionsView {
               .backgroundColor('#F3E6FF')
           }
           if (item.replyCount > 0) {
-            Text(`💬 ${item.replyCount}`)
-              .fontSize($r('app.float.caption_font_size'))
-              .fontColor($r('app.color.text_secondary'))
-              .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-              .borderRadius(10)
-              .backgroundColor('#F6F8FA')
+            Row({ space: 4 }) {
+              OctIcon({ res: $r('app.media.oct_comment_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
+              Text(`${item.replyCount}`)
+                .fontSize($r('app.float.caption_font_size'))
+                .fontColor($r('app.color.text_secondary'))
+            }
+            .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+            .borderRadius(10)
+            .backgroundColor('#F6F8FA')
           }
         }
         .width('100%')
@@ -197,9 +203,14 @@ export struct DiscussionsView {
   build() {
     Column() {
       Row({ space: 8 }) {
-        Text('←')
-          .fontSize(20)
-          .onClick(() => {
+        Stack() {
+  OctIcon({
+          res: $r('app.media.oct_arrow_left_24'),
+          iconSize: 20,
+          iconColor: $r('app.color.text_primary')
+  })
+}
+.onClick((): void => {
             this.pathStack.pop();
           })
         Text($r('app.string.nav_discussions_title'))
@@ -207,19 +218,28 @@ export struct DiscussionsView {
           .fontWeight(FontWeight.Bold)
           .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
-        Text('🔍')
-          .fontSize(18)
-          .padding(6)
-          .onClick(() => {
+        Stack() {
+  OctIcon({
+          res: $r('app.media.oct_search_24'),
+          iconSize: 20,
+          iconColor: $r('app.color.text_primary')
+  })
+}
+.onClick((): void => {
             this.pathStack.pushPathByName('search', '');
           })
-        Text('⋯')
-          .fontSize(18)
-          .fontColor($r('app.color.text_secondary'))
           .padding(6)
-          .onClick(() => {
+        Stack() {
+  OctIcon({
+          res: $r('app.media.oct_kebab_horizontal_16'),
+          iconSize: 18,
+          iconColor: $r('app.color.text_secondary')
+  })
+}
+.onClick((): void => {
             promptAction.showToast({ message: $r('app.string.home_feature_coming') });
           })
+          .padding(6)
       }
       .width('100%')
       .height(48)
@@ -229,9 +249,11 @@ export struct DiscussionsView {
         Column() {
           Row() {
             Stack({ alignContent: Alignment.TopEnd }) {
-              Text('≡')
-                .fontSize(14)
-                .fontColor($r('app.color.text_primary'))
+              OctIcon({
+                res: $r('app.media.oct_filter_16'),
+                iconSize: 14,
+                iconColor: $r('app.color.text_primary')
+              })
                 .padding({ left: 8, right: 8, top: 5, bottom: 5 })
                 .borderRadius(12)
                 .backgroundColor($r('app.color.card_background'))

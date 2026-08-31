@@ -3,6 +3,7 @@
  * My lists 区（+ NEW 预留，v1 恒显空态卡）+ Starred 分组（头像/名称/描述/星数/语言）。
  */
 import { promptAction } from '@kit.ArkUI';
+import { OctIcon } from '../components/OctIcon';
 import { WorkStarredPage, WorkStarredRepoItem } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
@@ -84,10 +85,14 @@ export struct StarredRepositoriesView {
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .layoutWeight(1)
-        Text('⋯')
-          .fontSize(16)
-          .fontColor($r('app.color.text_secondary'))
-          .onClick(() => this.comingSoon())
+        Stack() {
+  OctIcon({
+          res: $r('app.media.oct_kebab_horizontal_16'),
+          iconSize: 15,
+          iconColor: $r('app.color.text_secondary')
+  })
+}
+.onClick((): void => this.comingSoon())
       }
       .width('100%')
 
@@ -109,7 +114,8 @@ export struct StarredRepositoriesView {
       }
 
       Row({ space: 8 }) {
-        Text(`★ ${compactCount(repo.stargazerCount)}`)
+        OctIcon({ res: $r('app.media.oct_star_fill_16'), iconSize: 12, iconColor: '#B88700' })
+        Text(compactCount(repo.stargazerCount))
           .fontSize($r('app.float.caption_font_size'))
           .fontColor('#B88700')
         if (repo.language !== '') {
@@ -137,9 +143,14 @@ export struct StarredRepositoriesView {
     Column() {
       // 副标题（viewer login）+ 主标题 + 操作
       Row({ space: 12 }) {
-        Text('←')
-          .fontSize(20)
-          .onClick(() => {
+        Stack() {
+  OctIcon({
+          res: $r('app.media.oct_arrow_left_24'),
+          iconSize: 20,
+          iconColor: $r('app.color.text_primary')
+  })
+}
+.onClick((): void => {
             this.pathStack.pop();
           })
         Column({ space: 2 }) {
@@ -153,17 +164,26 @@ export struct StarredRepositoriesView {
         }
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Start)
-        Text('🔍')
-          .fontSize(18)
-          .padding(6)
-          .onClick(() => {
+        Stack() {
+  OctIcon({
+          res: $r('app.media.oct_search_24'),
+          iconSize: 20,
+          iconColor: $r('app.color.text_primary')
+  })
+}
+.onClick((): void => {
             this.pathStack.pushPathByName('search', '');
           })
-        Text('⋯')
-          .fontSize(18)
-          .fontColor($r('app.color.text_secondary'))
           .padding(6)
-          .onClick(() => this.comingSoon())
+        Stack() {
+  OctIcon({
+          res: $r('app.media.oct_kebab_horizontal_16'),
+          iconSize: 18,
+          iconColor: $r('app.color.text_secondary')
+  })
+}
+.onClick((): void => this.comingSoon())
+          .padding(6)
       }
       .width('100%')
       .height(56)
@@ -173,9 +193,7 @@ export struct StarredRepositoriesView {
         Column() {
           // My lists 行（列表 API 后续 Spec，v1 展示行 + 空态卡）
           Row() {
-            Text('☰')
-              .fontSize(16)
-              .fontColor($r('app.color.text_secondary'))
+            OctIcon({ res: $r('app.media.oct_three_bars_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
             Text($r('app.string.work_starred_my_lists'))
               .fontSize($r('app.float.body_font_size'))
               .fontColor($r('app.color.text_primary'))
@@ -221,9 +239,7 @@ export struct StarredRepositoriesView {
 
           // Starred 分组头
           Row() {
-            Text('☆')
-              .fontSize(18)
-              .fontColor($r('app.color.text_secondary'))
+            OctIcon({ res: $r('app.media.oct_star_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
             Text($r('app.string.home_work_starred'))
               .fontSize(16)
               .fontWeight(FontWeight.Medium)

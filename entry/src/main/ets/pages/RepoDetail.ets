@@ -8,6 +8,7 @@ import { promptAction } from '@kit.ArkUI';
 import { RepoDetail, FileEntry, LanguageSlice, ReleaseEntry } from '../models/RepoDetailModels';
 import { RepoService } from '../services/RepoService';
 import { StateView } from '../components/StateView';
+import { OctIcon } from '../components/OctIcon';
 import { resText } from '../utils/I18n';
 import { timeParts, TimeParts } from '../utils/Format';
 
@@ -418,21 +419,35 @@ export struct RepoDetailView {
   build() {
     Column() {
       Row({ space: 8 }) {
-        Text('←')
-          .fontSize(20)
-          .onClick(() => {
-            this.pathStack.pop();
+        Stack() {
+          OctIcon({
+            res: $r('app.media.oct_arrow_left_24'),
+            iconSize: 20,
+            iconColor: $r('app.color.text_primary')
           })
+        }
+        .onClick(() => {
+          this.pathStack.pop();
+        })
         Blank()
-        Text('＋')
-          .fontSize(20)
-          .fontColor($r('app.color.primary'))
-          .padding(6)
-          .onClick(() => this.comingSoon())
-        Text('⋯')
-          .fontSize(20)
-          .padding(6)
-          .onClick(() => this.comingSoon())
+        Stack() {
+          OctIcon({
+            res: $r('app.media.oct_plus_24'),
+            iconSize: 20,
+            iconColor: $r('app.color.primary')
+          })
+        }
+        .padding(6)
+        .onClick(() => this.comingSoon())
+        Stack() {
+          OctIcon({
+            res: $r('app.media.oct_kebab_horizontal_16'),
+            iconSize: 18,
+            iconColor: $r('app.color.text_primary')
+          })
+        }
+        .padding(6)
+        .onClick(() => this.comingSoon())
       }
       .width('100%')
       .height(48)

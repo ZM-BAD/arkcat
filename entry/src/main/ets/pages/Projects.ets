@@ -3,6 +3,7 @@
  * 范围（All projects / Owned by me）+ 状态（Open/Closed）+ 排序标签；过滤/排序均在客户端。
  */
 import { promptAction } from '@kit.ArkUI';
+import { OctIcon } from '../components/OctIcon';
 import { WorkProjectItem, WorkProjectsPage, filterWorkProjects } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
@@ -123,14 +124,13 @@ export struct ProjectsView {
   @Builder
   projectRow(project: WorkProjectItem) {
     Row({ space: 12 }) {
-      Text('▦')
-        .fontSize(15)
-        .fontColor(Color.White)
-        .width(34)
-        .height(34)
-        .textAlign(TextAlign.Center)
-        .backgroundColor('#57606A')
-        .borderRadius(8)
+      Stack() {
+          OctIcon({ res: $r('app.media.oct_project_16'), iconSize: 18, iconColor: Color.White })
+      }
+      .width(34)
+      .height(34)
+      .backgroundColor('#57606A')
+      .borderRadius(8)
       Column({ space: 4 }) {
         Text(project.title)
           .fontSize($r('app.float.body_font_size'))
@@ -167,9 +167,14 @@ export struct ProjectsView {
   build() {
     Column() {
       Row({ space: 8 }) {
-        Text('←')
-          .fontSize(20)
-          .onClick(() => {
+        Stack() {
+  OctIcon({
+          res: $r('app.media.oct_arrow_left_24'),
+          iconSize: 20,
+          iconColor: $r('app.color.text_primary')
+  })
+}
+.onClick((): void => {
             this.pathStack.pop();
           })
         Text($r('app.string.nav_projects_title'))
@@ -177,19 +182,28 @@ export struct ProjectsView {
           .fontWeight(FontWeight.Bold)
           .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
-        Text('🔍')
-          .fontSize(18)
-          .padding(6)
-          .onClick(() => {
+        Stack() {
+  OctIcon({
+          res: $r('app.media.oct_search_24'),
+          iconSize: 20,
+          iconColor: $r('app.color.text_primary')
+  })
+}
+.onClick((): void => {
             this.pathStack.pushPathByName('search', '');
           })
-        Text('⋯')
-          .fontSize(18)
-          .fontColor($r('app.color.text_secondary'))
           .padding(6)
-          .onClick(() => {
+        Stack() {
+  OctIcon({
+          res: $r('app.media.oct_kebab_horizontal_16'),
+          iconSize: 18,
+          iconColor: $r('app.color.text_secondary')
+  })
+}
+.onClick((): void => {
             promptAction.showToast({ message: $r('app.string.home_feature_coming') });
           })
+          .padding(6)
       }
       .width('100%')
       .height(48)

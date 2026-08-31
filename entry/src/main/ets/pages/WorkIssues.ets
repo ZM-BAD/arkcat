@@ -3,6 +3,7 @@
  * 三组筛选（状态/归属/可见性）+ 状态图标（open/completed/not_planned）+ 标签胶囊 + 评论数。
  */
 import { promptAction } from '@kit.ArkUI';
+import { OctIcon } from '../components/OctIcon';
 import { WorkIssueItem, WorkIssuesPage, WorkLabel } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
@@ -140,12 +141,14 @@ export struct WorkIssuesView {
     this.refresh();
   }
 
-  /** 状态图标（Spec 017：OPEN 绿✔ / COMPLETED 紫✔ / NOT_PLANNED 灰⊘） */
-  private issueGlyph(issue: WorkIssueItem): string {
+  /** 状态图标（Spec 017/024：OPEN 绿 / COMPLETED 紫 / NOT_PLANNED 灰） */
+  private issueIcon(issue: WorkIssueItem): Resource {
     if (issue.iconKey === 'open') {
-      return '✔';
+      return $r('app.media.oct_issue_opened_16');
     }
-    return issue.iconKey === 'not_planned' ? '⊘' : '✔';
+    return issue.iconKey === 'not_planned'
+      ? $r('app.media.oct_x_circle_16')
+      : $r('app.media.oct_check_circle_fill_16');
   }
 
   private issueColor(issue: WorkIssueItem): string {
@@ -183,9 +186,7 @@ export struct WorkIssuesView {
   issueCard(issue: WorkIssueItem) {
     Column({ space: 6 }) {
       Row() {
-        Text(this.issueGlyph(issue))
-          .fontSize(18)
-          .fontColor(this.issueColor(issue))
+        OctIcon({ res: this.issueIcon(issue), iconSize: 18, iconColor: this.issueColor(issue) })
         Text(`${issue.repoFullName} #${issue.number}`)
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
@@ -213,12 +214,15 @@ export struct WorkIssuesView {
             this.labelChip(label)
           }, (label: WorkLabel) => label.name)
           if (issue.commentCount > 0) {
-            Text(`💬 ${issue.commentCount}`)
-              .fontSize($r('app.float.caption_font_size'))
-              .fontColor($r('app.color.text_secondary'))
-              .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-              .borderRadius(10)
-              .backgroundColor('#F6F8FA')
+            Row({ space: 4 }) {
+              OctIcon({ res: $r('app.media.oct_comment_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
+              Text(`${issue.commentCount}`)
+                .fontSize($r('app.float.caption_font_size'))
+                .fontColor($r('app.color.text_secondary'))
+            }
+            .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+            .borderRadius(10)
+            .backgroundColor('#F6F8FA')
           }
         }
         .width('100%')
@@ -234,9 +238,14 @@ export struct WorkIssuesView {
   build() {
     Column() {
       Row({ space: 8 }) {
-        Text('←')
-          .fontSize(20)
-          .onClick(() => {
+        Stack() {
+  OctIcon({
+          res: $r('app.media.oct_arrow_left_24'),
+          iconSize: 20,
+          iconColor: $r('app.color.text_primary')
+  })
+}
+.onClick((): void => {
             this.pathStack.pop();
           })
         Text($r('app.string.nav_issues_title'))
@@ -244,19 +253,28 @@ export struct WorkIssuesView {
           .fontWeight(FontWeight.Bold)
           .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
-        Text('🔍')
-          .fontSize(18)
-          .padding(6)
-          .onClick(() => {
+        Stack() {
+  OctIcon({
+          res: $r('app.media.oct_search_24'),
+          iconSize: 20,
+          iconColor: $r('app.color.text_primary')
+  })
+}
+.onClick((): void => {
             this.pathStack.pushPathByName('search', '');
           })
-        Text('⋯')
-          .fontSize(18)
-          .fontColor($r('app.color.text_secondary'))
           .padding(6)
-          .onClick(() => {
+        Stack() {
+  OctIcon({
+          res: $r('app.media.oct_kebab_horizontal_16'),
+          iconSize: 18,
+          iconColor: $r('app.color.text_secondary')
+  })
+}
+.onClick((): void => {
             promptAction.showToast({ message: $r('app.string.home_feature_coming') });
           })
+          .padding(6)
       }
       .width('100%')
       .height(48)
@@ -267,9 +285,11 @@ export struct WorkIssuesView {
           Row() {
             // 漏斗徽标：激活筛选数
             Stack({ alignContent: Alignment.TopEnd }) {
-              Text('≡')
-                .fontSize(14)
-                .fontColor($r('app.color.text_primary'))
+              OctIcon({
+                res: $r('app.media.oct_filter_16'),
+                iconSize: 14,
+                iconColor: $r('app.color.text_primary')
+              })
                 .padding({ left: 8, right: 8, top: 5, bottom: 5 })
                 .borderRadius(12)
                 .backgroundColor($r('app.color.card_background'))

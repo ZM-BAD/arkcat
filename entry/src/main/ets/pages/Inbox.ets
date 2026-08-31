@@ -7,6 +7,7 @@ import { promptAction } from '@kit.ArkUI';
 import { NotificationItem, issueNumberFromUrl } from '../models/GitHubModels';
 import { NotificationsService } from '../services/NotificationsService';
 import { StateView } from '../components/StateView';
+import { OctIcon } from '../components/OctIcon';
 import { timeParts, notificationTypeKey, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
@@ -261,13 +262,17 @@ export struct InboxView {
           .fontWeight(FontWeight.Bold)
           .fontColor($r('app.color.text_primary'))
         Blank()
-        Text('⋯')
-          .fontSize(20)
-          .fontColor($r('app.color.text_secondary'))
-          .padding(4)
-          .onClick(() => {
+        Stack() {
+  OctIcon({
+          res: $r('app.media.oct_kebab_horizontal_16'),
+          iconSize: 18,
+          iconColor: $r('app.color.text_secondary')
+  })
+}
+.onClick((): void => {
             promptAction.showToast({ message: $r('app.string.inbox_detail_coming') });
           })
+          .padding(4)
       }
       .width('100%')
       .padding({ left: 16, right: 16, top: 8 })

@@ -6,6 +6,7 @@
 import { WorkOrgItem, WorkOrgsPage } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
+import { OctIcon } from '../components/OctIcon';
 
 @ComponentV2
 export struct OrganizationsView {
@@ -116,9 +117,14 @@ export struct OrganizationsView {
   build() {
     Column() {
       Row({ space: 8 }) {
-        Text('←')
-          .fontSize(20)
-          .onClick(() => {
+        Stack() {
+  OctIcon({
+          res: $r('app.media.oct_arrow_left_24'),
+          iconSize: 20,
+          iconColor: $r('app.color.text_primary')
+  })
+}
+.onClick((): void => {
             this.pathStack.pop();
           })
         Text($r('app.string.nav_organizations_title'))
