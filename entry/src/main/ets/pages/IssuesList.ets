@@ -3,6 +3,7 @@
  * 点击 Issue 进入详情为 Spec 008 范围，当前提示。
  */
 import { promptAction } from '@kit.ArkUI';
+import { OctIcon } from '../components/OctIcon';
 import { IssueSummary } from '../models/IssuesModels';
 import { IssuesService } from '../services/IssuesService';
 import { StateView } from '../components/StateView';
@@ -134,8 +135,11 @@ export struct IssuesListView {
   issueCard(issue: IssueSummary) {
     Column({ space: 6 }) {
       Row({ space: 6 }) {
-        Text(issue.state === 'OPEN' ? '🟢' : '🟣')
-          .fontSize(12)
+        OctIcon({
+          res: issue.state === 'OPEN' ? $r('app.media.oct_issue_opened_16') : $r('app.media.oct_issue_closed_16'),
+          iconSize: 18,
+          iconColor: issue.state === 'OPEN' ? '#2DA44E' : '#8250DF'
+        })
         Text(issue.title)
           .fontSize($r('app.float.body_font_size'))
           .fontWeight(FontWeight.Medium)
@@ -175,9 +179,12 @@ export struct IssuesListView {
             .fontColor($r('app.color.text_secondary'))
         }
         Blank()
-        Text(`💬 ${issue.commentCount}`)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
+        Row({ space: 4 }) {
+          OctIcon({ res: $r('app.media.oct_comment_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
+          Text(`${issue.commentCount}`)
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor($r('app.color.text_secondary'))
+        }
       }
       .width('100%')
     }
@@ -194,9 +201,14 @@ export struct IssuesListView {
   build() {
     Column() {
       Row({ space: 8 }) {
-        Text('←')
-          .fontSize(20)
-          .onClick(() => {
+        Stack() {
+  OctIcon({
+          res: $r('app.media.oct_arrow_left_24'),
+          iconSize: 20,
+          iconColor: $r('app.color.text_primary')
+  })
+}
+.onClick((): void => {
             this.pathStack.pop();
           })
         Text($r('app.string.repo_issues_link'))
@@ -204,9 +216,14 @@ export struct IssuesListView {
           .fontWeight(FontWeight.Bold)
           .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
-        Text('＋')
-          .fontSize(20)
-          .onClick(() => {
+        Stack() {
+  OctIcon({
+          res: $r('app.media.oct_plus_24'),
+          iconSize: 20,
+          iconColor: $r('app.color.text_primary')
+  })
+}
+.onClick((): void => {
             promptAction.showToast({ message: $r('app.string.issues_new_coming') });
           })
       }

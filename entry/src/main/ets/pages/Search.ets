@@ -3,6 +3,7 @@
  * GitHub GraphQL CODE search 只返回文件名/路径/仓库；代码行正文/高亮为后续 Spec。
  */
 import { promptAction } from '@kit.ArkUI';
+import { OctIcon } from '../components/OctIcon';
 import { SearchService, CodeSearchItem, SEARCH_SUGGESTION_TYPES } from '../services/SearchService';
 import { StateView } from '../components/StateView';
 import { resText } from '../utils/I18n';
@@ -79,22 +80,22 @@ export struct SearchView {
     }
   }
 
-  private suggestionIcon(type: string): string {
+  private suggestionIcon(type: string): Resource {
     switch (type) {
       case 'code':
-        return '<>';
+        return $r('app.media.oct_code_16');
       case 'repositories':
-        return '▣';
+        return $r('app.media.oct_repo_16');
       case 'issues':
-        return '◷';
+        return $r('app.media.oct_issue_opened_16');
       case 'prs':
-        return '⑂';
+        return $r('app.media.oct_git_pull_request_16');
       case 'people':
-        return '👤';
+        return $r('app.media.oct_person_16');
       case 'orgs':
-        return '▤';
+        return $r('app.media.oct_organization_16');
       default:
-        return '?';
+        return $r('app.media.oct_search_24');
     }
   }
 
@@ -108,13 +109,11 @@ export struct SearchView {
   }
 
   @Builder
-  suggestionRow(icon: string, label: string, onClick: () => void) {
+  suggestionRow(iconRes: Resource, label: string, onClick: () => void) {
     Row({ space: 14 }) {
-      Text(icon)
-        .fontSize(18)
-        .fontColor($r('app.color.text_secondary'))
+      OctIcon({ res: iconRes, iconSize: 18, iconColor: $r('app.color.text_secondary') })
         .width(28)
-        .textAlign(TextAlign.Center)
+        .align(Alignment.Center)
       Text(label)
         .fontSize($r('app.float.body_font_size'))
         .fontColor($r('app.color.text_primary'))
@@ -131,8 +130,7 @@ export struct SearchView {
   codeCard(item: CodeSearchItem) {
     Column({ space: 6 }) {
       Row({ space: 6 }) {
-        Text('📄')
-          .fontSize(14)
+        OctIcon({ res: $r('app.media.oct_file_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
         Text(item.repoFullName)
           .fontSize($r('app.float.body_font_size'))
           .fontWeight(FontWeight.Medium)
@@ -180,9 +178,14 @@ export struct SearchView {
     Column() {
       // 搜索栏
       Row({ space: 8 }) {
-        Text('←')
-          .fontSize(20)
-          .onClick(() => {
+        Stack() {
+  OctIcon({
+          res: $r('app.media.oct_arrow_left_24'),
+          iconSize: 20,
+          iconColor: $r('app.color.text_primary')
+  })
+}
+.onClick((): void => {
             this.pathStack.pop();
           })
         TextInput({
@@ -193,20 +196,28 @@ export struct SearchView {
           .height(40)
           .onChange((v: string) => this.onSearchInput(v))
         if (this.keyword !== '') {
-          Text('×')
-            .fontSize(18)
-            .fontColor($r('app.color.text_secondary'))
-            .onClick(() => {
+          Stack() {
+  OctIcon({
+            res: $r('app.media.oct_x_16'),
+            iconSize: 18,
+            iconColor: $r('app.color.text_secondary')
+  })
+}
+.onClick((): void => {
               this.keyword = '';
               this.activeCategory = '';
               this.results = [];
               this.searched = false;
             })
         }
-        Text('⋯')
-          .fontSize(20)
-          .fontColor($r('app.color.text_secondary'))
-          .onClick(() => this.comingSoon())
+        Stack() {
+  OctIcon({
+          res: $r('app.media.oct_kebab_horizontal_16'),
+          iconSize: 18,
+          iconColor: $r('app.color.text_secondary')
+  })
+}
+.onClick((): void => this.comingSoon())
       }
       .width('100%')
       .height(48)
@@ -217,8 +228,7 @@ export struct SearchView {
           if (this.keyword.trim() === '') {
             // 未输入：空态提示（Spec 015）
             Column({ space: 8 }) {
-              Text('🔍')
-                .fontSize(40)
+              OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 40, iconColor: $r('app.color.text_secondary') })
                 .margin({ top: 60 })
               Text($r('app.string.search_empty_query'))
                 .fontSize($r('app.float.body_font_size'))

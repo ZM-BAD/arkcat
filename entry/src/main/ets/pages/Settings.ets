@@ -8,6 +8,7 @@ import { i18n } from '@kit.LocalizationKit';
 import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { TokenStore } from '../services/TokenStore';
+import { OctIcon } from '../components/OctIcon';
 import { resText } from '../utils/I18n';
 const PREFS_NAME = 'starraft_settings';
 const KEY_THEME = 'theme_mode';
@@ -182,9 +183,14 @@ export struct SettingsView {
   build() {
     Column() {
       Row({ space: 8 }) {
-        Text('←')
-          .fontSize(20)
-          .onClick(() => {
+        Stack() {
+  OctIcon({
+          res: $r('app.media.oct_arrow_left_24'),
+          iconSize: 20,
+          iconColor: $r('app.color.text_primary')
+  })
+}
+.onClick((): void => {
             this.pathStack.pop();
           })
         Text($r('app.string.profile_settings'))

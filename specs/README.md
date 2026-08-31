@@ -31,6 +31,7 @@
 | 021 | [top-repos.md](021-top-repos.md) | 工作区 Top Repositories | Level 3 | ✅ |
 | 022 | [organizations.md](022-organizations.md) | 工作区 Organizations | Level 3 | ✅ |
 | 023 | [starred-repos.md](023-starred-repos.md) | 工作区 Starred Repositories | Level 3 | ✅ |
+| 024 | [octicons.md](024-octicons.md) | Octicons 图标资产引入（横向） | Level 4 | ✅ |
 | 012 | [i18n.md](012-i18n.md) | 国际化（英/简中，默认英语） | Level 4 | ✅ |
 | 013 | [home-official.md](013-home-official.md) | Home Tab 官方布局（My Work/Favorites/Shortcuts） | Level 1 | ✅ |
 | 014 | [settings.md](014-settings.md) | Settings 设置页 | Level 3 | ✅ implemented |

@@ -8,11 +8,12 @@ import { promptAction } from '@kit.ArkUI';
 import { ViewerBasic } from '../models/GitHubModels';
 import { HomeService } from '../services/HomeService';
 import { StateView } from '../components/StateView';
+import { OctIcon } from '../components/OctIcon';
 import { WorkSection, WorkConfigStore, visibleWorkSections } from '../utils/WorkConfig';
 
 /** My Work 条目标识：图标/色/文案/路由（与 Edit My Work 013/016 一致） */
 interface WorkEntryMeta {
-  icon: string;
+  iconRes: Resource;
   color: string;
   label: Resource;
   route: string;
@@ -64,22 +65,37 @@ export struct HomeView {
         .fontWeight(FontWeight.Bold)
         .fontColor($r('app.color.text_primary'))
       Blank()
-      Text('🔍')
-        .fontSize(18)
-        .padding(6)
-        .onClick(() => {
+      Stack() {
+  OctIcon({
+        res: $r('app.media.oct_search_24'),
+        iconSize: 20,
+        iconColor: $r('app.color.text_primary')
+  })
+}
+.onClick((): void => {
           this.pathStack.pushPathByName('search', '');
         })
-      Text('🔄')
-        .fontSize(18)
         .padding(6)
-        .onClick(() => this.refresh())
-      Text('＋')
-        .fontSize(20)
+      Stack() {
+  OctIcon({
+        res: $r('app.media.oct_sync_16'),
+        iconSize: 18,
+        iconColor: $r('app.color.text_primary')
+  })
+}
+.onClick((): void => this.refresh())
         .padding(6)
-        .onClick(() => {
+      Stack() {
+  OctIcon({
+        res: $r('app.media.oct_plus_24'),
+        iconSize: 20,
+        iconColor: $r('app.color.text_primary')
+  })
+}
+.onClick((): void => {
           promptAction.showToast({ message: $r('app.string.home_new_coming') });
         })
+        .padding(6)
       if (this.viewer !== null) {
         Image(this.viewer.avatarUrl)
           .width(32)
@@ -101,19 +117,19 @@ export struct HomeView {
   private workMeta(id: string): WorkEntryMeta {
     switch (id) {
       case 'prs':
-        return { icon: '⇄', color: '#3C78D8', label: $r('app.string.home_work_pull_requests'), route: 'workPrs' };
+        return { iconRes: $r('app.media.oct_git_pull_request_16'), color: '#3C78D8', label: $r('app.string.home_work_pull_requests'), route: 'workPrs' };
       case 'discussions':
-        return { icon: '❞', color: '#8250DF', label: $r('app.string.home_work_discussions'), route: 'discussions' };
+        return { iconRes: $r('app.media.oct_comment_discussion_16'), color: '#8250DF', label: $r('app.string.home_work_discussions'), route: 'discussions' };
       case 'projects':
-        return { icon: '▦', color: '#57606A', label: $r('app.string.home_work_projects'), route: 'projects' };
+        return { iconRes: $r('app.media.oct_project_16'), color: '#57606A', label: $r('app.string.home_work_projects'), route: 'projects' };
       case 'topRepos':
-        return { icon: '▤', color: '#24292F', label: $r('app.string.home_work_top_repos'), route: 'topRepos' };
+        return { iconRes: $r('app.media.oct_repo_16'), color: '#24292F', label: $r('app.string.home_work_top_repos'), route: 'topRepos' };
       case 'orgs':
-        return { icon: '⌂', color: '#E87B2E', label: $r('app.string.home_work_organizations'), route: 'organizations' };
+        return { iconRes: $r('app.media.oct_organization_16'), color: '#E87B2E', label: $r('app.string.home_work_organizations'), route: 'organizations' };
       case 'starred':
-        return { icon: '★', color: '#E3B341', label: $r('app.string.home_work_starred'), route: 'starred' };
+        return { iconRes: $r('app.media.oct_star_fill_16'), color: '#E3B341', label: $r('app.string.home_work_starred'), route: 'starred' };
       default:
-        return { icon: '◷', color: '#2DA44E', label: $r('app.string.home_work_issues'), route: 'workIssues' };
+        return { iconRes: $r('app.media.oct_issue_opened_16'), color: '#2DA44E', label: $r('app.string.home_work_issues'), route: 'workIssues' };
     }
   }
 
@@ -121,14 +137,13 @@ export struct HomeView {
   @Builder
   workEntry(meta: WorkEntryMeta) {
     Row() {
-      Text(meta.icon)
-        .fontSize(15)
-        .fontColor(Color.White)
-        .width(34)
-        .height(34)
-        .textAlign(TextAlign.Center)
-        .backgroundColor(meta.color)
-        .borderRadius(8)
+      Stack() {
+          OctIcon({ res: meta.iconRes, iconSize: 18, iconColor: Color.White })
+      }
+      .width(34)
+      .height(34)
+      .backgroundColor(meta.color)
+      .borderRadius(8)
       Text(meta.label)
         .fontSize($r('app.float.body_font_size'))
         .fontColor($r('app.color.text_primary'))
@@ -150,13 +165,17 @@ export struct HomeView {
         .fontWeight(FontWeight.Bold)
         .fontColor($r('app.color.text_primary'))
       Blank()
-      Text('⋯')
-        .fontSize(18)
-        .fontColor($r('app.color.text_secondary'))
-        .padding(4)
-        .onClick(() => {
+      Stack() {
+  OctIcon({
+        res: $r('app.media.oct_kebab_horizontal_16'),
+        iconSize: 18,
+        iconColor: $r('app.color.text_secondary')
+  })
+}
+.onClick((): void => {
           this.pathStack.pushPathByName('editMyWork', '');
         })
+        .padding(4)
     }
     .width('100%')
     .padding({ top: 16, bottom: 4 })
@@ -203,16 +222,15 @@ export struct HomeView {
 
   /** Shortcuts 圆形图标：浅色圆底 + 深色字形 */
   @Builder
-  shortcutGlyph(icon: string, bg: string, fg: string) {
-    Text(icon)
-      .fontSize(13)
-      .fontColor(fg)
-      .width(30)
-      .height(30)
-      .textAlign(TextAlign.Center)
-      .backgroundColor(bg)
-      .borderRadius(15)
-      .margin({ right: 6 })
+  shortcutGlyph(iconRes: Resource, bg: string, fg: string) {
+    Stack() {
+      OctIcon({ res: iconRes, iconSize: 14, iconColor: fg })
+    }
+    .width(30)
+    .height(30)
+    .backgroundColor(bg)
+    .borderRadius(15)
+    .margin({ right: 6 })
   }
 
   @Builder
@@ -226,12 +244,12 @@ export struct HomeView {
 
     Column({ space: 12 }) {
       Row() {
-        this.shortcutGlyph('◷', '#E7F0FF', '#2DA44E')
-        this.shortcutGlyph('⇄', '#E6F4EA', '#3C78D8')
-        this.shortcutGlyph('❞', '#F3E6FF', '#8250DF')
-        this.shortcutGlyph('▦', '#FFF4D6', '#57606A')
-        this.shortcutGlyph('⌂', '#FFF0E6', '#E87B2E')
-        this.shortcutGlyph('★', '#FFE6E6', '#B88700')
+        this.shortcutGlyph($r('app.media.oct_issue_opened_16'), '#E7F0FF', '#2DA44E')
+        this.shortcutGlyph($r('app.media.oct_git_pull_request_16'), '#E6F4EA', '#3C78D8')
+        this.shortcutGlyph($r('app.media.oct_comment_discussion_16'), '#F3E6FF', '#8250DF')
+        this.shortcutGlyph($r('app.media.oct_project_16'), '#FFF4D6', '#57606A')
+        this.shortcutGlyph($r('app.media.oct_organization_16'), '#FFF0E6', '#E87B2E')
+        this.shortcutGlyph($r('app.media.oct_star_fill_16'), '#FFE6E6', '#B88700')
       }
       .padding({ left: 8 })
 

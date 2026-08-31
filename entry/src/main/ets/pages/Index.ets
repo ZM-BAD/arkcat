@@ -14,6 +14,7 @@ import { RepoDetailView } from './RepoDetail';
 import { IssuesListView } from './IssuesList';
 import { SettingsView } from './Settings';
 import { SearchView } from './Search';
+import { OctIcon } from '../components/OctIcon';
 import { EditMyWorkView } from './EditMyWork';
 import { WorkIssuesView } from './WorkIssues';
 import { WorkPrsView } from './WorkPrs';
@@ -268,22 +269,22 @@ struct Index {
       TabContent() {
         HomeView({ token: this.token, pathStack: this.pathStack, workVersion: this.homeWorkVersion })
       }
-      .tabBar(this.tabItem('🏠', $r('app.string.tab_home'), 0))
+      .tabBar(this.tabItem($r('app.media.oct_home_16'), $r('app.string.tab_home'), 0))
 
       TabContent() {
         InboxView({ token: this.token })
       }
-      .tabBar(this.tabItem('🔔', $r('app.string.tab_inbox'), 1))
+      .tabBar(this.tabItem($r('app.media.oct_inbox_16'), $r('app.string.tab_inbox'), 1))
 
       TabContent() {
         ExploreView({ token: this.token, pathStack: this.pathStack })
       }
-      .tabBar(this.tabItem('🧭', $r('app.string.tab_explore'), 2))
+      .tabBar(this.tabItem($r('app.media.oct_telescope_16'), $r('app.string.tab_explore'), 2))
 
       TabContent() {
         CopilotView()
       }
-      .tabBar(this.tabItem('🤖', $r('app.string.tab_copilot'), 3))
+      .tabBar(this.tabItem($r('app.media.oct_copilot_16'), $r('app.string.tab_copilot'), 3))
     }
     .onChange((index: number) => {
       this.currentTab = index;
@@ -294,12 +295,14 @@ struct Index {
   }
 
   @Builder
-  tabItem(icon: string, labelRes: Resource, index: number) {
+  tabItem(iconRes: Resource, labelRes: Resource, index: number) {
     Column({ space: 2 }) {
       Stack({ alignContent: Alignment.TopEnd }) {
-        Text(icon)
-          .fontSize(20)
-          .opacity(this.currentTab === index ? 1 : 0.5)
+        OctIcon({
+          res: iconRes,
+          iconSize: 20,
+          iconColor: this.currentTab === index ? $r('app.color.primary') : $r('app.color.text_secondary')
+        })
         // 未读蓝点：Inbox Tab 图标右上角（Spec 013，官方 App 样式）
         if (index === 1 && this.inboxHasUnread) {
           Circle()
