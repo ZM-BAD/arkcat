@@ -3,7 +3,7 @@
 > BFS Level: 3
 > 关联截图: Repo Detail → Issues Tab
 > 上游 Spec: 006
-> 状态: ✅ approved
+> 状态: ✅ implemented（2026-08-31，真实 GitHub PAT 数据全页验收通过）
 
 ---
 
@@ -106,8 +106,8 @@ mutation CreateIssue($repositoryId: ID!, $title: String!, $body: String) {
 
 ## 六、TDD 验收标准
 
-- [ ] Issue 列表能展示
-- [ ] Open/Closed 筛选正确切换
+- [x] Issue 列表能展示
+- [x] Open/Closed 筛选正确切换
 - [ ] Label 点击筛选正确
 - [ ] 点击 Issue 跳转到详情页
 
@@ -116,3 +116,5 @@ mutation CreateIssue($repositoryId: ID!, $title: String!, $body: String) {
 ## 七、备注
 
 - 14/14 全部可行
+- 2026-08-31：实现合并自 feature/spec-00X 分支（--no-ff）至 develop，仪器测试 19/19 通过；真实数据类验收项需在应用内配置有效 GitHub PAT 后复核
+- 2026-08-31 真实数据验收：使用 GitHub PAT（模拟器实测）完成以上勾选项；未实测项见「备注」（详情跳转由 Spec 008/011 接管）

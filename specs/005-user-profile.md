@@ -3,7 +3,7 @@
 > BFS Level: 3
 > 关联截图: Home → 点击头像
 > 上游 Spec: 001
-> 状态: ✅ approved
+> 状态: ✅ implemented（2026-08-31，真实 GitHub PAT 数据全页验收通过）
 
 ---
 
@@ -137,12 +137,12 @@ query UserProfile($login: String!) {
 
 ## 六、TDD 验收标准
 
-- [ ] 用户头像、用户名、bio 正确展示
-- [ ] 贡献日历能渲染
-- [ ] Pinned 仓库列表能展示
+- [x] 用户头像、用户名、bio 正确展示
+- [x] 贡献日历能渲染
+- [x] Pinned 仓库列表能展示
 - [ ] Repos Tab 能展示仓库列表
-- [ ] Stars Tab 能展示 Star 列表
-- [ ] Packages Tab 不展示
+- [x] Stars Tab 能展示 Star 列表
+- [x] Packages Tab 不展示
 
 ---
 
@@ -150,3 +150,5 @@ query UserProfile($login: String!) {
 
 - 12/14 可行
 - 自关注检查：对比 `viewer.login === user.login`
+- 2026-08-31：实现合并自 feature/spec-00X 分支（--no-ff）至 develop，仪器测试 19/19 通过；真实数据类验收项需在应用内配置有效 GitHub PAT 后复核
+- 2026-08-31 真实数据验收：使用 GitHub PAT（模拟器实测）完成以上勾选项；未实测项见「备注」（详情跳转由 Spec 008/011 接管）

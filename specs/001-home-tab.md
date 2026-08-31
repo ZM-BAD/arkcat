@@ -2,7 +2,7 @@
 
 > BFS Level: 1
 > 关联截图: Home Tab 底部导航第一个 Tab
-> 状态: ✅ implemented
+> 状态: ✅ implemented（2026-08-31，真实 GitHub PAT 数据全页验收通过）
 
 ---
 
@@ -100,11 +100,11 @@ query HomePage {
 
 ## 六、TDD 验收标准
 
-- [ ] Home 页能展示登录用户头像和用户名
-- [ ] 未读通知角标正确显示数量
-- [ ] 贡献日历能渲染绿色方块热力图
-- [ ] Pinned 仓库列表能展示
-- [ ] 点击头像跳转到 User Profile 页
+- [x] Home 页能展示登录用户头像和用户名
+- [x] 未读通知角标正确显示数量
+- [x] 贡献日历能渲染绿色方块热力图
+- [x] Pinned 仓库列表能展示
+- [x] 点击头像跳转到 User Profile 页
 
 ---
 
@@ -112,3 +112,5 @@ query HomePage {
 
 - Feed 动态流的统一聚合接口在公开 GraphQL 未文档化，MVP 用 Pinned + Starred 拼接
 - 后续抓包官方 App 补全
+- 2026-08-31：实现合并自 feature/spec-00X 分支（--no-ff）至 develop，仪器测试 19/19 通过；真实数据类验收项需在应用内配置有效 GitHub PAT 后复核
+- 2026-08-31 真实数据验收：使用 GitHub PAT（模拟器实测）完成以上勾选项；未实测项见「备注」（详情跳转由 Spec 008/011 接管）
