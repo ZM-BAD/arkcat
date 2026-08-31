@@ -3,6 +3,7 @@
  * Spec 001 元素 5；颜色优先取 API 返回值。
  */
 import { ContributionCalendar as CalendarModel, ContributionDay } from '../models/GitHubModels';
+import { resText } from '../utils/I18n';
 
 @ComponentV2
 export struct ContributionCalendar {
@@ -28,7 +29,7 @@ export struct ContributionCalendar {
 
   build() {
     Column({ space: 8 }) {
-      Text(`${this.calendar?.totalContributions ?? 0} 次贡献（过去一年）`)
+      Text(this.totalText())
         .fontSize($r('app.float.caption_font_size'))
         .fontColor($r('app.color.text_secondary'))
 
@@ -48,5 +49,11 @@ export struct ContributionCalendar {
     .borderRadius($r('app.float.card_radius'))
     .backgroundColor($r('app.color.card_background'))
     .alignItems(HorizontalAlign.Start)
+  }
+
+  /** 贡献总数本地化文案（Spec 012：%1$d 位置占位） */
+  private totalText(): string {
+    return resText(this.getUIContext(), $r('app.string.home_contributions_total'),
+      this.calendar?.totalContributions ?? 0);
   }
 }

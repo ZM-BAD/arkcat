@@ -10,6 +10,7 @@ import { ContributionCalendar } from '../components/ContributionCalendar';
 import { RepoCard } from '../components/RepoCard';
 import { StateView } from '../components/StateView';
 import { RepoSummary } from '../models/GitHubModels';
+import { resText } from '../utils/I18n';
 
 @ComponentV2
 export struct ProfileView {
@@ -66,11 +67,26 @@ export struct ProfileView {
           stars: profile.stars
         };
         this.profile = updated;
-        promptAction.showToast({ message: following ? '已 Follow' : '已 Unfollow' });
+        const ui = this.getUIContext();
+        promptAction.showToast({
+          message: following
+            ? resText(ui, $r('app.string.profile_followed_toast'))
+            : resText(ui, $r('app.string.profile_unfollowed_toast'))
+        });
       })
       .catch((e: Error) => {
-        promptAction.showToast({ message: `操作失败: ${e.message}` });
+        promptAction.showToast({ message: this.fmt($r('app.string.profile_action_failed'), e.message) });
       });
+  }
+
+  /** 带 %1$s 格式化：资源模板 + 参数 → 当前语言文案 */
+  private fmt(res: Resource, arg: string): string {
+    return resText(this.getUIContext(), res, arg);
+  }
+
+  /** 资源 → 当前语言的纯文案 */
+  private stringOf(res: Resource): string {
+    return resText(this.getUIContext(), res);
   }
 
   @Builder
@@ -143,7 +159,7 @@ export struct ProfileView {
       .width('100%')
       .alignItems(HorizontalAlign.Start)
 
-      Text(`${this.profile?.user.followers ?? 0} followers · ${this.profile?.user.following ?? 0} following`)
+      Text(this.followersText())
         .fontSize($r('app.float.caption_font_size'))
         .fontColor($r('app.color.link_blue'))
         .width('100%')
@@ -152,6 +168,12 @@ export struct ProfileView {
     .borderRadius($r('app.float.card_radius'))
     .backgroundColor($r('app.color.card_background'))
     .width('100%')
+  }
+
+  /** followers/following 本地化文案（%1$d/%2$d 位置占位） */
+  private followersText(): string {
+    return resText(this.getUIContext(), $r('app.string.followers_suffix'),
+      this.profile?.user.followers ?? 0, this.profile?.user.following ?? 0);
   }
 
   @Builder
@@ -187,7 +209,8 @@ export struct ProfileView {
             .fontSize(20)
             .bindMenu([
               {
-                value: this.profile.viewerIsFollowing ? 'Unfollow' : 'Follow',
+                value: this.profile.viewerIsFollowing
+                  ? $r('app.string.profile_unfollow') : $r('app.string.profile_follow'),
                 action: (): void => this.toggleFollow()
               }
             ])
@@ -203,15 +226,15 @@ export struct ProfileView {
             this.headerCard()
 
             Row({ space: 4 }) {
-              this.tabBarLabel('Overview', 0)
-              this.tabBarLabel('Repos', 1)
-              this.tabBarLabel('Stars', 2)
+              this.tabBarLabel(this.stringOf($r('app.string.profile_tab_overview')), 0)
+              this.tabBarLabel(this.stringOf($r('app.string.profile_tab_repos')), 1)
+              this.tabBarLabel(this.stringOf($r('app.string.profile_tab_stars')), 2)
             }
             .width('100%')
 
             if (this.tab === 0) {
               ContributionCalendar({ calendar: this.profile.calendar })
-              Text('Pinned 仓库')
+              Text($r('app.string.home_pinned_section'))
                 .fontSize($r('app.float.title_font_size'))
                 .fontWeight(FontWeight.Bold)
                 .fontColor($r('app.color.text_primary'))

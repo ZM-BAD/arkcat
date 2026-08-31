@@ -3,6 +3,7 @@
  * Inbox/Explore/Copilot 内容由 Spec 002/003/004 分支实现，当前为占位视图。
  */
 import { TokenStore } from '../services/TokenStore';
+import { resText } from '../utils/I18n';
 import { TokenSetup } from './TokenSetup';
 import { HomeView } from './Home';
 import { InboxView } from './Inbox';
@@ -35,7 +36,7 @@ struct Index {
     Column({ space: 12 }) {
       Text(icon)
         .fontSize(48)
-      Text(`${label} · ${'待后续 Spec 实现'}`)
+      Text(`${label} · ${this.stringOf($r('app.string.index_spec_pending'))}`)
         .fontSize($r('app.float.body_font_size'))
         .fontColor($r('app.color.text_secondary'))
     }
@@ -60,7 +61,7 @@ struct Index {
         this.profileLogin = login;
       }
     })
-    .title('Profile')
+    .title($r('app.string.nav_profile_title'))
   }
 
   @Builder
@@ -82,7 +83,7 @@ struct Index {
         this.repoName = parts[1];
       }
     })
-    .title('Repository')
+    .title($r('app.string.nav_repo_title'))
   }
 
   @Builder
@@ -103,7 +104,7 @@ struct Index {
         this.repoName = parts[1];
       }
     })
-    .title('Issues')
+    .title($r('app.string.nav_issues_title'))
   }
 
   @Builder
@@ -158,6 +159,11 @@ struct Index {
         .fontSize($r('app.float.caption_font_size'))
         .fontColor(this.currentTab === index ? $r('app.color.primary') : $r('app.color.text_secondary'))
     }
+  }
+
+  /** 资源 → 当前语言的纯文案 */
+  private stringOf(res: Resource): string {
+    return resText(this.getUIContext(), res);
   }
 
   build() {

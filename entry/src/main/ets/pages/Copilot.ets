@@ -9,7 +9,7 @@ export struct CopilotView {
       Text('☀️')
         .fontSize(40)
         .margin({ top: 24 })
-      Text('Copilot Chat')
+      Text($r('app.string.copilot_title'))
         .fontSize($r('app.float.title_font_size'))
         .fontWeight(FontWeight.Bold)
         .fontColor($r('app.color.text_primary'))
@@ -17,11 +17,11 @@ export struct CopilotView {
       Column({ space: 8 }) {
         Text('🤖')
           .fontSize(48)
-        Text('Copilot 功能暂不支持')
+        Text($r('app.string.copilot_unsupported'))
           .fontSize($r('app.float.body_font_size'))
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.text_primary'))
-        Text('无公开 API，请使用 GitHub 官方 App')
+        Text($r('app.string.copilot_hint'))
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
       }

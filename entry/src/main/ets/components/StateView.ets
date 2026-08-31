@@ -1,12 +1,13 @@
 /**
  * 通用加载/错误/空态视图。各页复用，保证一致的反馈。
+ * emptyText 为 Resource，调用方直接传 $r()（Spec 012）。
  */
 @ComponentV2
 export struct StateView {
   @Param loading: boolean = false;
   @Param error: string = '';
   @Param empty: boolean = false;
-  @Param emptyText: string = '';
+  @Param emptyText: Resource = $r('app.string.state_empty');
   @Event onRetry: () => void = () => {};
 
   build() {
@@ -32,7 +33,7 @@ export struct StateView {
       } else if (this.empty) {
         Text('🗂')
           .fontSize(32)
-        Text(this.emptyText !== '' ? this.emptyText : $r('app.string.state_empty'))
+        Text(this.emptyText)
           .fontSize($r('app.float.body_font_size'))
           .fontColor($r('app.color.text_secondary'))
       }

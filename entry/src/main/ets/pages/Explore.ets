@@ -8,6 +8,7 @@ import { RepoSummary } from '../models/GitHubModels';
 import { ExploreService, FEATURED_TOPICS } from '../services/ExploreService';
 import { RepoCard } from '../components/RepoCard';
 import { StateView } from '../components/StateView';
+import { resText } from '../utils/I18n';
 
 @ComponentV2
 export struct ExploreView {
@@ -45,6 +46,12 @@ export struct ExploreView {
       .onClick(() => this.openTopic(topic))
   }
 
+  /** topic 仓库计数文案（Spec 012：%1$s/%2$d 位置占位） */
+  private topicCountText(): string {
+    return resText(this.getUIContext(), $r('app.string.explore_topic_count'),
+      this.selectedTopic, this.result?.repositoryCount ?? 0);
+  }
+
   build() {
     Column() {
       Text($r('app.string.tab_explore'))
@@ -58,7 +65,7 @@ export struct ExploreView {
       Row() {
         Text('🔍')
           .fontSize(16)
-        Text('搜索仓库 / 开发者')
+        Text($r('app.string.explore_search_placeholder'))
           .fontSize($r('app.float.body_font_size'))
           .fontColor($r('app.color.text_secondary'))
           .margin({ left: 8 })
@@ -75,7 +82,7 @@ export struct ExploreView {
 
       Scroll() {
         Column() {
-          Text('Topics')
+          Text($r('app.string.explore_topics_title'))
             .fontSize($r('app.float.title_font_size'))
             .fontWeight(FontWeight.Bold)
             .fontColor($r('app.color.text_primary'))
@@ -90,7 +97,7 @@ export struct ExploreView {
           .width('100%')
 
           if (this.selectedTopic !== '') {
-            Text(`topic:${this.selectedTopic} · ${this.result?.repositoryCount ?? 0} 个仓库`)
+            Text(this.topicCountText())
               .fontSize($r('app.float.caption_font_size'))
               .fontColor($r('app.color.text_secondary'))
               .width('100%')

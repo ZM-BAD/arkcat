@@ -6,7 +6,8 @@ import { promptAction } from '@kit.ArkUI';
 import { IssueSummary } from '../models/IssuesModels';
 import { IssuesService } from '../services/IssuesService';
 import { StateView } from '../components/StateView';
-import { relativeTime } from '../utils/Format';
+import { timeParts, TimeParts } from '../utils/Format';
+import { resText } from '../utils/I18n';
 
 @ComponentV2
 export struct IssuesListView {
@@ -73,6 +74,48 @@ export struct IssuesListView {
     this.refresh();
   }
 
+  /** 资源 → 当前语言的纯文案 */
+  private stringOf(res: Resource): string {
+    return resText(this.getUIContext(), res);
+  }
+
+  /** 排序标签：「排序：创建时间」等（%1$s 位置占位） */
+  private sortLabel(): string {
+    const ui = this.getUIContext();
+    let sortName = resText(ui, $r('app.string.issues_sort_created'));
+    if (this.sort === 'updated') {
+      sortName = resText(ui, $r('app.string.issues_sort_updated'));
+    } else if (this.sort === 'comments') {
+      sortName = resText(ui, $r('app.string.issues_sort_comments'));
+    }
+    return resText(ui, $r('app.string.issues_sort_label'), sortName);
+  }
+
+  /** 「N 个 Issue」计数（%1$d 位置占位） */
+  private countText(): string {
+    return resText(this.getUIContext(), $r('app.string.issues_count'), this.totalCount);
+  }
+
+  /** 相对时间结构化数据 → 当前语言文案（%1$d 位置占位） */
+  private timeText(parts: TimeParts | null): string {
+    if (parts === null) {
+      return '';
+    }
+    const ui = this.getUIContext();
+    switch (parts.unit) {
+      case 'just_now':
+        return resText(ui, $r('app.string.time_just_now'));
+      case 'minute':
+        return resText(ui, $r('app.string.time_minutes_ago'), parts.value);
+      case 'hour':
+        return resText(ui, $r('app.string.time_hours_ago'), parts.value);
+      case 'day':
+        return resText(ui, $r('app.string.time_days_ago'), parts.value);
+      case 'month':
+        return resText(ui, $r('app.string.time_months_ago'), parts.value);
+    }
+  }
+
   @Builder
   chip(label: string, active: boolean, onClick: () => void) {
     Text(label)
@@ -121,7 +164,7 @@ export struct IssuesListView {
         Text(`@${issue.authorLogin}`)
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
-        Text(relativeTime(issue.createdAt, Date.now()))
+        Text(this.timeText(timeParts(issue.createdAt, Date.now())))
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
         if (issue.linkedPrCount > 0) {
@@ -142,7 +185,7 @@ export struct IssuesListView {
     .width('100%')
     .margin({ bottom: 8 })
     .onClick(() => {
-      promptAction.showToast({ message: 'Issue 详情将在 Spec 008 提供' });
+      promptAction.showToast({ message: $r('app.string.issues_detail_coming') });
     })
   }
 
@@ -154,7 +197,7 @@ export struct IssuesListView {
           .onClick(() => {
             this.pathStack.pop();
           })
-        Text('Issues')
+        Text($r('app.string.repo_issues_link'))
           .fontSize($r('app.float.title_font_size'))
           .fontWeight(FontWeight.Bold)
           .fontColor($r('app.color.text_primary'))
@@ -162,7 +205,7 @@ export struct IssuesListView {
         Text('＋')
           .fontSize(20)
           .onClick(() => {
-            promptAction.showToast({ message: '新建 Issue 将在后续 Spec 提供' });
+            promptAction.showToast({ message: $r('app.string.issues_new_coming') });
           })
       }
       .width('100%')
@@ -173,16 +216,25 @@ export struct IssuesListView {
         Column() {
           // Open/Closed 双 Tab 切换 + 排序
           Row({ space: 8 }) {
-            this.chip('Open', !this.closed, (): void => this.switchState(false))
-            this.chip('Closed', this.closed, (): void => this.switchState(true))
+            this.chip(this.stringOf($r('app.string.issues_state_open')), !this.closed, (): void => this.switchState(false))
+            this.chip(this.stringOf($r('app.string.issues_state_closed')), this.closed, (): void => this.switchState(true))
             Blank()
-            Text(`排序：${this.sort === 'created' ? '创建时间' : this.sort === 'updated' ? '更新时间' : '评论数'}`)
+            Text(this.sortLabel())
               .fontSize($r('app.float.caption_font_size'))
               .fontColor($r('app.color.link_blue'))
               .bindMenu([
-                { value: '创建时间', action: (): void => { this.sort = 'created'; this.refresh(); } },
-                { value: '更新时间', action: (): void => { this.sort = 'updated'; this.refresh(); } },
-                { value: '评论数', action: (): void => { this.sort = 'comments'; this.refresh(); } }
+                {
+                  value: this.stringOf($r('app.string.issues_sort_created')),
+                  action: (): void => { this.sort = 'created'; this.refresh(); }
+                },
+                {
+                  value: this.stringOf($r('app.string.issues_sort_updated')),
+                  action: (): void => { this.sort = 'updated'; this.refresh(); }
+                },
+                {
+                  value: this.stringOf($r('app.string.issues_sort_comments')),
+                  action: (): void => { this.sort = 'comments'; this.refresh(); }
+                }
               ])
           }
           .width('100%')
@@ -202,7 +254,7 @@ export struct IssuesListView {
             .margin({ bottom: 8 })
           }
 
-          Text(`${this.totalCount} 个 Issue`)
+          Text(this.countText())
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))
             .width('100%')
@@ -213,7 +265,7 @@ export struct IssuesListView {
               this.issueCard(issue)
             }, (issue: IssueSummary) => issue.id)
             if (this.hasNextPage) {
-              Text('加载更多…')
+              Text($r('app.string.issues_load_more'))
                 .fontSize($r('app.float.body_font_size'))
                 .fontColor($r('app.color.link_blue'))
                 .padding(12)
@@ -224,7 +276,7 @@ export struct IssuesListView {
               loading: this.loading,
               error: this.errorMsg,
               empty: !this.loading && this.errorMsg === '',
-              emptyText: '暂无 Issue',
+              emptyText: $r('app.string.issues_empty'),
               onRetry: () => this.refresh()
             })
           }
