@@ -639,6 +639,158 @@
     {
       "name": "repo_pr_link",
       "value": "Pull Request"
+    },
+    {
+      "name": "nav_discussions_title",
+      "value": "讨论"
+    },
+    {
+      "name": "nav_projects_title",
+      "value": "项目"
+    },
+    {
+      "name": "nav_top_repos_title",
+      "value": "热门仓库"
+    },
+    {
+      "name": "nav_organizations_title",
+      "value": "组织"
+    },
+    {
+      "name": "nav_starred_title",
+      "value": "星标仓库"
+    },
+    {
+      "name": "nav_edit_work_title",
+      "value": "编辑我的工作"
+    },
+    {
+      "name": "edit_work_title",
+      "value": "编辑我的工作"
+    },
+    {
+      "name": "edit_work_save",
+      "value": "保存"
+    },
+    {
+      "name": "work_filter_all",
+      "value": "全部"
+    },
+    {
+      "name": "work_scope_created",
+      "value": "我创建的"
+    },
+    {
+      "name": "work_scope_assigned",
+      "value": "分配给我的"
+    },
+    {
+      "name": "work_scope_mentioned",
+      "value": "提及我的"
+    },
+    {
+      "name": "work_visibility",
+      "value": "可见性"
+    },
+    {
+      "name": "work_visibility_public",
+      "value": "公开"
+    },
+    {
+      "name": "work_visibility_private",
+      "value": "私有"
+    },
+    {
+      "name": "work_issues_empty",
+      "value": "暂无任何 Issue。"
+    },
+    {
+      "name": "work_prs_empty",
+      "value": "暂无任何拉取请求。"
+    },
+    {
+      "name": "work_discussions_empty",
+      "value": "暂无任何讨论。"
+    },
+    {
+      "name": "work_projects_empty",
+      "value": "暂无任何项目。"
+    },
+    {
+      "name": "work_top_repos_empty",
+      "value": "暂无任何仓库。"
+    },
+    {
+      "name": "work_orgs_empty",
+      "value": "暂无任何组织。"
+    },
+    {
+      "name": "work_use_fewer_filters",
+      "value": "请减少筛选条件，或重置所有筛选"
+    },
+    {
+      "name": "work_reset_all_filters",
+      "value": "重置所有筛选"
+    },
+    {
+      "name": "pr_state_merged",
+      "value": "已合并"
+    },
+    {
+      "name": "work_pr_checks",
+      "value": "检查"
+    },
+    {
+      "name": "work_pr_checks_failed",
+      "value": "检查失败"
+    },
+    {
+      "name": "work_pr_checks_pending",
+      "value": "检查待定"
+    },
+    {
+      "name": "work_discussions_unanswered",
+      "value": "未解答"
+    },
+    {
+      "name": "work_project_filter_all",
+      "value": "全部项目"
+    },
+    {
+      "name": "work_project_filter_mine",
+      "value": "我拥有的"
+    },
+    {
+      "name": "work_projects_sort_label",
+      "value": "排序：%1$s"
+    },
+    {
+      "name": "work_projects_sort_visited",
+      "value": "最近访问"
+    },
+    {
+      "name": "work_starred_my_lists",
+      "value": "我的列表"
+    },
+    {
+      "name": "work_starred_new",
+      "value": "+ 新建"
+    },
+    {
+      "name": "work_starred_first_list_title",
+      "value": "创建你的第一个列表"
+    },
+    {
+      "name": "work_starred_first_list_desc",
+      "value": "列表让你更轻松地整理和管理你加星标的仓库。"
+    },
+    {
+      "name": "work_starred_create_list",
+      "value": "创建列表"
+    },
+    {
+      "name": "time_years_ago",
+      "value": "%1$d 年前"
     }
   ]
 }

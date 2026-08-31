@@ -8,6 +8,15 @@ import { promptAction } from '@kit.ArkUI';
 import { ViewerBasic } from '../models/GitHubModels';
 import { HomeService } from '../services/HomeService';
 import { StateView } from '../components/StateView';
+import { WorkSection, WorkConfigStore, visibleWorkSections } from '../utils/WorkConfig';
+
+/** My Work 条目标识：图标/色/文案/路由（与 Edit My Work 013/016 一致） */
+interface WorkEntryMeta {
+  icon: string;
+  color: string;
+  label: Resource;
+  route: string;
+}
 
 @ComponentV2
 export struct HomeView {
@@ -16,8 +25,16 @@ export struct HomeView {
   @Local viewer: ViewerBasic | null = null;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  @Local workStore: WorkConfigStore = WorkConfigStore.instance;
+  @Param workVersion: number = 0;
+  @Local sectionsVersion: number = 0;
 
   aboutToAppear(): void {
+    WorkConfigStore.load(this.getUIContext().getHostContext())
+      .then(() => {
+        // load 完成后再触发一次重渲染（编辑页 SAVE 走 workVersion 参数泵）
+        this.sectionsVersion++;
+      });
     this.refresh();
   }
 
@@ -80,19 +97,39 @@ export struct HomeView {
     .padding({ left: 16, right: 8 })
   }
 
-  /** My Work 单行入口：彩色圆角方块 + 单色字形 + 标签 */
+  /** My Work 条目标识：id → 图标/色/文案/路由（与 Edit My Work 013/016 一致） */
+  private workMeta(id: string): WorkEntryMeta {
+    switch (id) {
+      case 'prs':
+        return { icon: '⇄', color: '#3C78D8', label: $r('app.string.home_work_pull_requests'), route: 'workPrs' };
+      case 'discussions':
+        return { icon: '❞', color: '#8250DF', label: $r('app.string.home_work_discussions'), route: 'discussions' };
+      case 'projects':
+        return { icon: '▦', color: '#57606A', label: $r('app.string.home_work_projects'), route: 'projects' };
+      case 'topRepos':
+        return { icon: '▤', color: '#24292F', label: $r('app.string.home_work_top_repos'), route: 'topRepos' };
+      case 'orgs':
+        return { icon: '⌂', color: '#E87B2E', label: $r('app.string.home_work_organizations'), route: 'organizations' };
+      case 'starred':
+        return { icon: '★', color: '#E3B341', label: $r('app.string.home_work_starred'), route: 'starred' };
+      default:
+        return { icon: '◷', color: '#2DA44E', label: $r('app.string.home_work_issues'), route: 'workIssues' };
+    }
+  }
+
+  /** My Work 单行入口：彩色圆角方块 + 单色字形 + 标签；按 WorkConfig 过滤/排序 */
   @Builder
-  workEntry(icon: string, color: string, labelRes: Resource) {
+  workEntry(meta: WorkEntryMeta) {
     Row() {
-      Text(icon)
+      Text(meta.icon)
         .fontSize(15)
         .fontColor(Color.White)
         .width(34)
         .height(34)
         .textAlign(TextAlign.Center)
-        .backgroundColor(color)
+        .backgroundColor(meta.color)
         .borderRadius(8)
-      Text(labelRes)
+      Text(meta.label)
         .fontSize($r('app.float.body_font_size'))
         .fontColor($r('app.color.text_primary'))
         .margin({ left: 12 })
@@ -100,7 +137,9 @@ export struct HomeView {
     .width('100%')
     .height(52)
     .alignItems(VerticalAlign.Center)
-    .onClick(() => this.comingSoon())
+    .onClick(() => {
+      this.pathStack.pushPathByName(meta.route, '');
+    })
   }
 
   @Builder
@@ -115,18 +154,17 @@ export struct HomeView {
         .fontSize(18)
         .fontColor($r('app.color.text_secondary'))
         .padding(4)
-        .onClick(() => this.comingSoon())
+        .onClick(() => {
+          this.pathStack.pushPathByName('editMyWork', '');
+        })
     }
     .width('100%')
     .padding({ top: 16, bottom: 4 })
 
-    this.workEntry('◷', '#2DA44E', $r('app.string.home_work_issues'))
-    this.workEntry('⇄', '#3C78D8', $r('app.string.home_work_pull_requests'))
-    this.workEntry('❞', '#8250DF', $r('app.string.home_work_discussions'))
-    this.workEntry('▦', '#57606A', $r('app.string.home_work_projects'))
-    this.workEntry('▤', '#24292F', $r('app.string.home_work_top_repos'))
-    this.workEntry('⌂', '#E87B2E', $r('app.string.home_work_organizations'))
-    this.workEntry('★', '#E3B341', $r('app.string.home_work_starred'))
+    ForEach(visibleWorkSections(this.workStore.sections), (section: WorkSection) => {
+      this.workEntry(this.workMeta(section.id))
+      // key 引用 workVersion/sectionsVersion：确保保存/加载后触发重渲染
+    }, (section: WorkSection) => `${section.id}_${this.workVersion}_${this.sectionsVersion}`)
   }
 
   @Builder

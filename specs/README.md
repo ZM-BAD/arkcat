@@ -23,6 +23,14 @@
 | 010 | [pr-diff.md](010-pr-diff.md) | PR Diff / Files Changed | Level 3 | ✅ |
 | 011 | [code-viewer.md](011-code-viewer.md) | 代码文件查看页 | Level 3 | ✅ |
 | 015 | [search.md](015-search.md) | 全局搜索页 | Level 3 | ✅ |
+| 016 | [edit-my-work.md](016-edit-my-work.md) | Edit My Work（Home 工作区条目编辑） | Level 3 | ✅ |
+| 017 | [work-issues.md](017-work-issues.md) | 工作区 Issue 列表（跨仓库） | Level 3 | ✅ |
+| 018 | [work-prs.md](018-work-prs.md) | 工作区 PR 列表（跨仓库） | Level 3 | ✅ |
+| 019 | [discussions.md](019-discussions.md) | 工作区 Discussion 列表 | Level 3 | ✅ |
+| 020 | [projects.md](020-projects.md) | 工作区 Projects 列表 | Level 3 | ✅ |
+| 021 | [top-repos.md](021-top-repos.md) | 工作区 Top Repositories | Level 3 | ✅ |
+| 022 | [organizations.md](022-organizations.md) | 工作区 Organizations | Level 3 | ✅ |
+| 023 | [starred-repos.md](023-starred-repos.md) | 工作区 Starred Repositories | Level 3 | ✅ |
 | 012 | [i18n.md](012-i18n.md) | 国际化（英/简中，默认英语） | Level 4 | ✅ |
 | 013 | [home-official.md](013-home-official.md) | Home Tab 官方布局（My Work/Favorites/Shortcuts） | Level 1 | ✅ |
 | 014 | [settings.md](014-settings.md) | Settings 设置页 | Level 3 | ✅ implemented |
