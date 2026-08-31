@@ -171,9 +171,10 @@ export struct IssuesListView {
 
       Scroll() {
         Column() {
-          // Open/Closed 切换 + 排序
+          // Open/Closed 双 Tab 切换 + 排序
           Row({ space: 8 }) {
-            this.chip(this.closed ? 'Closed' : 'Open', true, (): void => this.switchState(!this.closed))
+            this.chip('Open', !this.closed, (): void => this.switchState(false))
+            this.chip('Closed', this.closed, (): void => this.switchState(true))
             Blank()
             Text(`排序：${this.sort === 'created' ? '创建时间' : this.sort === 'updated' ? '更新时间' : '评论数'}`)
               .fontSize($r('app.float.caption_font_size'))
