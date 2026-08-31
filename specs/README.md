@@ -33,6 +33,12 @@
 | 023 | [starred-repos.md](023-starred-repos.md) | 工作区 Starred Repositories | Level 3 | ✅ |
 | 024 | [octicons.md](024-octicons.md) | Octicons 图标资产引入（横向） | Level 4 | ✅ |
 | 025 | [release-prep.md](025-release-prep.md) | 发布与开源准备（License/声明/上架清单） | Level 4 | ✅ |
+| 026 | [dark-mode.md](026-dark-mode.md) | 暗黑模式（三态主题，横向） | Level 4 | ✅ |
+| 027 | [repo-pr-list.md](027-repo-pr-list.md) | 仓库内 PR 列表 | Level 3 | ✅ |
+| 028 | [repo-commits.md](028-repo-commits.md) | 仓库 Commits 列表 | Level 3 | ✅ |
+| 029 | [repo-releases.md](029-repo-releases.md) | 仓库 Releases 页 | Level 3 | ✅ |
+| 030 | [issue-detail.md](030-issue-detail.md) | Issue 详情页 | Level 3 | ✅ |
+| 031 | [pr-detail.md](031-pr-detail.md) | PR 详情页（Changes/Status/Conversation） | Level 3 | ✅ |
 | 012 | [i18n.md](012-i18n.md) | 国际化（英/简中，默认英语） | Level 4 | ✅ |
 | 013 | [home-official.md](013-home-official.md) | Home Tab 官方布局（My Work/Favorites/Shortcuts） | Level 1 | ✅ |
 | 014 | [settings.md](014-settings.md) | Settings 设置页 | Level 3 | ✅ implemented |

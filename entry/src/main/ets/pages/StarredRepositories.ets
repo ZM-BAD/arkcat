@@ -114,10 +114,10 @@ export struct StarredRepositoriesView {
       }
 
       Row({ space: 8 }) {
-        OctIcon({ res: $r('app.media.oct_star_fill_16'), iconSize: 12, iconColor: '#B88700' })
+        OctIcon({ res: $r('app.media.oct_star_fill_16'), iconSize: 12, iconColor: $r('app.color.star_gold') })
         Text(compactCount(repo.stargazerCount))
           .fontSize($r('app.float.caption_font_size'))
-          .fontColor('#B88700')
+          .fontColor($r('app.color.star_gold'))
         if (repo.language !== '') {
           Text('●')
             .fontSize(10)
@@ -201,7 +201,7 @@ export struct StarredRepositoriesView {
             Blank()
             Text($r('app.string.work_starred_new'))
               .fontSize($r('app.float.body_font_size'))
-              .fontColor('#0969DA')
+              .fontColor($r('app.color.link_blue'))
               .onClick(() => this.comingSoon())
           }
           .width('100%')
@@ -224,17 +224,17 @@ export struct StarredRepositoriesView {
               .width('100%')
               .height(44)
               .fontSize($r('app.float.caption_font_size'))
-              .fontColor('#0969DA')
+              .fontColor($r('app.color.link_blue'))
               .backgroundColor(Color.Transparent)
               .borderRadius(8)
-              .border({ width: 1, color: '#D0D7DE' })
+              .border({ width: 1, color: $r('app.color.border') })
               .onClick(() => this.comingSoon())
           }
           .padding(24)
           .width('100%')
 
           Divider()
-            .color('#E5E7EB')
+            .color($r('app.color.divider'))
             .margin({ top: 8, bottom: 8 })
 
           // Starred 分组头

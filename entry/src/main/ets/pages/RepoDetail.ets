@@ -125,6 +125,18 @@ export struct RepoDetailView {
     this.pathStack.pushPathByName('issuesList', `${this.owner}/${this.name}`);
   }
 
+  private openPrs(): void {
+    this.pathStack.pushPathByName('repoPrs', `${this.owner}/${this.name}`);
+  }
+
+  private openReleases(): void {
+    this.pathStack.pushPathByName('repoReleases', `${this.owner}/${this.name}`);
+  }
+
+  private openCommits(): void {
+    this.pathStack.pushPathByName('repoCommits', `${this.owner}/${this.name}`);
+  }
+
   private comingSoon(): void {
     promptAction.showToast({ message: $r('app.string.home_feature_coming') });
   }
@@ -220,7 +232,7 @@ export struct RepoDetailView {
         .fontColor($r('app.color.link_blue'))
         .fontSize($r('app.float.body_font_size'))
         .borderRadius(8)
-        .border({ width: 1, color: '#D0D7DE' })
+        .border({ width: 1, color: $r('app.color.border') })
         .onClick(() => this.onStar())
       Text('⑂')
         .fontSize(18)
@@ -228,7 +240,7 @@ export struct RepoDetailView {
         .height(44)
         .textAlign(TextAlign.Center)
         .borderRadius(8)
-        .border({ width: 1, color: '#D0D7DE' })
+        .border({ width: 1, color: $r('app.color.border') })
         .onClick(() => this.onFork())
       Text('🔔')
         .fontSize(18)
@@ -236,7 +248,7 @@ export struct RepoDetailView {
         .height(44)
         .textAlign(TextAlign.Center)
         .borderRadius(8)
-        .border({ width: 1, color: '#D0D7DE' })
+        .border({ width: 1, color: $r('app.color.border') })
         .onClick(() => this.comingSoon())
     }
     .width('100%')
@@ -368,6 +380,7 @@ export struct RepoDetailView {
         .width('100%')
         .height(44)
         .padding({ left: 16, right: 16 })
+        .onClick(() => this.openCommits())
         .onClick(() => this.comingSoon())
 
         Row({ space: 12 }) {
@@ -460,9 +473,9 @@ export struct RepoDetailView {
             this.actionBar()
 
             this.countRow('◷', '#57606A', $r('app.string.repo_issues_link'), this.detail.issueCount, () => this.openIssues())
-            this.countRow('⑂', '#3C78D8', $r('app.string.repo_pr_link'), this.detail.prCount, () => this.comingSoon())
+            this.countRow('⑂', '#3C78D8', $r('app.string.repo_pr_link'), this.detail.prCount, () => this.openPrs())
             this.countRow('▶', '#E3B341', $r('app.string.repo_actions'), 0, () => this.comingSoon())
-            this.countRow('▸', '#24292F', $r('app.string.repo_releases'), this.detail.releaseCount, () => this.comingSoon())
+            this.countRow('▸', '#24292F', $r('app.string.repo_releases'), this.detail.releaseCount, () => this.openReleases())
             this.releaseCard()
 
             this.moreSection()

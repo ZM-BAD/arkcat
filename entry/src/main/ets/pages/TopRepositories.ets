@@ -152,11 +152,11 @@ export struct TopRepositoriesView {
           // 可见性下拉（All / Public / Private）
           Text(`${this.privacyLabel()} ⌄`)
             .fontSize($r('app.float.caption_font_size'))
-            .fontColor(this.privacy === 'all' ? $r('app.color.text_primary') : '#0969DA')
+            .fontColor(this.privacy === 'all' ? $r('app.color.text_primary') : $r('app.color.link_blue'))
             .padding({ left: 12, right: 12, top: 5, bottom: 5 })
             .borderRadius(12)
-            .backgroundColor(this.privacy === 'all' ? $r('app.color.card_background') : '#DDF4FF')
-            .border({ width: 1, color: this.privacy === 'all' ? '#D0D7DE' : '#B6E1FF' })
+            .backgroundColor(this.privacy === 'all' ? $r('app.color.card_background') : $r('app.color.chip_active_bg'))
+            .border({ width: 1, color: this.privacy === 'all' ? $r('app.color.border') : $r('app.color.chip_active_border') })
             .bindMenu([
               {
                 value: this.stringOf($r('app.string.work_filter_all')),

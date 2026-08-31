@@ -36,10 +36,10 @@ export struct WorkEmptyView {
           .width('70%')
           .height(44)
           .fontSize($r('app.float.caption_font_size'))
-          .fontColor('#0969DA')
+          .fontColor($r('app.color.link_blue'))
           .backgroundColor(Color.Transparent)
           .borderRadius(8)
-          .border({ width: 1, color: '#D0D7DE' })
+          .border({ width: 1, color: $r('app.color.border') })
           .margin({ top: 12 })
           .onClick(() => this.onButton())
       }

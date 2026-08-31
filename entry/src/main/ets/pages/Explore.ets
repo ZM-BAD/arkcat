@@ -126,7 +126,7 @@ export struct ExploreView {
         .backgroundColor(Color.Transparent)
         .height(36)
         .borderRadius(8)
-        .border({ width: 1, color: '#D0D7DE' })
+        .border({ width: 1, color: $r('app.color.border') })
         .onClick(() => this.comingSoon())
     }
     .padding($r('app.float.card_padding'))

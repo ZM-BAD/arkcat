@@ -7,6 +7,12 @@ import { timeParts, contributionLevelColor, notificationTypeKey, compactCount } 
 import { Json } from '../../../main/ets/utils/Json';
 import { WorkSection, defaultWorkSections, visibleWorkSections, workSectionsToStorage, workSectionsFromStorage } from '../../../main/ets/utils/WorkConfig';
 import {
+  mapRepoPr, mapRepoPrsPage, mapRepoCommitsPage, mapRepoReleasesPage, mapIssueDetail, mapPrDetail,
+  filterPrsByAuthor, filterPrsByAssignee, repoPrIconKey, monthDayText
+} from '../../../main/ets/models/RepoSubModels';
+import { repoIssueStates } from '../../../main/ets/services/IssuesService';
+import { RepoPrItem } from '../../../main/ets/models/RepoSubModels';
+import {
   buildWorkIssuesQuery, buildWorkPrsQuery, buildWorkDiscussionsQuery, buildTopReposPrivacy,
   mapWorkIssue, workIssueIconKey, mapWorkPr, workPrIconKey,
   mapWorkStarredPage, filterWorkProjects, WorkProjectItem,
@@ -527,6 +533,111 @@ export default function logicTest(testsuiteName: string) {
       expect(orgPage.orgs.length).assertEqual(1);
       expect(orgPage.orgs[0].login).assertEqual('org1');
       expect(orgPage.orgs[0].name).assertEqual('Org One');
+    });
+
+    it('repoSub_pages_mappers', 0, () => {
+      expect(repoIssueStates('all').length).assertEqual(2);
+      expect(repoIssueStates('open')[0]).assertEqual('OPEN');
+      expect(repoIssueStates('closed')[0]).assertEqual('CLOSED');
+      expect(monthDayText('2026-06-30T00:00:00Z')).assertEqual('June 30');
+      expect(monthDayText('bad')).assertEqual('');
+      expect(repoPrIconKey('MERGED', true)).assertEqual('merged');
+      expect(repoPrIconKey('OPEN', false)).assertEqual('open');
+      expect(repoPrIconKey('CLOSED', false)).assertEqual('closed');
+
+      const author: JsonMap = { 'login': 'zm_bad' };
+      const labelNode: JsonMap = { 'name': 'deps', 'color': '#B5B5B5' };
+      const labelsWrap: JsonMap = { 'nodes': [labelNode] };
+      const commentsWrap: JsonMap = { 'totalCount': 2 };
+      const reviewsWrap: JsonMap = { 'totalCount': 1 };
+      const assigneeNode: JsonMap = { 'login': 'renovate' };
+      const assigneesWrap: JsonMap = { 'nodes': [assigneeNode] };
+      const pr: JsonMap = {
+        'id': 'P1', 'number': 8, 'title': 'feat', 'state': 'MERGED', 'merged': true,
+        'createdAt': '2026-08-01T00:00:00Z',
+        'labels': labelsWrap, 'comments': commentsWrap, 'reviewRequests': reviewsWrap,
+        'author': author, 'assignees': assigneesWrap
+      };
+      const prItem = mapRepoPr(pr);
+      const prList: RepoPrItem[] = [prItem];
+      expect(filterPrsByAuthor(prList, '').length).assertEqual(1);
+      expect(filterPrsByAuthor(prList, 'other').length).assertEqual(0);
+      expect(filterPrsByAssignee(prList, 'renovate').length).assertEqual(1);
+
+      const lNode: JsonMap = { 'name': 'deps' };
+      const prsWrap: JsonMap = { 'nodes': [pr] };
+      const labelsList: JsonMap = { 'nodes': [lNode] };
+      const repo: JsonMap = { 'pullRequests': prsWrap, 'labels': labelsList };
+      const data1: JsonMap = { 'repository': repo };
+      const page = mapRepoPrsPage(data1);
+      expect(page.prs.length).assertEqual(1);
+      expect(page.labelOptions[0]).assertEqual('deps');
+      expect(page.authorOptions[0]).assertEqual('zm_bad');
+      expect(page.assigneeOptions[0]).assertEqual('renovate');
+
+      const checks: JsonMap = { 'state': 'SUCCESS' };
+      const commitNode: JsonMap = {
+        'oid': 'abc', 'messageHeadline': 'fix', 'committedDate': '2026-08-01T00:00:00Z',
+        'author': author, 'statusCheckRollup': checks
+      };
+      const history: JsonMap = { 'nodes': [commitNode] };
+      const target: JsonMap = { 'history': history };
+      const branchRef: JsonMap = { 'target': target };
+      const repo2: JsonMap = { 'defaultBranchRef': branchRef };
+      const data2: JsonMap = { 'repository': repo2 };
+      const cp = mapRepoCommitsPage(data2);
+      expect(cp.commits.length).assertEqual(1);
+      expect(cp.commits[0].checksState).assertEqual('SUCCESS');
+
+      const relNode: JsonMap = {
+        'id': 'R1', 'tagName': '1.3.2', 'isLatest': true,
+        'createdAt': '2026-06-30T00:00:00Z', 'description': 'LLM', 'body': 'body', 'author': author
+      };
+      const releasesWrap2: JsonMap = { 'nodes': [relNode] };
+      const repo3: JsonMap = { 'releases': releasesWrap2 };
+      const data3: JsonMap = { 'repository': repo3 };
+      const rp = mapRepoReleasesPage(data3);
+      expect(rp.releases.length).assertEqual(1);
+      expect(rp.releases[0].isLatest).assertTrue();
+
+      const issueLabelsWrap: JsonMap = { 'nodes': [lNode] };
+      const cNode: JsonMap = { 'id': 'C1', 'body': 'c', 'createdAt': '2026-08-02T00:00:00Z', 'author': author };
+      const issueComments: JsonMap = { 'totalCount': 1, 'nodes': [cNode] };
+      const issueNode: JsonMap = {
+        'number': 1, 'title': 't', 'state': 'OPEN', 'stateReason': '', 'body': 'body text',
+        'createdAt': '2026-08-01T00:00:00Z', 'author': author,
+        'labels': issueLabelsWrap, 'comments': issueComments
+      };
+      const repo4: JsonMap = { 'issue': issueNode };
+      const data4: JsonMap = { 'repository': repo4 };
+      const ip = mapIssueDetail(data4);
+      expect(ip.number).assertEqual(1);
+      expect(ip.comments.length).assertEqual(1);
+      expect(ip.labels[0]).assertEqual('deps');
+
+      const mergeCommit: JsonMap = { 'abbreviatedOid': 'eb43eaa' };
+      const prComments: JsonMap = { 'totalCount': 1, 'nodes': [] };
+      const prNode: JsonMap = {
+        'number': 82, 'title': 'fix', 'state': 'MERGED', 'merged': true, 'isDraft': false,
+        'body': 'body', 'createdAt': '2026-08-01T00:00:00Z', 'mergedAt': '2026-08-02T00:00:00Z',
+        'additions': 249, 'deletions': 49, 'author': author, 'headRefName': 'fix/1', 'baseRefName': 'main',
+        'mergeCommit': mergeCommit, 'statusCheckRollup': checks,
+        'comments': prComments
+      };
+      // files/commits/reviews 内联字面量需显式类型（上一批测试的既有惯例）
+      const filesWrap: JsonMap = { 'totalCount': 3 };
+      const commitsWrap2: JsonMap = { 'totalCount': 1 };
+      const reviewsWrap2: JsonMap = { 'totalCount': 0 };
+      prNode['files'] = filesWrap;
+      prNode['commits'] = commitsWrap2;
+      prNode['reviews'] = reviewsWrap2;
+      const repo5: JsonMap = { 'pullRequest': prNode };
+      const data5: JsonMap = { 'repository': repo5 };
+      const pp = mapPrDetail(data5);
+      expect(pp.filesCount).assertEqual(3);
+      expect(pp.additions).assertEqual(249);
+      expect(pp.mergeOid).assertEqual('eb43eaa');
+      expect(pp.checksState).assertEqual('SUCCESS');
     });
   });
 }

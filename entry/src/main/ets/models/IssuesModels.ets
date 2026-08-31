@@ -14,6 +14,7 @@ export interface IssueSummary {
   labels: string[];
   commentCount: number;
   linkedPrCount: number;
+  assignees: string[];
 }
 
 /** Issues 列表页数据（含分页游标） */
@@ -36,6 +37,13 @@ export function mapIssue(raw: JsonMap): IssueSummary {
     }
   }
   const comments = Json.obj(raw, 'comments');
+  const assigneesWrap = Json.obj(raw, 'assignees');
+  const assignees: string[] = [];
+  if (assigneesWrap !== null) {
+    for (const nodeItem of Json.arr(assigneesWrap, 'nodes')) {
+      assignees.push(Json.str(nodeItem as JsonMap, 'login'));
+    }
+  }
   const timeline = Json.obj(raw, 'timelineItems');
   let linkedPrCount = 0;
   if (timeline !== null) {
@@ -55,7 +63,8 @@ export function mapIssue(raw: JsonMap): IssueSummary {
     authorLogin: author ? Json.str(author, 'login') : '',
     labels: labels,
     commentCount: comments ? Json.num(comments, 'totalCount') : 0,
-    linkedPrCount: linkedPrCount
+    linkedPrCount: linkedPrCount,
+    assignees: assignees
   };
 }
 

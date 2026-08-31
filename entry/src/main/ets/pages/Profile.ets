@@ -312,7 +312,7 @@ export struct ProfileView {
     .width('100%')
     .padding(10)
     .borderRadius(10)
-    .backgroundColor(this.tab === tabIndex ? '#DBEFE3' : $r('app.color.card_background'))
+    .backgroundColor(this.tab === tabIndex ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))
     .margin({ bottom: 6 })
     .onClick(() => {
       this.tab = tabIndex;

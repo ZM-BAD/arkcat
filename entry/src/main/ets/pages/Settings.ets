@@ -10,6 +10,8 @@ import { common } from '@kit.AbilityKit';
 import { TokenStore } from '../services/TokenStore';
 import { OctIcon } from '../components/OctIcon';
 import { resText } from '../utils/I18n';
+import { applyThemeMode } from '../utils/ThemeMode';
+
 const PREFS_NAME = 'starraft_settings';
 const KEY_THEME = 'theme_mode';
 const KEY_LANG = 'app_language';
@@ -52,6 +54,17 @@ export struct SettingsView {
       });
   }
 
+  /** 当前主题的本地化显示文案（Spec 026） */
+  private themeLabel(): string {
+    if (this.themeMode === 'dark') {
+      return this.stringOf($r('app.string.settings_theme_dark'));
+    }
+    if (this.themeMode === 'light') {
+      return this.stringOf($r('app.string.settings_theme_light'));
+    }
+    return this.stringOf($r('app.string.settings_theme_follow_system'));
+  }
+
   /** Theme 选择：system/light/dark（真功能，持久化） */
   private pickTheme(): void {
     const ui = this.getUIContext();
@@ -59,9 +72,9 @@ export struct SettingsView {
       {
         title: resText(ui, $r('app.string.settings_theme')),
         buttons: [
-          { text: resText(ui, $r('app.string.settings_theme_follow_system')), color: '#0969DA' },
-          { text: resText(ui, $r('app.string.settings_theme_light')), color: '#0969DA' },
-          { text: resText(ui, $r('app.string.settings_theme_dark')), color: '#0969DA' }
+          { text: resText(ui, $r('app.string.settings_theme_follow_system')), color: $r('app.color.link_blue') },
+          { text: resText(ui, $r('app.string.settings_theme_light')), color: $r('app.color.link_blue') },
+          { text: resText(ui, $r('app.string.settings_theme_dark')), color: $r('app.color.link_blue') }
         ]
       },
       (err, data) => {
@@ -71,6 +84,7 @@ export struct SettingsView {
         const idx: number = data.index;
         this.themeMode = idx === 1 ? 'light' : idx === 2 ? 'dark' : 'system';
         this.saveSetting(KEY_THEME, this.themeMode);
+        applyThemeMode(this.getUIContext().getHostContext() as common.UIAbilityContext | undefined, this.themeMode);
       });
   }
 
@@ -81,8 +95,8 @@ export struct SettingsView {
       {
         title: resText(ui, $r('app.string.settings_language')),
         buttons: [
-          { text: resText(ui, $r('app.string.settings_language_zh')), color: '#0969DA' },
-          { text: resText(ui, $r('app.string.settings_language_en')), color: '#0969DA' }
+          { text: resText(ui, $r('app.string.settings_language_zh')), color: $r('app.color.link_blue') },
+          { text: resText(ui, $r('app.string.settings_language_en')), color: $r('app.color.link_blue') }
         ]
       },
       (err, data) => {
@@ -210,7 +224,7 @@ export struct SettingsView {
 
           this.sectionTitle($r('app.string.settings_general'))
           this.row($r('app.string.settings_theme'),
-            this.themeMode === 'system' ? this.stringOf($r('app.string.settings_theme_follow_system')) : this.themeMode,
+            this.themeLabel(),
             () => this.pickTheme())
           this.row($r('app.string.settings_code_options'), '', () => this.comingSoon())
           this.row($r('app.string.settings_language'),
