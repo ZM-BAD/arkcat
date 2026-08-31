@@ -41,10 +41,6 @@
       "value": "Issue"
     },
     {
-      "name": "index_spec_pending",
-      "value": "待后续 Spec 实现"
-    },
-    {
       "name": "token_setup_title",
       "value": "配置 GitHub Token"
     },
@@ -75,10 +71,6 @@
     {
       "name": "home_pinned_section",
       "value": "Pinned 仓库"
-    },
-    {
-      "name": "home_calendar_section",
-      "value": "贡献日历"
     },
     {
       "name": "home_contributions_total",
@@ -339,6 +331,74 @@
     {
       "name": "time_months_ago",
       "value": "%1$d 个月前"
+    },
+    {
+      "name": "home_my_work",
+      "value": "我的工作"
+    },
+    {
+      "name": "home_work_issues",
+      "value": "Issue"
+    },
+    {
+      "name": "home_work_pull_requests",
+      "value": "Pull Request"
+    },
+    {
+      "name": "home_work_discussions",
+      "value": "Discussion"
+    },
+    {
+      "name": "home_work_projects",
+      "value": "项目"
+    },
+    {
+      "name": "home_work_top_repos",
+      "value": "热门仓库"
+    },
+    {
+      "name": "home_work_organizations",
+      "value": "组织"
+    },
+    {
+      "name": "home_work_starred",
+      "value": "已加星"
+    },
+    {
+      "name": "home_favorites",
+      "value": "收藏"
+    },
+    {
+      "name": "home_favorites_empty",
+      "value": "添加收藏仓库，随时随地快速访问，无需搜索"
+    },
+    {
+      "name": "home_favorites_add",
+      "value": "添加收藏"
+    },
+    {
+      "name": "home_shortcuts",
+      "value": "快捷入口"
+    },
+    {
+      "name": "home_shortcuts_title",
+      "value": "你所需的功能，一键直达"
+    },
+    {
+      "name": "home_shortcuts_desc",
+      "value": "快速访问你的 Issue、Pull Request 或 Discussion 列表"
+    },
+    {
+      "name": "home_shortcuts_get_started",
+      "value": "开始使用"
+    },
+    {
+      "name": "home_feature_coming",
+      "value": "该功能将在后续 Spec 提供"
+    },
+    {
+      "name": "home_new_coming",
+      "value": "新建功能将在后续版本提供"
     }
   ]
 }

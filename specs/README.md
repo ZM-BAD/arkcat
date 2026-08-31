@@ -11,7 +11,7 @@
 
 | 编号 | 文件 | 描述 | BFS Level | 状态 |
 |------|------|------|-----------|------|
-| 001 | [home-tab.md](001-home-tab.md) | 首页 Tab | Level 1 | ✅ |
+| 001 | [home-tab.md](001-home-tab.md) | 首页 Tab（已被 013 替换） | Level 1 | deprecated |
 | 002 | [inbox-tab.md](002-inbox-tab.md) | 通知收件箱 Tab | Level 1 | ✅ |
 | 003 | [explore-tab.md](003-explore-tab.md) | 发现探索 Tab | Level 1 | ✅ |
 | 004 | [copilot-tab.md](004-copilot-tab.md) | AI 助手 Tab | Level 1 | ✅ |
@@ -23,6 +23,7 @@
 | 010 | [pr-diff.md](010-pr-diff.md) | PR Diff / Files Changed | Level 3 | ✅ |
 | 011 | [code-viewer.md](011-code-viewer.md) | 代码文件查看页 | Level 3 | ✅ |
 | 012 | [i18n.md](012-i18n.md) | 国际化（英/简中，默认英语） | Level 4 | ✅ |
+| 013 | [home-official.md](013-home-official.md) | Home Tab 官方布局（My Work/Favorites/Shortcuts） | Level 1 | ✅ |
 
 ## 覆盖率
 

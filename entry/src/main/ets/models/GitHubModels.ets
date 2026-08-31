@@ -16,6 +16,22 @@ export interface UserSummary {
   following: number;
 }
 
+/** 查看者基础信息（Spec 013：Home Header 头像/名字） */
+export interface ViewerBasic {
+  login: string;
+  name: string;
+  avatarUrl: string;
+}
+
+/** GraphQL viewer 基础节点 → ViewerBasic */
+export function mapViewerBasic(raw: JsonMap): ViewerBasic {
+  return {
+    login: Json.str(raw, 'login'),
+    name: Json.str(raw, 'name'),
+    avatarUrl: Json.str(raw, 'avatarUrl')
+  };
+}
+
 /** 仓库摘要卡片 */
 export interface RepoSummary {
   id: string;
@@ -38,13 +54,6 @@ export interface ContributionDay {
 export interface ContributionCalendar {
   totalContributions: number;
   weeks: ContributionDay[][];
-}
-
-/** Home 页聚合数据 */
-export interface HomeOverview {
-  user: UserSummary;
-  calendar: ContributionCalendar;
-  pinned: RepoSummary[];
 }
 
 /** 通知条目（REST /notifications） */
@@ -120,24 +129,6 @@ export function mapCalendar(raw: JsonMap): ContributionCalendar {
     }
   }
   return { totalContributions: total, weeks: weeks };
-}
-
-/** GraphQL HomePage 响应 → HomeOverview */
-export function mapHomeOverview(data: JsonMap): HomeOverview {
-  const viewer = Json.obj(data, 'viewer') ?? ({} as JsonMap);
-  const calendarRaw = Json.obj(Json.obj(viewer, 'contributionsCollection') ?? ({} as JsonMap), 'contributionCalendar');
-  const pinnedRaw = Json.obj(viewer, 'pinnedItems');
-  const pinned: RepoSummary[] = [];
-  if (pinnedRaw !== null) {
-    for (const nodeItem of Json.arr(pinnedRaw, 'nodes')) {
-      pinned.push(mapRepo(nodeItem as JsonMap));
-    }
-  }
-  return {
-    user: mapUser(viewer),
-    calendar: mapCalendar(calendarRaw ?? ({} as JsonMap)),
-    pinned: pinned
-  };
 }
 
 /** REST /notifications 数组元素 → NotificationItem */

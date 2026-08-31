@@ -2,7 +2,7 @@
 
 > BFS Level: 1
 > 关联截图: Home Tab 底部导航第一个 Tab
-> 状态: ✅ implemented（2026-08-31，真实 GitHub PAT 数据全页验收通过）
+> 状态: deprecated（2026-08-31 由 Spec 013 整体替换：官方布局为 My Work / Favorites / Shortcuts）
 
 ---
 
