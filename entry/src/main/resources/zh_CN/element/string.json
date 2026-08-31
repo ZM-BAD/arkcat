@@ -2,11 +2,11 @@
   "string": [
     {
       "name": "module_desc",
-      "value": "StarRaft entry module"
+      "value": "StarRaft 主模块"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "StarRaft main entry"
+      "value": "StarRaft 主入口"
     },
     {
       "name": "EntryAbility_label",
@@ -14,95 +14,95 @@
     },
     {
       "name": "tab_home",
-      "value": "Home"
+      "value": "首页"
     },
     {
       "name": "tab_inbox",
-      "value": "Inbox"
+      "value": "通知"
     },
     {
       "name": "tab_explore",
-      "value": "Explore"
+      "value": "发现"
     },
     {
       "name": "tab_copilot",
-      "value": "Copilot"
+      "value": "助手"
     },
     {
       "name": "nav_profile_title",
-      "value": "Profile"
+      "value": "个人主页"
     },
     {
       "name": "nav_repo_title",
-      "value": "Repository"
+      "value": "仓库"
     },
     {
       "name": "nav_issues_title",
-      "value": "Issues"
+      "value": "Issue"
     },
     {
       "name": "index_spec_pending",
-      "value": "To be implemented in a future spec"
+      "value": "待后续 Spec 实现"
     },
     {
       "name": "token_setup_title",
-      "value": "Set up GitHub Token"
+      "value": "配置 GitHub Token"
     },
     {
       "name": "token_setup_desc",
-      "value": "StarRaft connects directly to the GitHub API. A Personal Access Token (read:user, repo, notifications) is required."
+      "value": "StarRaft 直连 GitHub API，需要一个 Personal Access Token（read:user、repo、notifications 权限即可）"
     },
     {
       "name": "token_input_placeholder",
-      "value": "Paste your ghp_ token"
+      "value": "粘贴 ghp_ 开头的 Token"
     },
     {
       "name": "token_save",
-      "value": "Save & Continue"
+      "value": "保存并进入"
     },
     {
       "name": "token_error_empty",
-      "value": "Token cannot be empty"
+      "value": "Token 不能为空"
     },
     {
       "name": "token_error_save",
-      "value": "Save failed, please try again"
+      "value": "保存失败，请重试"
     },
     {
       "name": "home_search_hint",
-      "value": "Search will be available in a future version"
+      "value": "搜索功能将在后续版本提供"
     },
     {
       "name": "home_pinned_section",
-      "value": "Pinned repositories"
+      "value": "Pinned 仓库"
     },
     {
       "name": "home_calendar_section",
-      "value": "Contribution calendar"
+      "value": "贡献日历"
     },
     {
       "name": "home_contributions_total",
-      "value": "%1$d contributions in the past year"
+      "value": "过去一年 %1$d 次贡献"
     },
     {
       "name": "state_loading",
-      "value": "Loading…"
+      "value": "加载中…"
     },
     {
       "name": "state_network_error",
-      "value": "Network request failed. Check your token and network, then try again."
+      "value": "网络请求失败，请检查 Token 与网络后重试"
     },
     {
       "name": "state_retry",
-      "value": "Retry"
+      "value": "重试"
     },
     {
       "name": "state_empty",
-      "value": "No data"
+      "value": "暂无数据"
     },
     {
       "name": "followers_suffix",
-      "value": "%1$d followers · %2$d following"
+      "value": "%1$d 关注者 · %2$d 关注"
     },
     {
       "name": "repo_stars_fmt",
@@ -114,27 +114,27 @@
     },
     {
       "name": "inbox_filter_all",
-      "value": "All"
+      "value": "全部"
     },
     {
       "name": "inbox_filter_unread",
-      "value": "Unread"
+      "value": "未读"
     },
     {
       "name": "inbox_empty",
-      "value": "No notifications"
+      "value": "暂无通知"
     },
     {
       "name": "inbox_marked_read",
-      "value": "Marked as read"
+      "value": "已标记为已读"
     },
     {
       "name": "inbox_mark_failed",
-      "value": "Mark failed: %1$s"
+      "value": "标记失败：%1$s"
     },
     {
       "name": "inbox_detail_coming",
-      "value": "Detail page will be available in a future spec"
+      "value": "详情页将在后续 Spec 实现"
     },
     {
       "name": "notif_type_issue",
@@ -158,11 +158,11 @@
     },
     {
       "name": "notif_type_security",
-      "value": "Security alert"
+      "value": "安全"
     },
     {
       "name": "explore_search_placeholder",
-      "value": "Search repositories / developers"
+      "value": "搜索仓库 / 开发者"
     },
     {
       "name": "explore_topics_title",
@@ -170,7 +170,7 @@
     },
     {
       "name": "explore_topic_count",
-      "value": "topic:%1$s · %2$d repositories"
+      "value": "topic:%1$s · %2$d 个仓库"
     },
     {
       "name": "copilot_title",
@@ -178,11 +178,11 @@
     },
     {
       "name": "copilot_unsupported",
-      "value": "Copilot is not supported yet"
+      "value": "Copilot 功能暂不支持"
     },
     {
       "name": "copilot_hint",
-      "value": "No public API is available. Please use the official GitHub app."
+      "value": "无公开 API，请使用 GitHub 官方 App"
     },
     {
       "name": "profile_tab_overview",
@@ -198,47 +198,47 @@
     },
     {
       "name": "profile_follow",
-      "value": "Follow"
+      "value": "关注"
     },
     {
       "name": "profile_unfollow",
-      "value": "Unfollow"
+      "value": "取消关注"
     },
     {
       "name": "profile_followed_toast",
-      "value": "Followed"
+      "value": "已关注"
     },
     {
       "name": "profile_unfollowed_toast",
-      "value": "Unfollowed"
+      "value": "已取消关注"
     },
     {
       "name": "profile_action_failed",
-      "value": "Action failed: %1$s"
+      "value": "操作失败：%1$s"
     },
     {
       "name": "repo_starred_toast",
-      "value": "Starred"
+      "value": "已 Star"
     },
     {
       "name": "repo_unstarred_toast",
-      "value": "Unstarred"
+      "value": "已取消 Star"
     },
     {
       "name": "repo_star_failed",
-      "value": "Star failed: %1$s"
+      "value": "Star 失败：%1$s"
     },
     {
       "name": "repo_fork_created_toast",
-      "value": "Fork created"
+      "value": "Fork 已创建"
     },
     {
       "name": "repo_fork_failed",
-      "value": "Fork failed: %1$s"
+      "value": "Fork 失败：%1$s"
     },
     {
       "name": "repo_starred_label",
-      "value": "★ Starred"
+      "value": "★ 已 Star"
     },
     {
       "name": "repo_license_fmt",
@@ -246,7 +246,7 @@
     },
     {
       "name": "repo_last_commit_fmt",
-      "value": "Latest commit: %1$s"
+      "value": "最近提交：%1$s"
     },
     {
       "name": "repo_readme_title",
@@ -254,19 +254,19 @@
     },
     {
       "name": "repo_code_viewer_coming",
-      "value": "Full code viewer will be available in Spec 011"
+      "value": "完整 Code Viewer 将在 Spec 011 提供"
     },
     {
       "name": "repo_code_viewer_toast",
-      "value": "Code viewer will be available in Spec 011"
+      "value": "Code Viewer 将在 Spec 011 提供"
     },
     {
       "name": "repo_files_title",
-      "value": "📂 Files"
+      "value": "📂 文件"
     },
     {
       "name": "repo_browser_coming",
-      "value": "File browser will be available in Spec 011"
+      "value": "文件浏览器将在 Spec 011 提供"
     },
     {
       "name": "repo_languages_title",
@@ -286,59 +286,59 @@
     },
     {
       "name": "issues_sort_label",
-      "value": "Sort: %1$s"
+      "value": "排序：%1$s"
     },
     {
       "name": "issues_sort_created",
-      "value": "Created"
+      "value": "创建时间"
     },
     {
       "name": "issues_sort_updated",
-      "value": "Updated"
+      "value": "更新时间"
     },
     {
       "name": "issues_sort_comments",
-      "value": "Comments"
+      "value": "评论数"
     },
     {
       "name": "issues_count",
-      "value": "%1$d issues"
+      "value": "%1$d 个 Issue"
     },
     {
       "name": "issues_load_more",
-      "value": "Load more…"
+      "value": "加载更多…"
     },
     {
       "name": "issues_empty",
-      "value": "No issues"
+      "value": "暂无 Issue"
     },
     {
       "name": "issues_detail_coming",
-      "value": "Issue detail will be available in Spec 008"
+      "value": "Issue 详情将在 Spec 008 提供"
     },
     {
       "name": "issues_new_coming",
-      "value": "Creating an issue will be available in a future spec"
+      "value": "新建 Issue 将在后续 Spec 提供"
     },
     {
       "name": "time_just_now",
-      "value": "Just now"
+      "value": "刚刚"
     },
     {
       "name": "time_minutes_ago",
-      "value": "%1$d minutes ago"
+      "value": "%1$d 分钟前"
     },
     {
       "name": "time_hours_ago",
-      "value": "%1$d hours ago"
+      "value": "%1$d 小时前"
     },
     {
       "name": "time_days_ago",
-      "value": "%1$d days ago"
+      "value": "%1$d 天前"
     },
     {
       "name": "time_months_ago",
-      "value": "%1$d months ago"
+      "value": "%1$d 个月前"
     }
   ]
 }

@@ -7,6 +7,7 @@ import { promptAction } from '@kit.ArkUI';
 import { RepoDetail, FileEntry, LanguageSlice } from '../models/RepoDetailModels';
 import { RepoService } from '../services/RepoService';
 import { StateView } from '../components/StateView';
+import { resText } from '../utils/I18n';
 
 @ComponentV2
 export struct RepoDetailView {
@@ -64,14 +65,24 @@ export struct RepoDetailView {
           lastCommitMessage: detail.lastCommitMessage
         };
         this.detail = updated;
-        promptAction.showToast({ message: starred ? '已 Star' : '已取消 Star' });
+        const ui = this.getUIContext();
+        promptAction.showToast({
+          message: starred
+            ? resText(ui, $r('app.string.repo_starred_toast'))
+            : resText(ui, $r('app.string.repo_unstarred_toast'))
+        });
       })
       .catch((e: Error) => {
-        promptAction.showToast({ message: `Star 失败: ${e.message}` });
+        promptAction.showToast({ message: this.fmt($r('app.string.repo_star_failed'), e.message) });
       })
       .finally(() => {
         this.busy = false;
       });
+  }
+
+  /** 带 %1$s 格式化：资源模板 + 参数 → 当前语言文案 */
+  private fmt(res: Resource, arg: string): string {
+    return resText(this.getUIContext(), res, arg);
   }
 
   private onFork(): void {
@@ -82,10 +93,10 @@ export struct RepoDetailView {
     this.busy = true;
     RepoService.createFork(this.token, detail.repoId)
       .then(() => {
-        promptAction.showToast({ message: 'Fork 已创建' });
+        promptAction.showToast({ message: $r('app.string.repo_fork_created_toast') });
       })
       .catch((e: Error) => {
-        promptAction.showToast({ message: `Fork 失败: ${e.message}` });
+        promptAction.showToast({ message: this.fmt($r('app.string.repo_fork_failed'), e.message) });
       })
       .finally(() => {
         this.busy = false;
@@ -119,7 +130,7 @@ export struct RepoDetailView {
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
         if (this.detail?.viewerHasStarred ?? false) {
-          Text('★ 已 Star')
+          Text($r('app.string.repo_starred_label'))
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.primary'))
         }
@@ -127,7 +138,7 @@ export struct RepoDetailView {
       .width('100%')
 
       if (this.detail !== null && this.detail.licenseName !== '') {
-        Text(`📝 ${this.detail?.licenseName ?? ''} License`)
+        Text(this.fmt($r('app.string.repo_license_fmt'), this.detail?.licenseName ?? ''))
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
           .width('100%')
@@ -149,7 +160,7 @@ export struct RepoDetailView {
       }
 
       if (this.detail !== null && this.detail.lastCommitMessage !== '') {
-        Text(`最近提交：${this.detail?.lastCommitMessage ?? ''}`)
+        Text(this.fmt($r('app.string.repo_last_commit_fmt'), this.detail?.lastCommitMessage ?? ''))
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
           .maxLines(1)
@@ -165,7 +176,7 @@ export struct RepoDetailView {
   @Builder
   readmeCard() {
     Column({ space: 8 }) {
-      Text('📖 README')
+      Text($r('app.string.repo_readme_title'))
         .fontSize($r('app.float.body_font_size'))
         .fontWeight(FontWeight.Bold)
         .fontColor($r('app.color.text_primary'))
@@ -175,11 +186,11 @@ export struct RepoDetailView {
         .maxLines(10)
         .lineHeight(18)
         .width('100%')
-      Text('完整 Code Viewer 将在 Spec 011 提供')
+      Text($r('app.string.repo_code_viewer_coming'))
         .fontSize($r('app.float.caption_font_size'))
         .fontColor($r('app.color.link_blue'))
         .onClick(() => {
-          promptAction.showToast({ message: 'Code Viewer 将在 Spec 011 提供' });
+          promptAction.showToast({ message: $r('app.string.repo_code_viewer_toast') });
         })
     }
     .alignItems(HorizontalAlign.Start)
@@ -192,7 +203,7 @@ export struct RepoDetailView {
   @Builder
   filesCard() {
     Column({ space: 4 }) {
-      Text('📂 文件')
+      Text($r('app.string.repo_files_title'))
         .fontSize($r('app.float.body_font_size'))
         .fontWeight(FontWeight.Bold)
         .fontColor($r('app.color.text_primary'))
@@ -209,7 +220,7 @@ export struct RepoDetailView {
         .width('100%')
         .padding({ top: 6, bottom: 6 })
       }, (file: FileEntry) => file.name)
-      Text('文件浏览器将在 Spec 011 提供')
+      Text($r('app.string.repo_browser_coming'))
         .fontSize($r('app.float.caption_font_size'))
         .fontColor($r('app.color.link_blue'))
         .margin({ top: 4 })
@@ -224,7 +235,7 @@ export struct RepoDetailView {
   @Builder
   languagesCard() {
     Column({ space: 8 }) {
-      Text('📊 Languages')
+      Text($r('app.string.repo_languages_title'))
         .fontSize($r('app.float.body_font_size'))
         .fontWeight(FontWeight.Bold)
         .fontColor($r('app.color.text_primary'))
@@ -270,7 +281,7 @@ export struct RepoDetailView {
           .fontColor($r('app.color.text_primary'))
           .maxLines(1)
           .layoutWeight(1)
-        Text('Issues')
+        Text($r('app.string.repo_issues_link'))
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.link_blue'))
           .onClick(() => this.openIssues())

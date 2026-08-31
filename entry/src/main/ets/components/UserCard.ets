@@ -3,6 +3,7 @@
  * Spec 001 元素 4；点击头像区域触发 onOpenProfile（Spec 005 实现路由目的地）。
  */
 import { UserSummary } from '../models/GitHubModels';
+import { resText } from '../utils/I18n';
 
 @ComponentV2
 export struct UserCard {
@@ -35,7 +36,7 @@ export struct UserCard {
             .maxLines(2)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
         }
-        Text(`${this.user?.followers ?? 0} followers · ${this.user?.following ?? 0} following`)
+        Text(this.followersText())
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
       }
@@ -46,5 +47,11 @@ export struct UserCard {
     .padding($r('app.float.card_padding'))
     .borderRadius($r('app.float.card_radius'))
     .backgroundColor($r('app.color.card_background'))
+  }
+
+  /** followers/following 本地化文案（Spec 012：%1$d/%2$d 位置占位） */
+  private followersText(): string {
+    return resText(this.getUIContext(), $r('app.string.followers_suffix'),
+      this.user?.followers ?? 0, this.user?.following ?? 0);
   }
 }

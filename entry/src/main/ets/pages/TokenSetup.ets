@@ -3,6 +3,7 @@
  * Spec 001 前置条件——应用直连 GitHub API，必须有 PAT 才能拉取数据。
  */
 import { TokenStore } from '../services/TokenStore';
+import { resText } from '../utils/I18n';
 
 @ComponentV2
 export struct TokenSetup {
@@ -61,7 +62,7 @@ export struct TokenSetup {
   private async saveToken(): Promise<void> {
     const trimmed = this.token.trim();
     if (trimmed === '') {
-      this.error = 'Token 不能为空';
+      this.error = this.stringOf($r('app.string.token_error_empty'));
       return;
     }
     this.saving = true;
@@ -69,9 +70,14 @@ export struct TokenSetup {
       await TokenStore.save(trimmed);
       this.onSaved(trimmed);
     } catch (e) {
-      this.error = '保存失败，请重试';
+      this.error = this.stringOf($r('app.string.token_error_save'));
     } finally {
       this.saving = false;
     }
+  }
+
+  /** 资源 → 当前语言的纯文案 */
+  private stringOf(res: Resource): string {
+    return resText(this.getUIContext(), res);
   }
 }

@@ -6,7 +6,8 @@ import { promptAction } from '@kit.ArkUI';
 import { NotificationItem } from '../models/GitHubModels';
 import { NotificationsService } from '../services/NotificationsService';
 import { StateView } from '../components/StateView';
-import { relativeTime, notificationTypeLabel } from '../utils/Format';
+import { timeParts, notificationTypeKey, TimeParts } from '../utils/Format';
+import { resText } from '../utils/I18n';
 
 @ComponentV2
 export struct InboxView {
@@ -44,7 +45,7 @@ export struct InboxView {
 
   private markRead(item: NotificationItem): void {
     if (!item.unread) {
-      promptAction.showToast({ message: '详情页将在后续 Spec 实现' });
+      promptAction.showToast({ message: $r('app.string.inbox_detail_coming') });
       return;
     }
     NotificationsService.markThreadRead(this.token, item.threadId)
@@ -61,11 +62,67 @@ export struct InboxView {
           };
           return copy;
         });
-        promptAction.showToast({ message: '已标记为已读' });
+        promptAction.showToast({ message: $r('app.string.inbox_marked_read') });
       })
       .catch((e: Error) => {
-        promptAction.showToast({ message: `标记失败: ${e.message}` });
+        promptAction.showToast({ message: this.fmt($r('app.string.inbox_mark_failed'), e.message) });
       });
+  }
+
+  /** 带 %1$s 格式化：资源模板 + 参数 → 当前语言文案 */
+  private fmt(res: Resource, arg: string): string {
+    return resText(this.getUIContext(), res, arg);
+  }
+
+  /** 资源 → 当前语言的纯文案 */
+  private stringOf(res: Resource): string {
+    return resText(this.getUIContext(), res);
+  }
+
+  /** 通知副行：本地化类型 · reason（API 原文）· 相对时间 */
+  private subjectLine(item: NotificationItem): string {
+    const type = this.notifTypeLabel(item.subjectType);
+    const parts = timeParts(item.updatedAt, Date.now());
+    const time = parts === null ? '' : this.timeText(parts);
+    return `${type} · ${item.reason} · ${time}`;
+  }
+
+  /** subject.type → 本地化标签；未知 key 透传原文（Spec 012） */
+  private notifTypeLabel(subjectType: string): string {
+    const ui = this.getUIContext();
+    switch (notificationTypeKey(subjectType)) {
+      case 'issue':
+        return resText(ui, $r('app.string.notif_type_issue'));
+      case 'pr':
+        return resText(ui, $r('app.string.notif_type_pr'));
+      case 'release':
+        return resText(ui, $r('app.string.notif_type_release'));
+      case 'ci':
+        return resText(ui, $r('app.string.notif_type_ci'));
+      case 'discussion':
+        return resText(ui, $r('app.string.notif_type_discussion'));
+      case 'security':
+        return resText(ui, $r('app.string.notif_type_security'));
+      default:
+        return subjectType;
+    }
+  }
+
+  /** 相对时间结构化数据 → 当前语言文案（%1$d 位置占位） */
+  private timeText(parts: TimeParts): string {
+    const ui = this.getUIContext();
+    switch (parts.unit) {
+      case 'just_now':
+        return resText(ui, $r('app.string.time_just_now'));
+      case 'minute':
+        return resText(ui, $r('app.string.time_minutes_ago'), parts.value);
+      case 'hour':
+        return resText(ui, $r('app.string.time_hours_ago'), parts.value);
+      case 'day':
+        return resText(ui, $r('app.string.time_days_ago'), parts.value);
+      case 'month':
+        return resText(ui, $r('app.string.time_months_ago'), parts.value);
+    }
   }
 
   @Builder
@@ -99,7 +156,7 @@ export struct InboxView {
           .fontColor($r('app.color.text_primary'))
           .maxLines(2)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
-        Text(`${notificationTypeLabel(item.subjectType)} · ${item.reason} · ${relativeTime(item.updatedAt, Date.now())}`)
+        Text(this.subjectLine(item))
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
       }
@@ -123,8 +180,8 @@ export struct InboxView {
         .padding($r('app.float.page_padding'))
 
       Row({ space: 8 }) {
-        this.filterTab('All', this.all, (): void => this.switchFilter(true))
-        this.filterTab('Unread', !this.all, (): void => this.switchFilter(false))
+        this.filterTab(this.stringOf($r('app.string.inbox_filter_all')), this.all, (): void => this.switchFilter(true))
+        this.filterTab(this.stringOf($r('app.string.inbox_filter_unread')), !this.all, (): void => this.switchFilter(false))
       }
       .width('100%')
       .padding({ left: 16, right: 16, bottom: 8 })
@@ -140,7 +197,7 @@ export struct InboxView {
               loading: this.loading,
               error: this.errorMsg,
               empty: !this.loading && this.errorMsg === '',
-              emptyText: '暂无通知'
+              emptyText: $r('app.string.inbox_empty')
             })
           }
         }

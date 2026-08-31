@@ -3,7 +3,7 @@
  * 运行于模拟器（aa test），与主代码同一编译单元，可直接 import main ets。
  */
 import { describe, it, expect } from '@ohos/hypium';
-import { relativeTime, contributionLevelColor, notificationTypeLabel } from '../../../main/ets/utils/Format';
+import { timeParts, contributionLevelColor, notificationTypeKey } from '../../../main/ets/utils/Format';
 import { Json } from '../../../main/ets/utils/Json';
 import { mapUser, mapRepo, mapCalendar, mapHomeOverview, mapNotifications } from '../../../main/ets/models/GitHubModels';
 import { buildNotificationsPath } from '../../../main/ets/services/NotificationsService';
@@ -19,24 +19,35 @@ const NOW = Date.parse('2026-08-31T12:00:00Z');
 
 export default function logicTest(testsuiteName: string) {
   describe(testsuiteName, () => {
-    it('relativeTime_justNow', 0, () => {
-      expect(relativeTime('2026-08-31T11:59:50Z', NOW)).assertEqual('刚刚');
+    it('timeParts_justNow', 0, () => {
+      const parts = timeParts('2026-08-31T11:59:50Z', NOW);
+      expect(parts !== null).assertTrue();
+      expect(parts?.value).assertEqual(0);
+      expect(parts?.unit).assertEqual('just_now');
     });
-    it('relativeTime_minutes', 0, () => {
-      expect(relativeTime('2026-08-31T11:55:00Z', NOW)).assertEqual('5 分钟前');
+    it('timeParts_minutes', 0, () => {
+      const parts = timeParts('2026-08-31T11:55:00Z', NOW);
+      expect(parts?.value).assertEqual(5);
+      expect(parts?.unit).assertEqual('minute');
     });
-    it('relativeTime_hours', 0, () => {
-      expect(relativeTime('2026-08-31T09:00:00Z', NOW)).assertEqual('3 小时前');
+    it('timeParts_hours', 0, () => {
+      const parts = timeParts('2026-08-31T09:00:00Z', NOW);
+      expect(parts?.value).assertEqual(3);
+      expect(parts?.unit).assertEqual('hour');
     });
-    it('relativeTime_days', 0, () => {
-      expect(relativeTime('2026-08-29T12:00:00Z', NOW)).assertEqual('2 天前');
+    it('timeParts_days', 0, () => {
+      const parts = timeParts('2026-08-29T12:00:00Z', NOW);
+      expect(parts?.value).assertEqual(2);
+      expect(parts?.unit).assertEqual('day');
     });
-    it('relativeTime_months', 0, () => {
+    it('timeParts_months', 0, () => {
       // 6/1 → 8/31 共 91 天，floor(91/30) = 3 个月
-      expect(relativeTime('2026-06-01T12:00:00Z', NOW)).assertEqual('3 个月前');
+      const parts = timeParts('2026-06-01T12:00:00Z', NOW);
+      expect(parts?.value).assertEqual(3);
+      expect(parts?.unit).assertEqual('month');
     });
-    it('relativeTime_invalid', 0, () => {
-      expect(relativeTime('not-a-date', NOW)).assertEqual('');
+    it('timeParts_invalid', 0, () => {
+      expect(timeParts('not-a-date', NOW)).assertNull();
     });
 
     it('contributionLevelColor_levels', 0, () => {
@@ -47,11 +58,14 @@ export default function logicTest(testsuiteName: string) {
       expect(contributionLevelColor(20)).assertEqual('#216E39');
     });
 
-    it('notificationTypeLabel_mapping', 0, () => {
-      expect(notificationTypeLabel('PullRequest')).assertEqual('PR');
-      expect(notificationTypeLabel('Issue')).assertEqual('Issue');
-      expect(notificationTypeLabel('SecurityAlert')).assertEqual('安全');
-      expect(notificationTypeLabel('Whatever')).assertEqual('Whatever');
+    it('notificationTypeKey_mapping', 0, () => {
+      expect(notificationTypeKey('PullRequest')).assertEqual('pr');
+      expect(notificationTypeKey('Issue')).assertEqual('issue');
+      expect(notificationTypeKey('SecurityAlert')).assertEqual('security');
+      expect(notificationTypeKey('CheckSuite')).assertEqual('ci');
+      expect(notificationTypeKey('Discussion')).assertEqual('discussion');
+      // 未知类型原样返回，UI 层直接展示
+      expect(notificationTypeKey('Whatever')).assertEqual('Whatever');
     });
 
     it('json_helpers_missingFields', 0, () => {

@@ -69,7 +69,7 @@ async function request(method: http.RequestMethod, url: string, token: string, b
         msg = typeof c === 'number' ? `${m} (code ${c})` : m;
       }
     }
-    throw new ApiError(0, `网络请求失败: ${msg}`);
+    throw new ApiError(0, `Network request failed: ${msg}`);
   } finally {
     req.destroy();
   }
@@ -85,16 +85,16 @@ export async function graphql(query: string, variables: Record<string, Object> |
   const resp = await request(http.RequestMethod.POST, GITHUB_GRAPHQL, token, JSON.stringify(payload));
   const root = Json.parse(resp.body);
   if (root === null) {
-    throw new ApiError(resp.code, 'GraphQL 响应解析失败');
+    throw new ApiError(resp.code, 'Failed to parse GraphQL response');
   }
   const errors = Json.arr(root, 'errors');
   if (errors.length > 0) {
     const first = errors[0] as JsonMap;
-    throw new ApiError(resp.code, `GraphQL 错误: ${Json.str(first, 'message')}`);
+    throw new ApiError(resp.code, `GraphQL error: ${Json.str(first, 'message')}`);
   }
   const data = Json.obj(root, 'data');
   if (data === null) {
-    throw new ApiError(resp.code, 'GraphQL 响应缺少 data');
+    throw new ApiError(resp.code, 'GraphQL response missing data');
   }
   return data;
 }

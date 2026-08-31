@@ -22,6 +22,7 @@
 | 009 | [pr-detail.md](009-pr-detail.md) | PR 详情页 | Level 3 | ✅ |
 | 010 | [pr-diff.md](010-pr-diff.md) | PR Diff / Files Changed | Level 3 | ✅ |
 | 011 | [code-viewer.md](011-code-viewer.md) | 代码文件查看页 | Level 3 | ✅ |
+| 012 | [i18n.md](012-i18n.md) | 国际化（英/简中，默认英语） | Level 4 | ✅ |
 
 ## 覆盖率
 

@@ -3,6 +3,7 @@
  * Home（Pinned）、Profile（Repos/Stars）、Explore（Topic 结果）复用。
  */
 import { RepoSummary } from '../models/GitHubModels';
+import { resText } from '../utils/I18n';
 
 @ComponentV2
 export struct RepoCard {
@@ -43,10 +44,10 @@ export struct RepoCard {
       }
 
       Row({ space: 12 }) {
-        Text(`★ ${this.repo?.stargazerCount ?? 0}`)
+        Text(this.starsText())
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
-        Text(`⑂ ${this.repo?.forkCount ?? 0}`)
+        Text(this.forksText())
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
       }
@@ -57,5 +58,15 @@ export struct RepoCard {
     .backgroundColor($r('app.color.card_background'))
     .width('100%')
     .onClick(() => this.onOpen())
+  }
+
+  private starsText(): string {
+    return resText(this.getUIContext(), $r('app.string.repo_stars_fmt'),
+      this.repo?.stargazerCount ?? 0);
+  }
+
+  private forksText(): string {
+    return resText(this.getUIContext(), $r('app.string.repo_forks_fmt'),
+      this.repo?.forkCount ?? 0);
   }
 }
