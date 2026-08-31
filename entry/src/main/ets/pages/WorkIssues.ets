@@ -151,23 +151,23 @@ export struct WorkIssuesView {
       : $r('app.media.oct_check_circle_fill_16');
   }
 
-  private issueColor(issue: WorkIssueItem): string {
+  private issueColor(issue: WorkIssueItem): ResourceColor {
     if (issue.iconKey === 'open') {
       return '#2DA44E';
     }
-    return issue.iconKey === 'not_planned' ? '#8C959F' : '#8250DF';
+    return issue.iconKey === 'not_planned' ? $r('app.color.text_tertiary') : '#8250DF';
   }
 
   @Builder
   filterChip(label: string, menu: MenuElement[], active: boolean) {
     Text(`${label} ⌄`)
       .fontSize($r('app.float.caption_font_size'))
-      .fontColor(active ? '#0969DA' : $r('app.color.text_primary'))
+      .fontColor(active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
       .padding({ left: 12, right: 12, top: 5, bottom: 5 })
       .borderRadius(12)
-      .backgroundColor(active ? '#DDF4FF' : $r('app.color.card_background'))
+      .backgroundColor(active ? $r('app.color.chip_active_bg') : $r('app.color.card_background'))
       .margin({ right: 8 })
-      .border({ width: 1, color: active ? '#B6E1FF' : '#D0D7DE' })
+      .border({ width: 1, color: active ? $r('app.color.chip_active_border') : $r('app.color.border') })
       .bindMenu(menu)
   }
 
@@ -222,7 +222,7 @@ export struct WorkIssuesView {
             }
             .padding({ left: 8, right: 8, top: 2, bottom: 2 })
             .borderRadius(10)
-            .backgroundColor('#F6F8FA')
+            .backgroundColor($r('app.color.chip_bg'))
           }
         }
         .width('100%')
@@ -293,7 +293,7 @@ export struct WorkIssuesView {
                 .padding({ left: 8, right: 8, top: 5, bottom: 5 })
                 .borderRadius(12)
                 .backgroundColor($r('app.color.card_background'))
-                .border({ width: 1, color: '#D0D7DE' })
+                .border({ width: 1, color: $r('app.color.border') })
               if (this.activeFilterCount() > 0) {
                 Circle()
                   .width(12)

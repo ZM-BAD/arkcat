@@ -164,7 +164,7 @@ export struct SearchView {
         .maxLines(3)
         .width('100%')
         .padding(10)
-        .backgroundColor('#F6F8FA')
+        .backgroundColor($r('app.color.chip_bg'))
         .borderRadius(6)
     }
     .padding($r('app.float.card_padding'))

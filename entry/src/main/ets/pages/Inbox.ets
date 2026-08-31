@@ -166,8 +166,8 @@ export struct InboxView {
       .fontColor(active ? $r('app.color.primary') : $r('app.color.text_primary'))
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
       .borderRadius(16)
-      .backgroundColor(active ? '#DBEFE3' : $r('app.color.card_background'))
-      .border({ width: 1, color: '#D0D7DE' })
+      .backgroundColor(active ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))
+      .border({ width: 1, color: $r('app.color.border') })
       .onClick(onClick)
   }
 
@@ -288,8 +288,8 @@ export struct InboxView {
           .fontColor(this.filter === 'repo' ? $r('app.color.primary') : $r('app.color.text_primary'))
           .padding({ left: 12, right: 12, top: 6, bottom: 6 })
           .borderRadius(16)
-          .backgroundColor(this.filter === 'repo' ? '#DBEFE3' : $r('app.color.card_background'))
-          .border({ width: 1, color: '#D0D7DE' })
+          .backgroundColor(this.filter === 'repo' ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))
+          .border({ width: 1, color: $r('app.color.border') })
           .bindMenu(this.repoMenu())
           .onClick(() => {
             this.switchFilter('repo');

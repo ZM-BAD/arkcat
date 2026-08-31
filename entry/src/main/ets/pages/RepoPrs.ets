@@ -1,18 +1,19 @@
 /**
- * 仓库内 Issue 列表页（Spec 007/026 修订）：官方布局对齐——
- * 副标题 owner + 四筛选（状态/Label/Author/Assignee）+ 行样式（状态圈/标题/#N/时间/💬/🔁）。
- * Author/Assignee 为客户端过滤（首屏集合），行点击进入 Issue 详情（Spec 030）。
+ * 仓库内 PR 列表页（Spec 027）：Repo Detail → PRs Tab。
+ * 筛选：状态（All/Open/Closed/Merged）+ Label（GraphQL）+ Author/Assignee（客户端过滤）。
  */
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
-import { IssueSummary, IssuesPage } from '../models/IssuesModels';
-import { IssuesService } from '../services/IssuesService';
+import { RepoPrItem, RepoPrsPage, filterPrsByAuthor, filterPrsByAssignee, repoPrIconKey } from '../models/RepoSubModels';
+import { WorkLabel } from '../models/WorkModels';
+import { RepoSubService } from '../services/RepoSubService';
 import { StateView } from '../components/StateView';
+import { WorkEmptyView } from '../components/WorkEmptyView';
 import { timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
-export struct IssuesListView {
+export struct RepoPrsView {
   @Param owner: string = '';
   @Param name: string = '';
   @Param token: string = '';
@@ -21,9 +22,11 @@ export struct IssuesListView {
   @Local label: string = '';
   @Local author: string = '';
   @Local assignee: string = '';
-  @Local all: IssueSummary[] = [];
-  @Local shown: IssueSummary[] = [];
-  @Local repoLabels: string[] = [];
+  @Local all: RepoPrItem[] = [];
+  @Local shown: RepoPrItem[] = [];
+  @Local labelOptions: string[] = [];
+  @Local authorOptions: string[] = [];
+  @Local assigneeOptions: string[] = [];
   @Local cursor: string = '';
   @Local hasNextPage: boolean = false;
   @Local loading: boolean = true;
@@ -36,10 +39,12 @@ export struct IssuesListView {
   private refresh(): void {
     this.loading = true;
     this.errorMsg = '';
-    IssuesService.fetchRepoIssues(this.token, this.owner, this.name, this.state, this.label, '')
-      .then((page: IssuesPage) => {
-        this.all = page.issues;
-        this.repoLabels = page.repoLabels;
+    RepoSubService.fetchRepoPrs(this.token, this.owner, this.name, this.state, this.label, '')
+      .then((page: RepoPrsPage) => {
+        this.all = page.prs;
+        this.labelOptions = page.labelOptions;
+        this.authorOptions = page.authorOptions;
+        this.assigneeOptions = page.assigneeOptions;
         this.cursor = page.endCursor;
         this.hasNextPage = page.hasNextPage;
         this.applyFilters();
@@ -56,9 +61,9 @@ export struct IssuesListView {
       return;
     }
     this.loading = true;
-    IssuesService.fetchRepoIssues(this.token, this.owner, this.name, this.state, this.label, this.cursor)
-      .then((page: IssuesPage) => {
-        this.all = this.all.concat(page.issues);
+    RepoSubService.fetchRepoPrs(this.token, this.owner, this.name, this.state, this.label, this.cursor)
+      .then((page: RepoPrsPage) => {
+        this.all = this.all.concat(page.prs);
         this.cursor = page.endCursor;
         this.hasNextPage = page.hasNextPage;
         this.applyFilters();
@@ -70,47 +75,10 @@ export struct IssuesListView {
       });
   }
 
-  /** 客户端过滤：Author/Assignee（Spec 027 边界） */
   private applyFilters(): void {
-    const next: IssueSummary[] = [];
-    for (const issue of this.all) {
-      if (this.author !== '' && issue.authorLogin !== this.author) {
-        continue;
-      }
-      if (this.assignee !== '' && issue.assignees.indexOf(this.assignee) < 0) {
-        continue;
-      }
-      next.push(issue);
-    }
-    this.shown = next;
-  }
-
-  /** Author 下拉选项（首屏作者集合） */
-  private authorOptions(): string[] {
-    const seen: Set<string> = new Set();
-    const options: string[] = [];
-    for (const issue of this.all) {
-      if (issue.authorLogin !== '' && !seen.has(issue.authorLogin)) {
-        seen.add(issue.authorLogin);
-        options.push(issue.authorLogin);
-      }
-    }
-    return options;
-  }
-
-  /** Assignee 下拉选项（首屏分配人集合） */
-  private assigneeOptions(): string[] {
-    const seen: Set<string> = new Set();
-    const options: string[] = [];
-    for (const issue of this.all) {
-      for (const a of issue.assignees) {
-        if (!seen.has(a)) {
-          seen.add(a);
-          options.push(a);
-        }
-      }
-    }
-    return options;
+    let list: RepoPrItem[] = filterPrsByAuthor(this.all, this.author);
+    list = filterPrsByAssignee(list, this.assignee);
+    this.shown = list;
   }
 
   private stringOf(res: Resource): string {
@@ -138,16 +106,6 @@ export struct IssuesListView {
     }
   }
 
-  private stateLabel(): string {
-    if (this.state === 'open') {
-      return this.stringOf($r('app.string.issues_state_open'));
-    }
-    if (this.state === 'closed') {
-      return this.stringOf($r('app.string.issues_state_closed'));
-    }
-    return this.stringOf($r('app.string.work_filter_all'));
-  }
-
   private activeFilterCount(): number {
     let c = this.state === 'all' ? 0 : 1;
     if (this.label !== '') {
@@ -162,15 +120,69 @@ export struct IssuesListView {
     return c;
   }
 
-  private issueIcon(issue: IssueSummary): Resource {
-    if (issue.state === 'OPEN') {
-      return $r('app.media.oct_issue_opened_16');
+  private stateLabel(): string {
+    if (this.state === 'open') {
+      return this.stringOf($r('app.string.issues_state_open'));
     }
-    return $r('app.media.oct_issue_closed_16');
+    if (this.state === 'closed') {
+      return this.stringOf($r('app.string.issues_state_closed'));
+    }
+    if (this.state === 'merged') {
+      return this.stringOf($r('app.string.pr_state_merged'));
+    }
+    return this.stringOf($r('app.string.work_filter_all'));
   }
 
-  private issueColor(issue: IssueSummary): ResourceColor {
-    return issue.state === 'OPEN' ? '#2DA44E' : '#8250DF';
+  private prIcon(item: RepoPrItem): Resource {
+    const key = repoPrIconKey(item.state, item.merged);
+    if (key === 'merged') {
+      return $r('app.media.oct_check_circle_fill_16');
+    }
+    return key === 'open' ? $r('app.media.oct_git_pull_request_16') : $r('app.media.oct_x_circle_16');
+  }
+
+  private prColor(item: RepoPrItem): ResourceColor {
+    const key = repoPrIconKey(item.state, item.merged);
+    if (key === 'merged') {
+      return '#8250DF';
+    }
+    return key === 'open' ? '#2DA44E' : $r('app.color.text_tertiary');
+  }
+
+  private labelMenu(): MenuElement[] {
+    const items: MenuElement[] = [];
+    for (const l of this.labelOptions) {
+      items.push({
+        value: l,
+        action: (): void => { this.label = this.label === l ? '' : l; this.refresh(); }
+      });
+    }
+    if (items.length === 0) {
+      items.push({ value: this.stringOf($r('app.string.repo_prs_label')), action: (): void => { } });
+    }
+    return items;
+  }
+
+  private authorMenu(): MenuElement[] {
+    const items: MenuElement[] = [];
+    for (const a of this.authorOptions) {
+      items.push({
+        value: a,
+        action: (): void => { this.author = this.author === a ? '' : a; this.applyFilters(); }
+      });
+    }
+    return items;
+  }
+
+  private assigneeMenu(): MenuElement[] {
+    const items: MenuElement[] = [];
+    for (const a of this.assigneeOptions) {
+      items.push({
+        value: a,
+        action: (): void => { this.assignee = this.assignee === a ? '' : a; this.applyFilters(); }
+      });
+    }
+    return items;
   }
 
   @Builder
@@ -186,81 +198,56 @@ export struct IssuesListView {
       .bindMenu(menu)
   }
 
-  private labelMenu(): MenuElement[] {
-    const items: MenuElement[] = [];
-    for (const l of this.repoLabels) {
-      items.push({
-        value: l,
-        action: (): void => { this.label = this.label === l ? '' : l; this.refresh(); }
-      });
-    }
-    if (items.length === 0) {
-      items.push({ value: this.stringOf($r('app.string.repo_prs_label')), action: (): void => { } });
-    }
-    return items;
-  }
-
-  private authorMenu(): MenuElement[] {
-    const items: MenuElement[] = [];
-    for (const a of this.authorOptions()) {
-      items.push({
-        value: a,
-        action: (): void => { this.author = this.author === a ? '' : a; this.applyFilters(); }
-      });
-    }
-    return items;
-  }
-
-  private assigneeMenu(): MenuElement[] {
-    const items: MenuElement[] = [];
-    for (const a of this.assigneeOptions()) {
-      items.push({
-        value: a,
-        action: (): void => { this.assignee = this.assignee === a ? '' : a; this.applyFilters(); }
-      });
-    }
-    return items;
-  }
-
   @Builder
-  labelChip(label: string) {
-    Text(label)
+  labelChip(label: WorkLabel) {
+    Text(label.name)
       .fontSize(10)
       .fontColor(Color.White)
       .padding({ left: 8, right: 8, top: 2, bottom: 2 })
       .borderRadius(4)
-      .backgroundColor('#57606A')
+      .backgroundColor(label.color !== '' ? label.color : '#57606A')
       .margin({ right: 6 })
   }
 
   @Builder
-  issueCard(issue: IssueSummary) {
+  prRow(item: RepoPrItem) {
     Column({ space: 6 }) {
       Row() {
-        OctIcon({ res: this.issueIcon(issue), iconSize: 22, iconColor: this.issueColor(issue) })
-        Text(issue.title)
+        OctIcon({ res: this.prIcon(item), iconSize: 18, iconColor: this.prColor(item) })
+        Text(item.title)
           .fontSize($r('app.float.body_font_size'))
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.text_primary'))
           .margin({ left: 12 })
-          .maxLines(3)
+          .maxLines(2)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .layoutWeight(1)
-        Text(`#${issue.number}`)
+        Text(`#${item.number}`)
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
-          .margin({ left: 8 })
+          .margin({ left: 6 })
       }
       .width('100%')
 
       Row({ space: 8 }) {
-        ForEach(issue.labels, (label: string) => {
+        ForEach(item.labels, (label: WorkLabel) => {
           this.labelChip(label)
-        }, (label: string) => label)
-        if (issue.commentCount > 0) {
+        }, (label: WorkLabel) => label.name)
+        if (item.checksState === 'SUCCESS') {
+          Row({ space: 4 }) {
+            OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 12, iconColor: $r('app.color.success_text') })
+            Text(this.stringOf($r('app.string.work_pr_checks')))
+              .fontSize($r('app.float.caption_font_size'))
+              .fontColor($r('app.color.success_text'))
+          }
+          .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+          .borderRadius(10)
+          .backgroundColor($r('app.color.checks_success_bg'))
+        }
+        if (item.commentCount > 0) {
           Row({ space: 4 }) {
             OctIcon({ res: $r('app.media.oct_comment_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
-            Text(`${issue.commentCount}`)
+            Text(`${item.commentCount}`)
               .fontSize($r('app.float.caption_font_size'))
               .fontColor($r('app.color.text_secondary'))
           }
@@ -268,19 +255,15 @@ export struct IssuesListView {
           .borderRadius(10)
           .backgroundColor($r('app.color.chip_bg'))
         }
-        if (issue.linkedPrCount > 0) {
-          Row({ space: 4 }) {
-            OctIcon({ res: $r('app.media.oct_git_pull_request_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
-            Text(`${issue.linkedPrCount}`)
-              .fontSize($r('app.float.caption_font_size'))
-              .fontColor($r('app.color.text_secondary'))
-          }
-          .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-          .borderRadius(10)
-          .backgroundColor($r('app.color.chip_bg'))
+        if (item.authorAvatar !== '') {
+          Image(item.authorAvatar)
+            .width(20)
+            .height(20)
+            .borderRadius(10)
+            .backgroundColor($r('app.color.heat_empty'))
         }
         Blank()
-        Text(this.timeText(timeParts(issue.createdAt, Date.now())))
+        Text(this.timeText(timeParts(item.createdAt, Date.now())))
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
       }
@@ -292,7 +275,7 @@ export struct IssuesListView {
     .width('100%')
     .margin({ bottom: 8 })
     .onClick(() => {
-      this.pathStack.pushPathByName('issueDetail', `${this.owner}/${this.name}/${issue.number}`);
+      this.pathStack.pushPathByName('prDetail', `${this.owner}/${this.name}/${item.number}`);
     })
   }
 
@@ -309,7 +292,7 @@ export struct IssuesListView {
           Text(this.owner)
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))
-          Text($r('app.string.repo_issues_link'))
+          Text($r('app.string.home_work_pull_requests'))
             .fontSize($r('app.float.title_font_size'))
             .fontWeight(FontWeight.Bold)
             .fontColor($r('app.color.text_primary'))
@@ -328,7 +311,7 @@ export struct IssuesListView {
         }
         .padding(6)
         .onClick(() => {
-          promptAction.showToast({ message: $r('app.string.issues_new_coming') });
+          promptAction.showToast({ message: $r('app.string.home_feature_coming') });
         })
       }
       .width('100%')
@@ -361,7 +344,8 @@ export struct IssuesListView {
             this.filterChip(this.stateLabel(), [
               { value: this.stringOf($r('app.string.work_filter_all')), action: (): void => { this.state = 'all'; this.refresh(); } },
               { value: this.stringOf($r('app.string.issues_state_open')), action: (): void => { this.state = 'open'; this.refresh(); } },
-              { value: this.stringOf($r('app.string.issues_state_closed')), action: (): void => { this.state = 'closed'; this.refresh(); } }
+              { value: this.stringOf($r('app.string.issues_state_closed')), action: (): void => { this.state = 'closed'; this.refresh(); } },
+              { value: this.stringOf($r('app.string.pr_state_merged')), action: (): void => { this.state = 'merged'; this.refresh(); } }
             ], this.state !== 'all')
 
             this.filterChip(this.label === '' ? this.stringOf($r('app.string.repo_prs_label')) : this.label,
@@ -377,9 +361,9 @@ export struct IssuesListView {
           .margin({ bottom: 12 })
 
           if (this.shown.length > 0) {
-            ForEach(this.shown, (issue: IssueSummary) => {
-              this.issueCard(issue)
-            }, (issue: IssueSummary) => issue.id)
+            ForEach(this.shown, (item: RepoPrItem) => {
+              this.prRow(item)
+            }, (item: RepoPrItem) => item.id)
             if (this.hasNextPage) {
               Text($r('app.string.issues_load_more'))
                 .fontSize($r('app.float.body_font_size'))
@@ -390,7 +374,7 @@ export struct IssuesListView {
           } else if (this.loading || this.errorMsg !== '') {
             StateView({ loading: this.loading, error: this.errorMsg, onRetry: () => this.refresh() })
           } else {
-            StateView({ empty: true, emptyText: $r('app.string.issues_empty') })
+            WorkEmptyView({ iconText: '🐱', title: $r('app.string.repo_prs_empty') })
           }
         }
         .padding({ left: 16, right: 16, bottom: 16 })

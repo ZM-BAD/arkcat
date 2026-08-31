@@ -192,10 +192,10 @@ export struct HomeView {
       .width('100%')
       .height(44)
       .fontSize($r('app.float.caption_font_size'))
-      .fontColor('#0969DA')
+      .fontColor($r('app.color.link_blue'))
       .backgroundColor(Color.Transparent)
       .borderRadius(8)
-      .border({ width: 1, color: '#D0D7DE' })
+      .border({ width: 1, color: $r('app.color.border') })
       .onClick(() => this.comingSoon())
   }
 
@@ -220,9 +220,9 @@ export struct HomeView {
     .width('100%')
   }
 
-  /** Shortcuts 圆形图标：浅色圆底 + 深色字形 */
+  /** Shortcuts 圆形图标：浅色圆底 + 深色字形（bg/fg 走语义色 token） */
   @Builder
-  shortcutGlyph(iconRes: Resource, bg: string, fg: string) {
+  shortcutGlyph(iconRes: Resource, bg: ResourceColor, fg: ResourceColor) {
     Stack() {
       OctIcon({ res: iconRes, iconSize: 14, iconColor: fg })
     }
@@ -244,12 +244,12 @@ export struct HomeView {
 
     Column({ space: 12 }) {
       Row() {
-        this.shortcutGlyph($r('app.media.oct_issue_opened_16'), '#E7F0FF', '#2DA44E')
-        this.shortcutGlyph($r('app.media.oct_git_pull_request_16'), '#E6F4EA', '#3C78D8')
-        this.shortcutGlyph($r('app.media.oct_comment_discussion_16'), '#F3E6FF', '#8250DF')
-        this.shortcutGlyph($r('app.media.oct_project_16'), '#FFF4D6', '#57606A')
-        this.shortcutGlyph($r('app.media.oct_organization_16'), '#FFF0E6', '#E87B2E')
-        this.shortcutGlyph($r('app.media.oct_star_fill_16'), '#FFE6E6', '#B88700')
+        this.shortcutGlyph($r('app.media.oct_issue_opened_16'), $r('app.color.shortcut_issue_bg'), '#2DA44E')
+        this.shortcutGlyph($r('app.media.oct_git_pull_request_16'), $r('app.color.shortcut_pr_bg'), '#3C78D8')
+        this.shortcutGlyph($r('app.media.oct_comment_discussion_16'), $r('app.color.shortcut_discussion_bg'), '#8250DF')
+        this.shortcutGlyph($r('app.media.oct_project_16'), $r('app.color.shortcut_project_bg'), '#57606A')
+        this.shortcutGlyph($r('app.media.oct_organization_16'), $r('app.color.shortcut_org_bg'), '#E87B2E')
+        this.shortcutGlyph($r('app.media.oct_star_fill_16'), $r('app.color.shortcut_star_bg'), $r('app.color.star_gold'))
       }
       .padding({ left: 8 })
 
@@ -282,13 +282,13 @@ export struct HomeView {
             this.myWorkSection()
 
             Divider()
-              .color('#E5E7EB')
+              .color($r('app.color.divider'))
               .margin({ top: 8 })
 
             this.favoritesSection()
 
             Divider()
-              .color('#E5E7EB')
+              .color($r('app.color.divider'))
               .margin({ top: 8 })
 
             this.shortcutsSection()

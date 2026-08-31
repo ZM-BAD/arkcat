@@ -3,6 +3,9 @@
  * Inbox/Explore/Copilot 内容由 Spec 002/003/004 分支实现，当前为占位视图。
  */
 import { TokenStore } from '../services/TokenStore';
+import { preferences } from '@kit.ArkData';
+import { common } from '@kit.AbilityKit';
+import { applyThemeMode } from '../utils/ThemeMode';
 import { HomeService } from '../services/HomeService';
 import { TokenSetup } from './TokenSetup';
 import { HomeView } from './Home';
@@ -23,6 +26,11 @@ import { ProjectsView } from './Projects';
 import { TopRepositoriesView } from './TopRepositories';
 import { OrganizationsView } from './Organizations';
 import { StarredRepositoriesView } from './StarredRepositories';
+import { RepoPrsView } from './RepoPrs';
+import { RepoCommitsView } from './RepoCommits';
+import { RepoReleasesView } from './RepoReleases';
+import { IssueDetailView } from './IssueDetail';
+import { PrDetailView } from './PrDetail';
 
 @Entry
 @Component
@@ -33,12 +41,21 @@ struct Index {
   @State profileLogin: string = '';
   @State repoOwner: string = '';
   @State repoName: string = '';
+  @State detailNumber: number = 0;
   @State inboxHasUnread: boolean = false;
   /** My Work 配置变更计数器：Edit My Work SAVE 后递增，泵到 HomeView 触发重渲染 */
   @State homeWorkVersion: number = 0;
   private pathStack: NavPathStack = new NavPathStack();
 
   aboutToAppear(): void {
+    // 启动恢复主题（Spec 026 三态：system/light/dark）
+    preferences.getPreferences(this.getUIContext().getHostContext() as common.UIAbilityContext, 'starraft_settings')
+      .then((pref: preferences.Preferences) => {
+        const mode = pref.getSync('theme_mode', 'system') as string;
+        applyThemeMode(this.getUIContext().getHostContext() as common.UIAbilityContext | undefined, mode);
+      })
+      .catch(() => {
+      });
     TokenStore.load().then((token: string) => {
       this.token = token;
       this.checked = true;
@@ -232,6 +249,100 @@ struct Index {
     .title($r('app.string.nav_starred_title'))
   }
 
+  /** 路由参数解析：owner/name[/number] */
+  private parseRouteParam(param: string): void {
+    const parts = param.split('/');
+    if (parts.length >= 2) {
+      this.repoOwner = parts[0];
+      this.repoName = parts[1];
+    }
+    if (parts.length >= 3) {
+      this.detailNumber = Number(parts[2]);
+    }
+  }
+
+  @Builder
+  repoPrsDestination() {
+    NavDestination() {
+      RepoPrsView({
+        owner: this.repoOwner,
+        name: this.repoName,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseRouteParam(context.pathInfo.param as string);
+    })
+    .title($r('app.string.home_work_pull_requests'))
+  }
+
+  @Builder
+  repoCommitsDestination() {
+    NavDestination() {
+      RepoCommitsView({
+        owner: this.repoOwner,
+        name: this.repoName,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseRouteParam(context.pathInfo.param as string);
+    })
+    .title($r('app.string.repo_commits_title'))
+  }
+
+  @Builder
+  repoReleasesDestination() {
+    NavDestination() {
+      RepoReleasesView({
+        owner: this.repoOwner,
+        name: this.repoName,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseRouteParam(context.pathInfo.param as string);
+    })
+    .title($r('app.string.repo_releases_title'))
+  }
+
+  @Builder
+  issueDetailDestination() {
+    NavDestination() {
+      IssueDetailView({
+        owner: this.repoOwner,
+        name: this.repoName,
+        number: this.detailNumber,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseRouteParam(context.pathInfo.param as string);
+    })
+    .title($r('app.string.nav_issues_title'))
+  }
+
+  @Builder
+  prDetailDestination() {
+    NavDestination() {
+      PrDetailView({
+        owner: this.repoOwner,
+        name: this.repoName,
+        number: this.detailNumber,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseRouteParam(context.pathInfo.param as string);
+    })
+    .title($r('app.string.home_work_pull_requests'))
+  }
+
   @Builder
   destinationMap(name: string) {
     if (name === 'userProfile') {
@@ -260,6 +371,16 @@ struct Index {
       this.organizationsDestination()
     } else if (name === 'starred') {
       this.starredDestination()
+    } else if (name === 'repoPrs') {
+      this.repoPrsDestination()
+    } else if (name === 'repoCommits') {
+      this.repoCommitsDestination()
+    } else if (name === 'repoReleases') {
+      this.repoReleasesDestination()
+    } else if (name === 'issueDetail') {
+      this.issueDetailDestination()
+    } else if (name === 'prDetail') {
+      this.prDetailDestination()
     }
   }
 
@@ -308,7 +429,7 @@ struct Index {
           Circle()
             .width(8)
             .height(8)
-            .fill('#0969DA')
+            .fill($r('app.color.link_blue'))
             .margin({ top: -2, right: -2 })
         }
       }

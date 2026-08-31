@@ -149,11 +149,11 @@ export struct WorkPrsView {
     return item.iconKey === 'open' ? $r('app.media.oct_git_pull_request_16') : $r('app.media.oct_x_circle_16');
   }
 
-  private prColor(item: WorkPrItem): string {
+  private prColor(item: WorkPrItem): ResourceColor {
     if (item.iconKey === 'merged') {
       return '#8250DF';
     }
-    return item.iconKey === 'open' ? '#2DA44E' : '#8C959F';
+    return item.iconKey === 'open' ? '#2DA44E' : $r('app.color.text_tertiary');
   }
 
   /** Checks 胶囊文案（SUCCESS/FAILURE/PENDING；未知静默，图标由 checksIcon 提供） */
@@ -177,36 +177,36 @@ export struct WorkPrsView {
     return $r('app.media.oct_x_16');
   }
 
-  private checksColor(state: string): string {
+  private checksColor(state: string): ResourceColor {
     if (state === 'SUCCESS') {
-      return '#1A7F37';
+      return $r('app.color.success_text');
     }
     if (state === 'FAILURE' || state === 'ERROR') {
-      return '#CF222E';
+      return $r('app.color.danger_text');
     }
-    return '#9A6700';
+    return $r('app.color.warning_text');
   }
 
-  private checksBg(state: string): string {
+  private checksBg(state: string): ResourceColor {
     if (state === 'SUCCESS') {
-      return '#DAFBE1';
+      return $r('app.color.checks_success_bg');
     }
     if (state === 'FAILURE' || state === 'ERROR') {
-      return '#FFEBE9';
+      return $r('app.color.checks_failure_bg');
     }
-    return '#FFF8C5';
+    return $r('app.color.checks_pending_bg');
   }
 
   @Builder
   filterChip(label: string, menu: MenuElement[], active: boolean) {
     Text(`${label} ⌄`)
       .fontSize($r('app.float.caption_font_size'))
-      .fontColor(active ? '#0969DA' : $r('app.color.text_primary'))
+      .fontColor(active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
       .padding({ left: 12, right: 12, top: 5, bottom: 5 })
       .borderRadius(12)
-      .backgroundColor(active ? '#DDF4FF' : $r('app.color.card_background'))
+      .backgroundColor(active ? $r('app.color.chip_active_bg') : $r('app.color.card_background'))
       .margin({ right: 8 })
-      .border({ width: 1, color: active ? '#B6E1FF' : '#D0D7DE' })
+      .border({ width: 1, color: active ? $r('app.color.chip_active_border') : $r('app.color.border') })
       .bindMenu(menu)
   }
 
@@ -261,7 +261,7 @@ export struct WorkPrsView {
           }
           .padding({ left: 8, right: 8, top: 2, bottom: 2 })
           .borderRadius(10)
-          .backgroundColor('#F6F8FA')
+          .backgroundColor($r('app.color.chip_bg'))
         }
         if (item.reviewCount > 0) {
           Row({ space: 4 }) {
@@ -272,7 +272,7 @@ export struct WorkPrsView {
           }
           .padding({ left: 8, right: 8, top: 2, bottom: 2 })
           .borderRadius(10)
-          .backgroundColor('#F6F8FA')
+          .backgroundColor($r('app.color.chip_bg'))
         }
       }
       .width('100%')
@@ -341,7 +341,7 @@ export struct WorkPrsView {
                 .padding({ left: 8, right: 8, top: 5, bottom: 5 })
                 .borderRadius(12)
                 .backgroundColor($r('app.color.card_background'))
-                .border({ width: 1, color: '#D0D7DE' })
+                .border({ width: 1, color: $r('app.color.border') })
               if (this.activeFilterCount() > 0) {
                 Circle()
                   .width(12)

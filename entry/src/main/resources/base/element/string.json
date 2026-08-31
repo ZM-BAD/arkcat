@@ -791,6 +791,118 @@
     {
       "name": "time_years_ago",
       "value": "%1$d years ago"
+    },
+    {
+      "name": "repo_prs_label",
+      "value": "Label"
+    },
+    {
+      "name": "repo_prs_author",
+      "value": "Author"
+    },
+    {
+      "name": "repo_prs_assignee",
+      "value": "Assignee"
+    },
+    {
+      "name": "repo_prs_empty",
+      "value": "There aren't any pull requests."
+    },
+    {
+      "name": "repo_commits_title",
+      "value": "Commits"
+    },
+    {
+      "name": "repo_commits_authored",
+      "value": "authored"
+    },
+    {
+      "name": "repo_commits_empty",
+      "value": "No commits yet"
+    },
+    {
+      "name": "repo_releases_title",
+      "value": "Releases"
+    },
+    {
+      "name": "releases_latest",
+      "value": "Latest release"
+    },
+    {
+      "name": "releases_all",
+      "value": "All Releases"
+    },
+    {
+      "name": "releases_released_this",
+      "value": "released this %1$s"
+    },
+    {
+      "name": "releases_view_details",
+      "value": "View release details"
+    },
+    {
+      "name": "releases_empty",
+      "value": "No releases"
+    },
+    {
+      "name": "issue_detail_comments",
+      "value": "%1$d comments"
+    },
+    {
+      "name": "issue_detail_read_more",
+      "value": "Read more"
+    },
+    {
+      "name": "pr_changes_title",
+      "value": "Changes"
+    },
+    {
+      "name": "pr_files_changed",
+      "value": "%1$d files changed"
+    },
+    {
+      "name": "pr_commits_count",
+      "value": "%1$d commit"
+    },
+    {
+      "name": "pr_status_title",
+      "value": "Status"
+    },
+    {
+      "name": "pr_reviews",
+      "value": "Reviews"
+    },
+    {
+      "name": "pr_reviews_none",
+      "value": "None requested"
+    },
+    {
+      "name": "pr_all_checks_passed",
+      "value": "All checks have passed"
+    },
+    {
+      "name": "pr_branch_merged",
+      "value": "Branch merged"
+    },
+    {
+      "name": "pr_merged_commit",
+      "value": "merged commit %1$s into %2$s"
+    },
+    {
+      "name": "pr_delete_branch",
+      "value": "DELETE BRANCH"
+    },
+    {
+      "name": "pr_conversation_title",
+      "value": "Conversation"
+    },
+    {
+      "name": "pr_merged_badge",
+      "value": "Merged"
+    },
+    {
+      "name": "comment_button",
+      "value": "COMMENT"
     }
   ]
 }

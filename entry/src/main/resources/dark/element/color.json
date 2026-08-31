@@ -2,39 +2,39 @@
   "color": [
     {
       "name": "start_window_background",
-      "value": "#FFFFFF"
+      "value": "#010409"
     },
     {
       "name": "primary",
-      "value": "#238636"
+      "value": "#3FB950"
     },
     {
       "name": "text_primary",
-      "value": "#1F2328"
+      "value": "#F0F6FC"
     },
     {
       "name": "text_secondary",
-      "value": "#656D76"
+      "value": "#8D96A0"
     },
     {
       "name": "divider",
-      "value": "#D0D7DE"
+      "value": "#30363D"
     },
     {
       "name": "bg_page",
-      "value": "#F6F8FA"
+      "value": "#010409"
     },
     {
       "name": "card_background",
-      "value": "#FFFFFF"
+      "value": "#0D1117"
     },
     {
       "name": "badge_red",
-      "value": "#D1242F"
+      "value": "#F85149"
     },
     {
       "name": "heat_empty",
-      "value": "#EBEDF0"
+      "value": "#21262D"
     },
     {
       "name": "repo_language_blue",
@@ -42,91 +42,91 @@
     },
     {
       "name": "link_blue",
-      "value": "#0969DA"
+      "value": "#58A6FF"
     },
     {
       "name": "border",
-      "value": "#D0D7DE"
+      "value": "#30363D"
     },
     {
       "name": "chip_bg",
-      "value": "#F6F8FA"
+      "value": "#21262D"
     },
     {
       "name": "chip_active_bg",
-      "value": "#DDF4FF"
+      "value": "#1F6FEB4D"
     },
     {
       "name": "chip_active_border",
-      "value": "#B6E1FF"
+      "value": "#1F6FEB"
     },
     {
       "name": "chip_active_green_bg",
-      "value": "#DBEFE3"
+      "value": "#12261E"
     },
     {
       "name": "label_badge_bg",
-      "value": "#DBEAFE"
+      "value": "#143B63"
     },
     {
       "name": "text_tertiary",
-      "value": "#8C959F"
+      "value": "#8D96A0"
     },
     {
       "name": "star_gold",
-      "value": "#B88700"
+      "value": "#E3B341"
     },
     {
       "name": "success_text",
-      "value": "#1A7F37"
+      "value": "#3FB950"
     },
     {
       "name": "danger_text",
-      "value": "#CF222E"
+      "value": "#F85149"
     },
     {
       "name": "warning_text",
-      "value": "#9A6700"
+      "value": "#D29922"
     },
     {
       "name": "checks_success_bg",
-      "value": "#DAFBE1"
+      "value": "#12261E"
     },
     {
       "name": "checks_failure_bg",
-      "value": "#FFEBE9"
+      "value": "#36181C"
     },
     {
       "name": "checks_pending_bg",
-      "value": "#FFF8C5"
+      "value": "#3A2D00"
     },
     {
       "name": "discussion_badge_bg",
-      "value": "#F3E6FF"
+      "value": "#341E4D"
     },
     {
       "name": "shortcut_issue_bg",
-      "value": "#E7F0FF"
+      "value": "#2DA44E26"
     },
     {
       "name": "shortcut_pr_bg",
-      "value": "#E6F4EA"
+      "value": "#3C78D826"
     },
     {
       "name": "shortcut_discussion_bg",
-      "value": "#F3E6FF"
+      "value": "#8250DF33"
     },
     {
       "name": "shortcut_project_bg",
-      "value": "#FFF4D6"
+      "value": "#57606A40"
     },
     {
       "name": "shortcut_org_bg",
-      "value": "#FFF0E6"
+      "value": "#E87B2E33"
     },
     {
       "name": "shortcut_star_bg",
-      "value": "#FFE6E6"
+      "value": "#E3B34133"
     }
   ]
 }

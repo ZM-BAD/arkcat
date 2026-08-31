@@ -791,6 +791,118 @@
     {
       "name": "time_years_ago",
       "value": "%1$d 年前"
+    },
+    {
+      "name": "repo_prs_label",
+      "value": "标签"
+    },
+    {
+      "name": "repo_prs_author",
+      "value": "作者"
+    },
+    {
+      "name": "repo_prs_assignee",
+      "value": "分配人"
+    },
+    {
+      "name": "repo_prs_empty",
+      "value": "暂无拉取请求。"
+    },
+    {
+      "name": "repo_commits_title",
+      "value": "提交"
+    },
+    {
+      "name": "repo_commits_authored",
+      "value": "提交者"
+    },
+    {
+      "name": "repo_commits_empty",
+      "value": "暂无提交"
+    },
+    {
+      "name": "repo_releases_title",
+      "value": "版本"
+    },
+    {
+      "name": "releases_latest",
+      "value": "最新版本"
+    },
+    {
+      "name": "releases_all",
+      "value": "全部版本"
+    },
+    {
+      "name": "releases_released_this",
+      "value": "于 %1$s 发布"
+    },
+    {
+      "name": "releases_view_details",
+      "value": "查看发布详情"
+    },
+    {
+      "name": "releases_empty",
+      "value": "暂无版本"
+    },
+    {
+      "name": "issue_detail_comments",
+      "value": "%1$d 条评论"
+    },
+    {
+      "name": "issue_detail_read_more",
+      "value": "阅读更多"
+    },
+    {
+      "name": "pr_changes_title",
+      "value": "变更"
+    },
+    {
+      "name": "pr_files_changed",
+      "value": "%1$d 个文件变更"
+    },
+    {
+      "name": "pr_commits_count",
+      "value": "%1$d 个提交"
+    },
+    {
+      "name": "pr_status_title",
+      "value": "状态"
+    },
+    {
+      "name": "pr_reviews",
+      "value": "审查"
+    },
+    {
+      "name": "pr_reviews_none",
+      "value": "未请求"
+    },
+    {
+      "name": "pr_all_checks_passed",
+      "value": "所有检查已通过"
+    },
+    {
+      "name": "pr_branch_merged",
+      "value": "分支已合并"
+    },
+    {
+      "name": "pr_merged_commit",
+      "value": "将提交 %1$s 合并到 %2$s"
+    },
+    {
+      "name": "pr_delete_branch",
+      "value": "删除分支"
+    },
+    {
+      "name": "pr_conversation_title",
+      "value": "对话"
+    },
+    {
+      "name": "pr_merged_badge",
+      "value": "已合并"
+    },
+    {
+      "name": "comment_button",
+      "value": "评论"
     }
   ]
 }

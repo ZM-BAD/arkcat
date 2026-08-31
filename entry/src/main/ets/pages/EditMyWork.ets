@@ -84,7 +84,7 @@ export struct EditMyWorkView {
   workRow(item: WorkSection) {
     Row() {
       Toggle({ type: ToggleType.Checkbox, isOn: item.visible })
-        .selectedColor('#0969DA')
+        .selectedColor($r('app.color.link_blue'))
         .width(22)
         .height(22)
         .onChange((isOn: boolean) => {
@@ -146,7 +146,7 @@ export struct EditMyWorkView {
         Text($r('app.string.edit_work_save'))
           .fontSize($r('app.float.body_font_size'))
           .fontWeight(FontWeight.Medium)
-          .fontColor('#0969DA')
+          .fontColor($r('app.color.link_blue'))
           .padding(6)
           .onClick(() => this.save())
         Stack() {
