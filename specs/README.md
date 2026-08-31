@@ -24,6 +24,7 @@
 | 011 | [code-viewer.md](011-code-viewer.md) | 代码文件查看页 | Level 3 | ✅ |
 | 012 | [i18n.md](012-i18n.md) | 国际化（英/简中，默认英语） | Level 4 | ✅ |
 | 013 | [home-official.md](013-home-official.md) | Home Tab 官方布局（My Work/Favorites/Shortcuts） | Level 1 | ✅ |
+| 014 | [settings.md](014-settings.md) | Settings 设置页 | Level 3 | ✅ implemented |
 
 ## 覆盖率
 

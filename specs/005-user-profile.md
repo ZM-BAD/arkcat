@@ -1,15 +1,21 @@
 # Spec 005: User Profile（用户个人主页）
 
 > BFS Level: 3
-> 关联截图: Home → 点击头像
-> 上游 Spec: 001
-> 状态: ✅ implemented（2026-08-31，真实 GitHub PAT 数据全页验收通过）
+> 关联截图: 官方 App 个人主页（share/gear 顶栏 + 状态行 + 元信息 + Pinned 横滑双列 + 三计数入口）
+> 上游 Spec: 013（Home 头像进入）
+> 状态: implemented（2026-08-31，官方布局对齐验收通过）
 
 ---
 
 ## 一、页面/功能概述
 
-用户个人主页，展示头像、用户名、bio、状态、组织信息、社交计数。包含 Overview / Repos / Projects / Packages / Stars 五个子 Tab。
+用户个人主页。对照官方 App 布局：
+
+- **顶栏**：← 返回 + 分享/设置图标
+- **Header 卡**：头像/名字/@login + 状态行（Focussing·编辑）+ bio + 元信息（位置/邮箱/链接/关注数）
+- **Pinned 区**：横滑双列卡片
+- **计数入口**：Repositories / Organizations / Starred 三个彩色入口（含计数）
+- 原 Overview/Repos/Stars Tab 内容保留（日历+Pinned 收在 Overview 内），三计数入口点击展开对应列表
 
 ---
 
@@ -17,24 +23,29 @@
 
 ```text
 ┌─────────────────────────────────────┐
-│  ←   @username                ···    │
+│  ←  @ZM-BAD                🔗 ⚙      │  ← 返回/分享/设置
 ├─────────────────────────────────────┤
-│         ┌─────────┐                 │
-│         │  (头像)  │  🟢 Status     │
-│         └─────────┘                 │
-│       Display Name                  │
-│       @username                     │
-│  Bio text                           │
-│  🏢 Organization                    │
-│  📍 Location                        │
-│  🔗 Website                         │
-│  👥 N following · M followers       │
+│  ┌───────────────────────────────┐  │
+│  │ 🖼 周铭   @ZM-BAD             │  │
+│  │ ⚡ Focusing              ✏    │  │  ← 状态行+编辑
+│  │ Backend developer...           │  │
+│  │ 📍 Hangzhou                    │  │
+│  │ ✉ prozm.bad@gmail.com          │  │
+│  │ 🔗 https://zmbad.me            │  │
+│  │ 🔗 @zm_bad                     │  │
+│  │ 👥 33 followers · 61 following │  │
+│  └───────────────────────────────┘  │
 ├─────────────────────────────────────┤
-│  [ Overview ] [ Repos ] [ Projects ] [ Packages ] [ Stars ] │
+│  📌 Pinned  (横滑双列)               │
+│  ┌─────┐ ┌─────┐                    │
+│  │DAG  │ │kuan │  →                │
+│  └─────┘ └─────┘                    │
 ├─────────────────────────────────────┤
-│  📊 Contribution Calendar           │
-│  📌 Pinned Repositories             │
-│  [ Customize your pins ]            │
+│  ▶ Repositories            8        │  ← 计数入口
+│  ▶ Organizations           0        │
+│  ▶ Starred                93        │
+├─────────────────────────────────────┤
+│  展开内容（日历/Pinned/仓库列表/Star 列表）│
 └─────────────────────────────────────┘
 ```
 
@@ -42,22 +53,20 @@
 
 ## 三、元素清单
 
-| # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
-|---|------|------|------|--------|-------------|------|
-| 1 | App Bar 左 | ← 返回 | 回退 | ✅ 纯 UI | — | — |
-| 2 | App Bar 右 | ··· 更多菜单 | Follow/Block/举报 | ⚠️ | 部分 mutation 可行 | — |
-| 3 | 头像区 | 大头像 | 展示 | ✅ | `user.avatarUrl` | — |
-| 4 | 头像区 | 🟢 状态指示灯 + 状态文字 | 用户状态 | ✅ | `user.status { message emoji }` | — |
-| 5 | 用户名区 | 显示名 + @用户名 | 纯展示 | ✅ | `user { name login }` | — |
-| 6 | bio | 个人简介文字 | 纯展示 | ✅ | `user.bio` | — |
-| 7 | 元信息行 | 🏢 Organization | 纯展示 | ✅ | `user.company` | — |
-| 8 | 元信息行 | 📍 Location | 纯展示 | ✅ | `user.location` | — |
-| 9 | 元信息行 | 🔗 Website | 打开浏览器 | ✅ | `user.websiteUrl` | — |
-| 10 | 社交计数 | following / followers | 点击进入列表 | ✅ | `user.following.totalCount` | — |
-| 11 | Tab 栏 | Overview / Repos / Projects / Packages / Stars | 切换内容 | ⚠️ | 见下 | Packages 跳过 |
-| 12 | 贡献区 | Contribution Calendar | 日历热力图 | ✅ | `user.contributionsCollection` | — |
-| 13 | Pinned 区 | Pinned 仓库卡片 | 点击进入仓库 | ✅ | `user.pinnedItems` | — |
-| 14 | Pinned 区 | Customize your pins | 编辑 Pinned | ✅ | `updatePinnedItems` mutation | — |
+| # | 位置 | 元素 | 功能 | 可行性 | 接口 | 备注 |
+|---|------|------|------|--------|------|------|
+| 1 | 顶栏左 | ← 返回 | 回退 | ✅ 纯 UI | — | — |
+| 2 | 顶栏右 | 🔗 分享 | 分享用户主页 | ⚠️ | — | 点击提示（系统分享 API 后续） |
+| 3 | 顶栏右 | ⚙ 设置 | 进入 Settings 页 | ✅ | — | 新路由 settings |
+| 4 | Header | 头像/名字/@login | 纯展示 | ✅ | `user.avatarUrl/name/login` | — |
+| 5 | Header | 状态行（emoji+message+编辑笔） | 观众可见状态 | ✅ | `user.status { emoji message }` | 编辑笔仅视图 |
+| 6 | Header | bio | 纯展示 | ✅ | `user.bio` | — |
+| 7 | Header | 元信息行：位置/链接/X 账号 | 纯展示 | ✅ | `user.location/websiteUrl/twitterUsername` | email 需 user:email scope 移出查询 |
+| 8 | Header | followers/following 计数 | 纯展示 | ✅ | `user.followers/following.totalCount` | — |
+| 9 | Pinned 区 | 横滑双列仓库卡 | 打开仓库 | ✅ | `user.pinnedItems` | Grid 横向滚动 |
+| 10 | 计数入口 | Repositories/Organizations/Starred + 计数 | 展开对应列表 | ✅ | `user { repositories.totalCount organizations.totalCount starredRepositories.totalCount }` | 点击展开下方视图 |
+| 11 | 正文区 | 展开视图（Overview=日历+Pinned / Repos / Stars） | 内容区 | ✅ | 现有查询 | Tab 改展开式 |
+| 12 | ··· 菜单 | Follow/Unfollow | 关注动作 | ✅ | `user.viewerIsFollowing` + mutation | 保留原菜单 |
 
 ---
 
@@ -66,59 +75,17 @@
 ```graphql
 query UserProfile($login: String!) {
   user(login: $login) {
-    avatarUrl
-    name
-    login
-    bio
-    company
-    location
-    websiteUrl
-    status { message emoji indicatesLimitedAvailability }
+    id
+    avatarUrl name login bio company location websiteUrl email twitterUsername
+    status { emoji message }
     followers { totalCount }
     following { totalCount }
-    starredRepositories { totalCount }
-
-    pinnedItems(first: 6, types: [REPOSITORY]) {
-      nodes {
-        ... on Repository {
-          nameWithOwner
-          description
-          stargazerCount
-          forkCount
-          primaryLanguage { name color }
-        }
-      }
-    }
-
-    contributionsCollection {
-      contributionCalendar {
-        totalContributions
-        weeks { contributionDays { date contributionCount color } }
-      }
-    }
-
-    repositories(first: 30, orderBy: { field: UPDATED_AT, direction: DESC }) {
-      totalCount
-      nodes {
-        nameWithOwner
-        description
-        stargazerCount
-        forkCount
-        primaryLanguage { name color }
-        updatedAt
-      }
-    }
-
-    starredRepositories(first: 30) {
-      totalCount
-      nodes {
-        nameWithOwner
-        description
-        stargazerCount
-        forkCount
-        primaryLanguage { name color }
-      }
-    }
+    viewerIsFollowing
+    pinnedItems(first: 6, types: [REPOSITORY]) { nodes { ... on Repository { id nameWithOwner description stargazerCount forkCount primaryLanguage { name color } } } }
+    contributionsCollection { contributionCalendar { totalContributions weeks { contributionDays { date contributionCount color } } } }
+    repositories(first: 30, orderBy: { field: UPDATED_AT, direction: DESC }) { totalCount nodes { id nameWithOwner description stargazerCount forkCount primaryLanguage { name color } } }
+    starredRepositories(first: 30) { totalCount nodes { id nameWithOwner description stargazerCount forkCount primaryLanguage { name color } } }
+    organizations(first: 30) { totalCount }
   }
 }
 ```
@@ -129,26 +96,26 @@ query UserProfile($login: String!) {
 
 | 项 | 原因 | StarRaft 处理方式 |
 |----|------|-------------------|
-| Packages Tab | 无公开用户级 GraphQL 入口 | 不展示该 Tab |
-| Projects Tab | Projects v2 API 较复杂 | MVP 可做 tab 但谨慎跟进 |
-| ··· 更多菜单 | 部分操作需特殊权限 | Follow/Unfollow 支持，其余跳过 |
+| Packages/Projects | 无公开用户级入口 / 超范围 | 不展示（原边界） |
+| Achievements 徽章行 | 官方 App 专有，无公开 API | 不展示 |
+| user.email 字段 | 需 `user:email` scope，普通 repo scope token 会报错 | 移出主查询，邮箱行不展示 |
+| 系统分享 | 分享能力依赖系统能力集成 | 顶栏保留 🔗 图标，点击提示后续 |
+| 编辑状态笔 | 编辑状态需页面级交互 | 图标展示（不触发编辑），后续 Spec |
 
 ---
 
 ## 六、TDD 验收标准
 
-- [x] 用户头像、用户名、bio 正确展示
-- [x] 贡献日历能渲染
-- [x] Pinned 仓库列表能展示
-- [ ] Repos Tab 能展示仓库列表
-- [x] Stars Tab 能展示 Star 列表
-- [x] Packages Tab 不展示
+- [x] 顶栏 share/gear 图标渲染，gear 进入 Settings 页（截图验证）
+- [x] 状态行、X 元信息行渲染，缺失字段隐藏（邮箱因 scope 边界不展示）
+- [x] Pinned 横滑双列卡片
+- [x] Repositories/Organizations/Starred 三计数入口渲染且计数正确（8/0/93 实测）
+- [x] base/zh_CN key 对齐；ohosTest 21/21 通过
+- [x] 模拟器截图验收
 
 ---
 
 ## 七、备注
 
-- 12/14 可行
-- 自关注检查：对比 `viewer.login === user.login`
-- 2026-08-31：实现合并自 feature/spec-00X 分支（--no-ff）至 develop，仪器测试 19/19 通过；真实数据类验收项需在应用内配置有效 GitHub PAT 后复核
-- 2026-08-31 真实数据验收：使用 GitHub PAT（模拟器实测）完成以上勾选项；未实测项见「备注」（详情跳转由 Spec 008/011 接管）
+- 状态笔、分享图标：交互为点击提示（后续 Spec），保持功能按钮位置对齐官方
+- 2026-08-31：官方布局对齐完成，截图验收通过

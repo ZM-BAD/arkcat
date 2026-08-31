@@ -12,6 +12,7 @@ import { CopilotView } from './Copilot';
 import { ProfileView } from './Profile';
 import { RepoDetailView } from './RepoDetail';
 import { IssuesListView } from './IssuesList';
+import { SettingsView } from './Settings';
 
 @Entry
 @Component
@@ -109,6 +110,16 @@ struct Index {
   }
 
   @Builder
+  settingsDestination() {
+    NavDestination() {
+      SettingsView({
+        pathStack: this.pathStack
+      })
+    }
+    .title($r('app.string.profile_settings'))
+  }
+
+  @Builder
   destinationMap(name: string) {
     if (name === 'userProfile') {
       this.userProfileDestination()
@@ -116,6 +127,8 @@ struct Index {
       this.repoDetailDestination()
     } else if (name === 'issuesList') {
       this.issuesListDestination()
+    } else if (name === 'settings') {
+      this.settingsDestination()
     }
   }
 

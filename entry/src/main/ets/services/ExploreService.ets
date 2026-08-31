@@ -1,9 +1,11 @@
 /**
- * Explore 服务：Topic 仓库搜索（Spec 003）。
+ * Explore 服务：Discover/Activity/Topic（Spec 003）。
  * Collections 精选集无公开 API，按 Spec 边界隐藏。
  */
 import { graphql } from './GitHttpClient';
 import { TopicSearchResult, mapSearchResult } from '../models/ExploreModels';
+import { RepoSummary, mapRepo } from '../models/GitHubModels';
+import { Json, JsonMap } from '../utils/Json';
 
 const TOPIC_SEARCH_QUERY = `
 query TopicRepositories($query: String!, $first: Int = 20) {
@@ -33,6 +35,21 @@ export function buildTopicQuery(topic: string): string {
   return `topic:${topic}`;
 }
 
+/** 高星推荐搜索串（Spec 003 Recommend for you） */
+export function buildRecommendedQuery(): string {
+  return 'stars:>1000 topic:typescript sort:stars';
+}
+
+/** GraphQL search 响应 → RepoSummary[]（Spec 003 推荐卡） */
+export function mapRecommendation(data: JsonMap): RepoSummary[] {
+  const search = Json.obj(data, 'search') ?? ({} as JsonMap);
+  const repos: RepoSummary[] = [];
+  for (const nodeItem of Json.arr(search, 'nodes')) {
+    repos.push(mapRepo(nodeItem as JsonMap));
+  }
+  return repos;
+}
+
 export class ExploreService {
   /** 搜索某主题下按星标排序的仓库 */
   static async fetchTopicRepositories(token: string, topic: string): Promise<TopicSearchResult> {
@@ -42,5 +59,15 @@ export class ExploreService {
     };
     const data = await graphql(TOPIC_SEARCH_QUERY, variables, token);
     return mapSearchResult(data, topic);
+  }
+
+  /** Activity 推荐仓库（高星热门近似，官方个性化推荐无公开 API） */
+  static async fetchRecommendedRepos(token: string): Promise<RepoSummary[]> {
+    const variables: Record<string, Object> = {
+      'query': buildRecommendedQuery(),
+      'first': 5
+    };
+    const data = await graphql(TOPIC_SEARCH_QUERY, variables, token);
+    return mapRecommendation(data);
   }
 }

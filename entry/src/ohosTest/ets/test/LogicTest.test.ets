@@ -5,7 +5,7 @@
 import { describe, it, expect } from '@ohos/hypium';
 import { timeParts, contributionLevelColor, notificationTypeKey } from '../../../main/ets/utils/Format';
 import { Json } from '../../../main/ets/utils/Json';
-import { mapUser, mapRepo, mapCalendar, mapViewerBasic, mapNotifications } from '../../../main/ets/models/GitHubModels';
+import { mapUser, mapRepo, mapCalendar, mapViewerBasic, mapNotifications, issueNumberFromUrl } from '../../../main/ets/models/GitHubModels';
 import { buildNotificationsPath } from '../../../main/ets/services/NotificationsService';
 import { buildTopicQuery } from '../../../main/ets/services/ExploreService';
 import { mapSearchResult } from '../../../main/ets/models/ExploreModels';
@@ -147,6 +147,17 @@ export default function logicTest(testsuiteName: string) {
     it('buildNotificationsPath_filter', 0, () => {
       expect(buildNotificationsPath(true, 30)).assertEqual('/notifications?all=true&per_page=30');
       expect(buildNotificationsPath(false, 1)).assertEqual('/notifications?all=false&per_page=1');
+      // Spec 002 Focused：participating 模式
+      expect(buildNotificationsPath(true, 30, true)).assertEqual('/notifications?participating=true&per_page=30');
+    });
+
+    it('issueNumberFromUrl_extract', 0, () => {
+      expect(issueNumberFromUrl('/repos/a/b/issues/82')).assertEqual('82');
+      expect(issueNumberFromUrl('/repos/a/b/pull/456')).assertEqual('456');
+      // GitHub 通知 subject.url 为完整 URL
+      expect(issueNumberFromUrl('https://api.github.com/repos/a/b/issues/82')).assertEqual('82');
+      expect(issueNumberFromUrl('/repos/a/b/commits/deadbeef')).assertEqual('');
+      expect(issueNumberFromUrl('')).assertEqual('');
     });
 
     it('buildTopicQuery_and_mapSearchResult', 0, () => {
