@@ -8,6 +8,7 @@ import { HomeView } from './Home';
 import { InboxView } from './Inbox';
 import { ExploreView } from './Explore';
 import { CopilotView } from './Copilot';
+import { ProfileView } from './Profile';
 
 @Entry
 @Component
@@ -15,6 +16,7 @@ struct Index {
   @State token: string = '';
   @State checked: boolean = false;
   @State currentTab: number = 0;
+  @State profileLogin: string = '';
   private pathStack: NavPathStack = new NavPathStack();
 
   aboutToAppear(): void {
@@ -42,17 +44,18 @@ struct Index {
   @Builder
   userProfileDestination() {
     NavDestination() {
-      Column({ space: 12 }) {
-        Text('👤')
-          .fontSize(48)
-        Text('User Profile · Spec 005 待实现')
-          .fontSize($r('app.float.body_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-      }
-      .width('100%')
-      .height('100%')
-      .justifyContent(FlexAlign.Center)
+      ProfileView({
+        login: this.profileLogin,
+        token: this.token,
+        pathStack: this.pathStack
+      })
     }
+    .onReady((context: NavDestinationContext) => {
+      const login = context.pathInfo.param as string;
+      if (login !== undefined && login !== null && login !== '') {
+        this.profileLogin = login;
+      }
+    })
     .title('Profile')
   }
 
