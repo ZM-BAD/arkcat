@@ -7,6 +7,7 @@ import { timeParts, contributionLevelColor, notificationTypeKey } from '../../..
 import { Json } from '../../../main/ets/utils/Json';
 import { mapUser, mapRepo, mapCalendar, mapViewerBasic, mapNotifications, issueNumberFromUrl } from '../../../main/ets/models/GitHubModels';
 import { buildNotificationsPath } from '../../../main/ets/services/NotificationsService';
+import { buildCodeQuery, mapCodeSearch } from '../../../main/ets/services/SearchService';
 import { buildTopicQuery } from '../../../main/ets/services/ExploreService';
 import { mapSearchResult } from '../../../main/ets/models/ExploreModels';
 import { mapUserProfile, isSelfProfile } from '../../../main/ets/models/ProfileModels';
@@ -160,6 +161,33 @@ export default function logicTest(testsuiteName: string) {
       expect(issueNumberFromUrl('')).assertEqual('');
     });
 
+    it('buildCodeQuery_and_map', 0, () => {
+      expect(buildCodeQuery('claude code')).assertEqual('"claude code"');
+      const repo1: JsonMap = { 'nameWithOwner': 'nvidia/trit' };
+      const repo2: JsonMap = { 'nameWithOwner': 'jezwb/claude-skills' };
+      const fileNode1: JsonMap = {
+        'repository': repo1,
+        'path': 'docs/CLAUDE.md',
+        'name': 'CLAUDE.md'
+      };
+      const fileNode2: JsonMap = {
+        'repository': repo2,
+        'path': 'src/main.ts',
+        'name': 'main.ts'
+      };
+      const nodes: JsonMap[] = [fileNode1, fileNode2];
+      const search: JsonMap = {
+        'codeCount': 2,
+        'nodes': nodes
+      };
+      const items = mapCodeSearch({ 'search': search });
+      expect(items.length).assertEqual(2);
+      expect(items[0].repoFullName).assertEqual('nvidia/trit');
+      expect(items[0].name).assertEqual('CLAUDE.md');
+      expect(items[0].isMarkdown).assertTrue();
+      expect(items[1].isMarkdown).assertFalse();
+    });
+
     it('buildTopicQuery_and_mapSearchResult', 0, () => {
       expect(buildTopicQuery('harmonyos')).assertEqual('topic:harmonyos');
       const node1: JsonMap = { 'id': 'R1', 'nameWithOwner': 'a/b', 'stargazerCount': 5 };
@@ -231,14 +259,24 @@ export default function logicTest(testsuiteName: string) {
       const target: JsonMap = { 'history': history };
       const branch: JsonMap = { 'name': 'main', 'target': target };
       const watchers: JsonMap = { 'totalCount': 9 };
+      const issuesWrap: JsonMap = { 'totalCount': 5 };
+      const prsWrap: JsonMap = { 'totalCount': 3 };
+      const releaseNode: JsonMap = { 'tagName': 'v1.0.0', 'publishedAt': '2026-08-01T00:00:00Z', 'isLatest': true };
+      const releasesWrap: JsonMap = { 'totalCount': 2, 'nodes': [releaseNode] };
+      const ownerNode: JsonMap = { 'avatarUrl': 'u', 'login': 'zm_bad' };
       const repo: JsonMap = {
         'id': 'R1',
+        'name': 'starraft',
         'nameWithOwner': 'zm_bad/starraft',
         'description': 'gh client',
         'stargazerCount': 2,
         'forkCount': 1,
         'viewerHasStarred': true,
         'watchers': watchers,
+        'issues': issuesWrap,
+        'pullRequests': prsWrap,
+        'releases': releasesWrap,
+        'owner': ownerNode,
         'licenseInfo': license,
         'repositoryTopics': topicsWrap,
         'readme': readmeBlob,
@@ -248,6 +286,7 @@ export default function logicTest(testsuiteName: string) {
       };
       const detail = mapRepoDetail({ 'repository': repo });
       expect(detail.repoId).assertEqual('R1');
+      expect(detail.name).assertEqual('starraft');
       expect(detail.licenseName).assertEqual('MIT License');
       expect(detail.topics[0]).assertEqual('arkts');
       expect(detail.readmeText).assertEqual('# StarRaft');
@@ -257,6 +296,13 @@ export default function logicTest(testsuiteName: string) {
       expect(detail.languages[0].percent).assertEqual(75);
       expect(detail.languages[1].percent).assertEqual(25);
       expect(detail.lastCommitMessage).assertEqual('feat: init');
+      // Spec 006 计数/业主/分支
+      expect(detail.issueCount).assertEqual(5);
+      expect(detail.prCount).assertEqual(3);
+      expect(detail.releaseCount).assertEqual(2);
+      expect(detail.latestRelease?.tagName).assertEqual('v1.0.0');
+      expect(detail.ownerLogin).assertEqual('zm_bad');
+      expect(detail.defaultBranchRefName).assertEqual('main');
       // Star 切换方向
       expect(nextStarAction(true)).assertFalse();
       expect(nextStarAction(false)).assertTrue();

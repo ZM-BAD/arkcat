@@ -16,12 +16,13 @@
 | 003 | [explore-tab.md](003-explore-tab.md) | 发现探索 Tab | Level 1 | ✅ |
 | 004 | [copilot-tab.md](004-copilot-tab.md) | AI 助手 Tab | Level 1 | ✅ |
 | 005 | [user-profile.md](005-user-profile.md) | 用户个人主页 | Level 3 | ✅ |
-| 006 | [repo-detail.md](006-repo-detail.md) | 仓库详情页 | Level 3 | ✅ |
+| 006 | [repo-detail.md](006-repo-detail.md) | 仓库详情页（官方布局对齐） | Level 3 | ✅ |
 | 007 | [issues-list.md](007-issues-list.md) | Issue 列表页 | Level 3 | ✅ |
 | 008 | [pr-list.md](008-pr-list.md) | PR 列表页 | Level 3 | ✅ |
 | 009 | [pr-detail.md](009-pr-detail.md) | PR 详情页 | Level 3 | ✅ |
 | 010 | [pr-diff.md](010-pr-diff.md) | PR Diff / Files Changed | Level 3 | ✅ |
 | 011 | [code-viewer.md](011-code-viewer.md) | 代码文件查看页 | Level 3 | ✅ |
+| 015 | [search.md](015-search.md) | 全局搜索页 | Level 3 | ✅ |
 | 012 | [i18n.md](012-i18n.md) | 国际化（英/简中，默认英语） | Level 4 | ✅ |
 | 013 | [home-official.md](013-home-official.md) | Home Tab 官方布局（My Work/Favorites/Shortcuts） | Level 1 | ✅ |
 | 014 | [settings.md](014-settings.md) | Settings 设置页 | Level 3 | ✅ implemented |

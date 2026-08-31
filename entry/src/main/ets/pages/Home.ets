@@ -51,7 +51,7 @@ export struct HomeView {
         .fontSize(18)
         .padding(6)
         .onClick(() => {
-          promptAction.showToast({ message: $r('app.string.home_search_hint') });
+          this.pathStack.pushPathByName('search', '');
         })
       Text('🔄')
         .fontSize(18)

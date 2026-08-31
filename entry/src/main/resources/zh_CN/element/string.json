@@ -547,6 +547,98 @@
     {
       "name": "settings_version",
       "value": "StarRaft v1.0.0"
+    },
+    {
+      "name": "search_placeholder",
+      "value": "搜索或跳转到..."
+    },
+    {
+      "name": "search_suggestion_code",
+      "value": "代码中搜索 \"%1$s\""
+    },
+    {
+      "name": "search_suggestion_repositories",
+      "value": "仓库中搜索 \"%1$s\""
+    },
+    {
+      "name": "search_suggestion_issues",
+      "value": "Issue 中搜索 \"%1$s\""
+    },
+    {
+      "name": "search_suggestion_prs",
+      "value": "Pull Request 中搜索 \"%1$s\""
+    },
+    {
+      "name": "search_suggestion_people",
+      "value": "用户中搜索 \"%1$s\""
+    },
+    {
+      "name": "search_suggestion_orgs",
+      "value": "组织中搜索 \"%1$s\""
+    },
+    {
+      "name": "search_empty_query",
+      "value": "输入关键词开始搜索"
+    },
+    {
+      "name": "search_category_code",
+      "value": "代码"
+    },
+    {
+      "name": "search_matches_more",
+      "value": "显示更多 %1$d 条匹配"
+    },
+    {
+      "name": "search_no_results",
+      "value": "未找到结果"
+    },
+    {
+      "name": "markdown_badge",
+      "value": "Markdown"
+    },
+    {
+      "name": "repo_action_watch",
+      "value": "关注"
+    },
+    {
+      "name": "repo_more",
+      "value": "更多"
+    },
+    {
+      "name": "repo_current_branch",
+      "value": "当前分支"
+    },
+    {
+      "name": "repo_change",
+      "value": "切换"
+    },
+    {
+      "name": "repo_edit",
+      "value": "编辑"
+    },
+    {
+      "name": "repo_latest",
+      "value": "最新"
+    },
+    {
+      "name": "repo_commits",
+      "value": "提交"
+    },
+    {
+      "name": "repo_actions",
+      "value": "Actions"
+    },
+    {
+      "name": "repo_releases",
+      "value": "版本"
+    },
+    {
+      "name": "explore_unstar",
+      "value": "取消星标"
+    },
+    {
+      "name": "repo_pr_link",
+      "value": "Pull Request"
     }
   ]
 }
