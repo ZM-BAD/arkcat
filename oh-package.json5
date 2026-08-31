@@ -1,0 +1,13 @@
+{
+  "modelVersion": "26.0.0",
+  "name": "starraft",
+  "version": "1.0.0",
+  "description": "StarRaft - 纯血鸿蒙 GitHub 客户端",
+  "main": "",
+  "author": "zm_bad",
+  "license": "Apache-2.0",
+  "dependencies": {},
+  "devDependencies": {
+    "@ohos/hypium": "1.0.21"
+  }
+}

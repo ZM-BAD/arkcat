@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# ──────────────────────────────────────────────────────────────
+# Commit message hook
+# 强制 Conventional Commits 格式
+# ──────────────────────────────────────────────────────────────
+
+set -euo pipefail
+
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(head -n1 "$COMMIT_MSG_FILE")
+
+# Conventional Commits 正则
+# 支持: feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert
+PATTERN="^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?!?: .{1,72}"
+
+if ! echo "$COMMIT_MSG" | grep -qE "$PATTERN"; then
+    echo "❌ Commit message 不符合 Conventional Commits 规范"
+    echo ""
+    echo "   正确格式: <type>[optional scope]: <description>"
+    echo "   示例:"
+    echo "     feat(home): add notification badge"
+    echo "     fix(repo): correct star count display"
+    echo "     docs(spec): update PR diff spec"
+    echo "     test(home): add unit tests for user card"
+    echo ""
+    echo "   当前 commit message:"
+    echo "   \"$COMMIT_MSG\""
+    exit 1
+fi
+
+exit 0

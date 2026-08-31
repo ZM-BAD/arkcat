@@ -1,0 +1,37 @@
+# 构建输出
+build/
+/.hvigor/
+/node_modules/
+/oh_modules/
+/local.properties
+
+# 编辑器
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# 安装包
+*.hap
+*.app
+
+# 日志
+*.log
+
+# 本地配置（不含签名）
+*.p12
+*.cer
+**/signing/
+
+# AI Skills（项目本地，体积大，不入库）
+skills/
+.claude/
+.codegenie/
+.deveco/
+.qoder/
+# ZCode 技能接线（软链指向 .claude/skills，机器本地）
+.zcode/
+
+# LoopX 状态（本地目标/证据，不入库）
+.loopx/
+.codex/goals/

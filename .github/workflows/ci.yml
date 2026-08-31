@@ -1,0 +1,162 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+# 权限最小化
+permissions:
+  contents: read
+
+# 并发控制：同一分支的新 push 取消旧 run
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ──────────────────────────────────────────
+  # Job 1: Spec 合规检查
+  # ──────────────────────────────────────────
+  spec-lint:
+    name: Spec Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check spec files
+        run: bash scripts/check-spec.sh
+
+  # ──────────────────────────────────────────
+  # Job 2: Commit message 检查
+  # ──────────────────────────────────────────
+  commit-lint:
+    name: Commit Message Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check commit messages
+        run: |
+          # 获取当前 push/PR 中的所有 commit
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+            COMMITS=$(git log --format="%s" "$BASE..$HEAD")
+          else
+            BASE="${{ github.event.before }}"
+            HEAD="${{ github.sha }}"
+            if [ "$BASE" = "0000000000000000000000000000000000000000" ] || [ -z "$BASE" ]; then
+              # 首次推送：before 为全零 SHA，无法确定提交范围，只校验本次 HEAD
+              COMMITS=$(git log --format="%s" -1 "$HEAD")
+            else
+              # 历史重写（force push）后 before 可能不在链上：范围失效则只校验本次 HEAD
+              COMMITS=$(git log --format="%s" "$BASE..$HEAD" 2>/dev/null || git log --format="%s" -1 "$HEAD")
+            fi
+          fi
+
+          PATTERN="^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?!?: .+"
+
+          ERRORS=0
+          while IFS= read -r msg; do
+              if ! echo "$msg" | grep -qE "$PATTERN"; then
+                  echo "❌ Invalid: $msg"
+                  ERRORS=$((ERRORS + 1))
+              fi
+          done <<< "$COMMITS"
+
+          if [ $ERRORS -gt 0 ]; then
+              echo ""
+              echo "Found $ERRORS non-conventional commit(s)"
+              exit 1
+          fi
+          echo "✅ All commits follow Conventional Commits"
+
+  # ──────────────────────────────────────────
+  # Job 3: 文件结构完整性检查
+  # ──────────────────────────────────────────
+  structure-check:
+    name: Project Structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify required files exist
+        run: |
+          REQUIRED_FILES=(
+            "README.md"
+            "AGENTS.md"
+            "hvigorfile.ts"
+            "build-profile.json5"
+            "oh-package.json5"
+            "code-linter.json5"
+            "AppScope/app.json5"
+            "entry/build-profile.json5"
+            "entry/hvigorfile.ts"
+            "entry/src/main/module.json5"
+            "entry/src/main/ets/entryability/EntryAbility.ts"
+            "entry/src/main/ets/pages/Index.ets"
+            "specs/_TEMPLATE.md"
+            ".gitignore"
+          )
+
+          ERRORS=0
+          for f in "${REQUIRED_FILES[@]}"; do
+              if [ ! -f "$f" ]; then
+                  echo "❌ Missing: $f"
+                  ERRORS=$((ERRORS + 1))
+              fi
+          done
+
+          if [ $ERRORS -gt 0 ]; then
+              echo ""
+              echo "Missing $ERRORS required file(s)"
+              exit 1
+          fi
+          echo "✅ All required files present"
+
+      - name: Verify spec numbering (no gaps)
+        run: |
+          SPECS=$(find specs -maxdepth 1 -name "*.md" ! -name "_TEMPLATE.md" ! -name "README.md" | sort)
+          EXPECTED=1
+          for f in $SPECS; do
+              NUM=$(basename "$f" | grep -oE "^[0-9]+")
+              if [ "$NUM" -ne "$EXPECTED" ]; then
+                  echo "❌ Spec numbering gap: expected $(printf '%03d' $EXPECTED), got $(basename $f)"
+                  exit 1
+              fi
+              EXPECTED=$((EXPECTED + 1))
+          done
+          echo "✅ Spec numbering continuous (1..$((EXPECTED - 1)))"
+
+  # ──────────────────────────────────────────
+  # Job 4: HarmonyOS 构建（仅 macOS runner）
+  # ──────────────────────────────────────────
+  harmony-build:
+    name: HarmonyOS Build
+    runs-on: macos-14
+    if: false  # 需要 DevEco Studio 许可证，暂时禁用；本地构建即可
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        run: |
+          # 这里可以添加 ohpm install 等
+          echo "Build check placeholder"
+
+      - name: Build (placeholder)
+        run: |
+          echo "HarmonyOS build requires DevEco Studio"
+          echo "Run locally: hvigor assembleHap --mode debug"

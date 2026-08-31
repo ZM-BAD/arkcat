@@ -1,0 +1,76 @@
+# Spec 004: Copilot Tab（AI 助手）
+
+> BFS Level: 1
+> 关联截图: 底部导航第四个 Tab
+> 状态: ✅ approved
+
+---
+
+## 一、页面/功能概述
+
+GitHub Copilot AI 助手对话页。用户通过自然语言与 Copilot 对话，获取代码解释、PR 审查、Bug 查找等 AI 能力。**该 Tab 所有 Chat 功能均不可实现，只能展示 Empty State。**
+
+---
+
+## 二、整体 UI 结构
+
+```text
+┌─────────────────────────────────────┐
+│  ←   Copilot Chat            ✏️     │
+├─────────────────────────────────────┤
+│         ☀️ Good morning!             │
+│         username                     │
+│   ┌─────────────────────────────┐  │
+│   │ Ask Copilot...          📎  │  │  ← 输入框 ❌
+│   └─────────────────────────────┘  │
+│   [ Quick prompt chips ]            │  ← 快捷提示 ❌
+├─────────────────────────────────────┤
+│  🏠    🔔      🧭      🤖           │
+└─────────────────────────────────────┘
+```
+
+---
+
+## 三、元素清单
+
+| # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
+|---|------|------|------|--------|-------------|------|
+| 1 | App Bar 左 | ← 返回 | 导航 | ✅ 纯 UI | — | — |
+| 2 | App Bar 中 | 标题「Copilot Chat」 | 展示 | ✅ 纯 UI | — | — |
+| 3 | App Bar 右 | ✏️ 新对话 | 新建会话 | ❌ | Copilot 私有 API | — |
+| 4 | 问候区 | Good morning + 用户名 | 纯展示 | ✅ 纯 UI | — | — |
+| 5 | 输入框 | Ask Copilot + 附件 | 输入问题、发送 | ❌ | 无公开 API | — |
+| 6 | 快捷提示 | Quick prompt chips | 点击填入预设问题 | ❌ | 无公开 API | — |
+| 7 | 底部导航 | Copilot Tab 选中态 | 导航标识 | ✅ 纯 UI | — | — |
+
+---
+
+## 四、核心 GraphQL 片段
+
+> 本页所有 Chat 功能均由 Copilot 私有 API 驱动，无公开 GraphQL/REST 接口，**无可用片段**。
+
+---
+
+## 五、边界 / 不可行项
+
+| 项 | 原因 | StarRaft 处理方式 |
+|----|------|-------------------|
+| 全部 Chat 功能 | GitHub Copilot 对话完全由私有 API 驱动，无公开 GraphQL/REST 接口 | Tab 显示「暂不支持」Empty State 页 |
+| 输入框 + 附件 | 依赖 Copilot 私有 API | Empty State |
+| Quick prompt chips | 依赖 Copilot 私有 API | Empty State |
+| 新对话按钮 | 依赖 Copilot 私有 API | Empty State |
+
+---
+
+## 六、TDD 验收标准
+
+- [ ] Copilot Tab 展示 Empty State 页面
+- [ ] Empty State 说明「此功能需使用 GitHub 官方 App」
+- [ ] 底部导航 Copilot Tab 正常切换
+
+---
+
+## 七、备注
+
+- 4/7 可行，全部 Chat 功能不可实现
+- Empty State 文案：「Copilot 功能暂不支持（无公开 API），请使用 GitHub 官方 App」

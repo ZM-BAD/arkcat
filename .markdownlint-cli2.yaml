@@ -1,0 +1,27 @@
+# markdownlint-cli2 config (installed by spooner transform Stage 2)
+config:
+  MD013: false   # line length: no limit for Chinese text/tables
+  MD024: false   # duplicate headings: bilingual docs mirror sections
+  MD033: false   # inline HTML: allow badges
+  MD036: false   # emphasis-as-heading: common in Chinese docs (e.g. "借人")
+  MD022: false   # headings directly followed by lists: compact repo style
+  MD032: false   # lists directly after headings: compact repo style
+  MD041: false   # first line H1: allow intro quote before heading
+  MD060: false   # compact tables: repo style (|col|col|), not enforcing gfm spacing
+# 只扫描仓库自己的文档，避免把项目本地的 AI Skills 库（skills/、.claude/ 等）
+# 全树扫描进 pre-commit（数百 MB、数万个文件）
+globs:
+  - "*.md"
+  - "specs/**/*.md"
+  - "docs/**/*.md"
+ignores:
+  - node_modules/
+  - .git/
+  - oh_modules/
+  - build/
+  - .hvigor/
+  - skills/
+  - .claude/
+  - .codegenie/
+  - .deveco/
+  - .qoder/

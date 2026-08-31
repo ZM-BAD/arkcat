@@ -1,0 +1,28 @@
+{
+  "float": [
+    {
+      "name": "page_text_font_size",
+      "value": "24fp"
+    },
+    {
+      "name": "sub_text_font_size",
+      "value": "16fp"
+    },
+    {
+      "name": "hero_margin_top",
+      "value": "100vp"
+    },
+    {
+      "name": "sub_margin_top",
+      "value": "16vp"
+    },
+    {
+      "name": "button_height",
+      "value": "48vp"
+    },
+    {
+      "name": "button_bottom_margin",
+      "value": "50vp"
+    }
+  ]
+}
