@@ -41,10 +41,6 @@
       "value": "Issues"
     },
     {
-      "name": "index_spec_pending",
-      "value": "To be implemented in a future spec"
-    },
-    {
       "name": "token_setup_title",
       "value": "Set up GitHub Token"
     },
@@ -75,10 +71,6 @@
     {
       "name": "home_pinned_section",
       "value": "Pinned repositories"
-    },
-    {
-      "name": "home_calendar_section",
-      "value": "Contribution calendar"
     },
     {
       "name": "home_contributions_total",
@@ -339,6 +331,74 @@
     {
       "name": "time_months_ago",
       "value": "%1$d months ago"
+    },
+    {
+      "name": "home_my_work",
+      "value": "My Work"
+    },
+    {
+      "name": "home_work_issues",
+      "value": "Issues"
+    },
+    {
+      "name": "home_work_pull_requests",
+      "value": "Pull Requests"
+    },
+    {
+      "name": "home_work_discussions",
+      "value": "Discussions"
+    },
+    {
+      "name": "home_work_projects",
+      "value": "Projects"
+    },
+    {
+      "name": "home_work_top_repos",
+      "value": "Top Repositories"
+    },
+    {
+      "name": "home_work_organizations",
+      "value": "Organizations"
+    },
+    {
+      "name": "home_work_starred",
+      "value": "Starred"
+    },
+    {
+      "name": "home_favorites",
+      "value": "Favorites"
+    },
+    {
+      "name": "home_favorites_empty",
+      "value": "Add favorite repositories for quick access at any time, without having to search"
+    },
+    {
+      "name": "home_favorites_add",
+      "value": "ADD FAVORITES"
+    },
+    {
+      "name": "home_shortcuts",
+      "value": "Shortcuts"
+    },
+    {
+      "name": "home_shortcuts_title",
+      "value": "The things you need, one tap away"
+    },
+    {
+      "name": "home_shortcuts_desc",
+      "value": "Fast access your lists of Issues, Pull Requests, or Discussions"
+    },
+    {
+      "name": "home_shortcuts_get_started",
+      "value": "GET STARTED"
+    },
+    {
+      "name": "home_feature_coming",
+      "value": "This feature will be available in a future spec"
+    },
+    {
+      "name": "home_new_coming",
+      "value": "Creating content will be available in a future version"
     }
   ]
 }

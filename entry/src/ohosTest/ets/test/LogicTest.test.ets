@@ -5,7 +5,7 @@
 import { describe, it, expect } from '@ohos/hypium';
 import { timeParts, contributionLevelColor, notificationTypeKey } from '../../../main/ets/utils/Format';
 import { Json } from '../../../main/ets/utils/Json';
-import { mapUser, mapRepo, mapCalendar, mapHomeOverview, mapNotifications } from '../../../main/ets/models/GitHubModels';
+import { mapUser, mapRepo, mapCalendar, mapViewerBasic, mapNotifications } from '../../../main/ets/models/GitHubModels';
 import { buildNotificationsPath } from '../../../main/ets/services/NotificationsService';
 import { buildTopicQuery } from '../../../main/ets/services/ExploreService';
 import { mapSearchResult } from '../../../main/ets/models/ExploreModels';
@@ -125,34 +125,23 @@ export default function logicTest(testsuiteName: string) {
       expect(calendar.totalContributions).assertEqual(7);
     });
 
-    it('mapHomeOverview_endToEnd', 0, () => {
-      const followers: JsonMap = { 'totalCount': 1 };
-      const following: JsonMap = { 'totalCount': 2 };
-      const repoNode: JsonMap = {
-        'id': 'R_9',
-        'nameWithOwner': 'zm_bad/starraft',
-        'description': 'gh client',
-        'stargazerCount': 2,
-        'forkCount': 0
-      };
-      const pinned: JsonMap = { 'nodes': [repoNode] };
-      const day: JsonMap = { 'date': '2026-08-31', 'contributionCount': 4, 'color': '#30A14E' };
-      const week: JsonMap = { 'contributionDays': [day] };
-      const calendar: JsonMap = { 'totalContributions': 4, 'weeks': [week] };
-      const collection: JsonMap = { 'contributionCalendar': calendar };
-      const viewer: JsonMap = {
+    it('mapViewerBasic_basic', 0, () => {
+      const raw: JsonMap = {
         'login': 'zm_bad',
-        'avatarUrl': 'u',
-        'followers': followers,
-        'following': following,
-        'pinnedItems': pinned,
-        'contributionsCollection': collection
+        'name': '周铭',
+        'avatarUrl': 'https://avatars.example/u'
       };
-      const overview = mapHomeOverview({ 'viewer': viewer });
-      expect(overview.user.login).assertEqual('zm_bad');
-      expect(overview.pinned.length).assertEqual(1);
-      expect(overview.pinned[0].nameWithOwner).assertEqual('zm_bad/starraft');
-      expect(overview.calendar.totalContributions).assertEqual(4);
+      const viewer = mapViewerBasic(raw);
+      expect(viewer.login).assertEqual('zm_bad');
+      expect(viewer.name).assertEqual('周铭');
+      expect(viewer.avatarUrl).assertEqual('https://avatars.example/u');
+    });
+
+    it('mapViewerBasic_missingFields', 0, () => {
+      const viewer = mapViewerBasic({});
+      expect(viewer.login).assertEqual('');
+      expect(viewer.name).assertEqual('');
+      expect(viewer.avatarUrl).assertEqual('');
     });
 
     it('buildNotificationsPath_filter', 0, () => {

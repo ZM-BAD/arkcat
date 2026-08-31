@@ -3,7 +3,7 @@
  * Inbox/Explore/Copilot 内容由 Spec 002/003/004 分支实现，当前为占位视图。
  */
 import { TokenStore } from '../services/TokenStore';
-import { resText } from '../utils/I18n';
+import { HomeService } from '../services/HomeService';
 import { TokenSetup } from './TokenSetup';
 import { HomeView } from './Home';
 import { InboxView } from './Inbox';
@@ -22,28 +22,29 @@ struct Index {
   @State profileLogin: string = '';
   @State repoOwner: string = '';
   @State repoName: string = '';
+  @State inboxHasUnread: boolean = false;
   private pathStack: NavPathStack = new NavPathStack();
 
   aboutToAppear(): void {
     TokenStore.load().then((token: string) => {
       this.token = token;
       this.checked = true;
+      this.refreshInboxUnread(token);
     });
   }
 
-  @Builder
-  tabPlaceholder(icon: string, label: string) {
-    Column({ space: 12 }) {
-      Text(icon)
-        .fontSize(48)
-      Text(`${label} · ${this.stringOf($r('app.string.index_spec_pending'))}`)
-        .fontSize($r('app.float.body_font_size'))
-        .fontColor($r('app.color.text_secondary'))
+  /** 未读角标：REST 兜底，Inbox Tab 显示蓝点（Spec 013） */
+  private refreshInboxUnread(token: string): void {
+    if (token === '') {
+      return;
     }
-    .width('100%')
-    .height('100%')
-    .justifyContent(FlexAlign.Center)
-    .backgroundColor($r('app.color.bg_page'))
+    HomeService.hasUnreadNotifications(token)
+      .then((hasUnread: boolean) => {
+        this.inboxHasUnread = hasUnread;
+      })
+      .catch(() => {
+        this.inboxHasUnread = false;
+      });
   }
 
   @Builder
@@ -152,18 +153,23 @@ struct Index {
   @Builder
   tabItem(icon: string, labelRes: Resource, index: number) {
     Column({ space: 2 }) {
-      Text(icon)
-        .fontSize(20)
-        .opacity(this.currentTab === index ? 1 : 0.5)
+      Stack({ alignContent: Alignment.TopEnd }) {
+        Text(icon)
+          .fontSize(20)
+          .opacity(this.currentTab === index ? 1 : 0.5)
+        // 未读蓝点：Inbox Tab 图标右上角（Spec 013，官方 App 样式）
+        if (index === 1 && this.inboxHasUnread) {
+          Circle()
+            .width(8)
+            .height(8)
+            .fill('#0969DA')
+            .margin({ top: -2, right: -2 })
+        }
+      }
       Text(labelRes)
         .fontSize($r('app.float.caption_font_size'))
         .fontColor(this.currentTab === index ? $r('app.color.primary') : $r('app.color.text_secondary'))
     }
-  }
-
-  /** 资源 → 当前语言的纯文案 */
-  private stringOf(res: Resource): string {
-    return resText(this.getUIContext(), res);
   }
 
   build() {
