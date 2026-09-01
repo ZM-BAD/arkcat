@@ -111,6 +111,6 @@ ets/components/OctIcon.ets            # 统一样式入口
 
 ## 八、实施记录（2026-08-31）
 
-- 来源：Octicons v19.33.0（29 + three-bars 共 30 图标），原始 SVG 归档 `assets/octicons/`（含 MIT LICENSE）。
+- 来源：Octicons v19.33.0（全量 743 图标 2026-09-01 归档，含最初 30 个 + zap 等后续补充），原始 SVG 归档 `assets/octicons/`（含 MIT LICENSE）。
 - 交互实现约定：OctIcon 为纯视觉组件（无 onClick），可点击图标由调用侧 `Stack() { OctIcon(...) }.onClick(...)` 包装——避免组件内部 onClick 吞掉父级点击（My Work 行点击回归曾因此发生，已修复并实测）。
 - 保留项清单（待定自研）：官方彩色插画（🐱 占位）、内容 emoji（🔥📖📍🔗🗂👍 等）、语言点 ●、头像占位 ◯、RepoDetail 文件树/标签图标（▶▸◷⑂▣▤）、Profile 计数图标（▤）。
