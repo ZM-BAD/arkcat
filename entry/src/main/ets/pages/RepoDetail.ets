@@ -492,7 +492,7 @@ export struct RepoDetailView {
             this.countRow('◷', $r('app.color.text_secondary'), $r('app.string.repo_issues_link'), this.detail.issueCount, () => this.openIssues())
             this.countRow('⑂', $r('app.color.link_blue'), $r('app.string.repo_pr_link'), this.detail.prCount, () => this.openPrs())
             this.countRow('▶', $r('app.color.star_gold'), $r('app.string.repo_actions'), 0, () => this.comingSoon())
-            this.countRow('▸', $r('app.color.text_primary'), $r('app.string.repo_releases'), this.detail.releaseCount, () => this.openReleases())
+            this.countRow('▸', $r('app.color.work_dark_bg'), $r('app.string.repo_releases'), this.detail.releaseCount, () => this.openReleases())
             this.releaseCard()
 
             this.moreSection()

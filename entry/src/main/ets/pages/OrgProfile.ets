@@ -307,7 +307,7 @@ export struct OrgProfileView {
           .width(44)
           .height(44)
           .borderRadius(6)
-          .backgroundColor($r('app.color.text_primary'))
+          .backgroundColor($r('app.color.work_dark_bg'))
           Text($r('app.string.org_repositories_row'))
             .fontSize($r('app.float.body_font_size'))
             .fontColor($r('app.color.text_primary'))

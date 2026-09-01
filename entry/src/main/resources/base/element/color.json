@@ -167,6 +167,10 @@
     {
       "name": "tab_active_bg",
       "value": "#DDF4FF"
+    },
+    {
+      "name": "work_dark_bg",
+      "value": "#1F2328"
     }
   ]
 }

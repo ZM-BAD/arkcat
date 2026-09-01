@@ -135,7 +135,7 @@ export struct HomeView {
       case 'projects':
         return { iconRes: $r('app.media.oct_project_16'), color: $r('app.color.text_secondary'), label: $r('app.string.home_work_projects'), route: 'projects' };
       case 'topRepos':
-        return { iconRes: $r('app.media.oct_repo_16'), color: $r('app.color.text_primary'), label: $r('app.string.home_work_top_repos'), route: 'topRepos' };
+        return { iconRes: $r('app.media.oct_repo_16'), color: $r('app.color.work_dark_bg'), label: $r('app.string.home_work_top_repos'), route: 'topRepos' };
       case 'orgs':
         return { iconRes: $r('app.media.oct_organization_16'), color: $r('app.color.shortcut_orange_fg'), label: $r('app.string.home_work_organizations'), route: 'organizations' };
       case 'starred':
