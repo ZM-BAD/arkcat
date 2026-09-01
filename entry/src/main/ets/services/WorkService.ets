@@ -50,7 +50,7 @@ query WorkDiscussions($query: String!, $first: Int = 25, $after: String) {
     pageInfo { hasNextPage endCursor }
     nodes {
       ... on Discussion {
-        id number title state createdAt
+        id number title createdAt
         repository { nameWithOwner }
         category { name }
         comments { totalCount }

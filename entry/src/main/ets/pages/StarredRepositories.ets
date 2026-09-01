@@ -93,6 +93,10 @@ export struct StarredRepositoriesView {
           iconColor: $r('app.color.text_secondary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
 .onClick((): void => this.comingSoon())
       }
       .width('100%')
@@ -151,6 +155,10 @@ export struct StarredRepositoriesView {
           iconColor: $r('app.color.text_primary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
 .onClick((): void => {
             this.pathStack.pop();
           })
@@ -172,6 +180,10 @@ export struct StarredRepositoriesView {
           iconColor: $r('app.color.text_primary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_search'))
+        .focusable(true)
 .onClick((): void => {
             this.pathStack.pushPathByName('search', '');
           })
@@ -183,6 +195,10 @@ export struct StarredRepositoriesView {
           iconColor: $r('app.color.text_secondary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
 .onClick((): void => this.comingSoon())
           .padding(6)
       }

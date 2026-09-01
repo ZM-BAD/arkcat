@@ -97,8 +97,8 @@ export struct EditMyWorkView {
       Stack() {
           OctIcon({ res: this.meta(item.id).iconRes, iconSize: 18, iconColor: Color.White })
       }
-      .width(34)
-      .height(34)
+      .width(44)
+      .height(44)
       .backgroundColor(this.meta(item.id).color)
       .borderRadius(6)
       .margin({ left: 12 })
@@ -135,6 +135,10 @@ export struct EditMyWorkView {
           iconColor: $r('app.color.text_primary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
 .onClick((): void => {
             this.pathStack.pop();
           })
@@ -156,6 +160,10 @@ export struct EditMyWorkView {
           iconColor: $r('app.color.text_secondary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
 .onClick((): void => {
             promptAction.showToast({ message: $r('app.string.home_feature_coming') });
           })

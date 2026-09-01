@@ -228,6 +228,10 @@ export struct CodeOptionsView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
         .onClick(() => {
           this.pathStack.pop();
         })
@@ -300,7 +304,11 @@ export struct CodeOptionsView {
               Stack() {
                 OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
               }
+.width(44)
+.height(44)
               .padding(4)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
               .onClick(() => {
                 this.featureComing();
               })

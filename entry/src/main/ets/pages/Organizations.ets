@@ -7,6 +7,7 @@ import { WorkOrgItem, WorkOrgsPage } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
+import { resText } from '../utils/I18n';
 
 @ComponentV2
 export struct OrganizationsView {
@@ -17,6 +18,10 @@ export struct OrganizationsView {
   @Local hasNextPage: boolean = false;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+
+  private scopeName(): string {
+    return 'read:org';
+  }
 
   aboutToAppear(): void {
     this.refresh();
@@ -33,7 +38,11 @@ export struct OrganizationsView {
         this.loading = false;
       })
       .catch((e: Error) => {
-        this.errorMsg = e.message;
+        // Token scope 不足时给出可操作提示（GraphQL scopes 错误）而非裸接口错误
+        const hint = e.message.indexOf('scopes') >= 0
+          ? resText(this.getUIContext(), $r('app.string.work_scope_hint'), this.scopeName())
+          : e.message;
+        this.errorMsg = hint;
         this.loading = false;
       });
   }
@@ -51,7 +60,11 @@ export struct OrganizationsView {
         this.loading = false;
       })
       .catch((e: Error) => {
-        this.errorMsg = e.message;
+        // Token scope 不足时给出可操作提示（GraphQL scopes 错误）而非裸接口错误
+        const hint = e.message.indexOf('scopes') >= 0
+          ? resText(this.getUIContext(), $r('app.string.work_scope_hint'), this.scopeName())
+          : e.message;
+        this.errorMsg = hint;
         this.loading = false;
       });
   }
@@ -124,6 +137,10 @@ export struct OrganizationsView {
           iconColor: $r('app.color.text_primary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
 .onClick((): void => {
             this.pathStack.pop();
           })

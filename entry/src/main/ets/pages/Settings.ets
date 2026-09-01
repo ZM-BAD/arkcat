@@ -204,6 +204,10 @@ export struct SettingsView {
           iconColor: $r('app.color.text_primary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
 .onClick((): void => {
             this.pathStack.pop();
           })

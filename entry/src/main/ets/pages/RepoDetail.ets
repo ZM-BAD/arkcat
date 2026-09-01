@@ -444,6 +444,10 @@ export struct RepoDetailView {
             iconColor: $r('app.color.text_primary')
           })
         }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
         .onClick(() => {
           this.pathStack.pop();
         })
@@ -455,7 +459,11 @@ export struct RepoDetailView {
             iconColor: $r('app.color.link_blue')
           })
         }
+.width(44)
+.height(44)
         .padding(6)
+        .accessibilityDescription($r('app.string.a11y_new'))
+        .focusable(true)
         .onClick(() => this.comingSoon())
         Stack() {
           OctIcon({
@@ -464,7 +472,11 @@ export struct RepoDetailView {
             iconColor: $r('app.color.text_primary')
           })
         }
+.width(44)
+.height(44)
         .padding(6)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
         .onClick(() => this.comingSoon())
       }
       .width('100%')

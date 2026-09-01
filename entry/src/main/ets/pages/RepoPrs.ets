@@ -285,6 +285,10 @@ export struct RepoPrsView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
         .onClick(() => {
           this.pathStack.pop();
         })
@@ -302,14 +306,22 @@ export struct RepoPrsView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
+.width(44)
+.height(44)
         .padding(6)
+        .accessibilityDescription($r('app.string.a11y_search'))
+        .focusable(true)
         .onClick(() => {
           this.pathStack.pushPathByName('search', '');
         })
         Stack() {
           OctIcon({ res: $r('app.media.oct_plus_24'), iconSize: 20, iconColor: $r('app.color.link_blue') })
         }
+.width(44)
+.height(44)
         .padding(6)
+        .accessibilityDescription($r('app.string.a11y_new'))
+        .focusable(true)
         .onClick(() => {
           promptAction.showToast({ message: $r('app.string.home_feature_coming') });
         })

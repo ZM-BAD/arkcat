@@ -138,8 +138,10 @@ export struct FileTreeView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
-        .width(32)
-        .height(32)
+        .width(44)
+        .height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
         .onClick(() => {
           this.pathStack.pop();
         })
@@ -152,6 +154,8 @@ export struct FileTreeView {
           .layoutWeight(1)
         OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
           .margin({ left: 12 })
+        .accessibilityDescription($r('app.string.a11y_search'))
+        .focusable(true)
           .onClick(() => {
             this.filterOn = !this.filterOn;
             if (!this.filterOn) {
@@ -160,6 +164,8 @@ export struct FileTreeView {
           })
         OctIcon({ res: $r('app.media.oct_share_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
           .margin({ left: 12 })
+        .accessibilityDescription($r('app.string.a11y_share'))
+        .focusable(true)
           .onClick(() => {
             this.copyText(this.findUrl(), $r('app.string.file_link_copied'));
           })

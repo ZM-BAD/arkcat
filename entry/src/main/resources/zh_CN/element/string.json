@@ -1147,6 +1147,58 @@
     {
       "name": "file_link_unsupported",
       "value": "暂不支持此类型条目"
+    },
+    {
+      "name": "a11y_back",
+      "value": "返回"
+    },
+    {
+      "name": "a11y_search",
+      "value": "搜索"
+    },
+    {
+      "name": "a11y_share",
+      "value": "分享"
+    },
+    {
+      "name": "a11y_more",
+      "value": "更多"
+    },
+    {
+      "name": "a11y_settings",
+      "value": "设置"
+    },
+    {
+      "name": "a11y_new",
+      "value": "新建"
+    },
+    {
+      "name": "a11y_menu",
+      "value": "菜单"
+    },
+    {
+      "name": "a11y_close",
+      "value": "关闭"
+    },
+    {
+      "name": "a11y_star",
+      "value": "星标"
+    },
+    {
+      "name": "a11y_starred",
+      "value": "已收藏"
+    },
+    {
+      "name": "a11y_refresh",
+      "value": "刷新"
+    },
+    {
+      "name": "a11y_watch",
+      "value": "关注"
+    },
+    {
+      "name": "work_scope_hint",
+      "value": "Token 权限不足：请在生成 PAT 时包含 %1$s 权限（https://github.com/settings/tokens）"
     }
   ]
 }

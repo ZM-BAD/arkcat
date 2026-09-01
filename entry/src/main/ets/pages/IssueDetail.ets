@@ -141,6 +141,10 @@ export struct IssueDetailView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
         .onClick(() => {
           this.pathStack.pop();
         })
@@ -154,14 +158,22 @@ export struct IssueDetailView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
+.width(44)
+.height(44)
         .padding(6)
+        .accessibilityDescription($r('app.string.a11y_search'))
+        .focusable(true)
         .onClick(() => {
           this.pathStack.pushPathByName('search', '');
         })
         Stack() {
           OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
         }
+.width(44)
+.height(44)
         .padding(6)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
         .onClick(() => {
           promptAction.showToast({ message: $r('app.string.home_feature_coming') });
         })

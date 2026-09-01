@@ -42,7 +42,11 @@ export struct ProjectsView {
         this.loading = false;
       })
       .catch((e: Error) => {
-        this.errorMsg = e.message;
+        // Token scope 不足时给出可操作提示（GraphQL scopes 错误）而非裸接口错误
+        const hint = e.message.indexOf('scopes') >= 0
+          ? resText(this.getUIContext(), $r('app.string.work_scope_hint'), this.scopeName())
+          : e.message;
+        this.errorMsg = hint;
         this.loading = false;
       });
   }
@@ -61,7 +65,11 @@ export struct ProjectsView {
         this.loading = false;
       })
       .catch((e: Error) => {
-        this.errorMsg = e.message;
+        // Token scope 不足时给出可操作提示（GraphQL scopes 错误）而非裸接口错误
+        const hint = e.message.indexOf('scopes') >= 0
+          ? resText(this.getUIContext(), $r('app.string.work_scope_hint'), this.scopeName())
+          : e.message;
+        this.errorMsg = hint;
         this.loading = false;
       });
   }
@@ -69,6 +77,10 @@ export struct ProjectsView {
   /** 客户端过滤 + 排序（纯函数在 WorkModels，便于单测） */
   private applyFilters(): void {
     this.filtered = filterWorkProjects(this.allProjects, this.ownedOnly, this.viewerLogin, this.closedOnly);
+  }
+
+  private scopeName(): string {
+    return 'read:project';
   }
 
   private stringOf(res: Resource): string {
@@ -127,8 +139,8 @@ export struct ProjectsView {
       Stack() {
           OctIcon({ res: $r('app.media.oct_project_16'), iconSize: 18, iconColor: Color.White })
       }
-      .width(34)
-      .height(34)
+      .width(44)
+      .height(44)
       .backgroundColor($r('app.color.text_secondary'))
       .borderRadius(6)
       Column({ space: 4 }) {
@@ -174,6 +186,10 @@ export struct ProjectsView {
           iconColor: $r('app.color.text_primary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
 .onClick((): void => {
             this.pathStack.pop();
           })
@@ -189,6 +205,10 @@ export struct ProjectsView {
           iconColor: $r('app.color.text_primary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_search'))
+        .focusable(true)
 .onClick((): void => {
             this.pathStack.pushPathByName('search', '');
           })
@@ -200,6 +220,10 @@ export struct ProjectsView {
           iconColor: $r('app.color.text_secondary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
 .onClick((): void => {
             promptAction.showToast({ message: $r('app.string.home_feature_coming') });
           })

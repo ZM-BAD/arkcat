@@ -72,6 +72,10 @@ export struct HomeView {
         iconColor: $r('app.color.text_primary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_search'))
+        .focusable(true)
 .onClick((): void => {
           this.pathStack.pushPathByName('search', '');
         })
@@ -83,6 +87,10 @@ export struct HomeView {
         iconColor: $r('app.color.text_primary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_refresh'))
+        .focusable(true)
 .onClick((): void => this.refresh())
         .padding(6)
       Stack() {
@@ -92,6 +100,10 @@ export struct HomeView {
         iconColor: $r('app.color.text_primary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_new'))
+        .focusable(true)
 .onClick((): void => {
           promptAction.showToast({ message: $r('app.string.home_new_coming') });
         })
@@ -140,8 +152,8 @@ export struct HomeView {
       Stack() {
           OctIcon({ res: meta.iconRes, iconSize: 18, iconColor: Color.White })
       }
-      .width(34)
-      .height(34)
+      .width(44)
+      .height(44)
       .backgroundColor(meta.color)
       .borderRadius(6)
       Text(meta.label)
@@ -172,6 +184,10 @@ export struct HomeView {
         iconColor: $r('app.color.text_secondary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
 .onClick((): void => {
           this.pathStack.pushPathByName('editMyWork', '');
         })
@@ -226,8 +242,8 @@ export struct HomeView {
     Stack() {
       OctIcon({ res: iconRes, iconSize: 14, iconColor: fg })
     }
-    .width(30)
-    .height(30)
+    .width(44)
+    .height(44)
     .backgroundColor(bg)
     .borderRadius(15)
     .margin({ right: 6 })

@@ -245,6 +245,10 @@ export struct WorkIssuesView {
           iconColor: $r('app.color.text_primary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
 .onClick((): void => {
             this.pathStack.pop();
           })
@@ -260,6 +264,10 @@ export struct WorkIssuesView {
           iconColor: $r('app.color.text_primary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_search'))
+        .focusable(true)
 .onClick((): void => {
             this.pathStack.pushPathByName('search', '');
           })
@@ -271,6 +279,10 @@ export struct WorkIssuesView {
           iconColor: $r('app.color.text_secondary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
 .onClick((): void => {
             promptAction.showToast({ message: $r('app.string.home_feature_coming') });
           })

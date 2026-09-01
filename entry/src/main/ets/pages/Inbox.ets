@@ -269,6 +269,10 @@ export struct InboxView {
           iconColor: $r('app.color.text_secondary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
 .onClick((): void => {
             promptAction.showToast({ message: $r('app.string.inbox_detail_coming') });
           })

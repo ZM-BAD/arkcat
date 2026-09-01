@@ -185,6 +185,10 @@ export struct SearchView {
           iconColor: $r('app.color.text_primary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
 .onClick((): void => {
             this.pathStack.pop();
           })
@@ -203,6 +207,10 @@ export struct SearchView {
             iconColor: $r('app.color.text_secondary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_close'))
+        .focusable(true)
 .onClick((): void => {
               this.keyword = '';
               this.activeCategory = '';
@@ -217,6 +225,10 @@ export struct SearchView {
           iconColor: $r('app.color.text_secondary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
 .onClick((): void => this.comingSoon())
       }
       .width('100%')

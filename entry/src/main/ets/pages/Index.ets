@@ -669,6 +669,8 @@ struct Index {
         .navDestination(this.destinationMap)
       }
     }
+.width(44)
+.height(44)
     .width('100%')
     .height('100%')
   }

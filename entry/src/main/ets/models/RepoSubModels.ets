@@ -276,7 +276,7 @@ export function mapRelease(raw: JsonMap): ReleaseItem {
     isLatest: Json.bool(raw, 'isLatest'),
     createdAt: Json.str(raw, 'createdAt'),
     description: Json.str(raw, 'description'),
-    body: Json.str(raw, 'body'),
+    body: Json.str(raw, 'description'),
     authorLogin: author !== null ? Json.str(author, 'login') : '',
     authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : ''
   };
@@ -301,7 +301,7 @@ function mapComment(raw: JsonMap): RepoComment {
   const author = Json.obj(raw, 'author');
   return {
     id: Json.str(raw, 'id'),
-    body: Json.str(raw, 'body'),
+    body: Json.str(raw, 'description'),
     createdAt: Json.str(raw, 'createdAt'),
     authorLogin: author !== null ? Json.str(author, 'login') : '',
     authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : ''
