@@ -97,20 +97,27 @@ export struct ProfileView {
     return resText(this.getUIContext(), res, arg);
   }
 
+  /** 信息行：icon 固定在 16×16 容器保证跨行对齐；bold 时内容加粗 */
   @Builder
-  metaRow(iconRes: Resource, text: string) {
+  metaRow(iconRes: Resource, text: string, bold: boolean = false) {
     if (text !== '') {
-      Row({ space: 6 }) {
-        OctIcon({ res: iconRes, iconSize: 14, iconColor: $r('app.color.text_secondary') })
+      Row({ space: 8 }) {
+        Stack() {
+          OctIcon({ res: iconRes, iconSize: 14, iconColor: $r('app.color.text_secondary') })
+        }
+        .width(16)
+        .height(16)
         Text(text)
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
+          .fontWeight(bold ? FontWeight.Bold : FontWeight.Normal)
           .maxLines(1)
       }
+      .width('100%')
     }
   }
 
-  /** 状态行：emoji + Focusing 文案 + 最右铅笔（仅自己主页可编辑入口） */
+  /** 状态行：emoji + Focusing 文案 + 最右铅笔（灰）；灰底矩形背景，仅自己主页可编辑入口 */
   @Builder
   statusRow() {
     if (this.profile !== null && this.profile.statusMessage !== '') {
@@ -121,7 +128,7 @@ export struct ProfileView {
           .maxLines(1)
         Blank()
         if (isSelfProfile(this.profile.viewerLogin, this.profile.user.login)) {
-          OctIcon({ res: $r('app.media.oct_pencil_16'), iconSize: 16, iconColor: $r('app.color.link_blue') })
+          OctIcon({ res: $r('app.media.oct_pencil_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
             .padding(4)
             .onClick(() => {
               promptAction.showToast({ message: $r('app.string.home_feature_coming') });
@@ -129,6 +136,9 @@ export struct ProfileView {
         }
       }
       .width('100%')
+      .padding({ left: 12, right: 4, top: 8, bottom: 8 })
+      .borderRadius(6)
+      .backgroundColor($r('app.color.heat_empty'))
     }
   }
 
@@ -184,42 +194,68 @@ export struct ProfileView {
           .width('100%')
       }
 
-      Column({ space: 4 }) {
+      Column({ space: 8 }) {
         this.metaRow($r('app.media.oct_location_16'), this.profile?.location ?? '')
-        this.metaRow($r('app.media.oct_link_16'), this.profile?.websiteUrl ?? '')
-        this.metaRow($r('app.media.oct_mail_16'), this.profile?.email ?? '')
+        this.metaRow($r('app.media.oct_link_16'), this.profile?.websiteUrl ?? '', true)
+        this.metaRow($r('app.media.oct_mail_16'), this.profile?.email ?? '', true)
         if (this.profile?.twitterUsername !== '') {
-          Row({ space: 6 }) {
-            Text('𝕏')
-              .fontSize(14)
-              .fontColor($r('app.color.text_secondary'))
+          Row({ space: 8 }) {
+            Stack() {
+              Text('𝕏')
+                .fontSize(14)
+                .fontColor($r('app.color.text_secondary'))
+            }
+            .width(16)
+            .height(16)
             Text(`@${this.profile?.twitterUsername ?? ''}`)
               .fontSize($r('app.float.caption_font_size'))
               .fontColor($r('app.color.text_secondary'))
+              .fontWeight(FontWeight.Bold)
+              .maxLines(1)
           }
+          .width('100%')
         }
       }
       .width('100%')
       .alignItems(HorizontalAlign.Start)
 
-      // 两段可点计数行（Spec 034）：person 图标 + N followers · M following
-      Row({ space: 6 }) {
-        OctIcon({ res: $r('app.media.oct_person_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
-        Text(this.followersStat())
+      // 两段可点计数行（Spec 034）：person 图标 + N followers · M following（数字加粗）
+      Row({ space: 8 }) {
+        Stack() {
+          OctIcon({ res: $r('app.media.oct_person_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
+        }
+        .width(16)
+        .height(16)
+        Text(`${this.profile?.user.followers ?? 0}`)
           .fontSize($r('app.float.caption_font_size'))
+          .fontWeight(FontWeight.Bold)
           .fontColor($r('app.color.text_primary'))
+          .onClick(() => {
+            this.pathStack.pushPathByName('userList', `${this.profile?.user.login ?? ''}|followers`);
+          })
+        Text(resText(this.getUIContext(), $r('app.string.profile_followers_unit')))
+          .fontSize($r('app.float.caption_font_size'))
+          .fontColor($r('app.color.text_secondary'))
           .onClick(() => {
             this.pathStack.pushPathByName('userList', `${this.profile?.user.login ?? ''}|followers`);
           })
         Text('·')
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
-        Text(this.followingStat())
+        Text(`${this.profile?.user.following ?? 0}`)
           .fontSize($r('app.float.caption_font_size'))
+          .fontWeight(FontWeight.Bold)
           .fontColor($r('app.color.text_primary'))
           .onClick(() => {
             this.pathStack.pushPathByName('userList', `${this.profile?.user.login ?? ''}|following`);
           })
+        Text(resText(this.getUIContext(), $r('app.string.profile_following_unit')))
+          .fontSize($r('app.float.caption_font_size'))
+          .fontColor($r('app.color.text_secondary'))
+          .onClick(() => {
+            this.pathStack.pushPathByName('userList', `${this.profile?.user.login ?? ''}|following`);
+          })
+        Blank()
       }
       .width('100%')
 
@@ -231,18 +267,7 @@ export struct ProfileView {
     .width('100%')
   }
 
-  /** 计数行两段本地化文案（%1$d 占位） */
-  private followersStat(): string {
-    return resText(this.getUIContext(), $r('app.string.profile_followers_stat'),
-      this.profile?.user.followers ?? 0);
-  }
-
-  private followingStat(): string {
-    return resText(this.getUIContext(), $r('app.string.profile_following_stat'),
-      this.profile?.user.following ?? 0);
-  }
-
-  /** 导航入口行（Spec 035）：彩块图标 + 标签 + 计数 + › */
+  /** 导航入口行（Spec 035）：彩块图标 + 标签 + 计数（行容器由 navRowsSection 提供） */
   @Builder
   navRow(iconRes: Resource, color: ResourceColor, labelRes: Resource, count: number, onClick: () => void) {
     Row({ space: 12 }) {
@@ -260,14 +285,27 @@ export struct ProfileView {
       Text(`${count}`)
         .fontSize($r('app.float.body_font_size'))
         .fontColor($r('app.color.text_secondary'))
-      OctIcon({ res: $r('app.media.oct_chevron_right_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
     }
     .width('100%')
-    .padding(10)
-    .borderRadius(12)
-    .backgroundColor($r('app.color.card_background'))
-    .margin({ bottom: 6 })
+    .padding({ left: 10, right: 10, top: 6, bottom: 6 })
     .onClick(onClick)
+  }
+
+  /** 三导航入口组（Spec 035）：单卡片容器，一行一行展示 */
+  @Builder
+  navRowsSection() {
+    Column() {
+      this.navRow($r('app.media.oct_repo_16'), $r('app.color.text_secondary'), $r('app.string.profile_repositories'), this.profile?.repositoriesCount ?? 0,
+        () => this.pathStack.pushPathByName('repositoriesList', `${this.profile?.user.login ?? ''}|user`))
+      this.navRow($r('app.media.oct_organization_16'), $r('app.color.shortcut_orange_fg'), $r('app.string.profile_organizations'), this.profile?.organizationsCount ?? 0,
+        () => this.pathStack.pushPathByName('orgList', this.profile?.user.login ?? ''))
+      this.navRow($r('app.media.oct_star_16'), $r('app.color.star_gold'), $r('app.string.profile_starred'), this.profile?.starredCount ?? 0,
+        () => this.pathStack.pushPathByName('starred', this.profile?.user.login ?? ''))
+    }
+    .padding({ top: 4, bottom: 4 })
+    .borderRadius($r('app.float.card_radius'))
+    .backgroundColor($r('app.color.card_background'))
+    .width('100%')
   }
 
   build() {
@@ -287,11 +325,6 @@ export struct ProfileView {
 .onClick((): void => {
             this.pathStack.pop();
           })
-        Blank()
-        Text(`@${this.login}`)
-          .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.text_primary'))
         Blank()
         // 🔗 分享：系统分享能力后续 Spec（Spec 005 边界）
         OctIcon({ res: $r('app.media.oct_share_android_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
@@ -354,13 +387,8 @@ export struct ProfileView {
             .width('100%')
             .scrollBar(BarState.Off)
 
-            // 三导航入口（Spec 035：跳独立列表页）
-            this.navRow($r('app.media.oct_repo_16'), $r('app.color.text_secondary'), $r('app.string.profile_repositories'), this.profile.repositoriesCount,
-              () => this.pathStack.pushPathByName('repositoriesList', `${this.profile?.user.login ?? ''}|user`))
-            this.navRow($r('app.media.oct_organization_16'), $r('app.color.shortcut_orange_fg'), $r('app.string.profile_organizations'), this.profile.organizationsCount,
-              () => this.pathStack.pushPathByName('orgList', this.profile?.user.login ?? ''))
-            this.navRow($r('app.media.oct_star_16'), $r('app.color.star_gold'), $r('app.string.profile_starred'), this.profile.starredCount,
-              () => this.pathStack.pushPathByName('starred', this.profile?.user.login ?? ''))
+            // 三导航入口（Spec 035：单容器三行，跳独立列表页）
+            this.navRowsSection()
           } else {
             StateView({
               loading: this.loading,

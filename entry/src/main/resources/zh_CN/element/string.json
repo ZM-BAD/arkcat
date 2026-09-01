@@ -1005,8 +1005,16 @@
       "value": "%1$d 关注者"
     },
     {
+      "name": "profile_followers_unit",
+      "value": " 关注者"
+    },
+    {
       "name": "profile_following_stat",
       "value": "%1$d 关注"
+    },
+    {
+      "name": "profile_following_unit",
+      "value": " 关注"
     },
     {
       "name": "user_list_followers",

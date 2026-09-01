@@ -31,6 +31,7 @@ export struct StarredRepositoriesView {
     this.errorMsg = '';
     WorkService.fetchStarred(this.token, '', this.login)
       .then((page: WorkStarredPage) => {
+        // 排序后续再定：当前直接展示服务端返回顺序
         this.repos = page.repos;
         this.viewerLogin = page.viewerLogin;
         this.cursor = page.endCursor;
@@ -122,7 +123,7 @@ export struct StarredRepositoriesView {
         OctIcon({ res: $r('app.media.oct_star_fill_16'), iconSize: 12, iconColor: $r('app.color.star_gold') })
         Text(compactCount(repo.stargazerCount))
           .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.star_gold'))
+          .fontColor($r('app.color.text_primary'))
         if (repo.language !== '') {
           Text('●')
             .fontSize(12)

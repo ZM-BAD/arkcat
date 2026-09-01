@@ -1005,8 +1005,16 @@
       "value": "%1$d followers"
     },
     {
+      "name": "profile_followers_unit",
+      "value": " followers"
+    },
+    {
       "name": "profile_following_stat",
       "value": "%1$d following"
+    },
+    {
+      "name": "profile_following_unit",
+      "value": " following"
     },
     {
       "name": "user_list_followers",

@@ -158,17 +158,23 @@ export struct RepositoriesListView {
     ];
   }
 
-  /** 列表行：仓库名 + 描述 + 星数 + 语言 */
+  /** 列表行：仓库名（私有带 lock）+ 描述 + 星数（实心）+ 语言 */
   @Builder
   repoRow(repo: RepoSummary) {
     Column({ space: 5 }) {
-      Text(repo.name)
-        .fontSize($r('app.float.body_font_size'))
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.text_primary'))
-        .maxLines(1)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
-        .width('100%')
+      Row({ space: 6 }) {
+        if (repo.isPrivate) {
+          OctIcon({ res: $r('app.media.oct_lock_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
+        }
+        Text(repo.name)
+          .fontSize($r('app.float.body_font_size'))
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.text_primary'))
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .layoutWeight(1)
+      }
+      .width('100%')
       if (repo.description !== '') {
         Text(repo.description)
           .fontSize($r('app.float.body_font_size'))
@@ -179,7 +185,7 @@ export struct RepositoriesListView {
           .width('100%')
       }
       Row({ space: 5 }) {
-        OctIcon({ res: $r('app.media.oct_star_16'), iconSize: 14, iconColor: $r('app.color.star_gold') })
+        OctIcon({ res: $r('app.media.oct_star_fill_16'), iconSize: 14, iconColor: $r('app.color.star_gold') })
         Text(compactCount(repo.stargazerCount))
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))

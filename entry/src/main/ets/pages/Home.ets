@@ -210,7 +210,7 @@ export struct HomeView {
       .fontSize($r('app.float.caption_font_size'))
       .fontColor($r('app.color.link_blue'))
       .backgroundColor(Color.Transparent)
-      .borderRadius(6)
+      .borderRadius(0)
       .border({ width: 1, color: $r('app.color.border') })
       .onClick(() => this.comingSoon())
   }
@@ -236,17 +236,16 @@ export struct HomeView {
     .width('100%')
   }
 
-  /** Shortcuts 圆形图标：浅色圆底 + 深色字形（bg/fg 走语义色 token） */
+  /** Shortcuts 圆形图标：浅色圆底 + 深色字形（bg/fg 走语义色 token）；8 枚紧贴居中排布 */
   @Builder
   shortcutGlyph(iconRes: Resource, bg: ResourceColor, fg: ResourceColor) {
     Stack() {
-      OctIcon({ res: iconRes, iconSize: 14, iconColor: fg })
+      OctIcon({ res: iconRes, iconSize: 12, iconColor: fg })
     }
-    .width(44)
-    .height(44)
+    .width(32)
+    .height(32)
     .backgroundColor(bg)
-    .borderRadius(15)
-    .margin({ right: 6 })
+    .borderRadius(16)
   }
 
   @Builder
@@ -260,17 +259,17 @@ export struct HomeView {
 
     Column({ space: 12 }) {
       Row() {
-        // 官方 App 顺序（2026-09-01 截图）：zap / issue / pr / discussion / project / people / briefcase / file
+        // 当前顺序：zap / issue / pr / discussion / organization / people / briefcase / file-diff
         this.shortcutGlyph($r('app.media.oct_zap_16'), $r('app.color.shortcut_zap_bg'), $r('app.color.shortcut_gray_fg'))
         this.shortcutGlyph($r('app.media.oct_issue_opened_16'), $r('app.color.shortcut_green_bg'), $r('app.color.shortcut_green_fg'))
         this.shortcutGlyph($r('app.media.oct_git_pull_request_16'), $r('app.color.shortcut_blue_bg'), $r('app.color.shortcut_blue_fg'))
         this.shortcutGlyph($r('app.media.oct_comment_discussion_16'), $r('app.color.shortcut_purple_bg'), $r('app.color.shortcut_purple_fg'))
-        this.shortcutGlyph($r('app.media.oct_project_16'), $r('app.color.shortcut_orange_bg'), $r('app.color.shortcut_orange_fg'))
+        this.shortcutGlyph($r('app.media.oct_organization_16'), $r('app.color.shortcut_orange_bg'), $r('app.color.shortcut_orange_fg'))
         this.shortcutGlyph($r('app.media.oct_people_16'), $r('app.color.shortcut_pink_bg'), $r('app.color.shortcut_pink_fg'))
         this.shortcutGlyph($r('app.media.oct_briefcase_16'), $r('app.color.shortcut_indigo_bg'), $r('app.color.shortcut_indigo_fg'))
-        this.shortcutGlyph($r('app.media.oct_file_16'), $r('app.color.shortcut_file_bg'), $r('app.color.shortcut_gray_fg'))
+        this.shortcutGlyph($r('app.media.oct_file_diff_16'), $r('app.color.shortcut_file_bg'), $r('app.color.shortcut_gray_fg'))
       }
-      .padding({ left: 8 })
+      .justifyContent(FlexAlign.Center)
 
       Text($r('app.string.home_shortcuts_title'))
         .fontSize($r('app.float.body_font_size'))
