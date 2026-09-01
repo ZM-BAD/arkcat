@@ -3,7 +3,7 @@
 > BFS Level: 4
 > 关联截图: GitHub 官方 App 组织主页（dragonflyoss，用户提供 2026-09-01，完整版）
 > 上游 Spec: 035（组织列表页进入）
-> 状态: draft
+> 状态: implemented（2026-09-01，构建通过 / 模拟器冒烟 + 真实数据验证通过）
 
 ---
 

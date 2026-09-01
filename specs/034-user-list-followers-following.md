@@ -3,7 +3,7 @@
 > BFS Level: 4
 > 关联截图: GitHub 官方 App Followers（ZM-BAD）/ Following（shellRaining）列表页（用户提供 2026-09-01）
 > 上游 Spec: 005（User Profile）
-> 状态: draft
+> 状态: implemented（2026-09-01，构建通过 / 模拟器冒烟 + 真实数据验证通过）
 
 ---
 
