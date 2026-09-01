@@ -36,3 +36,6 @@ skills/
 # LoopX 状态（本地目标/证据，不入库）
 .loopx/
 .codex/goals/
+
+# Handoff（本地交接文档，不入库）
+/handoff.md
