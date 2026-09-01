@@ -46,6 +46,7 @@
 | 036 | [org-profile.md](036-org-profile.md) | 组织主页 | Level 3 | ✅ |
 | 037 | [repositories-list.md](037-repositories-list.md) | 仓库列表（筛选/排序） | Level 3 | ✅ |
 | 038 | [file-tree.md](038-file-tree.md) | 仓库文件列表页（Files） | Level 3 | ✅ |
+| 039 | [primer-design-system.md](039-primer-design-system.md) | GitHub Primer 设计系统接入（横向规范） | Level 4 | ✅ |
 | 012 | [i18n.md](012-i18n.md) | 国际化（英/简中，默认英语） | Level 4 | ✅ |
 | 013 | [home-official.md](013-home-official.md) | Home Tab 官方布局（My Work/Favorites/Shortcuts） | Level 1 | ✅ |
 | 014 | [settings.md](014-settings.md) | Settings 设置页 | Level 3 | ✅ implemented |

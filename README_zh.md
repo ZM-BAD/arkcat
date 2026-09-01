@@ -41,6 +41,7 @@
 - **API 层：GitHub GraphQL API v4**（以 GraphQL 为主，REST 兜底）
 - 网络库：@kit.NetworkKit（封装 GraphQL Client）
 - UI 框架：ArkUI（原生组件）
+- 设计系统：**GitHub Primer**（官方令牌与规范，见 [DESIGN.md](DESIGN.md)）
 - 状态管理：V2（`@ComponentV2` / `@Local`，API 18+）
 - **架构：纯端侧直连 GitHub GraphQL API**，无 BFF/后端服务
 - 认证方式：GitHub Personal Access Token（用户自行生成，客户端本地存储）
