@@ -3,7 +3,7 @@
 > BFS Level: 3
 > 关联截图: PR List → 点击 PR
 > 上游 Spec: 008
-> 状态: ✅ approved
+> 状态: deprecated（2026-09-01 由 Spec 031 实现：PR 详情，见 PrDetail.ets）
 
 ---
 

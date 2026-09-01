@@ -3,7 +3,7 @@
 > BFS Level: 3
 > 关联截图: Repo Detail → PRs Tab
 > 上游 Spec: 006
-> 状态: ✅ approved
+> 状态: deprecated（2026-09-01 由 Spec 027 实现：仓库 PR 列表，见 RepoPrs.ets）
 
 ---
 

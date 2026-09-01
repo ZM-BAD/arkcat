@@ -1095,6 +1095,58 @@
     {
       "name": "repos_sort_format",
       "value": "Sort: %1$s"
+    },
+    {
+      "name": "file_tree_title",
+      "value": "Files"
+    },
+    {
+      "name": "file_filter_hint",
+      "value": "Filter by name"
+    },
+    {
+      "name": "file_copy_link",
+      "value": "Copy link"
+    },
+    {
+      "name": "file_copy_path",
+      "value": "Copy path"
+    },
+    {
+      "name": "file_copy_contents",
+      "value": "Copy contents"
+    },
+    {
+      "name": "file_link_copied",
+      "value": "Link copied"
+    },
+    {
+      "name": "file_content_copied",
+      "value": "Contents copied"
+    },
+    {
+      "name": "file_copy_failed",
+      "value": "Copy failed"
+    },
+    {
+      "name": "file_empty_dir",
+      "value": "Empty directory"
+    },
+    {
+      "name": "file_dir_too_large",
+      "value": "Directory too large"
+    },
+    {
+      "name": "file_binary_unsupported",
+      "value": "Binary file is not supported"
+    },
+    {
+      "name": "file_truncated_hint",
+      "value": "File is too large to display"
+    },
+    {
+      "name": "file_link_unsupported",
+      "value": "This item is not supported"
     }
   ]
 }

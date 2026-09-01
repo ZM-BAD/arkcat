@@ -137,6 +137,11 @@ export struct RepoDetailView {
     this.pathStack.pushPathByName('repoCommits', `${this.owner}/${this.name}`);
   }
 
+  /** Spec 038：More → 文件 → 仓库文件树 */
+  private openFiles(): void {
+    this.pathStack.pushPathByName('repoFiles', `${this.owner}|${this.name}|`);
+  }
+
   private comingSoon(): void {
     promptAction.showToast({ message: $r('app.string.home_feature_coming') });
   }
@@ -367,7 +372,7 @@ export struct RepoDetailView {
         .width('100%')
         .height(44)
         .padding({ left: 16, right: 16 })
-        .onClick(() => this.comingSoon())
+        .onClick(() => this.openFiles())
 
         Row({ space: 12 }) {
           Text('▤')

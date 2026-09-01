@@ -1095,6 +1095,58 @@
     {
       "name": "repos_sort_format",
       "value": "排序：%1$s"
+    },
+    {
+      "name": "file_tree_title",
+      "value": "文件"
+    },
+    {
+      "name": "file_filter_hint",
+      "value": "按文件名筛选"
+    },
+    {
+      "name": "file_copy_link",
+      "value": "复制链接"
+    },
+    {
+      "name": "file_copy_path",
+      "value": "复制路径"
+    },
+    {
+      "name": "file_copy_contents",
+      "value": "复制内容"
+    },
+    {
+      "name": "file_link_copied",
+      "value": "链接已复制"
+    },
+    {
+      "name": "file_content_copied",
+      "value": "内容已复制"
+    },
+    {
+      "name": "file_copy_failed",
+      "value": "复制失败"
+    },
+    {
+      "name": "file_empty_dir",
+      "value": "空目录"
+    },
+    {
+      "name": "file_dir_too_large",
+      "value": "目录过大"
+    },
+    {
+      "name": "file_binary_unsupported",
+      "value": "不支持预览二进制文件"
+    },
+    {
+      "name": "file_truncated_hint",
+      "value": "文件过大，仅展示前段内容"
+    },
+    {
+      "name": "file_link_unsupported",
+      "value": "暂不支持此类型条目"
     }
   ]
 }

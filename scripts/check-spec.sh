@@ -76,7 +76,7 @@ for file in $SPEC_FILES; do
         claimed=$(echo "$claim" | cut -d/ -f1)
         actual=$(awk -F'|' '/^\| [0-9]+ \|/ { c += gsub(/✅/, "", $0) } END { print c+0 }' "$file")
         if [ "$claimed" -ne "$actual" ]; then
-            echo "  ❌ $filename — 可行性比例声明为 $claim，但元素清单实际 ✅=$actual 行"
+            echo "  ❌ $filename — 可行性比例声明为 ${claim}，但元素清单实际 ✅=$actual 行"
             ERRORS=$((ERRORS + 1))
         fi
     fi
