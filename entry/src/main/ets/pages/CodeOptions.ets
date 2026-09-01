@@ -161,7 +161,7 @@ export struct CodeOptionsView {
     .height(52)
     .padding({ left: 16, right: 16 })
     .backgroundColor($r('app.color.card_background'))
-    .borderRadius(10)
+    .borderRadius(12)
     .margin({ bottom: 2 })
   }
 
@@ -269,7 +269,7 @@ export struct CodeOptionsView {
             .height(64)
             .padding({ left: 16, right: 16 })
             .backgroundColor($r('app.color.card_background'))
-            .borderRadius(10)
+            .borderRadius(12)
             .margin({ bottom: 2 })
           }
 
@@ -292,7 +292,7 @@ export struct CodeOptionsView {
               Row()
                 .width(20)
                 .height(20)
-                .borderRadius(4)
+                .borderRadius(6)
                 .border({ width: 1.5, color: $r('app.color.link_blue') })
                 .onClick(() => {
                   this.featureComing();
@@ -321,7 +321,7 @@ export struct CodeOptionsView {
             .backgroundColor(this.codeBg())
           }
           .width('100%')
-          .borderRadius(10)
+          .borderRadius(12)
           .backgroundColor($r('app.color.card_background'))
 
           Row()

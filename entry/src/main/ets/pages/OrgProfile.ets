@@ -243,7 +243,7 @@ export struct OrgProfileView {
                     .fontColor($r('app.color.text_primary'))
                 }
                 .padding({ left: 14, right: 14, top: 8, bottom: 8 })
-                .borderRadius(20)
+                .borderRadius(12)
                 .backgroundColor($r('app.color.card_background'))
                 .borderWidth(1)
                 .borderColor($r('app.color.divider'))
@@ -304,7 +304,7 @@ export struct OrgProfileView {
           }
           .width(30)
           .height(30)
-          .borderRadius(8)
+          .borderRadius(6)
           .backgroundColor($r('app.color.text_primary'))
           Text($r('app.string.org_repositories_row'))
             .fontSize($r('app.float.body_font_size'))
@@ -320,7 +320,7 @@ export struct OrgProfileView {
         }
         .width('100%')
         .padding(12)
-        .borderRadius(10)
+        .borderRadius(12)
         .backgroundColor($r('app.color.card_background'))
         .margin({ top: 6 })
         .onClick(() => {

@@ -130,7 +130,7 @@ export struct ProjectsView {
       .width(34)
       .height(34)
       .backgroundColor($r('app.color.text_secondary'))
-      .borderRadius(8)
+      .borderRadius(6)
       Column({ space: 4 }) {
         Text(project.title)
           .fontSize($r('app.float.body_font_size'))

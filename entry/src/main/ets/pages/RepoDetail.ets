@@ -236,7 +236,7 @@ export struct RepoDetailView {
         .backgroundColor(Color.Transparent)
         .fontColor($r('app.color.link_blue'))
         .fontSize($r('app.float.body_font_size'))
-        .borderRadius(8)
+        .borderRadius(6)
         .border({ width: 1, color: $r('app.color.border') })
         .onClick(() => this.onStar())
       Text('⑂')
@@ -244,7 +244,7 @@ export struct RepoDetailView {
         .width(44)
         .height(44)
         .textAlign(TextAlign.Center)
-        .borderRadius(8)
+        .borderRadius(6)
         .border({ width: 1, color: $r('app.color.border') })
         .onClick(() => this.onFork())
       Text('🔔')
@@ -252,7 +252,7 @@ export struct RepoDetailView {
         .width(44)
         .height(44)
         .textAlign(TextAlign.Center)
-        .borderRadius(8)
+        .borderRadius(6)
         .border({ width: 1, color: $r('app.color.border') })
         .onClick(() => this.comingSoon())
     }
@@ -271,7 +271,7 @@ export struct RepoDetailView {
         .height(34)
         .textAlign(TextAlign.Center)
         .backgroundColor(color)
-        .borderRadius(8)
+        .borderRadius(6)
       Text(labelRes)
         .fontSize($r('app.float.body_font_size'))
         .fontWeight(FontWeight.Medium)
@@ -283,7 +283,7 @@ export struct RepoDetailView {
     }
     .width('100%')
     .padding(10)
-    .borderRadius(10)
+    .borderRadius(12)
     .backgroundColor($r('app.color.card_background'))
     .margin({ bottom: 6 })
     .onClick(onClick)
@@ -308,7 +308,7 @@ export struct RepoDetailView {
         }
       }
       .padding(12)
-      .borderRadius(10)
+      .borderRadius(12)
       .backgroundColor($r('app.color.card_background'))
       .width('100%')
       .margin({ left: 56, bottom: 6 })
@@ -408,7 +408,7 @@ export struct RepoDetailView {
     }
     .width('100%')
     .backgroundColor($r('app.color.card_background'))
-    .borderRadius(10)
+    .borderRadius(12)
   }
 
   /** README 简化富文本：标题行加粗 + 普通行 */

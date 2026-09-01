@@ -66,7 +66,7 @@ export struct OrgListView {
       Image(org.avatarUrl)
         .width(56)
         .height(56)
-        .borderRadius(8)
+        .borderRadius(6)
         .backgroundColor($r('app.color.heat_empty'))
       Column({ space: 3 }) {
         if (org.name !== '') {

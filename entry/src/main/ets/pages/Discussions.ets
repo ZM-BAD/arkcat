@@ -175,7 +175,7 @@ export struct DiscussionsView {
               .fontSize($r('app.float.caption_font_size'))
               .fontColor($r('app.color.shortcut_purple_fg'))
               .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-              .borderRadius(10)
+              .borderRadius(12)
               .backgroundColor($r('app.color.discussion_badge_bg'))
           }
           if (item.replyCount > 0) {
@@ -186,7 +186,7 @@ export struct DiscussionsView {
                 .fontColor($r('app.color.text_secondary'))
             }
             .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-            .borderRadius(10)
+            .borderRadius(12)
             .backgroundColor($r('app.color.chip_bg'))
           }
         }

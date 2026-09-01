@@ -163,7 +163,7 @@ export struct PrDetailView {
                     .fontSize(12)
                     .fontColor(Color.White)
                     .padding({ left: 8, right: 8, top: 3, bottom: 3 })
-                    .borderRadius(10)
+                    .borderRadius(12)
                     .backgroundColor('#2E5FC7')
                 }
                 if (this.detail.headRefName !== '') {
@@ -171,7 +171,7 @@ export struct PrDetailView {
                     .fontSize(12)
                     .fontColor(Color.White)
                     .padding({ left: 8, right: 8, top: 3, bottom: 3 })
-                    .borderRadius(10)
+                    .borderRadius(12)
                     .backgroundColor($r('app.color.primary'))
                 }
               }
@@ -314,7 +314,7 @@ export struct PrDetailView {
                   .fontSize($r('app.float.caption_font_size'))
                   .fontColor($r('app.color.text_secondary'))
                   .backgroundColor($r('app.color.card_background'))
-                  .borderRadius(8)
+                  .borderRadius(6)
                   .border({ width: 1, color: $r('app.color.border') })
                   .onClick(() => {
                     promptAction.showToast({ message: $r('app.string.home_feature_coming') });
@@ -342,7 +342,7 @@ export struct PrDetailView {
           .buttonStyle(ButtonStyleMode.NORMAL)
           .layoutWeight(1)
           .height(44)
-          .borderRadius(8)
+          .borderRadius(6)
           .onClick(() => {
             promptAction.showToast({ message: $r('app.string.home_feature_coming') });
           })

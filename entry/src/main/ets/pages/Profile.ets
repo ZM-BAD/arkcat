@@ -190,7 +190,7 @@ export struct ProfileView {
         .height(30)
         .textAlign(TextAlign.Center)
         .backgroundColor(color)
-        .borderRadius(8)
+        .borderRadius(6)
       Text(labelRes)
         .fontSize($r('app.float.body_font_size'))
         .fontColor($r('app.color.text_primary'))
@@ -204,7 +204,7 @@ export struct ProfileView {
     }
     .width('100%')
     .padding(10)
-    .borderRadius(10)
+    .borderRadius(12)
     .backgroundColor($r('app.color.card_background'))
     .margin({ bottom: 6 })
     .onClick(onClick)

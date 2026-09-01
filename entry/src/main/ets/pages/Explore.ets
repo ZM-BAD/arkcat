@@ -77,7 +77,7 @@ export struct ExploreView {
         .height(36)
         .textAlign(TextAlign.Center)
         .backgroundColor(color)
-        .borderRadius(8)
+        .borderRadius(6)
       Text(labelRes)
         .fontSize($r('app.float.body_font_size'))
         .fontWeight(FontWeight.Medium)
@@ -125,7 +125,7 @@ export struct ExploreView {
         .fontColor($r('app.color.link_blue'))
         .backgroundColor(Color.Transparent)
         .height(36)
-        .borderRadius(8)
+        .borderRadius(6)
         .border({ width: 1, color: $r('app.color.border') })
         .onClick(() => this.comingSoon())
     }

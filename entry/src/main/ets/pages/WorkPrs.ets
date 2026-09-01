@@ -249,7 +249,7 @@ export struct WorkPrsView {
               .fontColor(this.checksColor(item.checksState))
           }
           .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-          .borderRadius(10)
+          .borderRadius(12)
           .backgroundColor(this.checksBg(item.checksState))
         }
         if (item.commentCount > 0) {
@@ -260,7 +260,7 @@ export struct WorkPrsView {
               .fontColor($r('app.color.text_secondary'))
           }
           .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-          .borderRadius(10)
+          .borderRadius(12)
           .backgroundColor($r('app.color.chip_bg'))
         }
         if (item.reviewCount > 0) {
@@ -271,7 +271,7 @@ export struct WorkPrsView {
               .fontColor($r('app.color.text_secondary'))
           }
           .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-          .borderRadius(10)
+          .borderRadius(12)
           .backgroundColor($r('app.color.chip_bg'))
         }
       }

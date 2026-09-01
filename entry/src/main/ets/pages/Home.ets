@@ -143,7 +143,7 @@ export struct HomeView {
       .width(34)
       .height(34)
       .backgroundColor(meta.color)
-      .borderRadius(8)
+      .borderRadius(6)
       Text(meta.label)
         .fontSize($r('app.float.body_font_size'))
         .fontColor($r('app.color.text_primary'))
@@ -194,7 +194,7 @@ export struct HomeView {
       .fontSize($r('app.float.caption_font_size'))
       .fontColor($r('app.color.link_blue'))
       .backgroundColor(Color.Transparent)
-      .borderRadius(8)
+      .borderRadius(6)
       .border({ width: 1, color: $r('app.color.border') })
       .onClick(() => this.comingSoon())
   }

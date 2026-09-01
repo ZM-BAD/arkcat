@@ -189,7 +189,7 @@ export struct SettingsView {
     .height(46)
     .padding({ left: 16, right: 16 })
     .backgroundColor($r('app.color.card_background'))
-    .borderRadius(10)
+    .borderRadius(12)
     .margin({ bottom: 2 })
     .onClick(onClick)
   }

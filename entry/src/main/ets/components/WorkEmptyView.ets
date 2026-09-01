@@ -38,7 +38,7 @@ export struct WorkEmptyView {
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.link_blue'))
           .backgroundColor(Color.Transparent)
-          .borderRadius(8)
+          .borderRadius(6)
           .border({ width: 1, color: $r('app.color.border') })
           .margin({ top: 12 })
           .onClick(() => this.onButton())

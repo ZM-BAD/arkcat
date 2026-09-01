@@ -228,7 +228,7 @@ export struct IssuesListView {
       .fontSize(12)
       .fontColor(Color.White)
       .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-      .borderRadius(4)
+      .borderRadius(6)
       .backgroundColor($r('app.color.text_secondary'))
       .margin({ right: 6 })
   }
@@ -265,7 +265,7 @@ export struct IssuesListView {
               .fontColor($r('app.color.text_secondary'))
           }
           .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-          .borderRadius(10)
+          .borderRadius(12)
           .backgroundColor($r('app.color.chip_bg'))
         }
         if (issue.linkedPrCount > 0) {
@@ -276,7 +276,7 @@ export struct IssuesListView {
               .fontColor($r('app.color.text_secondary'))
           }
           .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-          .borderRadius(10)
+          .borderRadius(12)
           .backgroundColor($r('app.color.chip_bg'))
         }
         Blank()

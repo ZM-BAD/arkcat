@@ -100,7 +100,7 @@ export struct EditMyWorkView {
       .width(34)
       .height(34)
       .backgroundColor(this.meta(item.id).color)
-      .borderRadius(8)
+      .borderRadius(6)
       .margin({ left: 12 })
       Text(this.meta(item.id).label)
         .fontSize($r('app.float.body_font_size'))
@@ -170,7 +170,7 @@ export struct EditMyWorkView {
           ListItem() {
             this.workRow(item)
           }
-          .borderRadius(8)
+          .borderRadius(6)
           .backgroundColor($r('app.color.card_background'))
           .margin({ bottom: 4 })
         }, (item: WorkSection) => item.id)

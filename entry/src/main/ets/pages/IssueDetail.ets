@@ -250,7 +250,7 @@ export struct IssueDetailView {
           .buttonStyle(ButtonStyleMode.NORMAL)
           .layoutWeight(1)
           .height(44)
-          .borderRadius(8)
+          .borderRadius(6)
           .onClick(() => {
             promptAction.showToast({ message: $r('app.string.home_feature_coming') });
           })

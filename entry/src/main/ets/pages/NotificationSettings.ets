@@ -172,7 +172,7 @@ export struct NotificationSettingsView {
     .height(52)
     .padding({ left: 16, right: 16 })
     .backgroundColor($r('app.color.card_background'))
-    .borderRadius(10)
+    .borderRadius(12)
     .margin({ bottom: 2 })
   }
 
@@ -202,7 +202,7 @@ export struct NotificationSettingsView {
     .height(64)
     .padding({ left: 16, right: 16 })
     .backgroundColor($r('app.color.card_background'))
-    .borderRadius(10)
+    .borderRadius(12)
   }
 
   /** 骨架灰条 */
@@ -227,7 +227,7 @@ export struct NotificationSettingsView {
     }
     .width(44)
     .height(44)
-    .borderRadius(8)
+    .borderRadius(6)
     .backgroundColor(this.swipeAction(side) === SWIPE_DONE ? $r('app.color.success_text') : $r('app.color.text_secondary'))
   }
 
@@ -260,7 +260,7 @@ export struct NotificationSettingsView {
     .height(64)
     .padding(12)
     .backgroundColor($r('app.color.card_background'))
-    .borderRadius(10)
+    .borderRadius(12)
     .margin({ bottom: 2 })
   }
 
@@ -300,7 +300,7 @@ export struct NotificationSettingsView {
           .height(46)
           .padding({ left: 16, right: 16 })
           .backgroundColor($r('app.color.card_background'))
-          .borderRadius(10)
+          .borderRadius(12)
           .margin({ bottom: 2 })
 
           this.sectionTitle($r('app.string.settings_push_notif_types'))
