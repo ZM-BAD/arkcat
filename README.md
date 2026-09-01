@@ -85,44 +85,6 @@
 
 ---
 
-## 📁 Project Structure
-
-```text
-starraft/
-├── AppScope/                 # App-level configuration
-├── entry/                    # Main module
-│   └── src/main/
-│       ├── ets/              # ArkTS source code
-│       │   ├── entryability/ # Main entry Ability
-│       │   ├── pages/        # Pages
-│       │   ├── components/   # Reusable components (TBD)
-│       │   ├── services/     # Network / API layer (TBD)
-│       │   ├── models/       # Data models (TBD)
-│       │   └── utils/        # Utilities (TBD)
-│       ├── resources/        # Resource files
-│       └── module.json5      # Module config
-├── specs/                    # Spec documentation
-│   ├── _TEMPLATE.md          # Spec template
-│   └── NNN-name.md           # Per-page specs
-├── scripts/                  # Scripts
-│   ├── check-spec.sh         # Spec compliance check
-│   └── install-hooks.sh      # Install Git hooks
-├── .githooks/                # Git hooks
-│   ├── pre-commit            # Pre-commit checks
-│   └── commit-msg            # Commit message validation
-├── .github/workflows/        # CI configuration
-│   └── ci.yml                # Main CI pipeline
-├── hvigorfile.ts             # Build configuration
-├── build-profile.json5       # Build profile
-├── oh-package.json5          # Root dependencies
-├── CONTRIBUTING.md           # Contribution guide
-├── AGENTS.md                 # AI-assisted development guide
-├── README_zh.md              # 中文自述
-└── README.md                 # This file
-```
-
----
-
 ## 🚀 Quick Start
 
 ### Requirements

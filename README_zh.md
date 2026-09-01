@@ -85,44 +85,6 @@
 
 ---
 
-## 📁 项目结构
-
-```text
-starraft/
-├── AppScope/                 # 应用级配置
-├── entry/                    # 主模块
-│   └── src/main/
-│       ├── ets/              # ArkTS 源码
-│       │   ├── entryability/ # 主入口 Ability
-│       │   ├── pages/        # 页面
-│       │   ├── components/   # 组件（待创建）
-│       │   ├── services/     # 网络请求 / API 封装（待创建）
-│       │   ├── models/       # 数据模型（待创建）
-│       │   └── utils/        # 工具类（待创建）
-│       ├── resources/        # 资源文件
-│       └── module.json5      # 模块配置
-├── specs/                    # Spec 文档目录
-│   ├── _TEMPLATE.md          # Spec 模板
-│   └── NNN-name.md           # 各页面 Spec
-├── scripts/                  # 脚本
-│   ├── check-spec.sh         # Spec 合规检查
-│   └── install-hooks.sh      # 安装 Git hooks
-├── .githooks/                # Git hooks
-│   ├── pre-commit            # 提交前检查
-│   └── commit-msg            # Commit message 校验
-├── .github/workflows/        # CI 配置
-│   └── ci.yml                # 主 CI 流程
-├── hvigorfile.ts             # 构建配置
-├── build-profile.json5       # 构建 profile
-├── oh-package.json5          # 根依赖
-├── CONTRIBUTING.md           # 贡献指南
-├── AGENTS.md                 # AI 辅助开发指南
-├── README.md                 # English README
-└── README_zh.md              # 本文件
-```
-
----
-
 ## 🚀 快速开始
 
 ### 环境要求

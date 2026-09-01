@@ -160,3 +160,20 @@ jobs:
         run: |
           echo "HarmonyOS build requires DevEco Studio"
           echo "Run locally: hvigor assembleHap --mode debug"
+
+  # ──────────────────────────────────────────
+  # Job 5: Secret 泄漏检测（gitleaks；与本地 pre-commit gate 对齐）
+  # ──────────────────────────────────────────
+  gitleaks:
+    name: Gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
