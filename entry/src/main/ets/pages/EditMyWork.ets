@@ -83,8 +83,11 @@ export struct EditMyWorkView {
   @Builder
   workRow(item: WorkSection) {
     Row() {
-      Toggle({ type: ToggleType.Checkbox, isOn: item.visible })
+      // 官方 App 为方形勾选框：Checkbox 走 ROUNDED_SQUARE 形状（Toggle 默认圆形）
+      Checkbox()
+        .shape(CheckBoxShape.ROUNDED_SQUARE)
         .selectedColor($r('app.color.link_blue'))
+        .select(item.visible)
         .width(22)
         .height(22)
         .onChange((isOn: boolean) => {

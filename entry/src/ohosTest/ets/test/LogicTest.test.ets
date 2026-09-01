@@ -3,7 +3,7 @@
  * 运行于模拟器（aa test），与主代码同一编译单元，可直接 import main ets。
  */
 import { describe, it, expect } from '@ohos/hypium';
-import { timeParts, contributionLevelColor, notificationTypeKey, compactCount } from '../../../main/ets/utils/Format';
+import { timeParts, compactCount, notificationTypeKey } from '../../../main/ets/utils/Format';
 import { Json } from '../../../main/ets/utils/Json';
 import { WorkSection, defaultWorkSections, visibleWorkSections, workSectionsToStorage, workSectionsFromStorage } from '../../../main/ets/utils/WorkConfig';
 import {
@@ -18,7 +18,7 @@ import {
   mapWorkStarredPage, filterWorkProjects, WorkProjectItem,
   mapWorkProjectsPage, mapWorkTopReposPage, mapWorkOrgsPage
 } from '../../../main/ets/models/WorkModels';
-import { mapUser, mapRepo, mapCalendar, mapViewerBasic, mapNotifications, issueNumberFromUrl } from '../../../main/ets/models/GitHubModels';
+import { mapUser, mapRepo, mapViewerBasic, mapNotifications, issueNumberFromUrl } from '../../../main/ets/models/GitHubModels';
 import { buildNotificationsPath } from '../../../main/ets/services/NotificationsService';
 import { buildCodeQuery, mapCodeSearch } from '../../../main/ets/services/SearchService';
 import { buildTopicQuery } from '../../../main/ets/services/ExploreService';
@@ -62,14 +62,6 @@ export default function logicTest(testsuiteName: string) {
     });
     it('timeParts_invalid', 0, () => {
       expect(timeParts('not-a-date', NOW)).assertNull();
-    });
-
-    it('contributionLevelColor_levels', 0, () => {
-      expect(contributionLevelColor(0)).assertEqual('#EBEDF0');
-      expect(contributionLevelColor(2)).assertEqual('#9BE9A8');
-      expect(contributionLevelColor(5)).assertEqual('#40C463');
-      expect(contributionLevelColor(9)).assertEqual('#30A14E');
-      expect(contributionLevelColor(20)).assertEqual('#216E39');
     });
 
     it('notificationTypeKey_mapping', 0, () => {
@@ -126,17 +118,22 @@ export default function logicTest(testsuiteName: string) {
       expect(repo.stargazerCount).assertEqual(3);
     });
 
-    it('mapCalendar_colorFallbackAndTotal', 0, () => {
-      const day1: JsonMap = { 'date': '2026-08-30', 'contributionCount': 6, 'color': '' };
-      const day2: JsonMap = { 'date': '2026-08-31', 'contributionCount': 1, 'color': '#40C463' };
-      const week: JsonMap = { 'contributionDays': [day1, day2] };
-      const raw: JsonMap = { 'totalContributions': 0, 'weeks': [week] };
-      const calendar = mapCalendar(raw);
-      // API color 缺失时按贡献数兜底：count=6 → 等级 4 色
-      expect(calendar.weeks[0][0].color).assertEqual('#30A14E');
-      expect(calendar.weeks[0][1].color).assertEqual('#40C463');
-      // total 缺失时由 days 累加
-      expect(calendar.totalContributions).assertEqual(7);
+    it('mapRepo_ownerFields', 0, () => {
+      const owner: JsonMap = { 'login': 'zm_bad', 'avatarUrl': 'https://avatars.example/zm' };
+      const raw: JsonMap = {
+        'id': 'R_2',
+        'name': 'starraft',
+        'nameWithOwner': 'zm_bad/starraft',
+        'owner': owner
+      };
+      const repo = mapRepo(raw);
+      expect(repo.name).assertEqual('starraft');
+      expect(repo.ownerLogin).assertEqual('zm_bad');
+      expect(repo.ownerAvatarUrl).assertEqual('https://avatars.example/zm');
+      // 查询未带 owner 节点 → 兜底空串
+      const bare = mapRepo({ 'id': 'R_3' });
+      expect(bare.ownerLogin).assertEqual('');
+      expect(bare.ownerAvatarUrl).assertEqual('');
     });
 
     it('mapViewerBasic_basic', 0, () => {
@@ -218,8 +215,10 @@ export default function logicTest(testsuiteName: string) {
       const followers: JsonMap = { 'totalCount': 3 };
       const following: JsonMap = { 'totalCount': 4 };
       const status: JsonMap = { 'message': 'building', 'emoji': '🚀' };
-      const repoNode: JsonMap = { 'id': 'R5', 'nameWithOwner': 'a/b', 'stargazerCount': 1 };
-      const reposWrap: JsonMap = { 'nodes': [repoNode] };
+      const owner: JsonMap = { 'login': 'zm_bad', 'avatarUrl': 'https://avatars.example/zm' };
+      const repoNode: JsonMap = { 'id': 'R5', 'name': 'b', 'nameWithOwner': 'a/b', 'stargazerCount': 1, 'owner': owner };
+      const pinnedWrap: JsonMap = { 'nodes': [repoNode] };
+      const countWrap: JsonMap = { 'totalCount': 9 };
       const userNode: JsonMap = {
         'id': 'U1',
         'login': 'zm_bad',
@@ -227,12 +226,15 @@ export default function logicTest(testsuiteName: string) {
         'company': '@example',
         'location': 'SH',
         'websiteUrl': 'https://zmbad.me',
+        'email': 'zm@example.com',
         'viewerIsFollowing': true,
         'status': status,
         'followers': followers,
         'following': following,
-        'repositories': reposWrap,
-        'starredRepositories': reposWrap
+        'pinnedItems': pinnedWrap,
+        'repositories': countWrap,
+        'starredRepositories': countWrap,
+        'organizations': countWrap
       };
       const viewer: JsonMap = { 'login': 'other' };
       const data: JsonMap = { 'viewer': viewer, 'user': userNode };
@@ -241,10 +243,14 @@ export default function logicTest(testsuiteName: string) {
       expect(profile.viewerLogin).assertEqual('other');
       expect(profile.userId).assertEqual('U1');
       expect(profile.company).assertEqual('@example');
+      expect(profile.email).assertEqual('zm@example.com');
       expect(profile.statusEmoji).assertEqual('🚀');
       expect(profile.viewerIsFollowing).assertTrue();
-      expect(profile.repos.length).assertEqual(1);
-      expect(profile.stars.length).assertEqual(1);
+      expect(profile.pinned.length).assertEqual(1);
+      expect(profile.pinned[0].ownerLogin).assertEqual('zm_bad');
+      expect(profile.repositoriesCount).assertEqual(9);
+      expect(profile.organizationsCount).assertEqual(9);
+      expect(profile.starredCount).assertEqual(9);
       // 自关注判断
       expect(isSelfProfile('zm_bad', 'zm_bad')).assertTrue();
       expect(isSelfProfile('other', 'zm_bad')).assertFalse();
@@ -475,7 +481,8 @@ export default function logicTest(testsuiteName: string) {
       const repoNode2: JsonMap = {
         'id': 'R2', 'name': 'nolang', 'description': '', 'stargazerCount': 3, 'owner': owner
       };
-      const starredWrap: JsonMap = { 'nodes': [repoNode, repoNode2] };
+      const pageInfo: JsonMap = { 'hasNextPage': false, 'endCursor': '' };
+      const starredWrap: JsonMap = { 'nodes': [repoNode, repoNode2], 'pageInfo': pageInfo };
       const viewer: JsonMap = {
         'login': 'zm_bad', 'starredRepositories': starredWrap
       };

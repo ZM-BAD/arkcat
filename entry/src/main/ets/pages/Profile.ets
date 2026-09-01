@@ -7,6 +7,7 @@ import { promptAction } from '@kit.ArkUI';
 import { UserProfile } from '../models/ProfileModels';
 import { isSelfProfile } from '../models/ProfileModels';
 import { ProfileService } from '../services/ProfileService';
+import { AchievementsService } from '../services/AchievementsService';
 import { RepoCard } from '../components/RepoCard';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
@@ -21,6 +22,8 @@ export struct ProfileView {
   @Local profile: UserProfile | null = null;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  /** 勋章图片 URL 列表（官方 CDN，AchievementsService 抓取） */
+  @Local achievements: string[] = [];
 
   aboutToAppear(): void {
     this.refresh();
@@ -41,6 +44,14 @@ export struct ProfileView {
         this.errorMsg = e.message;
         this.loading = false;
       });
+    // 勋章无 GraphQL 字段：HTML 抓取独立于主查询，失败仅隐藏勋章行
+    AchievementsService.fetch(this.login)
+      .then((urls: string[]) => {
+        this.achievements = urls;
+      })
+      .catch(() => {
+        this.achievements = [];
+      });
   }
 
   private toggleFollow(): void {
@@ -59,6 +70,7 @@ export struct ProfileView {
           location: profile.location,
           websiteUrl: profile.websiteUrl,
           twitterUsername: profile.twitterUsername,
+          email: profile.email,
           statusEmoji: profile.statusEmoji,
           statusMessage: profile.statusMessage,
           viewerIsFollowing: following,
@@ -98,6 +110,48 @@ export struct ProfileView {
     }
   }
 
+  /** 状态行：emoji + Focusing 文案 + 最右铅笔（仅自己主页可编辑入口） */
+  @Builder
+  statusRow() {
+    if (this.profile !== null && this.profile.statusMessage !== '') {
+      Row() {
+        Text(`${this.profile.statusEmoji} ${this.profile.statusMessage}`)
+          .fontSize($r('app.float.caption_font_size'))
+          .fontColor($r('app.color.text_secondary'))
+          .maxLines(1)
+        Blank()
+        if (isSelfProfile(this.profile.viewerLogin, this.profile.user.login)) {
+          OctIcon({ res: $r('app.media.oct_pencil_16'), iconSize: 16, iconColor: $r('app.color.link_blue') })
+            .padding(4)
+            .onClick(() => {
+              promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+            })
+        }
+      }
+      .width('100%')
+    }
+  }
+
+  /** 勋章行：trophy + GitHub 官方徽章图列表（AchievementsService 抓取 HTML） */
+  @Builder
+  achievementsRow() {
+    if (this.achievements.length > 0) {
+      Row({ space: 8 }) {
+        OctIcon({ res: $r('app.media.oct_trophy_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+        Row({ space: 6 }) {
+          ForEach(this.achievements, (url: string, index: number) => {
+            Image(url)
+              .width(24)
+              .height(24)
+              .borderRadius(12)
+              .backgroundColor($r('app.color.heat_empty'))
+          }, (url: string, index: number) => `${url}_${index}`)
+        }
+      }
+      .width('100%')
+    }
+  }
+
   @Builder
   headerCard() {
     Column({ space: 8 }) {
@@ -108,12 +162,6 @@ export struct ProfileView {
           .borderRadius(36)
           .backgroundColor($r('app.color.heat_empty'))
         Column({ space: 4 }) {
-          if (this.profile !== null && this.profile.statusMessage !== '') {
-            Text(`${this.profile.statusEmoji} ${this.profile.statusMessage}`)
-              .fontSize($r('app.float.caption_font_size'))
-              .fontColor($r('app.color.text_secondary'))
-              .maxLines(1)
-          }
           Text(this.profile?.user.name ?? '')
             .fontSize($r('app.float.title_font_size'))
             .fontWeight(FontWeight.Bold)
@@ -127,6 +175,8 @@ export struct ProfileView {
       }
       .width('100%')
 
+      this.statusRow()
+
       if (this.profile !== null && this.profile.user.bio !== '') {
         Text(this.profile.user.bio)
           .fontSize($r('app.float.caption_font_size'))
@@ -135,8 +185,9 @@ export struct ProfileView {
       }
 
       Column({ space: 4 }) {
-        this.metaRow($r('app.media.oct_pin_16'), this.profile?.location ?? '')
+        this.metaRow($r('app.media.oct_location_16'), this.profile?.location ?? '')
         this.metaRow($r('app.media.oct_link_16'), this.profile?.websiteUrl ?? '')
+        this.metaRow($r('app.media.oct_mail_16'), this.profile?.email ?? '')
         if (this.profile?.twitterUsername !== '') {
           Row({ space: 6 }) {
             Text('𝕏')
@@ -151,8 +202,9 @@ export struct ProfileView {
       .width('100%')
       .alignItems(HorizontalAlign.Start)
 
-      // 两段可点计数行（Spec 034）：N followers · M following，中间 · 分隔
-      Row({ space: 4 }) {
+      // 两段可点计数行（Spec 034）：person 图标 + N followers · M following
+      Row({ space: 6 }) {
+        OctIcon({ res: $r('app.media.oct_person_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
         Text(this.followersStat())
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_primary'))
@@ -170,6 +222,8 @@ export struct ProfileView {
           })
       }
       .width('100%')
+
+      this.achievementsRow()
     }
     .padding($r('app.float.card_padding'))
     .borderRadius($r('app.float.card_radius'))
@@ -240,13 +294,13 @@ export struct ProfileView {
           .fontColor($r('app.color.text_primary'))
         Blank()
         // 🔗 分享：系统分享能力后续 Spec（Spec 005 边界）
-        OctIcon({ res: $r('app.media.oct_share_16'), iconSize: 20, iconColor: $r('app.color.text_primary') })
+        OctIcon({ res: $r('app.media.oct_share_android_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
           .padding(6)
           .onClick(() => {
             promptAction.showToast({ message: $r('app.string.home_feature_coming') });
           })
         // ⚙ 设置：进入 Settings 页（Spec 014）
-        OctIcon({ res: $r('app.media.oct_gear_16'), iconSize: 20, iconColor: $r('app.color.text_primary') })
+        OctIcon({ res: $r('app.media.oct_gear_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
           .padding(6)
           .onClick(() => {
             this.pathStack.pushPathByName('settings', this.login);
@@ -273,16 +327,20 @@ export struct ProfileView {
             this.headerCard()
 
             // Pinned 横滑双列（Spec 005 官方布局）
-            Text($r('app.string.home_pinned_section'))
-              .fontSize($r('app.float.title_font_size'))
-              .fontWeight(FontWeight.Bold)
-              .fontColor($r('app.color.text_primary'))
-              .width('100%')
+            Row({ space: 6 }) {
+              OctIcon({ res: $r('app.media.oct_pin_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
+              Text($r('app.string.home_pinned_section'))
+                .fontSize($r('app.float.title_font_size'))
+                .fontWeight(FontWeight.Bold)
+                .fontColor($r('app.color.text_primary'))
+            }
+            .width('100%')
             Scroll() {
               Row({ space: 8 }) {
                 ForEach(this.profile.pinned, (repo: RepoSummary) => {
                   RepoCard({
                     repo: repo,
+                    isPinned: true,
                     onOpen: (): void => {
                       this.pathStack.pushPathByName('repoDetail', repo.nameWithOwner);
                     }

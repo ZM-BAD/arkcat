@@ -69,7 +69,7 @@ export struct HomeView {
   OctIcon({
         res: $r('app.media.oct_search_24'),
         iconSize: 20,
-        iconColor: $r('app.color.text_primary')
+        iconColor: $r('app.color.link_blue')
   })
 }
 .width(44)
@@ -84,7 +84,7 @@ export struct HomeView {
   OctIcon({
         res: $r('app.media.oct_sync_16'),
         iconSize: 18,
-        iconColor: $r('app.color.text_primary')
+        iconColor: $r('app.color.link_blue')
   })
 }
 .width(44)
@@ -95,9 +95,9 @@ export struct HomeView {
         .padding(6)
       Stack() {
   OctIcon({
-        res: $r('app.media.oct_plus_24'),
+        res: $r('app.media.oct_plus_circle_24'),
         iconSize: 20,
-        iconColor: $r('app.color.text_primary')
+        iconColor: $r('app.color.link_blue')
   })
 }
 .width(44)

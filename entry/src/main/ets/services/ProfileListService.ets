@@ -294,6 +294,7 @@ export class ProfileListService {
       for (const node of parsed as Object[]) {
         const item = node as JsonMap;
         const language = Json.str(item, 'language');
+        const owner = Json.obj(item, 'owner');
         items.push({
           id: Json.str(item, 'id'),
           name: Json.str(item, 'name'),
@@ -303,7 +304,9 @@ export class ProfileListService {
           forkCount: Json.num(item, 'forks_count'),
           primaryLanguage: language,
           languageColor: LANGUAGE_COLORS[language] ?? '',
-          isPrivate: Json.bool(item, 'private')
+          isPrivate: Json.bool(item, 'private'),
+          ownerLogin: owner !== null ? Json.str(owner, 'login') : '',
+          ownerAvatarUrl: owner !== null ? Json.str(owner, 'avatar_url') : ''
         });
       }
     }

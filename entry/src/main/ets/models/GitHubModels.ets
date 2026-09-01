@@ -42,6 +42,9 @@ export interface RepoSummary {
   primaryLanguage: string;
   languageColor: string;
   isPrivate: boolean;
+  /** 仓库属主（Pinned 卡片头像/用户名；查询未带 owner 时为 ''） */
+  ownerLogin: string;
+  ownerAvatarUrl: string;
 }
 
 /** 通知条目（REST /notifications） */
@@ -92,6 +95,7 @@ export function mapRepo(raw: JsonMap): RepoSummary {
     language = Json.str(langObj, 'name');
     languageColor = Json.str(langObj, 'color');
   }
+  const owner = Json.obj(raw, 'owner');
   return {
     id: Json.str(raw, 'id'),
     name: Json.str(raw, 'name'),
@@ -101,7 +105,9 @@ export function mapRepo(raw: JsonMap): RepoSummary {
     forkCount: Json.num(raw, 'forkCount'),
     primaryLanguage: language,
     languageColor: languageColor,
-    isPrivate: Json.bool(raw, 'isPrivate')
+    isPrivate: Json.bool(raw, 'isPrivate'),
+    ownerLogin: owner !== null ? Json.str(owner, 'login') : '',
+    ownerAvatarUrl: owner !== null ? Json.str(owner, 'avatarUrl') : ''
   };
 }
 
