@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# ──────────────────────────────────────────────────────────────
+# pre-push 防误操作（main/develop 硬保护）
+# GitHub 私有仓库的 branch protection 需 Pro 订阅，本地 hook 先行：
+# 禁止对 main / develop 的：① delete ② force push（非快进）
+# Public/Pro 后可升级为远程保护（届时保留此 hook 双保险）
+# ──────────────────────────────────────────────────────────────
+set -u
+
+PROTECTED="refs/heads/main refs/heads/develop"
+ZERO="0000000000000000000000000000000000000000"
+STATUS=0
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+    [ -z "$local_ref" ] && continue
+    for p in $PROTECTED; do
+        [ "$remote_ref" = "$p" ] || continue
+
+        # 删除分支：local_sha 全零
+        if [ "$local_sha" = "$ZERO" ]; then
+            echo "❌ pre-push 拒绝：禁止删除受保护分支 $remote_ref" >&2
+            STATUS=1
+        # force push：remote 已存在且 local 不是其祖先（非快进）
+        elif [ "$remote_sha" != "$ZERO" ] && ! git merge-base --is-ancestor "$remote_sha" "$local_sha" 2>/dev/null; then
+            echo "❌ pre-push 拒绝：禁止 force push 到受保护分支 $remote_ref（非快进更新）" >&2
+            STATUS=1
+        fi
+    done
+done
+
+exit "$STATUS"

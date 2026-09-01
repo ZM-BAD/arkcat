@@ -38,3 +38,10 @@ else
         echo "  - $hook"
     done
 fi
+
+# 防误操作 pre-push（独立于 pre-commit 框架；GitHub 分支保护私有仓库需 Pro）
+if [ -f "$HOOKS_DIR/pre-push" ]; then
+    cp "$HOOKS_DIR/pre-push" "$PROJECT_ROOT/.git/hooks/pre-push"
+    chmod +x "$PROJECT_ROOT/.git/hooks/pre-push"
+    echo "✅ pre-push 保护（main/develop 禁 force push / 删除）已安装"
+fi
