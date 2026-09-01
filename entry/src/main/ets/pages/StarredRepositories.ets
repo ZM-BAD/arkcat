@@ -1,5 +1,5 @@
 /**
- * 工作区 Starred Repositories 页（Spec 023）：viewer 星标仓库。
+ * Starred Repositories 页（Spec 023/035）：viewer 星标仓库（默认）；传入 login 展示目标用户星标。
  * My lists 区（+ NEW 预留，v1 恒显空态卡）+ Starred 分组（头像/名称/描述/星数/语言）。
  */
 import { promptAction } from '@kit.ArkUI';
@@ -13,6 +13,7 @@ import { resText } from '../utils/I18n';
 @ComponentV2
 export struct StarredRepositoriesView {
   @Param token: string = '';
+  @Param login: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
   @Local repos: WorkStarredRepoItem[] = [];
   @Local viewerLogin: string = '';
@@ -28,7 +29,7 @@ export struct StarredRepositoriesView {
   private refresh(): void {
     this.loading = true;
     this.errorMsg = '';
-    WorkService.fetchStarred(this.token, '')
+    WorkService.fetchStarred(this.token, '', this.login)
       .then((page: WorkStarredPage) => {
         this.repos = page.repos;
         this.viewerLogin = page.viewerLogin;
@@ -47,7 +48,7 @@ export struct StarredRepositoriesView {
       return;
     }
     this.loading = true;
-    WorkService.fetchStarred(this.token, this.cursor)
+    WorkService.fetchStarred(this.token, this.cursor, this.login)
       .then((page: WorkStarredPage) => {
         this.repos = this.repos.concat(page.repos);
         this.cursor = page.endCursor;

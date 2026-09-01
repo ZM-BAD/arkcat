@@ -115,6 +115,24 @@ query WorkStarred($first: Int = 30, $after: String) {
   }
 }`;
 
+// 用户星标（Spec 035：Profile Starred 入口，任意用户 profile 可看）
+const USER_STARRED_QUERY = `
+query UserStarred($login: String!, $first: Int = 30, $after: String) {
+  viewer { login }
+  user(login: $login) {
+    login
+    starredRepositories(first: $first, after: $after) {
+      totalCount
+      pageInfo { hasNextPage endCursor }
+      nodes {
+        id name nameWithOwner description stargazerCount
+        owner { login avatarUrl }
+        primaryLanguage { name color }
+      }
+    }
+  }
+}`;
+
 export class WorkService {
   /** 工作区 Issue 列表（search type: ISSUE） */
   static async fetchIssues(token: string, state: string, scope: string, visibility: string,
@@ -192,13 +210,16 @@ export class WorkService {
     return mapWorkOrgsPage(data);
   }
 
-  /** 星标仓库列表（viewer.starredRepositories） */
-  static async fetchStarred(token: string, cursor: string): Promise<WorkStarredPage> {
+  /** 星标仓库列表：同 v1 走 viewer；传入 login 时展示目标用户星标（Spec 035） */
+  static async fetchStarred(token: string, cursor: string, login: string = ''): Promise<WorkStarredPage> {
     const variables: Record<string, Object> = { 'first': 30 };
     if (cursor !== '') {
       variables['after'] = cursor;
     }
-    const data = await graphql(WORK_STARRED_QUERY, variables, token);
+    if (login !== '') {
+      variables['login'] = login;
+    }
+    const data = await graphql(login !== '' ? USER_STARRED_QUERY : WORK_STARRED_QUERY, variables, token);
     return mapWorkStarredPage(data);
   }
 }

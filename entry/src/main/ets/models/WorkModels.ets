@@ -478,10 +478,17 @@ export function mapStarredRepo(raw: JsonMap): WorkStarredRepoItem {
   };
 }
 
-/** viewer.starredRepositories 响应 → WorkStarredPage */
+/** viewer / user(login) .starredRepositories 响应 → WorkStarredPage（Spec 035 双形状） */
 export function mapWorkStarredPage(data: JsonMap): WorkStarredPage {
   const viewer = Json.obj(data, 'viewer') ?? ({} as JsonMap);
-  const starredWrap = Json.obj(viewer, 'starredRepositories') ?? ({} as JsonMap);
+  let starredWrap = Json.obj(viewer, 'starredRepositories') ?? ({} as JsonMap);
+  let login = Json.str(viewer, 'login');
+  // user(login) 查询形状：viewer 无星标节点时读 user
+  if (Json.obj(starredWrap, 'pageInfo') === null) {
+    const userNode = Json.obj(data, 'user') ?? ({} as JsonMap);
+    starredWrap = Json.obj(userNode, 'starredRepositories') ?? ({} as JsonMap);
+    login = Json.str(userNode, 'login');
+  }
   const pageInfo = Json.obj(starredWrap, 'pageInfo');
   const repos: WorkStarredRepoItem[] = [];
   for (const nodeItem of Json.arr(starredWrap, 'nodes')) {
@@ -490,7 +497,7 @@ export function mapWorkStarredPage(data: JsonMap): WorkStarredPage {
   return {
     hasNextPage: pageInfo !== null ? Json.bool(pageInfo, 'hasNextPage') : false,
     endCursor: pageInfo !== null ? Json.str(pageInfo, 'endCursor') : '',
-    viewerLogin: Json.str(viewer, 'login'),
+    viewerLogin: login,
     repos: repos
   };
 }
