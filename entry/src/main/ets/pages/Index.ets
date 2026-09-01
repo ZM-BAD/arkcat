@@ -111,7 +111,7 @@ struct Index {
         this.profileLogin = login;
       }
     })
-    .title($r('app.string.nav_profile_title'))
+    .hideTitleBar(true)
   }
 
   @Builder
@@ -133,7 +133,7 @@ struct Index {
         this.repoName = parts[1];
       }
     })
-    .title($r('app.string.nav_repo_title'))
+    .hideTitleBar(true)
   }
 
   @Builder
@@ -154,7 +154,7 @@ struct Index {
         this.repoName = parts[1];
       }
     })
-    .title($r('app.string.nav_issues_title'))
+    .hideTitleBar(true)
   }
 
   @Builder
@@ -164,7 +164,7 @@ struct Index {
         pathStack: this.pathStack
       })
     }
-    .title($r('app.string.profile_settings'))
+    .hideTitleBar(true)
   }
 
   /** Spec 032：Settings → Notification Options 二级页（自绘头部，不设 .title() 防双标题） */
@@ -269,7 +269,7 @@ struct Index {
         pathStack: this.pathStack
       })
     }
-    .title('')
+    .hideTitleBar(true)
   }
 
   @Builder
@@ -282,7 +282,7 @@ struct Index {
         }
       })
     }
-    .title($r('app.string.nav_edit_work_title'))
+    .hideTitleBar(true)
   }
 
   @Builder
@@ -293,7 +293,7 @@ struct Index {
         pathStack: this.pathStack
       })
     }
-    .title($r('app.string.nav_issues_title'))
+    .hideTitleBar(true)
   }
 
   @Builder
@@ -304,7 +304,7 @@ struct Index {
         pathStack: this.pathStack
       })
     }
-    .title($r('app.string.home_work_pull_requests'))
+    .hideTitleBar(true)
   }
 
   @Builder
@@ -315,7 +315,7 @@ struct Index {
         pathStack: this.pathStack
       })
     }
-    .title($r('app.string.nav_discussions_title'))
+    .hideTitleBar(true)
   }
 
   @Builder
@@ -326,7 +326,7 @@ struct Index {
         pathStack: this.pathStack
       })
     }
-    .title($r('app.string.nav_projects_title'))
+    .hideTitleBar(true)
   }
 
   @Builder
@@ -337,7 +337,7 @@ struct Index {
         pathStack: this.pathStack
       })
     }
-    .title($r('app.string.nav_top_repos_title'))
+    .hideTitleBar(true)
   }
 
   @Builder
@@ -348,7 +348,7 @@ struct Index {
         pathStack: this.pathStack
       })
     }
-    .title($r('app.string.nav_organizations_title'))
+    .hideTitleBar(true)
   }
 
   @Builder
@@ -363,7 +363,7 @@ struct Index {
     .onReady((context: NavDestinationContext) => {
       this.starredLogin = context.pathInfo.param as string;
     })
-    .title($r('app.string.nav_starred_title'))
+    .hideTitleBar(true)
   }
 
   /** 路由参数解析：owner/name[/number] */
@@ -391,7 +391,7 @@ struct Index {
     .onReady((context: NavDestinationContext) => {
       this.parseRouteParam(context.pathInfo.param as string);
     })
-    .title($r('app.string.home_work_pull_requests'))
+    .hideTitleBar(true)
   }
 
   @Builder
@@ -407,7 +407,7 @@ struct Index {
     .onReady((context: NavDestinationContext) => {
       this.parseRouteParam(context.pathInfo.param as string);
     })
-    .title($r('app.string.repo_commits_title'))
+    .hideTitleBar(true)
   }
 
   @Builder
@@ -423,7 +423,7 @@ struct Index {
     .onReady((context: NavDestinationContext) => {
       this.parseRouteParam(context.pathInfo.param as string);
     })
-    .title($r('app.string.repo_releases_title'))
+    .hideTitleBar(true)
   }
 
   /** 文件路由参数解析：owner|name|path（path 可为空 = 根目录） */
@@ -484,7 +484,7 @@ struct Index {
     .onReady((context: NavDestinationContext) => {
       this.parseRouteParam(context.pathInfo.param as string);
     })
-    .title($r('app.string.nav_issues_title'))
+    .hideTitleBar(true)
   }
 
   @Builder
@@ -501,7 +501,7 @@ struct Index {
     .onReady((context: NavDestinationContext) => {
       this.parseRouteParam(context.pathInfo.param as string);
     })
-    .title($r('app.string.home_work_pull_requests'))
+    .hideTitleBar(true)
   }
 
   @Builder
