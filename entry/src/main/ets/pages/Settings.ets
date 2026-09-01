@@ -180,9 +180,7 @@ export struct SettingsView {
           .fontSize($r('app.float.body_font_size'))
           .fontColor($r('app.color.text_secondary'))
       }
-      Text('>')
-        .fontSize(14)
-        .fontColor($r('app.color.text_secondary'))
+      OctIcon({ res: $r('app.media.oct_chevron_right_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
         .margin({ left: 6 })
     }
     .width('100%')

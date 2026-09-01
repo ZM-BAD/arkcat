@@ -119,10 +119,10 @@ export struct OrgProfileView {
   }
 
   @Builder
-  metaRow(icon: string, text: string) {
+  metaRow(iconRes: Resource, text: string) {
     if (text !== '') {
       Row({ space: 8 }) {
-        Text(icon).fontSize(14)
+        OctIcon({ res: iconRes, iconSize: 14, iconColor: $r('app.color.text_secondary') })
         Text(text)
           .fontSize($r('app.float.body_font_size'))
           .fontColor($r('app.color.text_primary'))
@@ -181,9 +181,18 @@ export struct OrgProfileView {
         }
 
         Column({ space: 8 }) {
-          this.metaRow('🔗', org.websiteUrl)
-          this.metaRow('✉️', org.email)
-          this.metaRow('𝕏', org.twitterUsername !== '' ? `@${org.twitterUsername}` : '')
+          this.metaRow($r('app.media.oct_link_16'), org.websiteUrl)
+          this.metaRow($r('app.media.oct_mail_16'), org.email)
+          if (org.twitterUsername !== '') {
+            Row({ space: 6 }) {
+              Text('𝕏')
+                .fontSize(14)
+                .fontColor($r('app.color.text_secondary'))
+              Text(`@${org.twitterUsername}`)
+                .fontSize($r('app.float.caption_font_size'))
+                .fontColor($r('app.color.text_secondary'))
+            }
+          }
         }
         .margin({ top: 10 })
         .width('100%')
@@ -315,9 +324,7 @@ export struct OrgProfileView {
           Text(`${org.repositoriesCount}`)
             .fontSize($r('app.float.body_font_size'))
             .fontColor($r('app.color.text_secondary'))
-          Text('>')
-            .fontSize(14)
-            .fontColor($r('app.color.text_secondary'))
+          OctIcon({ res: $r('app.media.oct_chevron_right_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
             .margin({ left: 4 })
         }
         .width('100%')
