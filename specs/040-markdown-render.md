@@ -119,6 +119,7 @@ query IssueDetail($owner: String!, $name: String!, $number: Int!) {
 
 ## 七、备注
 
+- **本 Spec 为本批（040-051）第一个开发任务**（2026-09-02 与用户确认）。基线样式约束（颜色/图标/字号 token 强制、页面骨架复用、分域 polish 收口策略）见 handoff「关键约定」；观感标准：README/正文渲染**直接对齐官方 `.markdown-body`**（不适用「先糙后美」，本 Spec 开发时即达标）。
 - **选型依据（2026-09-02 调研）**：官方 App 移动端 = 服务端 GFM→HTML（GraphQL `bodyHTML`）经客户端 Web 呈现；ArkWeb + 官方 HTML = 我们与官方同管线，零解析差异；`github-markdown-css`（8923★/MIT）仅作样式底稿，颜色必须换用我们 `resources/base|dark/color.json` 的 Primer token 覆盖。
 - 备选纯 ArkUI 库 `@luvi/lv-markdown-in`（gitee 88star、60 版本、2026-08-15 还在发版、API 12 起、MIT）——优点无 Web 引擎开销；缺点本地解析与官方管线存在差异（如任务列表/表格细节）、需自调样式。决断点：真机（Pura 90 Pro）上 ArkWeb 首屏延迟 > 300ms 或出现明显滚动掉帧时启用。
 - 本组件是 041（评论）/043（创建编辑）/046（搜索）/047（Releases）的共同前提，建议作为下一批第一个开发任务。
