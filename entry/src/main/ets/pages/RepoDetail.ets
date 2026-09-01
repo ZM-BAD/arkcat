@@ -362,11 +362,11 @@ export struct RepoDetailView {
       if (this.moreExpanded) {
         Row({ space: 12 }) {
           Stack() {
-            OctIcon({ res: $r('app.media.oct_people_16'), iconSize: 16, iconColor: $r('app.color.danger_text') })
+            OctIcon({ res: $r('app.media.oct_people_16'), iconSize: 16, iconColor: Color.White })
           }
           .width(32)
           .height(32)
-          .backgroundColor($r('app.color.checks_failure_bg'))
+          .backgroundColor($r('app.color.badge_red'))
           .borderRadius(6)
           Text($r('app.string.repo_contributors'))
             .fontSize($r('app.float.body_font_size'))
@@ -379,11 +379,11 @@ export struct RepoDetailView {
 
         Row({ space: 12 }) {
           Stack() {
-            OctIcon({ res: $r('app.media.oct_eye_16'), iconSize: 16, iconColor: $r('app.color.warning_text') })
+            OctIcon({ res: $r('app.media.oct_eye_16'), iconSize: 16, iconColor: Color.White })
           }
           .width(32)
           .height(32)
-          .backgroundColor($r('app.color.checks_pending_bg'))
+          .backgroundColor($r('app.color.attention_bg'))
           .borderRadius(6)
           Text($r('app.string.repo_watchers'))
             .fontSize($r('app.float.body_font_size'))
@@ -396,11 +396,11 @@ export struct RepoDetailView {
 
         Row({ space: 12 }) {
           Stack() {
-            OctIcon({ res: $r('app.media.oct_law_16'), iconSize: 16, iconColor: $r('app.color.warning_text') })
+            OctIcon({ res: $r('app.media.oct_law_16'), iconSize: 16, iconColor: Color.White })
           }
           .width(32)
           .height(32)
-          .backgroundColor($r('app.color.checks_pending_bg'))
+          .backgroundColor($r('app.color.badge_red'))
           .borderRadius(6)
           Text($r('app.string.repo_license'))
             .fontSize($r('app.float.body_font_size'))

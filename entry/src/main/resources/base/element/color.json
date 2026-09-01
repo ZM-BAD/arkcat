@@ -171,6 +171,10 @@
     {
       "name": "work_dark_bg",
       "value": "#1F2328"
+    },
+    {
+      "name": "attention_bg",
+      "value": "#BF8700"
     }
   ]
 }
