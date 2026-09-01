@@ -455,11 +455,11 @@ export struct RepoDetailView {
 
       Row({ space: 12 }) {
         Stack() {
-          OctIcon({ res: $r('app.media.oct_file_code_16'), iconSize: 16, iconColor: Color.White })
+          OctIcon({ res: $r('app.media.oct_file_code_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
         }
         .width(32)
         .height(32)
-        .backgroundColor($r('app.color.text_secondary'))
+        .backgroundColor($r('app.color.heat_empty'))
         .borderRadius(6)
         Text($r('app.string.repo_code'))
           .fontSize($r('app.float.body_font_size'))
@@ -474,11 +474,11 @@ export struct RepoDetailView {
 
       Row({ space: 12 }) {
         Stack() {
-          OctIcon({ res: $r('app.media.oct_git_commit_16'), iconSize: 16, iconColor: Color.White })
+          OctIcon({ res: $r('app.media.oct_git_commit_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
         }
         .width(32)
         .height(32)
-        .backgroundColor($r('app.color.text_secondary'))
+        .backgroundColor($r('app.color.heat_empty'))
         .borderRadius(6)
         Text($r('app.string.repo_commits'))
           .fontSize($r('app.float.body_font_size'))
