@@ -109,6 +109,10 @@
       "value": "No notifications"
     },
     {
+      "name": "inbox_menu_refresh",
+      "value": "Refresh"
+    },
+    {
       "name": "inbox_marked_read",
       "value": "Marked as read"
     },

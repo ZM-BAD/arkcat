@@ -57,6 +57,10 @@ export interface NotificationItem {
   unread: boolean;
   updatedAt: string;
   subjectUrl: string;
+  /** 仓库属主头像（REST repository.owner.avatar_url；缺失为 ''） */
+  ownerAvatarUrl: string;
+  /** PullRequest 是否已合并（GraphQL 批量探测；默认为 false 保持绿色 PR） */
+  prMerged: boolean;
 }
 
 /**
@@ -115,6 +119,7 @@ export function mapRepo(raw: JsonMap): RepoSummary {
 export function mapNotification(raw: JsonMap): NotificationItem {
   const repo = Json.obj(raw, 'repository');
   const subject = Json.obj(raw, 'subject');
+  const owner = repo !== null ? Json.obj(repo, 'owner') : null;
   return {
     threadId: Json.str(raw, 'id'),
     repoFullName: repo ? Json.str(repo, 'full_name') : '',
@@ -123,7 +128,25 @@ export function mapNotification(raw: JsonMap): NotificationItem {
     reason: Json.str(raw, 'reason'),
     unread: Json.bool(raw, 'unread'),
     updatedAt: Json.str(raw, 'updated_at'),
-    subjectUrl: subject ? Json.str(subject, 'url') : ''
+    subjectUrl: subject ? Json.str(subject, 'url') : '',
+    ownerAvatarUrl: owner !== null ? Json.str(owner, 'avatar_url') : '',
+    prMerged: false
+  };
+}
+
+/** 拷贝通知并替换合并态（GraphQL 批量探测回填用，避免动态属性） */
+export function withPrMerged(item: NotificationItem, merged: boolean): NotificationItem {
+  return {
+    threadId: item.threadId,
+    repoFullName: item.repoFullName,
+    title: item.title,
+    subjectType: item.subjectType,
+    reason: item.reason,
+    unread: item.unread,
+    updatedAt: item.updatedAt,
+    subjectUrl: item.subjectUrl,
+    ownerAvatarUrl: item.ownerAvatarUrl,
+    prMerged: merged
   };
 }
 

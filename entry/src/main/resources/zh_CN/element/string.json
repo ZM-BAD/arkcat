@@ -109,6 +109,10 @@
       "value": "暂无通知"
     },
     {
+      "name": "inbox_menu_refresh",
+      "value": "刷新"
+    },
+    {
       "name": "inbox_marked_read",
       "value": "已标记为已读"
     },

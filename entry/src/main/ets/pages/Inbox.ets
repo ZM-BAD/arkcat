@@ -8,7 +8,7 @@ import { NotificationItem, issueNumberFromUrl } from '../models/GitHubModels';
 import { NotificationsService } from '../services/NotificationsService';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
-import { timeParts, notificationTypeKey, TimeParts } from '../utils/Format';
+import { timeParts, githubShortTime, notificationTypeKey, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
 type InboxFilter = 'inbox' | 'focused' | 'unread' | 'repo';
@@ -95,7 +95,9 @@ export struct InboxView {
             reason: it.reason,
             unread: it.threadId === item.threadId ? false : it.unread,
             updatedAt: it.updatedAt,
-            subjectUrl: it.subjectUrl
+            subjectUrl: it.subjectUrl,
+            ownerAvatarUrl: it.ownerAvatarUrl,
+            prMerged: it.prMerged
           };
           return copy;
         });
@@ -137,26 +139,49 @@ export struct InboxView {
     }
   }
 
-  /** 时间戳 → 相对时间文案；解析失败回退空串 */
-  private timeText(parts: TimeParts | null): string {
-    if (parts === null) {
-      return '';
+  /** 通知类型 → 图标（Inbox 卡片左上角；PR 已合并显示 merge 图标） */
+  private notifIconRes(subjectType: string, isMerged: boolean): Resource {
+    switch (notificationTypeKey(subjectType)) {
+      case 'issue':
+        return $r('app.media.oct_issue_opened_16');
+      case 'pr':
+        return isMerged ? $r('app.media.oct_git_merge_16') : $r('app.media.oct_git_pull_request_16');
+      case 'release':
+        return $r('app.media.oct_tag_16');
+      case 'ci':
+        return $r('app.media.oct_check_16');
+      case 'discussion':
+        return $r('app.media.oct_comment_discussion_16');
+      case 'security':
+        return $r('app.media.oct_alert_16');
+      default:
+        return $r('app.media.oct_issue_opened_16');
     }
-    const ui = this.getUIContext();
-    switch (parts.unit) {
-      case 'just_now':
-        return resText(ui, $r('app.string.time_just_now'));
-      case 'minute':
-        return resText(ui, $r('app.string.time_minutes_ago'), parts.value);
-      case 'hour':
-        return resText(ui, $r('app.string.time_hours_ago'), parts.value);
-      case 'day':
-        return resText(ui, $r('app.string.time_days_ago'), parts.value);
-      case 'month':
-        return resText(ui, $r('app.string.time_months_ago'), parts.value);
-      case 'year':
-        return resText(ui, $r('app.string.time_years_ago'), parts.value);
+  }
+
+  /** 通知类型 → 图标颜色：issue/PR 绿、PR 合并紫、讨论紫、Release 橙、CI 绿、安全红、未知灰 */
+  private notifIconColor(subjectType: string, isMerged: boolean): ResourceColor {
+    switch (notificationTypeKey(subjectType)) {
+      case 'issue':
+      case 'ci':
+        return $r('app.color.success_text');
+      case 'pr':
+        return isMerged ? $r('app.color.shortcut_purple_fg') : $r('app.color.success_text');
+      case 'release':
+        return $r('app.color.shortcut_orange_fg');
+      case 'discussion':
+        return $r('app.color.shortcut_purple_fg');
+      case 'security':
+        return $r('app.color.badge_red');
+      default:
+        return $r('app.color.text_secondary');
     }
+  }
+
+  /** 时间戳 → GitHub 风格相对时间（22h/1d/8d）；解析失败回退空串 */
+  private shortTime(item: NotificationItem): string {
+    const parts: TimeParts | null = timeParts(item.updatedAt, Date.now());
+    return parts !== null ? githubShortTime(parts) : '';
   }
 
   @Builder
@@ -194,14 +219,15 @@ export struct InboxView {
   }
 
   @Builder
-  notifyCard(item: NotificationItem) {
+  notifyCard(item: NotificationItem, roundTop: boolean, roundBottom: boolean) {
     Row({ space: 8 }) {
-      Circle()
-        .width(10)
-        .height(10)
-        .fill($r('app.color.link_blue'))
-        .opacity(item.unread ? 1 : 0)
-        .margin({ top: 6 })
+      // 左上角：通知类型图标（带色，PR 已合并为紫色 merge）；未读状态由标题加粗表达
+      Stack() {
+        OctIcon({ res: this.notifIconRes(item.subjectType, item.prMerged), iconSize: 16, iconColor: this.notifIconColor(item.subjectType, item.prMerged) })
+      }
+      .width(24)
+      .height(24)
+      .margin({ top: 1 })
       Column({ space: 2 }) {
         Row({ space: 4 }) {
           Text(item.repoFullName)
@@ -214,7 +240,7 @@ export struct InboxView {
               .fontColor($r('app.color.text_secondary'))
           }
           Blank()
-          Text(this.timeText(timeParts(item.updatedAt, Date.now())))
+          Text(this.shortTime(item))
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))
         }
@@ -229,9 +255,12 @@ export struct InboxView {
           .width('100%')
 
         Row({ space: 4 }) {
-          Text(item.unread ? '●' : '○')
-            .fontSize(14)
-            .fontColor(item.unread ? $r('app.color.link_blue') : $r('app.color.text_secondary'))
+          // 底行前：仓库属主头像（REST owner.avatar_url，缺失占位灰圆）
+          Image(item.ownerAvatarUrl)
+            .width(16)
+            .height(16)
+            .borderRadius(8)
+            .backgroundColor($r('app.color.heat_empty'))
           Text(this.subjectLine(item))
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))
@@ -242,9 +271,15 @@ export struct InboxView {
       .alignItems(HorizontalAlign.Start)
       .layoutWeight(1)
     }
+    .alignItems(VerticalAlign.Top)
     .width('100%')
     .padding($r('app.float.card_padding'))
-    .borderRadius($r('app.float.card_radius'))
+    .borderRadius({
+      topLeft: roundTop ? $r('app.float.card_radius') : 0,
+      topRight: roundTop ? $r('app.float.card_radius') : 0,
+      bottomLeft: roundBottom ? $r('app.float.card_radius') : 0,
+      bottomRight: roundBottom ? $r('app.float.card_radius') : 0
+    })
     .backgroundColor($r('app.color.card_background'))
     .onClick(() => this.markRead(item))
   }
@@ -266,17 +301,21 @@ export struct InboxView {
   OctIcon({
           res: $r('app.media.oct_kebab_horizontal_16'),
           iconSize: 18,
-          iconColor: $r('app.color.text_secondary')
+          iconColor: $r('app.color.link_blue')
   })
+  .rotate({ angle: 90 })
 }
 .width(44)
 .height(44)
         .accessibilityDescription($r('app.string.a11y_more'))
         .focusable(true)
-.onClick((): void => {
-            promptAction.showToast({ message: $r('app.string.inbox_detail_coming') });
-          })
-          .padding(4)
+.bindMenu([
+          {
+            value: $r('app.string.inbox_menu_refresh'),
+            action: (): void => this.refresh()
+          }
+        ])
+        .padding(4)
       }
       .width('100%')
       .padding({ left: 16, right: 16, top: 8 })
@@ -303,10 +342,16 @@ export struct InboxView {
       .padding({ left: 16, right: 16, bottom: 8 })
 
       Scroll() {
-        Column({ space: 8 }) {
+        // 卡片紧贴成整块列表：无间距，卡片间用灰色细线分割（首尾卡保留圆角）
+        Column() {
           if (this.items.length > 0) {
-            ForEach(this.items, (item: NotificationItem) => {
-              this.notifyCard(item)
+            ForEach(this.items, (item: NotificationItem, index: number) => {
+              this.notifyCard(item, index === 0, index === this.items.length - 1)
+              if (index !== this.items.length - 1) {
+                Divider()
+                  .color($r('app.color.divider'))
+                  .strokeWidth(1)
+              }
             }, (item: NotificationItem) => item.threadId)
           } else {
             StateView({

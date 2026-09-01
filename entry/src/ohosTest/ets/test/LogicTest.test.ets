@@ -3,7 +3,7 @@
  * 运行于模拟器（aa test），与主代码同一编译单元，可直接 import main ets。
  */
 import { describe, it, expect } from '@ohos/hypium';
-import { timeParts, compactCount, notificationTypeKey } from '../../../main/ets/utils/Format';
+import { timeParts, compactCount, notificationTypeKey, githubShortTime } from '../../../main/ets/utils/Format';
 import { Json } from '../../../main/ets/utils/Json';
 import { WorkSection, defaultWorkSections, visibleWorkSections, workSectionsToStorage, workSectionsFromStorage } from '../../../main/ets/utils/WorkConfig';
 import {
@@ -19,7 +19,7 @@ import {
   mapWorkProjectsPage, mapWorkTopReposPage, mapWorkOrgsPage
 } from '../../../main/ets/models/WorkModels';
 import { mapUser, mapRepo, mapViewerBasic, mapNotifications, issueNumberFromUrl } from '../../../main/ets/models/GitHubModels';
-import { buildNotificationsPath } from '../../../main/ets/services/NotificationsService';
+import { buildNotificationsPath, pullRefFromUrl, buildPullStatesQuery, mapPullMerged, PrRef } from '../../../main/ets/services/NotificationsService';
 import { buildCodeQuery, mapCodeSearch } from '../../../main/ets/services/SearchService';
 import { buildTopicQuery } from '../../../main/ets/services/ExploreService';
 import { mapSearchResult } from '../../../main/ets/models/ExploreModels';
@@ -48,6 +48,16 @@ export default function logicTest(testsuiteName: string) {
       const parts = timeParts('2026-08-31T09:00:00Z', NOW);
       expect(parts?.value).assertEqual(3);
       expect(parts?.unit).assertEqual('hour');
+    });
+    it('githubShortTime_formats', 0, () => {
+      // GitHub 通知卡片风格：22h / 1d / 8d（无本地化后缀）
+      expect(githubShortTime({ value: 0, unit: 'just_now' })).assertEqual('now');
+      expect(githubShortTime({ value: 5, unit: 'minute' })).assertEqual('5m');
+      expect(githubShortTime({ value: 22, unit: 'hour' })).assertEqual('22h');
+      expect(githubShortTime({ value: 1, unit: 'day' })).assertEqual('1d');
+      expect(githubShortTime({ value: 8, unit: 'day' })).assertEqual('8d');
+      expect(githubShortTime({ value: 3, unit: 'month' })).assertEqual('3mo');
+      expect(githubShortTime({ value: 2, unit: 'year' })).assertEqual('2y');
     });
     it('timeParts_days', 0, () => {
       const parts = timeParts('2026-08-29T12:00:00Z', NOW);
@@ -372,10 +382,41 @@ export default function logicTest(testsuiteName: string) {
       expect(page.repoLabels[0]).assertEqual('docs');
     });
 
+    it('pullRefFromUrl_and_queries', 0, () => {
+      const ref = pullRefFromUrl('https://api.github.com/repos/ZM-BAD/starraft/pulls/123');
+      expect(ref?.owner).assertEqual('ZM-BAD');
+      expect(ref?.name).assertEqual('starraft');
+      expect(ref?.number).assertEqual(123);
+      // Issue URL / 非法路径 → null（不探测合并态）
+      expect(pullRefFromUrl('https://api.github.com/repos/a/b/issues/8')).assertNull();
+      expect(pullRefFromUrl('')).assertNull();
+      // 单查询多 alias
+      const refA: PrRef = { owner: 'a', name: 'b', number: 8 };
+      const refB: PrRef = { owner: 'c', name: 'd', number: 9 };
+      const q = buildPullStatesQuery([refA, refB]);
+      expect(q.indexOf('t0:repository(owner:"a", name:"b")') >= 0).assertTrue();
+      expect(q.indexOf('t1:repository(owner:"c", name:"d")') >= 0).assertTrue();
+      expect(q.indexOf('issueOrPullRequest(number:8)') >= 0).assertTrue();
+      // 别名解析：缺失节点兜底 false
+      const node1: JsonMap = { 'merged': true };
+      const node2: JsonMap = { 'merged': false };
+      const repo1: JsonMap = { 'issueOrPullRequest': node1 };
+      const repo2: JsonMap = { 'issueOrPullRequest': node2 };
+      const alias0: JsonMap = { 'repository': repo1 };
+      const alias1: JsonMap = { 'repository': repo2 };
+      const alias2: JsonMap = {};
+      const data: JsonMap = { 't0': alias0, 't1': alias1, 't2': alias2 };
+      const merged = mapPullMerged(data, 3);
+      expect(merged[0]).assertTrue();
+      expect(merged[1]).assertFalse();
+      expect(merged[2]).assertFalse();
+    });
+
     it('mapNotifications_parseAndInvalid', 0, () => {
       expect(mapNotifications('[]').length).assertEqual(0);
       expect(mapNotifications('not json').length).assertEqual(0);
-      const repo: JsonMap = { 'full_name': 'a/b' };
+      const owner: JsonMap = { 'login': 'zm_bad', 'avatar_url': 'https://avatars.example/zm' };
+      const repo: JsonMap = { 'full_name': 'a/b', 'owner': owner };
       const subject: JsonMap = { 'title': 'fix bug', 'type': 'Issue' };
       const item: JsonMap = {
         'id': 'T1',
@@ -390,6 +431,7 @@ export default function logicTest(testsuiteName: string) {
       expect(list[0].repoFullName).assertEqual('a/b');
       expect(list[0].subjectType).assertEqual('Issue');
       expect(list[0].unread).assertTrue();
+      expect(list[0].ownerAvatarUrl).assertEqual('https://avatars.example/zm');
     });
 
     it('timeParts_years_and_compactCount', 0, () => {
