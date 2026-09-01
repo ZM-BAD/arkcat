@@ -40,7 +40,7 @@ export struct EditMyWorkView {
       case 'discussions':
         return { iconRes: $r('app.media.oct_comment_discussion_16'), color: $r('app.color.shortcut_purple_fg'), label: $r('app.string.home_work_discussions') };
       case 'projects':
-        return { iconRes: $r('app.media.oct_project_16'), color: $r('app.color.text_secondary'), label: $r('app.string.home_work_projects') };
+        return { iconRes: $r('app.media.oct_table_16'), color: $r('app.color.text_secondary'), label: $r('app.string.home_work_projects') };
       case 'topRepos':
         return { iconRes: $r('app.media.oct_repo_16'), color: $r('app.color.text_primary'), label: $r('app.string.home_work_top_repos') };
       case 'orgs':

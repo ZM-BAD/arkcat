@@ -10,7 +10,7 @@ import { RepoService } from '../services/RepoService';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
 import { resText } from '../utils/I18n';
-import { timeParts, TimeParts } from '../utils/Format';
+import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 
 @ComponentV2
 export struct RepoDetailView {
@@ -157,24 +157,7 @@ export struct RepoDetailView {
 
   /** 相对时间结构化数据 → 当前语言文案（%1$d 位置占位） */
   private timeText(parts: TimeParts | null): string {
-    if (parts === null) {
-      return '';
-    }
-    const ui = this.getUIContext();
-    switch (parts.unit) {
-      case 'just_now':
-        return resText(ui, $r('app.string.time_just_now'));
-      case 'minute':
-        return resText(ui, $r('app.string.time_minutes_ago'), parts.value);
-      case 'hour':
-        return resText(ui, $r('app.string.time_hours_ago'), parts.value);
-      case 'day':
-        return resText(ui, $r('app.string.time_days_ago'), parts.value);
-      case 'month':
-        return resText(ui, $r('app.string.time_months_ago'), parts.value);
-      case 'year':
-        return resText(ui, $r('app.string.time_years_ago'), parts.value);
-    }
+    return parts !== null ? githubShortTime(parts) : '';
   }
 
   @Builder

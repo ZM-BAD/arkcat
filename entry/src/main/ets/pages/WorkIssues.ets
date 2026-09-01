@@ -8,7 +8,7 @@ import { WorkIssueItem, WorkIssuesPage, WorkLabel } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
 import { WorkEmptyView } from '../components/WorkEmptyView';
-import { timeParts, TimeParts } from '../utils/Format';
+import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -18,6 +18,9 @@ export struct WorkIssuesView {
   @Local state: string = 'all';
   @Local scope: string = 'created';
   @Local visibilityFilter: string = 'all';
+  @Local orgFilter: string = '';
+  @Local repoFilter: string = '';
+  @Local sortNewest: boolean = true;
   @Local issues: WorkIssueItem[] = [];
   @Local cursor: string = '';
   @Local hasNextPage: boolean = false;
@@ -69,24 +72,7 @@ export struct WorkIssuesView {
 
   /** 相对时间结构化数据 → 当前语言文案 */
   private timeText(parts: TimeParts | null): string {
-    if (parts === null) {
-      return '';
-    }
-    const ui = this.getUIContext();
-    switch (parts.unit) {
-      case 'just_now':
-        return resText(ui, $r('app.string.time_just_now'));
-      case 'minute':
-        return resText(ui, $r('app.string.time_minutes_ago'), parts.value);
-      case 'hour':
-        return resText(ui, $r('app.string.time_hours_ago'), parts.value);
-      case 'day':
-        return resText(ui, $r('app.string.time_days_ago'), parts.value);
-      case 'month':
-        return resText(ui, $r('app.string.time_months_ago'), parts.value);
-      case 'year':
-        return resText(ui, $r('app.string.time_years_ago'), parts.value);
-    }
+    return parts !== null ? githubShortTime(parts) : '';
   }
 
   /** 激活的筛选数（漏斗徽标） */
@@ -99,6 +85,12 @@ export struct WorkIssuesView {
       count++;
     }
     if (this.visibilityFilter !== 'all') {
+      count++;
+    }
+    if (this.orgFilter !== '') {
+      count++;
+    }
+    if (this.repoFilter !== '') {
       count++;
     }
     return count;
@@ -124,6 +116,80 @@ export struct WorkIssuesView {
     return this.stringOf($r('app.string.work_visibility'));
   }
 
+  private orgLabel(): string {
+    return this.orgFilter !== '' ? this.orgFilter : this.stringOf($r('app.string.work_filter_organization'));
+  }
+
+  private repoLabel(): string {
+    return this.repoFilter !== '' ? this.repoFilter : this.stringOf($r('app.string.work_filter_repository'));
+  }
+
+  private sortLabel(): string {
+    return this.sortNewest
+      ? this.stringOf($r('app.string.work_filter_sort_newest'))
+      : this.stringOf($r('app.string.work_filter_sort_oldest'));
+  }
+
+  /** Organization 下拉：All organizations + 当前页数据中出现的组织（仓库属主） */
+  private orgMenu(): MenuElement[] {
+    const opts: string[] = [];
+    this.issues.forEach((it: WorkIssueItem) => {
+      const owner = it.repoFullName.split('/')[0];
+      if (owner !== '' && !opts.includes(owner)) {
+        opts.push(owner);
+      }
+    });
+    const items: MenuElement[] = [{
+      value: this.stringOf($r('app.string.work_filter_all_orgs')),
+      action: (): void => { this.orgFilter = ''; }
+    }];
+    opts.forEach((o: string) => {
+      items.push({
+        value: o,
+        action: (): void => { this.orgFilter = o; }
+      });
+    });
+    return items;
+  }
+
+  /** Repository 下拉：All repositories + 当前页数据中出现的仓库 */
+  private repoMenu(): MenuElement[] {
+    const opts: string[] = [];
+    this.issues.forEach((it: WorkIssueItem) => {
+      if (!opts.includes(it.repoFullName)) {
+        opts.push(it.repoFullName);
+      }
+    });
+    const items: MenuElement[] = [{
+      value: this.stringOf($r('app.string.work_filter_all_repos')),
+      action: (): void => { this.repoFilter = ''; }
+    }];
+    opts.forEach((r: string) => {
+      items.push({
+        value: r,
+        action: (): void => { this.repoFilter = r; }
+      });
+    });
+    return items;
+  }
+
+  /** 客户端组合过滤 + 排序（Organization / Repository / Sort） */
+  private visibleIssues(): WorkIssueItem[] {
+    let list: WorkIssueItem[] = this.issues;
+    if (this.orgFilter !== '') {
+      list = list.filter((it: WorkIssueItem) => it.repoFullName.split('/')[0] === this.orgFilter);
+    }
+    if (this.repoFilter !== '') {
+      list = list.filter((it: WorkIssueItem) => it.repoFullName === this.repoFilter);
+    }
+    const sorted: WorkIssueItem[] = [...list];
+    sorted.sort((a: WorkIssueItem, b: WorkIssueItem) => {
+      const cmp = a.createdAt.localeCompare(b.createdAt);
+      return this.sortNewest ? -cmp : cmp;
+    });
+    return sorted;
+  }
+
   private stateLabel(): string {
     if (this.state === 'open') {
       return this.stringOf($r('app.string.issues_state_open'));
@@ -138,6 +204,9 @@ export struct WorkIssuesView {
     this.state = 'all';
     this.scope = 'created';
     this.visibilityFilter = 'all';
+    this.orgFilter = '';
+    this.repoFilter = '';
+    this.sortNewest = true;
     this.refresh();
   }
 
@@ -148,7 +217,7 @@ export struct WorkIssuesView {
     }
     return issue.iconKey === 'not_planned'
       ? $r('app.media.oct_x_circle_16')
-      : $r('app.media.oct_check_circle_fill_16');
+      : $r('app.media.oct_check_circle_16');
   }
 
   private issueColor(issue: WorkIssueItem): ResourceColor {
@@ -160,15 +229,24 @@ export struct WorkIssuesView {
 
   @Builder
   filterChip(label: string, menu: MenuElement[], active: boolean) {
-    Text(`${label} ⌄`)
-      .fontSize($r('app.float.caption_font_size'))
-      .fontColor(active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
-      .padding({ left: 12, right: 12, top: 5, bottom: 5 })
-      .borderRadius(12)
-      .backgroundColor(active ? $r('app.color.chip_active_bg') : $r('app.color.card_background'))
-      .margin({ right: 8 })
-      .border({ width: 1, color: active ? $r('app.color.chip_active_border') : $r('app.color.border') })
-      .bindMenu(menu)
+    Row() {
+      Text(label)
+        .fontSize($r('app.float.caption_font_size'))
+        .fontColor(active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
+      OctIcon({
+        res: $r('app.media.oct_chevron_down_16'),
+        iconSize: 12,
+        iconColor: active ? $r('app.color.link_blue') : $r('app.color.text_secondary')
+      })
+        .margin({ left: 4 })
+    }
+    .height(30)
+    .padding({ left: 12, right: 10 })
+    .borderRadius(12)
+    .backgroundColor(active ? $r('app.color.chip_active_bg') : $r('app.color.card_background'))
+    .margin({ right: 8 })
+    .border({ width: 1, color: active ? $r('app.color.chip_active_border') : $r('app.color.border') })
+    .bindMenu(menu)
   }
 
   @Builder
@@ -183,7 +261,7 @@ export struct WorkIssuesView {
   }
 
   @Builder
-  issueCard(issue: WorkIssueItem) {
+  issueCard(issue: WorkIssueItem, roundTop: boolean, roundBottom: boolean) {
     Column({ space: 6 }) {
       Row() {
         OctIcon({ res: this.issueIcon(issue), iconSize: 18, iconColor: this.issueColor(issue) })
@@ -229,10 +307,14 @@ export struct WorkIssuesView {
       }
     }
     .padding($r('app.float.card_padding'))
-    .borderRadius($r('app.float.card_radius'))
+    .borderRadius({
+      topLeft: roundTop ? $r('app.float.card_radius') : 0,
+      topRight: roundTop ? $r('app.float.card_radius') : 0,
+      bottomLeft: roundBottom ? $r('app.float.card_radius') : 0,
+      bottomRight: roundBottom ? $r('app.float.card_radius') : 0
+    })
     .backgroundColor($r('app.color.card_background'))
     .width('100%')
-    .margin({ bottom: 8 })
   }
 
   build() {
@@ -261,7 +343,7 @@ export struct WorkIssuesView {
   OctIcon({
           res: $r('app.media.oct_search_24'),
           iconSize: 20,
-          iconColor: $r('app.color.text_primary')
+          iconColor: $r('app.color.link_blue')
   })
 }
 .width(44)
@@ -276,8 +358,9 @@ export struct WorkIssuesView {
   OctIcon({
           res: $r('app.media.oct_kebab_horizontal_16'),
           iconSize: 18,
-          iconColor: $r('app.color.text_secondary')
+          iconColor: $r('app.color.link_blue')
   })
+  .rotate({ angle: 90 })
 }
 .width(44)
 .height(44)
@@ -294,31 +377,45 @@ export struct WorkIssuesView {
 
       Scroll() {
         Column() {
+          Scroll() {
           Row() {
             // 漏斗徽标：激活筛选数
-            Stack({ alignContent: Alignment.TopEnd }) {
-              OctIcon({
-                res: $r('app.media.oct_filter_16'),
-                iconSize: 14,
-                iconColor: $r('app.color.text_primary')
-              })
-                .padding({ left: 8, right: 8, top: 5, bottom: 5 })
-                .borderRadius(12)
-                .backgroundColor($r('app.color.card_background'))
-                .border({ width: 1, color: $r('app.color.border') })
-              if (this.activeFilterCount() > 0) {
-                Circle()
-                  .width(12)
-                  .height(12)
-                  .fill($r('app.color.link_blue'))
-                  .margin({ top: -6, right: -6 })
-                Text(`${this.activeFilterCount()}`)
-                  .fontSize(12)
-                  .fontColor(Color.White)
-                  .margin({ top: -10, right: -3 })
+            if (this.activeFilterCount() > 0) {
+              Row({ space: 4 }) {
+                OctIcon({
+                  res: $r('app.media.oct_filter_16'),
+                  iconSize: 14,
+                  iconColor: $r('app.color.link_blue')
+                })
+                Stack() {
+                  Text(`${this.activeFilterCount()}`)
+                    .fontSize(12)
+                    .fontColor(Color.White)
+                }
+                .width(18)
+                .height(18)
+                .borderRadius(9)
+                .backgroundColor($r('app.color.link_blue'))
               }
+              .height(30)
+              .padding({ left: 8, right: 8 })
+              .borderRadius(12)
+              .backgroundColor($r('app.color.card_background'))
+              .border({ width: 1, color: $r('app.color.border') })
+              .margin({ right: 8 })
+              .bindMenu([
+                {
+                  value: $r('app.string.work_filter_create_shortcut'),
+                  action: (): void => {
+                    promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+                  }
+                },
+                {
+                  value: $r('app.string.work_clear_all_filters'),
+                  action: (): void => this.resetFilters()
+                }
+              ])
             }
-            .margin({ right: 8 })
 
             this.filterChip(this.stateLabel(), [
               {
@@ -364,13 +461,34 @@ export struct WorkIssuesView {
                 action: (): void => { this.visibilityFilter = 'private'; this.refresh(); }
               }
             ], this.visibilityFilter !== 'all')
+
+            this.filterChip(this.orgLabel(), this.orgMenu(), this.orgFilter !== '')
+            this.filterChip(this.repoLabel(), this.repoMenu(), this.repoFilter !== '')
+            this.filterChip(this.sortLabel(), [
+              {
+                value: this.stringOf($r('app.string.work_sort_newest')),
+                action: (): void => { this.sortNewest = true; }
+              },
+              {
+                value: this.stringOf($r('app.string.work_sort_oldest')),
+                action: (): void => { this.sortNewest = false; }
+              }
+            ], !this.sortNewest)
           }
           .width('100%')
+          }
+          .scrollable(ScrollDirection.Horizontal)
+          .scrollBar(BarState.Off)
           .margin({ bottom: 12 })
 
-          if (this.issues.length > 0) {
-            ForEach(this.issues, (issue: WorkIssueItem) => {
-              this.issueCard(issue)
+          if (this.visibleIssues().length > 0) {
+            ForEach(this.visibleIssues(), (issue: WorkIssueItem, index: number) => {
+              this.issueCard(issue, index === 0, index === this.visibleIssues().length - 1)
+              if (index !== this.visibleIssues().length - 1) {
+                Divider()
+                  .color($r('app.color.divider'))
+                  .strokeWidth(1)
+              }
             }, (issue: WorkIssueItem) => issue.id)
             if (this.hasNextPage) {
               Text($r('app.string.issues_load_more'))

@@ -8,7 +8,7 @@ import { WorkDiscussionItem, WorkDiscussionsPage } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
 import { WorkEmptyView } from '../components/WorkEmptyView';
-import { timeParts, TimeParts } from '../utils/Format';
+import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -18,6 +18,7 @@ export struct DiscussionsView {
   @Local state: string = 'all';
   @Local scope: string = 'created';
   @Local unanswered: boolean = false;
+  @Local sortNew: boolean = true;
   @Local discussions: WorkDiscussionItem[] = [];
   @Local cursor: string = '';
   @Local hasNextPage: boolean = false;
@@ -67,24 +68,7 @@ export struct DiscussionsView {
   }
 
   private timeText(parts: TimeParts | null): string {
-    if (parts === null) {
-      return '';
-    }
-    const ui = this.getUIContext();
-    switch (parts.unit) {
-      case 'just_now':
-        return resText(ui, $r('app.string.time_just_now'));
-      case 'minute':
-        return resText(ui, $r('app.string.time_minutes_ago'), parts.value);
-      case 'hour':
-        return resText(ui, $r('app.string.time_hours_ago'), parts.value);
-      case 'day':
-        return resText(ui, $r('app.string.time_days_ago'), parts.value);
-      case 'month':
-        return resText(ui, $r('app.string.time_months_ago'), parts.value);
-      case 'year':
-        return resText(ui, $r('app.string.time_years_ago'), parts.value);
-    }
+    return parts !== null ? githubShortTime(parts) : '';
   }
 
   private activeFilterCount(): number {
@@ -118,24 +102,50 @@ export struct DiscussionsView {
     return this.stringOf($r('app.string.work_scope_created'));
   }
 
+  private sortLabel(): string {
+    return this.sortNew
+      ? this.stringOf($r('app.string.work_filter_sort_new'))
+      : this.stringOf($r('app.string.work_filter_sort_oldest'));
+  }
+
+  /** Sort: New / Oldest（客户端按创建时间排序） */
+  private visibleDiscussions(): WorkDiscussionItem[] {
+    const sorted: WorkDiscussionItem[] = [...this.discussions];
+    sorted.sort((a: WorkDiscussionItem, b: WorkDiscussionItem) => {
+      const cmp = a.createdAt.localeCompare(b.createdAt);
+      return this.sortNew ? -cmp : cmp;
+    });
+    return sorted;
+  }
+
   private resetFilters(): void {
     this.state = 'all';
     this.scope = 'created';
     this.unanswered = false;
+    this.sortNew = true;
     this.refresh();
   }
 
   @Builder
   filterChip(label: string, menu: MenuElement[], active: boolean) {
-    Text(`${label} ⌄`)
-      .fontSize($r('app.float.caption_font_size'))
-      .fontColor(active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
-      .padding({ left: 12, right: 12, top: 5, bottom: 5 })
-      .borderRadius(12)
-      .backgroundColor(active ? $r('app.color.chip_active_bg') : $r('app.color.card_background'))
-      .margin({ right: 8 })
-      .border({ width: 1, color: active ? $r('app.color.chip_active_border') : $r('app.color.border') })
-      .bindMenu(menu)
+    Row() {
+      Text(label)
+        .fontSize($r('app.float.caption_font_size'))
+        .fontColor(active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
+      OctIcon({
+        res: $r('app.media.oct_chevron_down_16'),
+        iconSize: 12,
+        iconColor: active ? $r('app.color.link_blue') : $r('app.color.text_secondary')
+      })
+        .margin({ left: 4 })
+    }
+    .height(30)
+    .padding({ left: 12, right: 10 })
+    .borderRadius(12)
+    .backgroundColor(active ? $r('app.color.chip_active_bg') : $r('app.color.card_background'))
+    .margin({ right: 8 })
+    .border({ width: 1, color: active ? $r('app.color.chip_active_border') : $r('app.color.border') })
+    .bindMenu(menu)
   }
 
   @Builder
@@ -226,7 +236,7 @@ export struct DiscussionsView {
   OctIcon({
           res: $r('app.media.oct_search_24'),
           iconSize: 20,
-          iconColor: $r('app.color.text_primary')
+          iconColor: $r('app.color.link_blue')
   })
 }
 .width(44)
@@ -241,8 +251,9 @@ export struct DiscussionsView {
   OctIcon({
           res: $r('app.media.oct_kebab_horizontal_16'),
           iconSize: 18,
-          iconColor: $r('app.color.text_secondary')
+          iconColor: $r('app.color.link_blue')
   })
+  .rotate({ angle: 90 })
 }
 .width(44)
 .height(44)
@@ -259,30 +270,44 @@ export struct DiscussionsView {
 
       Scroll() {
         Column() {
+          Scroll() {
           Row() {
-            Stack({ alignContent: Alignment.TopEnd }) {
-              OctIcon({
-                res: $r('app.media.oct_filter_16'),
-                iconSize: 14,
-                iconColor: $r('app.color.text_primary')
-              })
-                .padding({ left: 8, right: 8, top: 5, bottom: 5 })
-                .borderRadius(12)
-                .backgroundColor($r('app.color.card_background'))
-                .border({ width: 1, color: $r('app.color.border') })
-              if (this.activeFilterCount() > 0) {
-                Circle()
-                  .width(12)
-                  .height(12)
-                  .fill($r('app.color.link_blue'))
-                  .margin({ top: -6, right: -6 })
-                Text(`${this.activeFilterCount()}`)
-                  .fontSize(12)
-                  .fontColor(Color.White)
-                  .margin({ top: -10, right: -3 })
+            if (this.activeFilterCount() > 0) {
+              Row({ space: 4 }) {
+                OctIcon({
+                  res: $r('app.media.oct_filter_16'),
+                  iconSize: 14,
+                  iconColor: $r('app.color.link_blue')
+                })
+                Stack() {
+                  Text(`${this.activeFilterCount()}`)
+                    .fontSize(12)
+                    .fontColor(Color.White)
+                }
+                .width(18)
+                .height(18)
+                .borderRadius(9)
+                .backgroundColor($r('app.color.link_blue'))
               }
+              .height(30)
+              .padding({ left: 8, right: 8 })
+              .borderRadius(12)
+              .backgroundColor($r('app.color.card_background'))
+              .border({ width: 1, color: $r('app.color.border') })
+              .margin({ right: 8 })
+              .bindMenu([
+                {
+                  value: $r('app.string.work_filter_create_shortcut'),
+                  action: (): void => {
+                    promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+                  }
+                },
+                {
+                  value: $r('app.string.work_clear_all_filters'),
+                  action: (): void => this.resetFilters()
+                }
+              ])
             }
-            .margin({ right: 8 })
 
             this.filterChip(this.stateLabel(), [
               {
@@ -314,7 +339,8 @@ export struct DiscussionsView {
             Text(this.stringOf($r('app.string.work_discussions_unanswered')))
               .fontSize($r('app.float.caption_font_size'))
               .fontColor(this.unanswered ? $r('app.color.link_blue') : $r('app.color.text_primary'))
-              .padding({ left: 12, right: 12, top: 5, bottom: 5 })
+              .height(30)
+              .padding({ left: 12, right: 12 })
               .borderRadius(12)
               .backgroundColor(this.unanswered ? $r('app.color.chip_active_bg') : $r('app.color.card_background'))
               .border({ width: 1, color: this.unanswered ? $r('app.color.chip_active_border') : $r('app.color.border') })
@@ -322,12 +348,26 @@ export struct DiscussionsView {
                 this.unanswered = !this.unanswered;
                 this.refresh();
               })
+
+            this.filterChip(this.sortLabel(), [
+              {
+                value: this.stringOf($r('app.string.work_sort_new')),
+                action: (): void => { this.sortNew = true; }
+              },
+              {
+                value: this.stringOf($r('app.string.work_sort_oldest')),
+                action: (): void => { this.sortNew = false; }
+              }
+            ], !this.sortNew)
           }
           .width('100%')
+          }
+          .scrollable(ScrollDirection.Horizontal)
+          .scrollBar(BarState.Off)
           .margin({ bottom: 12 })
 
-          if (this.discussions.length > 0) {
-            ForEach(this.discussions, (item: WorkDiscussionItem) => {
+          if (this.visibleDiscussions().length > 0) {
+            ForEach(this.visibleDiscussions(), (item: WorkDiscussionItem) => {
               this.discussionCard(item)
             }, (item: WorkDiscussionItem) => item.id)
             if (this.hasNextPage) {

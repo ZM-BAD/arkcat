@@ -705,6 +705,38 @@
       "value": "私有"
     },
     {
+      "name": "work_filter_organization",
+      "value": "组织"
+    },
+    {
+      "name": "work_filter_repository",
+      "value": "仓库"
+    },
+    {
+      "name": "work_filter_all_orgs",
+      "value": "所有组织"
+    },
+    {
+      "name": "work_filter_all_repos",
+      "value": "所有仓库"
+    },
+    {
+      "name": "work_sort_newest",
+      "value": "最新"
+    },
+    {
+      "name": "work_sort_oldest",
+      "value": "最旧"
+    },
+    {
+      "name": "work_filter_sort_newest",
+      "value": "排序：最新"
+    },
+    {
+      "name": "work_filter_sort_oldest",
+      "value": "排序：最旧"
+    },
+    {
       "name": "work_issues_empty",
       "value": "暂无任何 Issue。"
     },
@@ -770,7 +802,7 @@
     },
     {
       "name": "work_projects_sort_visited",
-      "value": "最近访问"
+      "value": "最近浏览"
     },
     {
       "name": "work_starred_my_lists",
@@ -1235,6 +1267,26 @@
     {
       "name": "repo_code",
       "value": "代码"
+    },
+    {
+      "name": "work_sort_updated",
+      "value": "最近更新"
+    },
+    {
+      "name": "work_filter_sort_new",
+      "value": "排序：新"
+    },
+    {
+      "name": "work_sort_new",
+      "value": "新"
+    },
+    {
+      "name": "work_filter_create_shortcut",
+      "value": "创建快捷方式"
+    },
+    {
+      "name": "work_clear_all_filters",
+      "value": "清空所有筛选"
     }
   ]
 }

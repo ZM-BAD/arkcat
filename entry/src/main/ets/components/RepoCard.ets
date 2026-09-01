@@ -76,7 +76,7 @@ export struct RepoCard {
       Text(this.isPinned ? (this.repo?.name ?? '') : (this.repo?.nameWithOwner ?? ''))
         .fontSize($r('app.float.body_font_size'))
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.link_blue'))
+        .fontColor(this.isPinned ? $r('app.color.text_primary') : $r('app.color.link_blue'))
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
         .layoutWeight(1)

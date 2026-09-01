@@ -705,6 +705,38 @@
       "value": "Private"
     },
     {
+      "name": "work_filter_organization",
+      "value": "Organization"
+    },
+    {
+      "name": "work_filter_repository",
+      "value": "Repository"
+    },
+    {
+      "name": "work_filter_all_orgs",
+      "value": "All organizations"
+    },
+    {
+      "name": "work_filter_all_repos",
+      "value": "All repositories"
+    },
+    {
+      "name": "work_sort_newest",
+      "value": "Newest"
+    },
+    {
+      "name": "work_sort_oldest",
+      "value": "Oldest"
+    },
+    {
+      "name": "work_filter_sort_newest",
+      "value": "Sort: Newest"
+    },
+    {
+      "name": "work_filter_sort_oldest",
+      "value": "Sort: Oldest"
+    },
+    {
       "name": "work_issues_empty",
       "value": "There aren't any issues."
     },
@@ -770,7 +802,7 @@
     },
     {
       "name": "work_projects_sort_visited",
-      "value": "Most recently visited"
+      "value": "Most recently viewed"
     },
     {
       "name": "work_starred_my_lists",
@@ -1235,6 +1267,26 @@
     {
       "name": "repo_code",
       "value": "Code"
+    },
+    {
+      "name": "work_sort_updated",
+      "value": "Most recently updated"
+    },
+    {
+      "name": "work_filter_sort_new",
+      "value": "Sort: New"
+    },
+    {
+      "name": "work_sort_new",
+      "value": "New"
+    },
+    {
+      "name": "work_filter_create_shortcut",
+      "value": "Create Shortcut"
+    },
+    {
+      "name": "work_clear_all_filters",
+      "value": "Clear all filters"
     }
   ]
 }

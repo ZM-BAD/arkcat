@@ -186,14 +186,25 @@ export struct InboxView {
 
   @Builder
   filterPill(label: string, active: boolean, onClick: () => void) {
-    Text(active ? `${label} ▾` : label)
-      .fontSize($r('app.float.caption_font_size'))
-      .fontColor(active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
-      .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-      .borderRadius(12)
-      .backgroundColor(active ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))
-      .border({ width: 1, color: $r('app.color.border') })
-      .onClick(onClick)
+    Row() {
+      Text(label)
+        .fontSize($r('app.float.caption_font_size'))
+        .fontColor(active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
+      if (active) {
+        OctIcon({
+          res: $r('app.media.oct_chevron_down_16'),
+          iconSize: 12,
+          iconColor: $r('app.color.link_blue')
+        })
+          .margin({ left: 4 })
+      }
+    }
+    .height(30)
+    .padding({ left: 12, right: 10 })
+    .borderRadius(12)
+    .backgroundColor(active ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))
+    .border({ width: 1, color: $r('app.color.border') })
+    .onClick(onClick)
   }
 
   /** Repository▾ 下拉菜单：从会话仓库提取（Spec 002） */
@@ -320,25 +331,38 @@ export struct InboxView {
       .width('100%')
       .padding({ left: 16, right: 16, top: 8 })
 
-      Row({ space: 8 }) {
+      Scroll() {
+        Row({ space: 8 }) {
         this.filterPill(this.stringOf($r('app.string.inbox_menu_inbox')), this.filter === 'inbox', (): void => this.switchFilter('inbox'))
         this.filterPill(this.stringOf($r('app.string.inbox_menu_focused')), this.filter === 'focused', (): void => this.switchFilter('focused'))
         this.filterPill(this.stringOf($r('app.string.inbox_menu_unread')), this.filter === 'unread', (): void => this.switchFilter('unread'))
-        Text(this.repoFilter !== ''
-          ? `${this.repoFilter} ▾`
-          : `${this.stringOf($r('app.string.inbox_menu_repository'))} ▾`)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor(this.filter === 'repo' ? $r('app.color.link_blue') : $r('app.color.text_primary'))
-          .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-          .borderRadius(12)
-          .backgroundColor(this.filter === 'repo' ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))
-          .border({ width: 1, color: $r('app.color.border') })
-          .bindMenu(this.repoMenu())
-          .onClick(() => {
-            this.switchFilter('repo');
+        Row() {
+          Text(this.repoFilter !== ''
+            ? this.repoFilter
+            : this.stringOf($r('app.string.inbox_menu_repository')))
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor(this.filter === 'repo' ? $r('app.color.link_blue') : $r('app.color.text_primary'))
+          OctIcon({
+            res: $r('app.media.oct_chevron_down_16'),
+            iconSize: 12,
+            iconColor: this.filter === 'repo' ? $r('app.color.link_blue') : $r('app.color.text_secondary')
           })
+            .margin({ left: 4 })
+        }
+        .height(30)
+        .padding({ left: 12, right: 10 })
+        .borderRadius(12)
+        .backgroundColor(this.filter === 'repo' ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))
+        .border({ width: 1, color: $r('app.color.border') })
+        .bindMenu(this.repoMenu())
+        .onClick(() => {
+          this.switchFilter('repo');
+        })
       }
       .width('100%')
+      }
+      .scrollable(ScrollDirection.Horizontal)
+      .scrollBar(BarState.Off)
       .padding({ left: 16, right: 16, bottom: 8 })
 
       Scroll() {

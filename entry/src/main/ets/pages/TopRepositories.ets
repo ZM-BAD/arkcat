@@ -157,11 +157,21 @@ export struct TopRepositoriesView {
 
       Scroll() {
         Column() {
-          // 可见性下拉（All / Public / Private）
-          Text(`${this.privacyLabel()} ⌄`)
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor(this.privacy === 'all' ? $r('app.color.text_primary') : $r('app.color.link_blue'))
-            .padding({ left: 12, right: 12, top: 5, bottom: 5 })
+          // 可见性下拉（All / Public / Private）：靠左 + chevron-down 图标
+          Row() {
+            Row() {
+              Text(this.privacyLabel())
+                .fontSize($r('app.float.caption_font_size'))
+                .fontColor(this.privacy === 'all' ? $r('app.color.text_primary') : $r('app.color.link_blue'))
+              OctIcon({
+                res: $r('app.media.oct_chevron_down_16'),
+                iconSize: 12,
+                iconColor: this.privacy === 'all' ? $r('app.color.text_secondary') : $r('app.color.link_blue')
+              })
+                .margin({ left: 4 })
+            }
+            .height(30)
+            .padding({ left: 12, right: 10 })
             .borderRadius(12)
             .backgroundColor(this.privacy === 'all' ? $r('app.color.card_background') : $r('app.color.chip_active_bg'))
             .border({ width: 1, color: this.privacy === 'all' ? $r('app.color.border') : $r('app.color.chip_active_border') })
@@ -180,6 +190,8 @@ export struct TopRepositoriesView {
               }
             ])
             .margin({ bottom: 12 })
+            }
+            .width('100%')
 
           if (this.repos.length > 0) {
             ForEach(this.repos, (repo: WorkTopRepoItem) => {

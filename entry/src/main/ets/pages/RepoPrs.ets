@@ -9,7 +9,7 @@ import { WorkLabel } from '../models/WorkModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { StateView } from '../components/StateView';
 import { WorkEmptyView } from '../components/WorkEmptyView';
-import { timeParts, TimeParts } from '../utils/Format';
+import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -86,24 +86,7 @@ export struct RepoPrsView {
   }
 
   private timeText(parts: TimeParts | null): string {
-    if (parts === null) {
-      return '';
-    }
-    const ui = this.getUIContext();
-    switch (parts.unit) {
-      case 'just_now':
-        return resText(ui, $r('app.string.time_just_now'));
-      case 'minute':
-        return resText(ui, $r('app.string.time_minutes_ago'), parts.value);
-      case 'hour':
-        return resText(ui, $r('app.string.time_hours_ago'), parts.value);
-      case 'day':
-        return resText(ui, $r('app.string.time_days_ago'), parts.value);
-      case 'month':
-        return resText(ui, $r('app.string.time_months_ago'), parts.value);
-      case 'year':
-        return resText(ui, $r('app.string.time_years_ago'), parts.value);
-    }
+    return parts !== null ? githubShortTime(parts) : '';
   }
 
   private activeFilterCount(): number {
@@ -332,6 +315,7 @@ export struct RepoPrsView {
 
       Scroll() {
         Column() {
+          Scroll() {
           Row() {
             Stack({ alignContent: Alignment.TopEnd }) {
               OctIcon({ res: $r('app.media.oct_filter_16'), iconSize: 14, iconColor: $r('app.color.text_primary') })
@@ -370,6 +354,9 @@ export struct RepoPrsView {
               this.assigneeMenu(), this.assignee !== '')
           }
           .width('100%')
+          }
+          .scrollable(ScrollDirection.Horizontal)
+          .scrollBar(BarState.Off)
           .margin({ bottom: 12 })
 
           if (this.shown.length > 0) {

@@ -8,7 +8,7 @@ import { WorkProjectItem, WorkProjectsPage, filterWorkProjects } from '../models
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
 import { WorkEmptyView } from '../components/WorkEmptyView';
-import { timeParts, TimeParts } from '../utils/Format';
+import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -19,6 +19,8 @@ export struct ProjectsView {
   @Local closedOnly: boolean = false;
   @Local allProjects: WorkProjectItem[] = [];
   @Local filtered: WorkProjectItem[] = [];
+  @Local sortViewed: boolean = true;
+  @Local viewedAt: Record<string, number> = {};
   @Local viewerLogin: string = '';
   @Local cursor: string = '';
   @Local hasNextPage: boolean = false;
@@ -88,24 +90,7 @@ export struct ProjectsView {
   }
 
   private timeText(parts: TimeParts | null): string {
-    if (parts === null) {
-      return '';
-    }
-    const ui = this.getUIContext();
-    switch (parts.unit) {
-      case 'just_now':
-        return resText(ui, $r('app.string.time_just_now'));
-      case 'minute':
-        return resText(ui, $r('app.string.time_minutes_ago'), parts.value);
-      case 'hour':
-        return resText(ui, $r('app.string.time_hours_ago'), parts.value);
-      case 'day':
-        return resText(ui, $r('app.string.time_days_ago'), parts.value);
-      case 'month':
-        return resText(ui, $r('app.string.time_months_ago'), parts.value);
-      case 'year':
-        return resText(ui, $r('app.string.time_years_ago'), parts.value);
-    }
+    return parts !== null ? githubShortTime(parts) : '';
   }
 
   private rangeLabel(): string {
@@ -122,22 +107,50 @@ export struct ProjectsView {
 
   @Builder
   filterChip(label: string, menu: MenuElement[], active: boolean) {
-    Text(`${label} ⌄`)
-      .fontSize($r('app.float.caption_font_size'))
-      .fontColor(active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
-      .padding({ left: 12, right: 12, top: 5, bottom: 5 })
-      .borderRadius(12)
-      .backgroundColor(active ? $r('app.color.chip_active_bg') : $r('app.color.card_background'))
-      .margin({ right: 8 })
-      .border({ width: 1, color: active ? $r('app.color.chip_active_border') : $r('app.color.border') })
-      .bindMenu(menu)
+    Row() {
+      Text(label)
+        .fontSize($r('app.float.caption_font_size'))
+        .fontColor(active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
+      OctIcon({
+        res: $r('app.media.oct_chevron_down_16'),
+        iconSize: 12,
+        iconColor: active ? $r('app.color.link_blue') : $r('app.color.text_secondary')
+      })
+        .margin({ left: 4 })
+    }
+    .height(30)
+    .padding({ left: 12, right: 10 })
+    .borderRadius(12)
+    .backgroundColor(active ? $r('app.color.chip_active_bg') : $r('app.color.card_background'))
+    .margin({ right: 8 })
+    .border({ width: 1, color: active ? $r('app.color.chip_active_border') : $r('app.color.border') })
+    .bindMenu(menu)
+  }
+
+  /** 排序标签：Most recently viewed（本会话浏览记录兜底）/ Most recently updated */
+  private sortLabel(): string {
+    return resText(this.getUIContext(), $r('app.string.work_projects_sort_label'),
+      this.stringOf(this.sortViewed ? $r('app.string.work_projects_sort_visited') : $r('app.string.work_sort_updated')));
+  }
+
+  /** Most recently viewed：按本会话点击浏览时间降序（无浏览记录视为 0）；updated 按 updatedAt 降序 */
+  private visibleProjects(): WorkProjectItem[] {
+    const sorted: WorkProjectItem[] = [...this.filtered];
+    if (this.sortViewed) {
+      sorted.sort((a: WorkProjectItem, b: WorkProjectItem) => {
+        return (this.viewedAt[b.id] ?? 0) - (this.viewedAt[a.id] ?? 0);
+      });
+    } else {
+      sorted.sort((a: WorkProjectItem, b: WorkProjectItem) => b.updatedAt.localeCompare(a.updatedAt));
+    }
+    return sorted;
   }
 
   @Builder
   projectRow(project: WorkProjectItem) {
     Row({ space: 12 }) {
       Stack() {
-          OctIcon({ res: $r('app.media.oct_project_16'), iconSize: 18, iconColor: Color.White })
+          OctIcon({ res: $r('app.media.oct_table_16'), iconSize: 18, iconColor: Color.White })
       }
       .width(44)
       .height(44)
@@ -172,6 +185,7 @@ export struct ProjectsView {
     .height(64)
     .padding({ left: 12, right: 12 })
     .onClick(() => {
+      this.viewedAt[project.id] = Date.now();
       promptAction.showToast({ message: $r('app.string.home_feature_coming') });
     })
   }
@@ -202,7 +216,7 @@ export struct ProjectsView {
   OctIcon({
           res: $r('app.media.oct_search_24'),
           iconSize: 20,
-          iconColor: $r('app.color.text_primary')
+          iconColor: $r('app.color.link_blue')
   })
 }
 .width(44)
@@ -217,8 +231,9 @@ export struct ProjectsView {
   OctIcon({
           res: $r('app.media.oct_kebab_horizontal_16'),
           iconSize: 18,
-          iconColor: $r('app.color.text_secondary')
+          iconColor: $r('app.color.link_blue')
   })
+  .rotate({ angle: 90 })
 }
 .width(44)
 .height(44)
@@ -235,6 +250,7 @@ export struct ProjectsView {
 
       Scroll() {
         Column() {
+          Scroll() {
           Row() {
             this.filterChip(this.rangeLabel(), [
               {
@@ -258,24 +274,25 @@ export struct ProjectsView {
               }
             ], this.closedOnly)
 
-            // 排序标签（Most recently visited 无 GraphQL 字段，近似 updatedAt 降序，点击提示）
-            Text(resText(this.getUIContext(), $r('app.string.work_projects_sort_label'),
-              this.stringOf($r('app.string.work_projects_sort_visited'))))
-              .fontSize($r('app.float.caption_font_size'))
-              .fontColor($r('app.color.text_secondary'))
-              .padding({ left: 12, right: 12, top: 5, bottom: 5 })
-              .borderRadius(12)
-              .backgroundColor($r('app.color.card_background'))
-              .border({ width: 1, color: $r('app.color.border') })
-              .onClick(() => {
-                promptAction.showToast({ message: $r('app.string.home_feature_coming') });
-              })
+            this.filterChip(this.sortLabel(), [
+              {
+                value: this.stringOf($r('app.string.work_projects_sort_visited')),
+                action: (): void => { this.sortViewed = true; }
+              },
+              {
+                value: this.stringOf($r('app.string.work_sort_updated')),
+                action: (): void => { this.sortViewed = false; }
+              }
+            ], !this.sortViewed)
           }
           .width('100%')
+          }
+          .scrollable(ScrollDirection.Horizontal)
+          .scrollBar(BarState.Off)
           .margin({ bottom: 12 })
 
-          if (this.filtered.length > 0) {
-            ForEach(this.filtered, (project: WorkProjectItem) => {
+          if (this.visibleProjects().length > 0) {
+            ForEach(this.visibleProjects(), (project: WorkProjectItem) => {
               this.projectRow(project)
             }, (project: WorkProjectItem) => `${project.title}_${project.number}_${project.ownerLogin}`)
             if (this.hasNextPage) {
