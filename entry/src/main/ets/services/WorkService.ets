@@ -30,7 +30,7 @@ query WorkIssues($query: String!, $first: Int = 25, $after: String) {
 
 const WORK_PRS_QUERY = `
 query WorkPullRequests($query: String!, $first: Int = 25, $after: String) {
-  search(query: $query, type: PR, first: $first, after: $after) {
+  search(query: $query, type: ISSUE, first: $first, after: $after) {
     pageInfo { hasNextPage endCursor }
     nodes {
       ... on PullRequest {
