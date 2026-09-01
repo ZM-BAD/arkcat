@@ -1199,6 +1199,30 @@
     {
       "name": "work_scope_hint",
       "value": "Token permission insufficient: create a PAT with the %1$s scope (https://github.com/settings/tokens)"
+    },
+    {
+      "name": "repo_stars_label",
+      "value": "stars"
+    },
+    {
+      "name": "repo_forks_label",
+      "value": "forks"
+    },
+    {
+      "name": "repo_contributors",
+      "value": "Contributors"
+    },
+    {
+      "name": "repo_watchers",
+      "value": "Watchers"
+    },
+    {
+      "name": "repo_license",
+      "value": "License"
+    },
+    {
+      "name": "repo_code",
+      "value": "Code"
     }
   ]
 }

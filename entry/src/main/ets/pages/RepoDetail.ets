@@ -205,8 +205,23 @@ export struct RepoDetailView {
           .width('100%')
       }
 
-      Row({ space: 14 }) {
-        Text(this.starLine())
+      Row({ space: 5 }) {
+        OctIcon({ res: $r('app.media.oct_star_16'), iconSize: 14, iconColor: $r('app.color.star_gold') })
+        Text(`${this.detail?.stargazerCount ?? 0}`)
+          .fontSize($r('app.float.caption_font_size'))
+          .fontColor($r('app.color.text_secondary'))
+        Text($r('app.string.repo_stars_label'))
+          .fontSize($r('app.float.caption_font_size'))
+          .fontColor($r('app.color.text_secondary'))
+        Text('·')
+          .fontSize($r('app.float.caption_font_size'))
+          .fontColor($r('app.color.text_tertiary'))
+          .margin({ left: 4, right: 4 })
+        OctIcon({ res: $r('app.media.oct_repo_forked_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
+        Text(`${this.detail?.forkCount ?? 0}`)
+          .fontSize($r('app.float.caption_font_size'))
+          .fontColor($r('app.color.text_secondary'))
+        Text($r('app.string.repo_forks_label'))
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
       }
@@ -228,17 +243,20 @@ export struct RepoDetailView {
   @Builder
   actionBar() {
     Row({ space: 8 }) {
-      Button(this.detail?.viewerHasStarred ?? false
-        ? this.stringOf($r('app.string.explore_unstar'))
-        : this.stringOf($r('app.string.explore_star')))
-        .layoutWeight(1)
-        .height(44)
-        .backgroundColor(Color.Transparent)
-        .fontColor($r('app.color.link_blue'))
-        .fontSize($r('app.float.body_font_size'))
-        .borderRadius(6)
-        .border({ width: 1, color: $r('app.color.border') })
-        .onClick(() => this.onStar())
+      Row({ space: 6 }) {
+        OctIcon({ res: $r('app.media.oct_star_16'), iconSize: 16, iconColor: $r('app.color.link_blue') })
+        Text(this.detail?.viewerHasStarred ?? false
+          ? this.stringOf($r('app.string.explore_unstar'))
+          : this.stringOf($r('app.string.explore_star')))
+          .fontSize($r('app.float.body_font_size'))
+          .fontColor($r('app.color.link_blue'))
+      }
+      .layoutWeight(1)
+      .height(44)
+      .justifyContent(FlexAlign.Center)
+      .borderRadius(6)
+      .border({ width: 1, color: $r('app.color.border') })
+      .onClick(() => this.onStar())
       Stack() {
         OctIcon({ res: $r('app.media.oct_repo_forked_16'), iconSize: 18, iconColor: $r('app.color.text_primary') })
       }
@@ -267,8 +285,8 @@ export struct RepoDetailView {
       Stack() {
         OctIcon({ res: iconRes, iconSize: 16, iconColor: Color.White })
       }
-      .width(44)
-      .height(44)
+      .width(32)
+      .height(32)
       .backgroundColor(color)
       .borderRadius(6)
       Text(labelRes)
@@ -281,10 +299,8 @@ export struct RepoDetailView {
         .fontColor($r('app.color.text_secondary'))
     }
     .width('100%')
-    .padding(10)
-    .borderRadius(12)
-    .backgroundColor($r('app.color.card_background'))
-    .margin({ bottom: 6 })
+    .height(48)
+    .padding({ left: 16, right: 16 })
     .onClick(onClick)
   }
 
@@ -339,61 +355,95 @@ export struct RepoDetailView {
 
       if (this.moreExpanded) {
         Row({ space: 12 }) {
-          OctIcon({ res: $r('app.media.oct_repo_forked_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
-          Text($r('app.string.repo_current_branch'))
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-          Text(`${this.detail?.defaultBranchRefName ?? 'main'} ✓`)
+          OctIcon({ res: $r('app.media.oct_people_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+          Text($r('app.string.repo_contributors'))
             .fontSize($r('app.float.body_font_size'))
             .fontColor($r('app.color.text_primary'))
-          Blank()
-          Text($r('app.string.repo_change'))
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.link_blue'))
-            .onClick(() => this.comingSoon())
         }
         .width('100%')
         .height(44)
         .padding({ left: 16, right: 16 })
+        .onClick(() => this.comingSoon())
 
         Row({ space: 12 }) {
-          OctIcon({ res: $r('app.media.oct_file_directory_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
-          Text($r('app.string.repo_files_title'))
+          OctIcon({ res: $r('app.media.oct_eye_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+          Text($r('app.string.repo_watchers'))
             .fontSize($r('app.float.body_font_size'))
             .fontColor($r('app.color.text_primary'))
         }
         .width('100%')
         .height(44)
         .padding({ left: 16, right: 16 })
-        .onClick(() => this.openFiles())
-
-        Row({ space: 12 }) {
-          OctIcon({ res: $r('app.media.oct_git_commit_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
-          Text($r('app.string.repo_commits'))
-            .fontSize($r('app.float.body_font_size'))
-            .fontColor($r('app.color.text_primary'))
-        }
-        .width('100%')
-        .height(44)
-        .padding({ left: 16, right: 16 })
-        .onClick(() => this.openCommits())
         .onClick(() => this.comingSoon())
 
         Row({ space: 12 }) {
           OctIcon({ res: $r('app.media.oct_book_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
-          Text($r('app.string.repo_readme_title'))
+          Text($r('app.string.repo_license'))
             .fontSize($r('app.float.body_font_size'))
             .fontColor($r('app.color.text_primary'))
-          Blank()
-          Text($r('app.string.repo_edit'))
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.link_blue'))
-            .onClick(() => this.comingSoon())
         }
         .width('100%')
         .height(44)
         .padding({ left: 16, right: 16 })
+        .onClick(() => this.comingSoon())
       }
+    }
+    .width('100%')
+    .backgroundColor($r('app.color.card_background'))
+    .borderRadius(12)
+  }
+
+  /** 分支区（独立于 More）：Current branch/main 垂排 + Code/Commits */
+  @Builder
+  branchSection() {
+    Column() {
+      // 垂排：标题在上，分支名在下（官方布局，绿色 ✓）
+      Text($r('app.string.repo_current_branch'))
+        .fontSize($r('app.float.caption_font_size'))
+        .fontColor($r('app.color.text_secondary'))
+        .width('100%')
+        .padding({ left: 16, right: 16, top: 10 })
+
+      Row({ space: 6 }) {
+        Text(this.detail?.defaultBranchRefName ?? 'main')
+          .fontSize($r('app.float.body_font_size'))
+          .fontColor($r('app.color.text_primary'))
+        OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 14, iconColor: $r('app.color.success_text') })
+        Blank()
+        Text($r('app.string.repo_change'))
+          .fontSize($r('app.float.caption_font_size'))
+          .fontColor($r('app.color.link_blue'))
+          .onClick(() => this.comingSoon())
+      }
+      .width('100%')
+      .height(44)
+      .padding({ left: 16, right: 16 })
+
+      Divider().color($r('app.color.divider')).margin({ left: 16, right: 16 })
+
+      Row({ space: 12 }) {
+        OctIcon({ res: $r('app.media.oct_code_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+        Text($r('app.string.repo_code'))
+          .fontSize($r('app.float.body_font_size'))
+          .fontColor($r('app.color.text_primary'))
+      }
+      .width('100%')
+      .height(48)
+      .padding({ left: 16, right: 16 })
+      .onClick(() => this.openFiles())
+
+      Divider().color($r('app.color.divider')).margin({ left: 72 })
+
+      Row({ space: 12 }) {
+        OctIcon({ res: $r('app.media.oct_git_commit_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+        Text($r('app.string.repo_commits'))
+          .fontSize($r('app.float.body_font_size'))
+          .fontColor($r('app.color.text_primary'))
+      }
+      .width('100%')
+      .height(48)
+      .padding({ left: 16, right: 16 })
+      .onClick(() => this.openCommits())
     }
     .width('100%')
     .backgroundColor($r('app.color.card_background'))
@@ -404,9 +454,6 @@ export struct RepoDetailView {
   @Builder
   readmeCard() {
     Column({ space: 6 }) {
-      OctIcon({ res: $r('app.media.oct_book_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
-        .width('100%')
-        .margin({ bottom: 4 })
       Text(this.detail?.readmeText ?? '')
         .fontSize($r('app.float.body_font_size'))
         .fontColor($r('app.color.text_primary'))
@@ -476,13 +523,22 @@ export struct RepoDetailView {
             this.headerBox()
             this.actionBar()
 
-            this.countRow($r('app.media.oct_issue_opened_16'), $r('app.color.text_secondary'), $r('app.string.repo_issues_link'), this.detail.issueCount, () => this.openIssues())
-            this.countRow($r('app.media.oct_git_pull_request_16'), $r('app.color.link_blue'), $r('app.string.repo_pr_link'), this.detail.prCount, () => this.openPrs())
-            this.countRow($r('app.media.oct_play_16'), $r('app.color.star_gold'), $r('app.string.repo_actions'), 0, () => this.comingSoon())
-            this.countRow($r('app.media.oct_tag_16'), $r('app.color.work_dark_bg'), $r('app.string.repo_releases'), this.detail.releaseCount, () => this.openReleases())
-            this.releaseCard()
+            Column() {
+              this.countRow($r('app.media.oct_issue_opened_16'), $r('app.color.text_secondary'), $r('app.string.repo_issues_link'), this.detail.issueCount, () => this.openIssues())
+              Divider().color($r('app.color.divider')).margin({ left: 72 })
+              this.countRow($r('app.media.oct_git_pull_request_16'), $r('app.color.link_blue'), $r('app.string.repo_pr_link'), this.detail.prCount, () => this.openPrs())
+              Divider().color($r('app.color.divider')).margin({ left: 72 })
+              this.countRow($r('app.media.oct_play_16'), $r('app.color.star_gold'), $r('app.string.repo_actions'), 0, () => this.comingSoon())
+              Divider().color($r('app.color.divider')).margin({ left: 72 })
+              this.countRow($r('app.media.oct_tag_16'), $r('app.color.work_dark_bg'), $r('app.string.repo_releases'), this.detail.releaseCount, () => this.openReleases())
+            }
+            .width('100%')
+            .backgroundColor($r('app.color.card_background'))
+            .borderRadius(12)
 
             this.moreSection()
+
+            this.branchSection()
 
             if (this.detail.readmeText !== '') {
               this.readmeCard()

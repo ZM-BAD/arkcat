@@ -1199,6 +1199,30 @@
     {
       "name": "work_scope_hint",
       "value": "Token 权限不足：请在生成 PAT 时包含 %1$s 权限（https://github.com/settings/tokens）"
+    },
+    {
+      "name": "repo_stars_label",
+      "value": "星标"
+    },
+    {
+      "name": "repo_forks_label",
+      "value": "复刻"
+    },
+    {
+      "name": "repo_contributors",
+      "value": "贡献者"
+    },
+    {
+      "name": "repo_watchers",
+      "value": "关注者"
+    },
+    {
+      "name": "repo_license",
+      "value": "许可"
+    },
+    {
+      "name": "repo_code",
+      "value": "代码"
     }
   ]
 }
