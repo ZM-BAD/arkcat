@@ -18,11 +18,11 @@ while read -r local_ref local_sha remote_ref remote_sha; do
 
         # 删除分支：local_sha 全零
         if [ "$local_sha" = "$ZERO" ]; then
-            echo "❌ pre-push 拒绝：禁止删除受保护分支 $remote_ref" >&2
+            echo "❌ pre-push 拒绝：禁止删除受保护分支 ${remote_ref}" >&2
             STATUS=1
         # force push：remote 已存在且 local 不是其祖先（非快进）
         elif [ "$remote_sha" != "$ZERO" ] && ! git merge-base --is-ancestor "$remote_sha" "$local_sha" 2>/dev/null; then
-            echo "❌ pre-push 拒绝：禁止 force push 到受保护分支 $remote_ref（非快进更新）" >&2
+            echo "❌ pre-push 拒绝：禁止 force push 到受保护分支 ${remote_ref}（非快进更新）" >&2
             STATUS=1
         fi
     done
