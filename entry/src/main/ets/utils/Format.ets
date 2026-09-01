@@ -61,23 +61,6 @@ export function compactCount(n: number): string {
   return `${k}k`;
 }
 
-/** 贡献等级（0-4）对应的 GitHub 热力图颜色，API 未返回颜色时兜底 */
-export function contributionLevelColor(count: number): string {
-  if (count <= 0) {
-    return '#EBEDF0';
-  }
-  if (count <= 2) {
-    return '#9BE9A8';
-  }
-  if (count <= 5) {
-    return '#40C463';
-  }
-  if (count <= 9) {
-    return '#30A14E';
-  }
-  return '#216E39';
-}
-
 /**
  * GitHub Notifications subject.type → 本地化 key。
  * 未知类型原样返回，UI 层未命中 key 时直接显示原文。

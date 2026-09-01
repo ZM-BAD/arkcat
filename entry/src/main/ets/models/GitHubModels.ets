@@ -4,7 +4,6 @@
  * 模型保持纯数据接口；映射函数集中在此，便于单元测试。
  */
 import { Json, JsonMap } from '../utils/Json';
-import { contributionLevelColor } from '../utils/Format';
 
 /** 用户摘要（Home 卡片 / 列表作者行通用） */
 export interface UserSummary {
@@ -35,25 +34,14 @@ export function mapViewerBasic(raw: JsonMap): ViewerBasic {
 /** 仓库摘要卡片 */
 export interface RepoSummary {
   id: string;
+  name: string;
   nameWithOwner: string;
   description: string;
   stargazerCount: number;
   forkCount: number;
   primaryLanguage: string;
   languageColor: string;
-}
-
-/** 单个贡献日的展示模型（count + 颜色） */
-export interface ContributionDay {
-  date: string;
-  count: number;
-  color: string;
-}
-
-/** 贡献日历：周为列，一周内 7 天 */
-export interface ContributionCalendar {
-  totalContributions: number;
-  weeks: ContributionDay[][];
+  isPrivate: boolean;
 }
 
 /** 通知条目（REST /notifications） */
@@ -106,43 +94,15 @@ export function mapRepo(raw: JsonMap): RepoSummary {
   }
   return {
     id: Json.str(raw, 'id'),
+    name: Json.str(raw, 'name'),
     nameWithOwner: Json.str(raw, 'nameWithOwner'),
     description: Json.str(raw, 'description'),
     stargazerCount: Json.num(raw, 'stargazerCount'),
     forkCount: Json.num(raw, 'forkCount'),
     primaryLanguage: language,
-    languageColor: languageColor
+    languageColor: languageColor,
+    isPrivate: Json.bool(raw, 'isPrivate')
   };
-}
-
-/** GraphQL contributionCalendar → ContributionCalendar（含颜色兜底） */
-export function mapCalendar(raw: JsonMap): ContributionCalendar {
-  const weeks: ContributionDay[][] = [];
-  const weekArr = Json.arr(raw, 'weeks');
-  let total = Json.num(raw, 'totalContributions');
-  for (const weekItem of weekArr) {
-    const days: ContributionDay[] = [];
-    const week = weekItem as JsonMap;
-    for (const dayItem of Json.arr(week, 'contributionDays')) {
-      const day = dayItem as JsonMap;
-      const count = Json.num(day, 'contributionCount');
-      // API 返回 color 为空时按贡献数兜底着色
-      let color = Json.str(day, 'color');
-      if (color === '') {
-        color = contributionLevelColor(count);
-      }
-      days.push({ date: Json.str(day, 'date'), count: count, color: color });
-    }
-    weeks.push(days);
-  }
-  if (total === 0) {
-    for (const week of weeks) {
-      for (const day of week) {
-        total += day.count;
-      }
-    }
-  }
-  return { totalContributions: total, weeks: weeks };
 }
 
 /** REST /notifications 数组元素 → NotificationItem */

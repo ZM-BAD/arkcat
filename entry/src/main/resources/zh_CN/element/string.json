@@ -999,6 +999,102 @@
     {
       "name": "settings_preview",
       "value": "预览"
+    },
+    {
+      "name": "profile_followers_stat",
+      "value": "%1$d 关注者"
+    },
+    {
+      "name": "profile_following_stat",
+      "value": "%1$d 关注"
+    },
+    {
+      "name": "user_list_followers",
+      "value": "关注者"
+    },
+    {
+      "name": "user_list_following",
+      "value": "关注"
+    },
+    {
+      "name": "user_list_empty",
+      "value": "这里空空如也。"
+    },
+    {
+      "name": "org_list_title",
+      "value": "组织"
+    },
+    {
+      "name": "org_list_empty",
+      "value": "暂无组织。"
+    },
+    {
+      "name": "org_follow",
+      "value": "+ 关注"
+    },
+    {
+      "name": "org_following",
+      "value": "关注中"
+    },
+    {
+      "name": "org_read_more",
+      "value": "展开更多"
+    },
+    {
+      "name": "org_read_less",
+      "value": "收起"
+    },
+    {
+      "name": "org_repositories_row",
+      "value": "仓库"
+    },
+    {
+      "name": "repos_list_title",
+      "value": "仓库"
+    },
+    {
+      "name": "repos_list_empty",
+      "value": "未找到仓库。"
+    },
+    {
+      "name": "repos_filter_all",
+      "value": "全部"
+    },
+    {
+      "name": "repos_filter_public",
+      "value": "公开"
+    },
+    {
+      "name": "repos_filter_private",
+      "value": "私有"
+    },
+    {
+      "name": "repos_filter_language",
+      "value": "语言"
+    },
+    {
+      "name": "repos_lang_all",
+      "value": "所有语言"
+    },
+    {
+      "name": "repos_sort_recent",
+      "value": "最近推送"
+    },
+    {
+      "name": "repos_sort_stars",
+      "value": "星标"
+    },
+    {
+      "name": "repos_sort_name",
+      "value": "名称"
+    },
+    {
+      "name": "repos_sort_updated",
+      "value": "最近更新"
+    },
+    {
+      "name": "repos_sort_format",
+      "value": "排序：%1$s"
     }
   ]
 }

@@ -999,6 +999,102 @@
     {
       "name": "settings_preview",
       "value": "Preview"
+    },
+    {
+      "name": "profile_followers_stat",
+      "value": "%1$d followers"
+    },
+    {
+      "name": "profile_following_stat",
+      "value": "%1$d following"
+    },
+    {
+      "name": "user_list_followers",
+      "value": "Followers"
+    },
+    {
+      "name": "user_list_following",
+      "value": "Following"
+    },
+    {
+      "name": "user_list_empty",
+      "value": "Nothing here yet."
+    },
+    {
+      "name": "org_list_title",
+      "value": "Organizations"
+    },
+    {
+      "name": "org_list_empty",
+      "value": "No organizations yet."
+    },
+    {
+      "name": "org_follow",
+      "value": "+ FOLLOW"
+    },
+    {
+      "name": "org_following",
+      "value": "FOLLOWING"
+    },
+    {
+      "name": "org_read_more",
+      "value": "Read more"
+    },
+    {
+      "name": "org_read_less",
+      "value": "Read less"
+    },
+    {
+      "name": "org_repositories_row",
+      "value": "Repositories"
+    },
+    {
+      "name": "repos_list_title",
+      "value": "Repositories"
+    },
+    {
+      "name": "repos_list_empty",
+      "value": "No repositories found."
+    },
+    {
+      "name": "repos_filter_all",
+      "value": "All"
+    },
+    {
+      "name": "repos_filter_public",
+      "value": "Public"
+    },
+    {
+      "name": "repos_filter_private",
+      "value": "Private"
+    },
+    {
+      "name": "repos_filter_language",
+      "value": "Language"
+    },
+    {
+      "name": "repos_lang_all",
+      "value": "All languages"
+    },
+    {
+      "name": "repos_sort_recent",
+      "value": "Recently pushed"
+    },
+    {
+      "name": "repos_sort_stars",
+      "value": "Stars"
+    },
+    {
+      "name": "repos_sort_name",
+      "value": "Name"
+    },
+    {
+      "name": "repos_sort_updated",
+      "value": "Updated"
+    },
+    {
+      "name": "repos_sort_format",
+      "value": "Sort: %1$s"
     }
   ]
 }

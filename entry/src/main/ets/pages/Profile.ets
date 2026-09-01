@@ -1,12 +1,12 @@
 /**
- * User Profile 页（Spec 005）：头像/bio/元信息 + Overview/Repos/Stars 子 Tab。
- * Packages 无公开 API 不展示，Projects 按边界跳过；··· 菜单提供 Follow/Unfollow。
+ * User Profile 页（Spec 005 + Spec 034/035 改造）：头像/bio/元信息 + Pinned + 两段可点计数行 + 三导航入口。
+ * Packages 无公开 API 不展示，Projects 按边界跳过；··· 菜单提供 Follow/Unfollow；
+ * 贡献日历与内嵌切换按官方 App 对齐移除（Spec 035）。
  */
 import { promptAction } from '@kit.ArkUI';
 import { UserProfile } from '../models/ProfileModels';
 import { isSelfProfile } from '../models/ProfileModels';
 import { ProfileService } from '../services/ProfileService';
-import { ContributionCalendar } from '../components/ContributionCalendar';
 import { RepoCard } from '../components/RepoCard';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
@@ -19,7 +19,6 @@ export struct ProfileView {
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
   @Local profile: UserProfile | null = null;
-  @Local tab: number = 0;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
 
@@ -63,10 +62,7 @@ export struct ProfileView {
           statusEmoji: profile.statusEmoji,
           statusMessage: profile.statusMessage,
           viewerIsFollowing: following,
-          calendar: profile.calendar,
           pinned: profile.pinned,
-          repos: profile.repos,
-          stars: profile.stars,
           repositoriesCount: profile.repositoriesCount,
           organizationsCount: profile.organizationsCount,
           starredCount: profile.starredCount
@@ -87,19 +83,6 @@ export struct ProfileView {
   /** 带 %1$s 格式化：资源模板 + 参数 → 当前语言文案 */
   private fmt(res: Resource, arg: string): string {
     return resText(this.getUIContext(), res, arg);
-  }
-
-  @Builder
-  repoList(repos: RepoSummary[]) {
-    ForEach(repos, (repo: RepoSummary) => {
-      RepoCard({
-        repo: repo,
-        onOpen: (): void => {
-          this.pathStack.pushPathByName('repoDetail', repo.nameWithOwner);
-        }
-      })
-        .margin({ bottom: 8 })
-    }, (repo: RepoSummary) => repo.id !== '' ? repo.id : repo.nameWithOwner)
   }
 
   @Builder
@@ -159,10 +142,25 @@ export struct ProfileView {
       .width('100%')
       .alignItems(HorizontalAlign.Start)
 
-      Text(this.followersText())
-        .fontSize($r('app.float.caption_font_size'))
-        .fontColor($r('app.color.link_blue'))
-        .width('100%')
+      // 两段可点计数行（Spec 034）：N followers · M following，中间 · 分隔
+      Row({ space: 4 }) {
+        Text(this.followersStat())
+          .fontSize($r('app.float.caption_font_size'))
+          .fontColor($r('app.color.text_primary'))
+          .onClick(() => {
+            this.pathStack.pushPathByName('userList', `${this.profile?.user.login ?? ''}|followers`);
+          })
+        Text('·')
+          .fontSize($r('app.float.caption_font_size'))
+          .fontColor($r('app.color.text_secondary'))
+        Text(this.followingStat())
+          .fontSize($r('app.float.caption_font_size'))
+          .fontColor($r('app.color.text_primary'))
+          .onClick(() => {
+            this.pathStack.pushPathByName('userList', `${this.profile?.user.login ?? ''}|following`);
+          })
+      }
+      .width('100%')
     }
     .padding($r('app.float.card_padding'))
     .borderRadius($r('app.float.card_radius'))
@@ -170,10 +168,46 @@ export struct ProfileView {
     .width('100%')
   }
 
-  /** followers/following 本地化文案（%1$d/%2$d 位置占位） */
-  private followersText(): string {
-    return resText(this.getUIContext(), $r('app.string.followers_suffix'),
-      this.profile?.user.followers ?? 0, this.profile?.user.following ?? 0);
+  /** 计数行两段本地化文案（%1$d 占位） */
+  private followersStat(): string {
+    return resText(this.getUIContext(), $r('app.string.profile_followers_stat'),
+      this.profile?.user.followers ?? 0);
+  }
+
+  private followingStat(): string {
+    return resText(this.getUIContext(), $r('app.string.profile_following_stat'),
+      this.profile?.user.following ?? 0);
+  }
+
+  /** 导航入口行（Spec 035）：彩块图标 + 标签 + 计数 + › */
+  @Builder
+  navRow(icon: string, color: string, labelRes: Resource, count: number, onClick: () => void) {
+    Row({ space: 12 }) {
+      Text(icon)
+        .fontSize(18)
+        .fontColor(Color.White)
+        .width(30)
+        .height(30)
+        .textAlign(TextAlign.Center)
+        .backgroundColor(color)
+        .borderRadius(8)
+      Text(labelRes)
+        .fontSize($r('app.float.body_font_size'))
+        .fontColor($r('app.color.text_primary'))
+        .layoutWeight(1)
+      Text(`${count}`)
+        .fontSize($r('app.float.body_font_size'))
+        .fontColor($r('app.color.text_secondary'))
+      Text('>')
+        .fontSize(14)
+        .fontColor($r('app.color.text_secondary'))
+    }
+    .width('100%')
+    .padding(10)
+    .borderRadius(10)
+    .backgroundColor($r('app.color.card_background'))
+    .margin({ bottom: 6 })
+    .onClick(onClick)
   }
 
   build() {
@@ -255,19 +289,13 @@ export struct ProfileView {
             .width('100%')
             .scrollBar(BarState.Off)
 
-            // 三计数入口（Spec 005 官方布局）
-            this.countEntry('▤', '#57606A', $r('app.string.profile_repositories'), this.profile.repositoriesCount, 0)
-            this.countEntry('◫', '#E87B2E', $r('app.string.profile_organizations'), this.profile.organizationsCount, 1)
-            this.countEntry('★', '#E3B341', $r('app.string.profile_starred'), this.profile.starredCount, 2)
-
-            // 展开视图（三计数入口对应内容；0=Overview 日历）
-            if (this.tab === 0) {
-              ContributionCalendar({ calendar: this.profile.calendar })
-            } else if (this.tab === 1) {
-              this.repoList(this.profile.repos)
-            } else {
-              this.repoList(this.profile.stars)
-            }
+            // 三导航入口（Spec 035：跳独立列表页）
+            this.navRow('▤', '#57606A', $r('app.string.profile_repositories'), this.profile.repositoriesCount,
+              () => this.pathStack.pushPathByName('repositoriesList', `${this.profile?.user.login ?? ''}|user`))
+            this.navRow('◫', '#E87B2E', $r('app.string.profile_organizations'), this.profile.organizationsCount,
+              () => this.pathStack.pushPathByName('orgList', this.profile?.user.login ?? ''))
+            this.navRow('★', '#E3B341', $r('app.string.profile_starred'), this.profile.starredCount,
+              () => this.pathStack.pushPathByName('starred', this.profile?.user.login ?? ''))
           } else {
             StateView({
               loading: this.loading,
@@ -286,36 +314,5 @@ export struct ProfileView {
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
-  }
-
-  /** 计数入口：彩块图标 + 标签 + 计数；点击切换展开视图 */
-  @Builder
-  countEntry(icon: string, color: string, labelRes: Resource, count: number, tabIndex: number) {
-    Row({ space: 12 }) {
-      Text(icon)
-        .fontSize(18)
-        .fontColor(Color.White)
-        .width(30)
-        .height(30)
-        .textAlign(TextAlign.Center)
-        .backgroundColor(color)
-        .borderRadius(8)
-      Text(labelRes)
-        .fontSize($r('app.float.body_font_size'))
-        .fontWeight(this.tab === tabIndex ? FontWeight.Bold : FontWeight.Normal)
-        .fontColor($r('app.color.text_primary'))
-        .layoutWeight(1)
-      Text(`${count}`)
-        .fontSize($r('app.float.body_font_size'))
-        .fontColor($r('app.color.text_secondary'))
-    }
-    .width('100%')
-    .padding(10)
-    .borderRadius(10)
-    .backgroundColor(this.tab === tabIndex ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))
-    .margin({ bottom: 6 })
-    .onClick(() => {
-      this.tab = tabIndex;
-    })
   }
 }

@@ -35,12 +35,17 @@ function baseHeaders(token: string): Record<string, string> {
   return headers;
 }
 
-async function request(method: http.RequestMethod, url: string, token: string, body?: string): Promise<RawResponse> {
+async function request(method: http.RequestMethod, url: string, token: string, body?: string,
+  accept?: string): Promise<RawResponse> {
   const req = http.createHttp();
   try {
+    const headers: Record<string, string> = baseHeaders(token);
+    if (accept !== undefined) {
+      headers['Accept'] = accept;
+    }
     const options: http.HttpRequestOptions = {
       method: method,
-      header: baseHeaders(token),
+      header: headers,
       expectDataType: http.HttpDataType.STRING,
       connectTimeout: 15000,
       readTimeout: 20000
@@ -100,11 +105,21 @@ export async function graphql(query: string, variables: Record<string, Object> |
 }
 
 /** REST GET */
-export async function restGet(path: string, token: string): Promise<RawResponse> {
-  return request(http.RequestMethod.GET, `${GITHUB_API}${path}`, token);
+export async function restGet(path: string, token: string, accept?: string): Promise<RawResponse> {
+  return request(http.RequestMethod.GET, `${GITHUB_API}${path}`, token, undefined, accept);
 }
 
 /** REST PATCH（标记通知已读等） */
 export async function restPatch(path: string, token: string): Promise<RawResponse> {
   return request(http.RequestMethod.PATCH, `${GITHUB_API}${path}`, token);
+}
+
+/** REST PUT（组织关注等无 body 写操作） */
+export async function restPut(path: string, token: string): Promise<RawResponse> {
+  return request(http.RequestMethod.PUT, `${GITHUB_API}${path}`, token);
+}
+
+/** REST DELETE（组织取关等无 body 写操作） */
+export async function restDelete(path: string, token: string): Promise<RawResponse> {
+  return request(http.RequestMethod.DELETE, `${GITHUB_API}${path}`, token);
 }

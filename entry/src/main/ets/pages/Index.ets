@@ -33,6 +33,10 @@ import { IssueDetailView } from './IssueDetail';
 import { PrDetailView } from './PrDetail';
 import { NotificationSettingsView } from './NotificationSettings';
 import { CodeOptionsView } from './CodeOptions';
+import { UserListView } from './UserList';
+import { OrgListView } from './OrgList';
+import { OrgProfileView } from './OrgProfile';
+import { RepositoriesListView } from './RepositoriesList';
 
 @Entry
 @Component
@@ -45,6 +49,12 @@ struct Index {
   @State repoName: string = '';
   @State detailNumber: number = 0;
   @State inboxHasUnread: boolean = false;
+  @State listLogin: string = '';
+  @State listKind: string = 'followers';
+  @State orgLogin: string = '';
+  @State reposOwner: string = '';
+  @State reposMode: string = 'org';
+  @State starredLogin: string = '';
   /** My Work 配置变更计数器：Edit My Work SAVE 后递增，泵到 HomeView 触发重渲染 */
   @State homeWorkVersion: number = 0;
   private pathStack: NavPathStack = new NavPathStack();
@@ -172,6 +182,78 @@ struct Index {
     .hideTitleBar(true)
   }
 
+  /** Spec 034：用户列表页（login|followers|following 参数） */
+  @Builder
+  userListDestination() {
+    NavDestination() {
+      UserListView({
+        login: this.listLogin,
+        kind: this.listKind,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      const full = context.pathInfo.param as string;
+      const idx = full.indexOf('|');
+      this.listLogin = idx >= 0 ? full.substring(0, idx) : full;
+      this.listKind = idx >= 0 ? full.substring(idx + 1) : 'followers';
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 035：组织列表页 */
+  @Builder
+  orgListDestination() {
+    NavDestination() {
+      OrgListView({
+        login: this.orgLogin,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.orgLogin = context.pathInfo.param as string;
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 036：组织主页 */
+  @Builder
+  orgProfileDestination() {
+    NavDestination() {
+      OrgProfileView({
+        login: this.orgLogin,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.orgLogin = context.pathInfo.param as string;
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 037：通用仓库列表页（owner|org|user 参数） */
+  @Builder
+  repositoriesListDestination() {
+    NavDestination() {
+      RepositoriesListView({
+        owner: this.reposOwner,
+        mode: this.reposMode,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      const full = context.pathInfo.param as string;
+      const idx = full.indexOf('|');
+      this.reposOwner = idx >= 0 ? full.substring(0, idx) : full;
+      this.reposMode = idx >= 0 ? full.substring(idx + 1) : 'org';
+    })
+    .hideTitleBar(true)
+  }
+
   @Builder
   searchDestination() {
     NavDestination() {
@@ -267,9 +349,13 @@ struct Index {
     NavDestination() {
       StarredRepositoriesView({
         token: this.token,
+        login: this.starredLogin,
         pathStack: this.pathStack
       })
     }
+    .onReady((context: NavDestinationContext) => {
+      this.starredLogin = context.pathInfo.param as string;
+    })
     .title($r('app.string.nav_starred_title'))
   }
 
@@ -381,6 +467,14 @@ struct Index {
       this.notificationSettingsDestination()
     } else if (name === 'codeOptions') {
       this.codeOptionsDestination()
+    } else if (name === 'userList') {
+      this.userListDestination()
+    } else if (name === 'orgList') {
+      this.orgListDestination()
+    } else if (name === 'orgProfile') {
+      this.orgProfileDestination()
+    } else if (name === 'repositoriesList') {
+      this.repositoriesListDestination()
     } else if (name === 'search') {
       this.searchDestination()
     } else if (name === 'editMyWork') {
