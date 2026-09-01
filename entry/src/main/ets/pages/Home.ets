@@ -14,7 +14,7 @@ import { WorkSection, WorkConfigStore, visibleWorkSections } from '../utils/Work
 /** My Work 条目标识：图标/色/文案/路由（与 Edit My Work 013/016 一致） */
 interface WorkEntryMeta {
   iconRes: Resource;
-  color: string;
+  color: ResourceColor;
   label: Resource;
   route: string;
 }
@@ -61,7 +61,7 @@ export struct HomeView {
   header() {
     Row() {
       Text($r('app.string.tab_home'))
-        .fontSize(28)
+        .fontSize(32)
         .fontWeight(FontWeight.Bold)
         .fontColor($r('app.color.text_primary'))
       Blank()
@@ -117,19 +117,19 @@ export struct HomeView {
   private workMeta(id: string): WorkEntryMeta {
     switch (id) {
       case 'prs':
-        return { iconRes: $r('app.media.oct_git_pull_request_16'), color: '#3C78D8', label: $r('app.string.home_work_pull_requests'), route: 'workPrs' };
+        return { iconRes: $r('app.media.oct_git_pull_request_16'), color: $r('app.color.link_blue'), label: $r('app.string.home_work_pull_requests'), route: 'workPrs' };
       case 'discussions':
-        return { iconRes: $r('app.media.oct_comment_discussion_16'), color: '#8250DF', label: $r('app.string.home_work_discussions'), route: 'discussions' };
+        return { iconRes: $r('app.media.oct_comment_discussion_16'), color: $r('app.color.shortcut_purple_fg'), label: $r('app.string.home_work_discussions'), route: 'discussions' };
       case 'projects':
-        return { iconRes: $r('app.media.oct_project_16'), color: '#57606A', label: $r('app.string.home_work_projects'), route: 'projects' };
+        return { iconRes: $r('app.media.oct_project_16'), color: $r('app.color.text_secondary'), label: $r('app.string.home_work_projects'), route: 'projects' };
       case 'topRepos':
-        return { iconRes: $r('app.media.oct_repo_16'), color: '#24292F', label: $r('app.string.home_work_top_repos'), route: 'topRepos' };
+        return { iconRes: $r('app.media.oct_repo_16'), color: $r('app.color.text_primary'), label: $r('app.string.home_work_top_repos'), route: 'topRepos' };
       case 'orgs':
-        return { iconRes: $r('app.media.oct_organization_16'), color: '#E87B2E', label: $r('app.string.home_work_organizations'), route: 'organizations' };
+        return { iconRes: $r('app.media.oct_organization_16'), color: $r('app.color.shortcut_orange_fg'), label: $r('app.string.home_work_organizations'), route: 'organizations' };
       case 'starred':
-        return { iconRes: $r('app.media.oct_star_fill_16'), color: '#E3B341', label: $r('app.string.home_work_starred'), route: 'starred' };
+        return { iconRes: $r('app.media.oct_star_fill_16'), color: $r('app.color.star_gold'), label: $r('app.string.home_work_starred'), route: 'starred' };
       default:
-        return { iconRes: $r('app.media.oct_issue_opened_16'), color: '#2DA44E', label: $r('app.string.home_work_issues'), route: 'workIssues' };
+        return { iconRes: $r('app.media.oct_issue_opened_16'), color: $r('app.color.success_text'), label: $r('app.string.home_work_issues'), route: 'workIssues' };
     }
   }
 

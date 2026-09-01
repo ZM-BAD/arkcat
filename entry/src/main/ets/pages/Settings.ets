@@ -124,7 +124,7 @@ export struct SettingsView {
         buttons: [
           {
             text: resText(ui, $r('app.string.settings_cancel')),
-            color: '#57606A'
+            color: $r('app.color.text_secondary')
           },
           {
             text: resText(ui, $r('app.string.settings_confirm')),

@@ -92,9 +92,9 @@ export struct IssueDetailView {
 
   private stateColor(): ResourceColor {
     if (this.detail?.state === 'OPEN') {
-      return '#2DA44E';
+      return $r('app.color.success_text');
     }
-    return this.detail?.stateReason === 'NOT_PLANNED' ? $r('app.color.text_tertiary') : '#8250DF';
+    return this.detail?.stateReason === 'NOT_PLANNED' ? $r('app.color.text_tertiary') : $r('app.color.shortcut_purple_fg');
   }
 
   @Builder
@@ -175,7 +175,7 @@ export struct IssueDetailView {
           if (this.detail !== null) {
             Column({ space: 8 }) {
               Text(this.detail.title)
-                .fontSize(22)
+                .fontSize(20)
                 .fontWeight(FontWeight.Bold)
                 .fontColor($r('app.color.text_primary'))
                 .width('100%')
@@ -255,7 +255,7 @@ export struct IssueDetailView {
             promptAction.showToast({ message: $r('app.string.home_feature_coming') });
           })
         Text('😊')
-          .fontSize(22)
+          .fontSize(20)
           .padding({ left: 10, right: 4 })
           .onClick(() => {
             promptAction.showToast({ message: $r('app.string.home_feature_coming') });

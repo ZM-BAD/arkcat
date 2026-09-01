@@ -153,9 +153,9 @@ export struct WorkIssuesView {
 
   private issueColor(issue: WorkIssueItem): ResourceColor {
     if (issue.iconKey === 'open') {
-      return '#2DA44E';
+      return $r('app.color.success_text');
     }
-    return issue.iconKey === 'not_planned' ? $r('app.color.text_tertiary') : '#8250DF';
+    return issue.iconKey === 'not_planned' ? $r('app.color.text_tertiary') : $r('app.color.shortcut_purple_fg');
   }
 
   @Builder
@@ -174,11 +174,11 @@ export struct WorkIssuesView {
   @Builder
   labelChip(label: WorkLabel) {
     Text(label.name)
-      .fontSize(10)
+      .fontSize(12)
       .fontColor(Color.White)
       .padding({ left: 8, right: 8, top: 2, bottom: 2 })
       .borderRadius(4)
-      .backgroundColor(label.color !== '' ? label.color : '#57606A')
+      .backgroundColor(label.color !== '' ? label.color : $r('app.color.text_secondary'))
       .margin({ right: 6 })
   }
 
@@ -301,7 +301,7 @@ export struct WorkIssuesView {
                   .fill($r('app.color.link_blue'))
                   .margin({ top: -6, right: -6 })
                 Text(`${this.activeFilterCount()}`)
-                  .fontSize(8)
+                  .fontSize(12)
                   .fontColor(Color.White)
                   .margin({ top: -10, right: -3 })
               }

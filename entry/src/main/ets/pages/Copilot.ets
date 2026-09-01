@@ -16,7 +16,7 @@ export struct CopilotView {
 
       Column({ space: 8 }) {
         Text('🤖')
-          .fontSize(48)
+          .fontSize(40)
         Text($r('app.string.copilot_unsupported'))
           .fontSize($r('app.float.body_font_size'))
           .fontWeight(FontWeight.Medium)

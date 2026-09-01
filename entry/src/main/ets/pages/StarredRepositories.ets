@@ -121,8 +121,8 @@ export struct StarredRepositoriesView {
           .fontColor($r('app.color.star_gold'))
         if (repo.language !== '') {
           Text('●')
-            .fontSize(10)
-            .fontColor(repo.languageColor !== '' ? repo.languageColor : '#57606A')
+            .fontSize(12)
+            .fontColor(repo.languageColor !== '' ? repo.languageColor : $r('app.color.text_secondary'))
           Text(repo.language)
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))
@@ -159,7 +159,7 @@ export struct StarredRepositoriesView {
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))
           Text($r('app.string.nav_starred_title'))
-            .fontSize(22)
+            .fontSize(20)
             .fontWeight(FontWeight.Bold)
             .fontColor($r('app.color.text_primary'))
         }

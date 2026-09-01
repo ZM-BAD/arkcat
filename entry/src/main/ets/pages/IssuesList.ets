@@ -170,7 +170,7 @@ export struct IssuesListView {
   }
 
   private issueColor(issue: IssueSummary): ResourceColor {
-    return issue.state === 'OPEN' ? '#2DA44E' : '#8250DF';
+    return issue.state === 'OPEN' ? $r('app.color.success_text') : $r('app.color.shortcut_purple_fg');
   }
 
   @Builder
@@ -225,11 +225,11 @@ export struct IssuesListView {
   @Builder
   labelChip(label: string) {
     Text(label)
-      .fontSize(10)
+      .fontSize(12)
       .fontColor(Color.White)
       .padding({ left: 8, right: 8, top: 2, bottom: 2 })
       .borderRadius(4)
-      .backgroundColor('#57606A')
+      .backgroundColor($r('app.color.text_secondary'))
       .margin({ right: 6 })
   }
 
@@ -351,7 +351,7 @@ export struct IssuesListView {
                   .fill($r('app.color.link_blue'))
                   .margin({ top: -6, right: -6 })
                 Text(`${this.activeFilterCount()}`)
-                  .fontSize(8)
+                  .fontSize(12)
                   .fontColor(Color.White)
                   .margin({ top: -10, right: -3 })
               }

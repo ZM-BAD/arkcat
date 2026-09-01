@@ -240,7 +240,7 @@ export struct RepoDetailView {
         .border({ width: 1, color: $r('app.color.border') })
         .onClick(() => this.onStar())
       Text('⑂')
-        .fontSize(18)
+        .fontSize(20)
         .width(44)
         .height(44)
         .textAlign(TextAlign.Center)
@@ -248,7 +248,7 @@ export struct RepoDetailView {
         .border({ width: 1, color: $r('app.color.border') })
         .onClick(() => this.onFork())
       Text('🔔')
-        .fontSize(18)
+        .fontSize(20)
         .width(44)
         .height(44)
         .textAlign(TextAlign.Center)
@@ -262,7 +262,7 @@ export struct RepoDetailView {
 
   /** 计数入口：彩块图标 + 标签 + 计数 */
   @Builder
-  countRow(icon: string, color: string, labelRes: Resource, count: number, onClick: () => void) {
+  countRow(icon: string, color: ResourceColor, labelRes: Resource, count: number, onClick: () => void) {
     Row({ space: 12 }) {
       Text(icon)
         .fontSize(16)
@@ -322,7 +322,7 @@ export struct RepoDetailView {
     Column() {
       Row({ space: 8 }) {
         Text('···')
-          .fontSize(18)
+          .fontSize(20)
           .fontColor($r('app.color.text_secondary'))
         Text($r('app.string.repo_more'))
           .fontSize($r('app.float.body_font_size'))
@@ -477,10 +477,10 @@ export struct RepoDetailView {
             this.headerBox()
             this.actionBar()
 
-            this.countRow('◷', '#57606A', $r('app.string.repo_issues_link'), this.detail.issueCount, () => this.openIssues())
-            this.countRow('⑂', '#3C78D8', $r('app.string.repo_pr_link'), this.detail.prCount, () => this.openPrs())
-            this.countRow('▶', '#E3B341', $r('app.string.repo_actions'), 0, () => this.comingSoon())
-            this.countRow('▸', '#24292F', $r('app.string.repo_releases'), this.detail.releaseCount, () => this.openReleases())
+            this.countRow('◷', $r('app.color.text_secondary'), $r('app.string.repo_issues_link'), this.detail.issueCount, () => this.openIssues())
+            this.countRow('⑂', $r('app.color.link_blue'), $r('app.string.repo_pr_link'), this.detail.prCount, () => this.openPrs())
+            this.countRow('▶', $r('app.color.star_gold'), $r('app.string.repo_actions'), 0, () => this.comingSoon())
+            this.countRow('▸', $r('app.color.text_primary'), $r('app.string.repo_releases'), this.detail.releaseCount, () => this.openReleases())
             this.releaseCard()
 
             this.moreSection()

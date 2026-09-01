@@ -262,7 +262,7 @@ export struct CodeOptionsView {
                   this.saveSetting('code_font_size', value);
                 })
               Text('A')
-                .fontSize(22)
+                .fontSize(20)
                 .fontColor($r('app.color.text_secondary'))
             }
             .width('100%')

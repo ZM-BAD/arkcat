@@ -82,7 +82,7 @@ export struct TopRepositoriesView {
           .backgroundColor($r('app.color.heat_empty'))
       } else {
         Text('◯')
-          .fontSize(28)
+          .fontSize(32)
           .width(40)
           .height(40)
           .borderRadius(20)

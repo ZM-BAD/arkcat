@@ -2,7 +2,7 @@
   "float": [
     {
       "name": "page_text_font_size",
-      "value": "24fp"
+      "value": "20fp"
     },
     {
       "name": "sub_text_font_size",
@@ -42,7 +42,7 @@
     },
     {
       "name": "title_font_size",
-      "value": "18fp"
+      "value": "20fp"
     },
     {
       "name": "body_font_size",

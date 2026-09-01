@@ -181,10 +181,10 @@ export struct ProfileView {
 
   /** 导航入口行（Spec 035）：彩块图标 + 标签 + 计数 + › */
   @Builder
-  navRow(icon: string, color: string, labelRes: Resource, count: number, onClick: () => void) {
+  navRow(icon: string, color: ResourceColor, labelRes: Resource, count: number, onClick: () => void) {
     Row({ space: 12 }) {
       Text(icon)
-        .fontSize(18)
+        .fontSize(20)
         .fontColor(Color.White)
         .width(30)
         .height(30)
@@ -231,14 +231,14 @@ export struct ProfileView {
         Blank()
         // 🔗 分享：系统分享能力后续 Spec（Spec 005 边界）
         Text('🔗')
-          .fontSize(18)
+          .fontSize(20)
           .padding(6)
           .onClick(() => {
             promptAction.showToast({ message: $r('app.string.home_feature_coming') });
           })
         // ⚙ 设置：进入 Settings 页（Spec 014）
         Text('⚙')
-          .fontSize(18)
+          .fontSize(20)
           .padding(6)
           .onClick(() => {
             this.pathStack.pushPathByName('settings', this.login);
@@ -290,11 +290,11 @@ export struct ProfileView {
             .scrollBar(BarState.Off)
 
             // 三导航入口（Spec 035：跳独立列表页）
-            this.navRow('▤', '#57606A', $r('app.string.profile_repositories'), this.profile.repositoriesCount,
+            this.navRow('▤', $r('app.color.text_secondary'), $r('app.string.profile_repositories'), this.profile.repositoriesCount,
               () => this.pathStack.pushPathByName('repositoriesList', `${this.profile?.user.login ?? ''}|user`))
-            this.navRow('◫', '#E87B2E', $r('app.string.profile_organizations'), this.profile.organizationsCount,
+            this.navRow('◫', $r('app.color.shortcut_orange_fg'), $r('app.string.profile_organizations'), this.profile.organizationsCount,
               () => this.pathStack.pushPathByName('orgList', this.profile?.user.login ?? ''))
-            this.navRow('★', '#E3B341', $r('app.string.profile_starred'), this.profile.starredCount,
+            this.navRow('★', $r('app.color.star_gold'), $r('app.string.profile_starred'), this.profile.starredCount,
               () => this.pathStack.pushPathByName('starred', this.profile?.user.login ?? ''))
           } else {
             StateView({

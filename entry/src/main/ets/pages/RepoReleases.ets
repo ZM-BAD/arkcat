@@ -94,7 +94,7 @@ export struct RepoReleasesView {
           .fontColor($r('app.color.text_primary'))
         if (item.isLatest) {
           Text($r('app.string.releases_latest'))
-            .fontSize(10)
+            .fontSize(12)
             .fontColor($r('app.color.success_text'))
             .padding({ left: 6, right: 6, top: 2, bottom: 2 })
             .borderRadius(6)
@@ -141,12 +141,12 @@ export struct RepoReleasesView {
             // 最新版本头卡
             Column({ space: 8 }) {
               Text(this.releases[0].tagName)
-                .fontSize(28)
+                .fontSize(32)
                 .fontWeight(FontWeight.Bold)
                 .fontColor($r('app.color.text_primary'))
               if (this.releases[0].isLatest) {
                 Text($r('app.string.releases_latest'))
-                  .fontSize(10)
+                  .fontSize(12)
                   .fontColor($r('app.color.success_text'))
                   .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                   .borderRadius(6)
@@ -171,7 +171,7 @@ export struct RepoReleasesView {
 
               Column({ space: 6 }) {
                 Text('What\'s Changed')
-                  .fontSize(18)
+                  .fontSize(20)
                   .fontWeight(FontWeight.Bold)
                   .fontColor($r('app.color.text_primary'))
                 Text(this.releases[0].description !== '' ? this.releases[0].description : this.releases[0].body)

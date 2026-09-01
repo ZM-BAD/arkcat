@@ -129,7 +129,7 @@ export struct ProjectsView {
       }
       .width(34)
       .height(34)
-      .backgroundColor('#57606A')
+      .backgroundColor($r('app.color.text_secondary'))
       .borderRadius(8)
       Column({ space: 4 }) {
         Text(project.title)

@@ -151,7 +151,7 @@ export struct PrDetailView {
             // 标题 + 徽章
             Column({ space: 8 }) {
               Text(this.detail.title)
-                .fontSize(22)
+                .fontSize(20)
                 .fontWeight(FontWeight.Bold)
                 .fontColor($r('app.color.text_primary'))
                 .width('100%')
@@ -160,7 +160,7 @@ export struct PrDetailView {
               Row({ space: 8 }) {
                 if (this.detail.merged) {
                   Text($r('app.string.pr_merged_badge'))
-                    .fontSize(10)
+                    .fontSize(12)
                     .fontColor(Color.White)
                     .padding({ left: 8, right: 8, top: 3, bottom: 3 })
                     .borderRadius(10)
@@ -168,7 +168,7 @@ export struct PrDetailView {
                 }
                 if (this.detail.headRefName !== '') {
                   Text(this.detail.headRefName)
-                    .fontSize(10)
+                    .fontSize(12)
                     .fontColor(Color.White)
                     .padding({ left: 8, right: 8, top: 3, bottom: 3 })
                     .borderRadius(10)
@@ -347,7 +347,7 @@ export struct PrDetailView {
             promptAction.showToast({ message: $r('app.string.home_feature_coming') });
           })
         Text('😊')
-          .fontSize(22)
+          .fontSize(20)
           .padding({ left: 10, right: 4 })
           .onClick(() => {
             promptAction.showToast({ message: $r('app.string.home_feature_coming') });

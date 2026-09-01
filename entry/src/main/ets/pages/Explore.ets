@@ -68,7 +68,7 @@ export struct ExploreView {
 
   /** Discover 入口块：彩色方标 + 标题 */
   @Builder
-  discoverEntry(icon: string, color: string, labelRes: Resource) {
+  discoverEntry(icon: string, color: ResourceColor, labelRes: Resource) {
     Row({ space: 10 }) {
       Text(icon)
         .fontSize(20)
@@ -166,7 +166,7 @@ export struct ExploreView {
             .margin({ top: 8, bottom: 8 })
 
           this.discoverEntry('🔥', '#D94130', $r('app.string.explore_trending'))
-          this.discoverEntry('✦', '#8250DF', $r('app.string.explore_awesome'))
+          this.discoverEntry('✦', $r('app.color.shortcut_purple_fg'), $r('app.string.explore_awesome'))
 
           // Activity 区（Spec 003 推荐流）
           Text($r('app.string.explore_activity'))

@@ -179,7 +179,7 @@ export struct RepositoriesListView {
           .width('100%')
       }
       Row({ space: 5 }) {
-        OctIcon({ res: $r('app.media.oct_star_16'), iconSize: 14, iconColor: '#E3B341' })
+        OctIcon({ res: $r('app.media.oct_star_16'), iconSize: 14, iconColor: $r('app.color.star_gold') })
         Text(compactCount(repo.stargazerCount))
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))

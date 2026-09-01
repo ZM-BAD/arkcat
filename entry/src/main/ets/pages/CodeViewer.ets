@@ -38,8 +38,8 @@ export struct CodeViewerView {
   @Local darkTheme: boolean = false;
   @Local overrideFont: boolean = true;
   @Local font: number = FONT_DEFAULT;
-  @Local codeBg: string = CODE_LIGHT_BG;
-  @Local codeText: string = '#1F2328';
+  @Local codeBg: ResourceColor = CODE_LIGHT_BG;
+  @Local codeText: ResourceColor = $r('app.color.text_primary');
   @Local contentLoaded: boolean = false;
   @Local settingsLoaded: boolean = false;
 

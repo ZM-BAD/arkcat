@@ -144,9 +144,9 @@ export struct RepoPrsView {
   private prColor(item: RepoPrItem): ResourceColor {
     const key = repoPrIconKey(item.state, item.merged);
     if (key === 'merged') {
-      return '#8250DF';
+      return $r('app.color.shortcut_purple_fg');
     }
-    return key === 'open' ? '#2DA44E' : $r('app.color.text_tertiary');
+    return key === 'open' ? $r('app.color.success_text') : $r('app.color.text_tertiary');
   }
 
   private labelMenu(): MenuElement[] {
@@ -201,11 +201,11 @@ export struct RepoPrsView {
   @Builder
   labelChip(label: WorkLabel) {
     Text(label.name)
-      .fontSize(10)
+      .fontSize(12)
       .fontColor(Color.White)
       .padding({ left: 8, right: 8, top: 2, bottom: 2 })
       .borderRadius(4)
-      .backgroundColor(label.color !== '' ? label.color : '#57606A')
+      .backgroundColor(label.color !== '' ? label.color : $r('app.color.text_secondary'))
       .margin({ right: 6 })
   }
 
@@ -334,7 +334,7 @@ export struct RepoPrsView {
                   .fill($r('app.color.link_blue'))
                   .margin({ top: -6, right: -6 })
                 Text(`${this.activeFilterCount()}`)
-                  .fontSize(8)
+                  .fontSize(12)
                   .fontColor(Color.White)
                   .margin({ top: -10, right: -3 })
               }

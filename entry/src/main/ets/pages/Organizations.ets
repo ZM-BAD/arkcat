@@ -67,7 +67,7 @@ export struct OrganizationsView {
           .backgroundColor($r('app.color.heat_empty'))
       } else {
         Text('◯')
-          .fontSize(28)
+          .fontSize(32)
           .width(40)
           .height(40)
           .borderRadius(20)
@@ -103,7 +103,7 @@ export struct OrganizationsView {
     Column() {
       Blank()
       Text($r('app.string.work_orgs_empty'))
-        .fontSize(22)
+        .fontSize(20)
         .fontWeight(FontWeight.Bold)
         .fontColor($r('app.color.text_primary'))
         .textAlign(TextAlign.Center)

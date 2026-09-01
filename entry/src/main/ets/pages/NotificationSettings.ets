@@ -228,7 +228,7 @@ export struct NotificationSettingsView {
     .width(44)
     .height(44)
     .borderRadius(8)
-    .backgroundColor(this.swipeAction(side) === SWIPE_DONE ? '#2DA44E' : '#57606A')
+    .backgroundColor(this.swipeAction(side) === SWIPE_DONE ? $r('app.color.success_text') : $r('app.color.text_secondary'))
   }
 
   /** 滑动预览卡：骨架 + 动作块（左滑块在右，右滑块在左） */

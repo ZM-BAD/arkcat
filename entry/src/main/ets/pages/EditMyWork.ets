@@ -10,7 +10,7 @@ import { resText } from '../utils/I18n';
 /** 条目元信息（图标/色/文案/路由 与 Home 013/024 保持一致） */
 interface WorkEntryMeta {
   iconRes: Resource;
-  color: string;
+  color: ResourceColor;
   label: Resource;
 }
 
@@ -36,19 +36,19 @@ export struct EditMyWorkView {
   private meta(id: string): WorkEntryMeta {
     switch (id) {
       case 'prs':
-        return { iconRes: $r('app.media.oct_git_pull_request_16'), color: '#3C78D8', label: $r('app.string.home_work_pull_requests') };
+        return { iconRes: $r('app.media.oct_git_pull_request_16'), color: $r('app.color.link_blue'), label: $r('app.string.home_work_pull_requests') };
       case 'discussions':
-        return { iconRes: $r('app.media.oct_comment_discussion_16'), color: '#8250DF', label: $r('app.string.home_work_discussions') };
+        return { iconRes: $r('app.media.oct_comment_discussion_16'), color: $r('app.color.shortcut_purple_fg'), label: $r('app.string.home_work_discussions') };
       case 'projects':
-        return { iconRes: $r('app.media.oct_project_16'), color: '#57606A', label: $r('app.string.home_work_projects') };
+        return { iconRes: $r('app.media.oct_project_16'), color: $r('app.color.text_secondary'), label: $r('app.string.home_work_projects') };
       case 'topRepos':
-        return { iconRes: $r('app.media.oct_repo_16'), color: '#24292F', label: $r('app.string.home_work_top_repos') };
+        return { iconRes: $r('app.media.oct_repo_16'), color: $r('app.color.text_primary'), label: $r('app.string.home_work_top_repos') };
       case 'orgs':
-        return { iconRes: $r('app.media.oct_organization_16'), color: '#E87B2E', label: $r('app.string.home_work_organizations') };
+        return { iconRes: $r('app.media.oct_organization_16'), color: $r('app.color.shortcut_orange_fg'), label: $r('app.string.home_work_organizations') };
       case 'starred':
-        return { iconRes: $r('app.media.oct_star_fill_16'), color: '#E3B341', label: $r('app.string.home_work_starred') };
+        return { iconRes: $r('app.media.oct_star_fill_16'), color: $r('app.color.star_gold'), label: $r('app.string.home_work_starred') };
       default:
-        return { iconRes: $r('app.media.oct_issue_opened_16'), color: '#2DA44E', label: $r('app.string.home_work_issues') };
+        return { iconRes: $r('app.media.oct_issue_opened_16'), color: $r('app.color.success_text'), label: $r('app.string.home_work_issues') };
     }
   }
 

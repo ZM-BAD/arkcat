@@ -145,7 +145,7 @@ export struct DiscussionsView {
         OctIcon({
           res: $r('app.media.oct_comment_discussion_16'),
           iconSize: 18,
-          iconColor: item.iconKey === 'open' ? '#8250DF' : $r('app.color.text_tertiary')
+          iconColor: item.iconKey === 'open' ? $r('app.color.shortcut_purple_fg') : $r('app.color.text_tertiary')
         })
         Text(`${item.repoFullName} #${item.number}`)
           .fontSize($r('app.float.caption_font_size'))
@@ -173,7 +173,7 @@ export struct DiscussionsView {
           if (item.category !== '') {
             Text(item.category)
               .fontSize($r('app.float.caption_font_size'))
-              .fontColor('#8250DF')
+              .fontColor($r('app.color.shortcut_purple_fg'))
               .padding({ left: 8, right: 8, top: 2, bottom: 2 })
               .borderRadius(10)
               .backgroundColor($r('app.color.discussion_badge_bg'))
@@ -265,7 +265,7 @@ export struct DiscussionsView {
                   .fill($r('app.color.link_blue'))
                   .margin({ top: -6, right: -6 })
                 Text(`${this.activeFilterCount()}`)
-                  .fontSize(8)
+                  .fontSize(12)
                   .fontColor(Color.White)
                   .margin({ top: -10, right: -3 })
               }

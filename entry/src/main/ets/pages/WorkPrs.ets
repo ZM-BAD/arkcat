@@ -151,9 +151,9 @@ export struct WorkPrsView {
 
   private prColor(item: WorkPrItem): ResourceColor {
     if (item.iconKey === 'merged') {
-      return '#8250DF';
+      return $r('app.color.shortcut_purple_fg');
     }
-    return item.iconKey === 'open' ? '#2DA44E' : $r('app.color.text_tertiary');
+    return item.iconKey === 'open' ? $r('app.color.success_text') : $r('app.color.text_tertiary');
   }
 
   /** Checks 胶囊文案（SUCCESS/FAILURE/PENDING；未知静默，图标由 checksIcon 提供） */
@@ -349,7 +349,7 @@ export struct WorkPrsView {
                   .fill($r('app.color.link_blue'))
                   .margin({ top: -6, right: -6 })
                 Text(`${this.activeFilterCount()}`)
-                  .fontSize(8)
+                  .fontSize(12)
                   .fontColor(Color.White)
                   .margin({ top: -10, right: -3 })
               }

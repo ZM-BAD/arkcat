@@ -14,7 +14,7 @@
     },
     {
       "name": "text_secondary",
-      "value": "#656D76"
+      "value": "#59636E"
     },
     {
       "name": "divider",
@@ -74,7 +74,7 @@
     },
     {
       "name": "star_gold",
-      "value": "#B88700"
+      "value": "#BF8700"
     },
     {
       "name": "success_text",

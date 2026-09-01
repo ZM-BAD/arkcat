@@ -150,7 +150,7 @@ export struct SearchView {
         Circle()
           .width(12)
           .height(12)
-          .fill('#8250DF')
+          .fill($r('app.color.shortcut_purple_fg'))
         Text(this.badgeText(item))
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_primary'))
