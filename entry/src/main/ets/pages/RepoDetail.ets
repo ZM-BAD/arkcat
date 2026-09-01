@@ -452,7 +452,7 @@ export struct RepoDetailView {
           OctIcon({
             res: $r('app.media.oct_plus_24'),
             iconSize: 20,
-            iconColor: $r('app.color.primary')
+            iconColor: $r('app.color.link_blue')
           })
         }
         .padding(6)

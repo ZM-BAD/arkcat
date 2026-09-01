@@ -10,11 +10,11 @@
     },
     {
       "name": "text_primary",
-      "value": "#F0F6FC"
+      "value": "#E6EDF3"
     },
     {
       "name": "text_secondary",
-      "value": "#8D96A0"
+      "value": "#9198A1"
     },
     {
       "name": "divider",
@@ -42,7 +42,7 @@
     },
     {
       "name": "link_blue",
-      "value": "#58A6FF"
+      "value": "#4493F8"
     },
     {
       "name": "border",
@@ -54,7 +54,7 @@
     },
     {
       "name": "chip_active_bg",
-      "value": "#1F6FEB4D"
+      "value": "#4D1F6FEB"
     },
     {
       "name": "chip_active_border",
@@ -105,28 +105,68 @@
       "value": "#341E4D"
     },
     {
-      "name": "shortcut_issue_bg",
-      "value": "#2DA44E26"
+      "name": "shortcut_zap_bg",
+      "value": "#3359636E"
     },
     {
-      "name": "shortcut_pr_bg",
-      "value": "#3C78D826"
+      "name": "shortcut_file_bg",
+      "value": "#3359636E"
     },
     {
-      "name": "shortcut_discussion_bg",
-      "value": "#8250DF33"
+      "name": "shortcut_gray_fg",
+      "value": "#E6EDF3"
     },
     {
-      "name": "shortcut_project_bg",
-      "value": "#57606A40"
+      "name": "shortcut_green_bg",
+      "value": "#33DAFBE1"
     },
     {
-      "name": "shortcut_org_bg",
-      "value": "#E87B2E33"
+      "name": "shortcut_green_fg",
+      "value": "#3FB950"
     },
     {
-      "name": "shortcut_star_bg",
-      "value": "#E3B34133"
+      "name": "shortcut_blue_bg",
+      "value": "#33DDF4FF"
+    },
+    {
+      "name": "shortcut_blue_fg",
+      "value": "#4493F8"
+    },
+    {
+      "name": "shortcut_purple_bg",
+      "value": "#33FBEFFF"
+    },
+    {
+      "name": "shortcut_purple_fg",
+      "value": "#AB7DF8"
+    },
+    {
+      "name": "shortcut_orange_bg",
+      "value": "#33FFF1E5"
+    },
+    {
+      "name": "shortcut_orange_fg",
+      "value": "#DB6D28"
+    },
+    {
+      "name": "shortcut_pink_bg",
+      "value": "#33FFEFF7"
+    },
+    {
+      "name": "shortcut_pink_fg",
+      "value": "#DB61A2"
+    },
+    {
+      "name": "shortcut_indigo_bg",
+      "value": "#33FBEFFF"
+    },
+    {
+      "name": "shortcut_indigo_fg",
+      "value": "#6E40C9"
+    },
+    {
+      "name": "tab_active_bg",
+      "value": "#33DDF4FF"
     }
   ]
 }

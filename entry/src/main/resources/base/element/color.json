@@ -6,7 +6,7 @@
     },
     {
       "name": "primary",
-      "value": "#238636"
+      "value": "#1A7F37"
     },
     {
       "name": "text_primary",
@@ -105,28 +105,68 @@
       "value": "#F3E6FF"
     },
     {
-      "name": "shortcut_issue_bg",
-      "value": "#E7F0FF"
+      "name": "shortcut_zap_bg",
+      "value": "#EFF2F5"
     },
     {
-      "name": "shortcut_pr_bg",
-      "value": "#E6F4EA"
+      "name": "shortcut_file_bg",
+      "value": "#EFF2F5"
     },
     {
-      "name": "shortcut_discussion_bg",
-      "value": "#F3E6FF"
+      "name": "shortcut_gray_fg",
+      "value": "#1F2328"
     },
     {
-      "name": "shortcut_project_bg",
-      "value": "#FFF4D6"
+      "name": "shortcut_green_bg",
+      "value": "#DAFBE1"
     },
     {
-      "name": "shortcut_org_bg",
-      "value": "#FFF0E6"
+      "name": "shortcut_green_fg",
+      "value": "#1A7F37"
     },
     {
-      "name": "shortcut_star_bg",
-      "value": "#FFE6E6"
+      "name": "shortcut_blue_bg",
+      "value": "#DDF4FF"
+    },
+    {
+      "name": "shortcut_blue_fg",
+      "value": "#0969DA"
+    },
+    {
+      "name": "shortcut_purple_bg",
+      "value": "#FBEFFF"
+    },
+    {
+      "name": "shortcut_purple_fg",
+      "value": "#8250DF"
+    },
+    {
+      "name": "shortcut_orange_bg",
+      "value": "#FFF1E5"
+    },
+    {
+      "name": "shortcut_orange_fg",
+      "value": "#BC4C00"
+    },
+    {
+      "name": "shortcut_pink_bg",
+      "value": "#FFEFF7"
+    },
+    {
+      "name": "shortcut_pink_fg",
+      "value": "#BF3989"
+    },
+    {
+      "name": "shortcut_indigo_bg",
+      "value": "#FBEFFF"
+    },
+    {
+      "name": "shortcut_indigo_fg",
+      "value": "#6639BA"
+    },
+    {
+      "name": "tab_active_bg",
+      "value": "#DDF4FF"
     }
   ]
 }

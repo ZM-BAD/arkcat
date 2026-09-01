@@ -16,7 +16,7 @@ export struct StateView {
         LoadingProgress()
           .width(40)
           .height(40)
-          .color($r('app.color.primary'))
+          .color($r('app.color.link_blue'))
         Text($r('app.string.state_loading'))
           .fontSize($r('app.float.body_font_size'))
           .fontColor($r('app.color.text_secondary'))

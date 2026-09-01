@@ -244,12 +244,15 @@ export struct HomeView {
 
     Column({ space: 12 }) {
       Row() {
-        this.shortcutGlyph($r('app.media.oct_issue_opened_16'), $r('app.color.shortcut_issue_bg'), '#2DA44E')
-        this.shortcutGlyph($r('app.media.oct_git_pull_request_16'), $r('app.color.shortcut_pr_bg'), '#3C78D8')
-        this.shortcutGlyph($r('app.media.oct_comment_discussion_16'), $r('app.color.shortcut_discussion_bg'), '#8250DF')
-        this.shortcutGlyph($r('app.media.oct_project_16'), $r('app.color.shortcut_project_bg'), '#57606A')
-        this.shortcutGlyph($r('app.media.oct_organization_16'), $r('app.color.shortcut_org_bg'), '#E87B2E')
-        this.shortcutGlyph($r('app.media.oct_star_fill_16'), $r('app.color.shortcut_star_bg'), $r('app.color.star_gold'))
+        // 官方 App 顺序（2026-09-01 截图）：zap / issue / pr / discussion / project / people / briefcase / file
+        this.shortcutGlyph($r('app.media.oct_zap_16'), $r('app.color.shortcut_zap_bg'), $r('app.color.shortcut_gray_fg'))
+        this.shortcutGlyph($r('app.media.oct_issue_opened_16'), $r('app.color.shortcut_green_bg'), $r('app.color.shortcut_green_fg'))
+        this.shortcutGlyph($r('app.media.oct_git_pull_request_16'), $r('app.color.shortcut_blue_bg'), $r('app.color.shortcut_blue_fg'))
+        this.shortcutGlyph($r('app.media.oct_comment_discussion_16'), $r('app.color.shortcut_purple_bg'), $r('app.color.shortcut_purple_fg'))
+        this.shortcutGlyph($r('app.media.oct_project_16'), $r('app.color.shortcut_orange_bg'), $r('app.color.shortcut_orange_fg'))
+        this.shortcutGlyph($r('app.media.oct_people_16'), $r('app.color.shortcut_pink_bg'), $r('app.color.shortcut_pink_fg'))
+        this.shortcutGlyph($r('app.media.oct_briefcase_16'), $r('app.color.shortcut_indigo_bg'), $r('app.color.shortcut_indigo_fg'))
+        this.shortcutGlyph($r('app.media.oct_file_16'), $r('app.color.shortcut_file_bg'), $r('app.color.shortcut_gray_fg'))
       }
       .padding({ left: 8 })
 

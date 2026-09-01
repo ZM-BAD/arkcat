@@ -61,7 +61,7 @@ export struct ExploreView {
       .fontColor(this.selectedTopic === topic ? Color.White : $r('app.color.text_primary'))
       .padding({ left: 14, right: 14, top: 6, bottom: 6 })
       .borderRadius(14)
-      .backgroundColor(this.selectedTopic === topic ? $r('app.color.primary') : $r('app.color.card_background'))
+      .backgroundColor(this.selectedTopic === topic ? $r('app.color.link_blue') : $r('app.color.card_background'))
       .margin({ right: 8, bottom: 8 })
       .onClick(() => this.openTopic(topic))
   }
@@ -97,7 +97,7 @@ export struct ExploreView {
       Row({ space: 4 }) {
         Text('●')
           .fontSize(12)
-          .fontColor($r('app.color.primary'))
+          .fontColor($r('app.color.link_blue'))
         Text(repo.nameWithOwner)
           .fontSize($r('app.float.body_font_size'))
           .fontWeight(FontWeight.Medium)

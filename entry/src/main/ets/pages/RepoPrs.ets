@@ -307,7 +307,7 @@ export struct RepoPrsView {
           this.pathStack.pushPathByName('search', '');
         })
         Stack() {
-          OctIcon({ res: $r('app.media.oct_plus_24'), iconSize: 20, iconColor: $r('app.color.primary') })
+          OctIcon({ res: $r('app.media.oct_plus_24'), iconSize: 20, iconColor: $r('app.color.link_blue') })
         }
         .padding(6)
         .onClick(() => {
@@ -331,7 +331,7 @@ export struct RepoPrsView {
                 Circle()
                   .width(12)
                   .height(12)
-                  .fill($r('app.color.primary'))
+                  .fill($r('app.color.link_blue'))
                   .margin({ top: -6, right: -6 })
                 Text(`${this.activeFilterCount()}`)
                   .fontSize(8)

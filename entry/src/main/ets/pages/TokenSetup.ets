@@ -48,7 +48,7 @@ export struct TokenSetup {
       Button($r('app.string.token_save'))
         .width('86%')
         .height($r('app.float.button_height'))
-        .backgroundColor($r('app.color.primary'))
+        .backgroundColor($r('app.color.link_blue'))
         .enabled(this.token.trim() !== '' && !this.saving)
         .onClick(() => {
           this.saveToken();

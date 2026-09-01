@@ -63,6 +63,7 @@ struct Index {
   @State filePath: string = '';
   /** My Work 配置变更计数器：Edit My Work SAVE 后递增，泵到 HomeView 触发重渲染 */
   @State homeWorkVersion: number = 0;
+  private tabController: TabsController = new TabsController();
   private pathStack: NavPathStack = new NavPathStack();
 
   aboutToAppear(): void {
@@ -562,31 +563,43 @@ struct Index {
 
   @Builder
   mainTabs() {
-    Tabs({ barPosition: BarPosition.End }) {
-      TabContent() {
-        HomeView({ token: this.token, pathStack: this.pathStack, workVersion: this.homeWorkVersion })
-      }
-      .tabBar(this.tabItem($r('app.media.oct_home_16'), $r('app.string.tab_home'), 0))
+    Column() {
+      Tabs({ barPosition: BarPosition.End, controller: this.tabController }) {
+        TabContent() {
+          HomeView({ token: this.token, pathStack: this.pathStack, workVersion: this.homeWorkVersion })
+        }
 
-      TabContent() {
-        InboxView({ token: this.token })
-      }
-      .tabBar(this.tabItem($r('app.media.oct_inbox_16'), $r('app.string.tab_inbox'), 1))
+        TabContent() {
+          InboxView({ token: this.token })
+        }
 
-      TabContent() {
-        ExploreView({ token: this.token, pathStack: this.pathStack })
-      }
-      .tabBar(this.tabItem($r('app.media.oct_telescope_16'), $r('app.string.tab_explore'), 2))
+        TabContent() {
+          ExploreView({ token: this.token, pathStack: this.pathStack })
+        }
 
-      TabContent() {
-        CopilotView()
+        TabContent() {
+          CopilotView()
+        }
       }
-      .tabBar(this.tabItem($r('app.media.oct_copilot_16'), $r('app.string.tab_copilot'), 3))
+      .onChange((index: number) => {
+        this.currentTab = index;
+      })
+      .barHeight(0)
+      .width('100%')
+      .layoutWeight(1)
+
+      // 自绘底栏（官方浮层样式）：白底 + 上投影 + 选中胶囊（Spec 013 官方截图对齐）
+      Row() {
+        this.tabItem($r('app.media.oct_home_16'), $r('app.string.tab_home'), 0)
+        this.tabItem($r('app.media.oct_inbox_16'), $r('app.string.tab_inbox'), 1)
+        this.tabItem($r('app.media.oct_telescope_16'), $r('app.string.tab_explore'), 2)
+        this.tabItem($r('app.media.oct_copilot_16'), $r('app.string.tab_copilot'), 3)
+      }
+      .width('100%')
+      .height(56)
+      .backgroundColor($r('app.color.card_background'))
+      .shadow({ radius: 14, color: '#1A000000', offsetY: -3 })
     }
-    .onChange((index: number) => {
-      this.currentTab = index;
-    })
-    .barHeight(56)
     .width('100%')
     .height('100%')
   }
@@ -594,25 +607,43 @@ struct Index {
   @Builder
   tabItem(iconRes: Resource, labelRes: Resource, index: number) {
     Column({ space: 2 }) {
-      Stack({ alignContent: Alignment.TopEnd }) {
-        OctIcon({
-          res: iconRes,
-          iconSize: 20,
-          iconColor: this.currentTab === index ? $r('app.color.primary') : $r('app.color.text_secondary')
-        })
-        // 未读蓝点：Inbox Tab 图标右上角（Spec 013，官方 App 样式）
-        if (index === 1 && this.inboxHasUnread) {
-          Circle()
-            .width(8)
-            .height(8)
-            .fill($r('app.color.link_blue'))
-            .margin({ top: -2, right: -2 })
+      Stack({ alignContent: Alignment.Center }) {
+        if (this.currentTab === index) {
+          // 选中态胶囊底（官方浅蓝）
+          Column()
+            .width(56)
+            .height(32)
+            .borderRadius(16)
+            .backgroundColor($r('app.color.tab_active_bg'))
+        }
+        Stack({ alignContent: Alignment.TopEnd }) {
+          OctIcon({
+            res: iconRes,
+            iconSize: 20,
+            iconColor: this.currentTab === index ? $r('app.color.link_blue') : $r('app.color.text_secondary')
+          })
+          // 未读蓝点：Inbox Tab 图标右上角（Spec 013，官方 App 样式）
+          if (index === 1 && this.inboxHasUnread) {
+            Circle()
+              .width(8)
+              .height(8)
+              .fill($r('app.color.link_blue'))
+              .margin({ top: -2, right: -2 })
+          }
         }
       }
+      .width('100%')
+      .height(32)
       Text(labelRes)
         .fontSize($r('app.float.caption_font_size'))
-        .fontColor(this.currentTab === index ? $r('app.color.primary') : $r('app.color.text_secondary'))
+        .fontColor(this.currentTab === index ? $r('app.color.link_blue') : $r('app.color.text_secondary'))
     }
+    .width('25%')
+    .height('100%')
+    .justifyContent(FlexAlign.Center)
+    .onClick(() => {
+      this.tabController.changeIndex(index);
+    })
   }
 
   build() {

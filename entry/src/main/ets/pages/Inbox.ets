@@ -163,7 +163,7 @@ export struct InboxView {
   filterPill(label: string, active: boolean, onClick: () => void) {
     Text(active ? `${label} ▾` : label)
       .fontSize($r('app.float.caption_font_size'))
-      .fontColor(active ? $r('app.color.primary') : $r('app.color.text_primary'))
+      .fontColor(active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
       .borderRadius(16)
       .backgroundColor(active ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))
@@ -199,7 +199,7 @@ export struct InboxView {
       Circle()
         .width(10)
         .height(10)
-        .fill($r('app.color.primary'))
+        .fill($r('app.color.link_blue'))
         .opacity(item.unread ? 1 : 0)
         .margin({ top: 6 })
       Column({ space: 2 }) {
@@ -231,7 +231,7 @@ export struct InboxView {
         Row({ space: 4 }) {
           Text(item.unread ? '●' : '○')
             .fontSize(14)
-            .fontColor(item.unread ? $r('app.color.primary') : $r('app.color.text_secondary'))
+            .fontColor(item.unread ? $r('app.color.link_blue') : $r('app.color.text_secondary'))
           Text(this.subjectLine(item))
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))
@@ -285,7 +285,7 @@ export struct InboxView {
           ? `${this.repoFilter} ▾`
           : `${this.stringOf($r('app.string.inbox_menu_repository'))} ▾`)
           .fontSize($r('app.float.caption_font_size'))
-          .fontColor(this.filter === 'repo' ? $r('app.color.primary') : $r('app.color.text_primary'))
+          .fontColor(this.filter === 'repo' ? $r('app.color.link_blue') : $r('app.color.text_primary'))
           .padding({ left: 12, right: 12, top: 6, bottom: 6 })
           .borderRadius(16)
           .backgroundColor(this.filter === 'repo' ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))

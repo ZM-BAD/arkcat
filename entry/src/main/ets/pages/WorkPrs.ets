@@ -346,7 +346,7 @@ export struct WorkPrsView {
                 Circle()
                   .width(12)
                   .height(12)
-                  .fill($r('app.color.primary'))
+                  .fill($r('app.color.link_blue'))
                   .margin({ top: -6, right: -6 })
                 Text(`${this.activeFilterCount()}`)
                   .fontSize(8)
