@@ -264,7 +264,7 @@ export struct InboxView {
         Blank()
         Stack() {
   OctIcon({
-          res: $r('app.media.oct_kebab_horizontal_16'),
+          res: $r('app.media.oct_kebab_vertical_16'),
           iconSize: 18,
           iconColor: $r('app.color.text_secondary')
   })

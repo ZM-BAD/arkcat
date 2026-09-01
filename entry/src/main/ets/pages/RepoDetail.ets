@@ -244,12 +244,12 @@ export struct RepoDetailView {
   actionBar() {
     Row({ space: 8 }) {
       Row({ space: 6 }) {
-        OctIcon({ res: $r('app.media.oct_star_16'), iconSize: 16, iconColor: $r('app.color.link_blue') })
+        OctIcon({ res: $r('app.media.oct_star_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
         Text(this.detail?.viewerHasStarred ?? false
           ? this.stringOf($r('app.string.explore_unstar'))
           : this.stringOf($r('app.string.explore_star')))
           .fontSize($r('app.float.body_font_size'))
-          .fontColor($r('app.color.link_blue'))
+          .fontColor($r('app.color.text_primary'))
       }
       .layoutWeight(1)
       .height(44)
@@ -335,23 +335,23 @@ export struct RepoDetailView {
   @Builder
   moreSection() {
     Column() {
+      if (!this.moreExpanded) {
       Row({ space: 8 }) {
-        OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+        OctIcon({ res: $r('app.media.oct_kebab_vertical_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
         Text($r('app.string.repo_more'))
           .fontSize($r('app.float.body_font_size'))
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.text_primary'))
         Blank()
-        Text(this.moreExpanded ? '⌃' : '⌄')
-          .fontSize(16)
-          .fontColor($r('app.color.text_secondary'))
+        OctIcon({ res: $r('app.media.oct_chevron_down_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
       }
       .width('100%')
       .height(48)
       .padding({ left: 16, right: 16 })
       .onClick(() => {
-        this.moreExpanded = !this.moreExpanded;
+        this.moreExpanded = true;
       })
+      }
 
       if (this.moreExpanded) {
         Row({ space: 12 }) {
@@ -377,7 +377,7 @@ export struct RepoDetailView {
         .onClick(() => this.comingSoon())
 
         Row({ space: 12 }) {
-          OctIcon({ res: $r('app.media.oct_book_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+          OctIcon({ res: $r('app.media.oct_law_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
           Text($r('app.string.repo_license'))
             .fontSize($r('app.float.body_font_size'))
             .fontColor($r('app.color.text_primary'))
@@ -405,6 +405,7 @@ export struct RepoDetailView {
         .padding({ left: 16, right: 16, top: 10 })
 
       Row({ space: 6 }) {
+        OctIcon({ res: $r('app.media.oct_git_branch_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
         Text(this.detail?.defaultBranchRefName ?? 'main')
           .fontSize($r('app.float.body_font_size'))
           .fontColor($r('app.color.text_primary'))
@@ -422,7 +423,7 @@ export struct RepoDetailView {
       Divider().color($r('app.color.divider')).margin({ left: 16, right: 16 })
 
       Row({ space: 12 }) {
-        OctIcon({ res: $r('app.media.oct_code_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+        OctIcon({ res: $r('app.media.oct_file_code_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
         Text($r('app.string.repo_code'))
           .fontSize($r('app.float.body_font_size'))
           .fontColor($r('app.color.text_primary'))
@@ -488,7 +489,7 @@ export struct RepoDetailView {
         Blank()
         Stack() {
           OctIcon({
-            res: $r('app.media.oct_plus_24'),
+            res: $r('app.media.oct_plus_circle_24'),
             iconSize: 20,
             iconColor: $r('app.color.link_blue')
           })
@@ -501,7 +502,7 @@ export struct RepoDetailView {
         .onClick(() => this.comingSoon())
         Stack() {
           OctIcon({
-            res: $r('app.media.oct_kebab_horizontal_16'),
+            res: $r('app.media.oct_kebab_vertical_16'),
             iconSize: 18,
             iconColor: $r('app.color.text_primary')
           })
