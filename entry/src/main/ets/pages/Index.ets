@@ -31,6 +31,8 @@ import { RepoCommitsView } from './RepoCommits';
 import { RepoReleasesView } from './RepoReleases';
 import { IssueDetailView } from './IssueDetail';
 import { PrDetailView } from './PrDetail';
+import { NotificationSettingsView } from './NotificationSettings';
+import { CodeOptionsView } from './CodeOptions';
 
 @Entry
 @Component
@@ -146,6 +148,28 @@ struct Index {
       })
     }
     .title($r('app.string.profile_settings'))
+  }
+
+  /** Spec 032：Settings → Notification Options 二级页（自绘头部，不设 .title() 防双标题） */
+  @Builder
+  notificationSettingsDestination() {
+    NavDestination() {
+      NotificationSettingsView({
+        pathStack: this.pathStack
+      })
+    }
+    .hideTitleBar(true)
+  }
+
+  /** Spec 033：Settings → Code Options 二级页（自绘头部，不设 .title() 防双标题） */
+  @Builder
+  codeOptionsDestination() {
+    NavDestination() {
+      CodeOptionsView({
+        pathStack: this.pathStack
+      })
+    }
+    .hideTitleBar(true)
   }
 
   @Builder
@@ -353,6 +377,10 @@ struct Index {
       this.issuesListDestination()
     } else if (name === 'settings') {
       this.settingsDestination()
+    } else if (name === 'notificationSettings') {
+      this.notificationSettingsDestination()
+    } else if (name === 'codeOptions') {
+      this.codeOptionsDestination()
     } else if (name === 'search') {
       this.searchDestination()
     } else if (name === 'editMyWork') {

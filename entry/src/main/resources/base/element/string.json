@@ -903,6 +903,102 @@
     {
       "name": "comment_button",
       "value": "COMMENT"
+    },
+    {
+      "name": "settings_working_hours",
+      "value": "Working hours"
+    },
+    {
+      "name": "settings_off",
+      "value": "Off"
+    },
+    {
+      "name": "settings_push_notif_types",
+      "value": "Push Notifications Types"
+    },
+    {
+      "name": "settings_notif_direct_mentions",
+      "value": "Direct Mentions"
+    },
+    {
+      "name": "settings_notif_review_requested",
+      "value": "Review Requested"
+    },
+    {
+      "name": "settings_notif_assigned",
+      "value": "Assigned"
+    },
+    {
+      "name": "settings_notif_deployment_review",
+      "value": "Deployment Review"
+    },
+    {
+      "name": "settings_notif_pull_request_review",
+      "value": "Pull Request Review"
+    },
+    {
+      "name": "settings_notif_workflow_runs",
+      "value": "Workflow Runs"
+    },
+    {
+      "name": "settings_live_notifications",
+      "value": "Live notifications"
+    },
+    {
+      "name": "settings_cloud_agent_updates",
+      "value": "Cloud Agent Updates"
+    },
+    {
+      "name": "settings_remote_session_updates",
+      "value": "Remote Session Updates"
+    },
+    {
+      "name": "settings_swipe_options",
+      "value": "Swipe Options"
+    },
+    {
+      "name": "settings_left_swipe",
+      "value": "Left swipe"
+    },
+    {
+      "name": "settings_right_swipe",
+      "value": "Right swipe"
+    },
+    {
+      "name": "settings_mark_as_done",
+      "value": "Mark as done"
+    },
+    {
+      "name": "settings_unsubscribe",
+      "value": "Unsubscribe"
+    },
+    {
+      "name": "settings_change",
+      "value": "CHANGE"
+    },
+    {
+      "name": "settings_code_scrollable_path",
+      "value": "Scrollable File Path"
+    },
+    {
+      "name": "settings_code_line_numbers",
+      "value": "Show line numbers"
+    },
+    {
+      "name": "settings_code_dark_theme",
+      "value": "Always use dark theme"
+    },
+    {
+      "name": "settings_code_override_font",
+      "value": "Override system font size"
+    },
+    {
+      "name": "settings_code_wrap_lines",
+      "value": "Wrap lines"
+    },
+    {
+      "name": "settings_preview",
+      "value": "Preview"
     }
   ]
 }
