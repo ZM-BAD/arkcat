@@ -37,6 +37,8 @@ import { UserListView } from './UserList';
 import { OrgListView } from './OrgList';
 import { OrgProfileView } from './OrgProfile';
 import { RepositoriesListView } from './RepositoriesList';
+import { FileTreeView } from './FileTree';
+import { CodeViewerView } from './CodeViewer';
 
 @Entry
 @Component
@@ -55,6 +57,10 @@ struct Index {
   @State reposOwner: string = '';
   @State reposMode: string = 'org';
   @State starredLogin: string = '';
+  /** 文件路由参数（Spec 038/011 共用，格式 owner|name|path） */
+  @State fileOwner: string = '';
+  @State fileRepo: string = '';
+  @State filePath: string = '';
   /** My Work 配置变更计数器：Edit My Work SAVE 后递增，泵到 HomeView 触发重渲染 */
   @State homeWorkVersion: number = 0;
   private pathStack: NavPathStack = new NavPathStack();
@@ -419,6 +425,50 @@ struct Index {
     .title($r('app.string.repo_releases_title'))
   }
 
+  /** 文件路由参数解析：owner|name|path（path 可为空 = 根目录） */
+  private parseFileParam(param: string): void {
+    const parts: string[] = param.split('|');
+    this.fileOwner = parts.length > 0 ? parts[0] : '';
+    this.fileRepo = parts.length > 1 ? parts[1] : '';
+    this.filePath = parts.length > 2 ? parts[2] : '';
+  }
+
+  /** Spec 038：仓库文件树（自绘头部，不设 .title() 防双标题） */
+  @Builder
+  repoFilesDestination() {
+    NavDestination() {
+      FileTreeView({
+        owner: this.fileOwner,
+        name: this.fileRepo,
+        dirPath: this.filePath,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseFileParam(context.pathInfo.param as string);
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 011：代码查看器（自绘头部，不设 .title() 防双标题） */
+  @Builder
+  codeViewerDestination() {
+    NavDestination() {
+      CodeViewerView({
+        owner: this.fileOwner,
+        name: this.fileRepo,
+        filePath: this.filePath,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseFileParam(context.pathInfo.param as string);
+    })
+    .hideTitleBar(true)
+  }
+
   @Builder
   issueDetailDestination() {
     NavDestination() {
@@ -503,6 +553,10 @@ struct Index {
       this.issueDetailDestination()
     } else if (name === 'prDetail') {
       this.prDetailDestination()
+    } else if (name === 'repoFiles') {
+      this.repoFilesDestination()
+    } else if (name === 'codeViewer') {
+      this.codeViewerDestination()
     }
   }
 
