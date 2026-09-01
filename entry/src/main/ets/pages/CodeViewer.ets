@@ -227,7 +227,7 @@ export struct CodeViewerView {
           .onClick(() => {
             this.pathStack.pushPathByName('codeOptions', '');
           })
-        OctIcon({ res: $r('app.media.oct_kebab_vertical_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
+        OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
           .margin({ left: 12 })
           .bindMenu(this.menuItems())
       }

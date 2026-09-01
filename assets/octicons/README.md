@@ -7,4 +7,4 @@
 - 下载命令示例：
   `curl -s -o icons/arrow-left-24.svg https://raw.githubusercontent.com/primer/octicons/v19.33.0/icons/arrow-left-24.svg`
 
-- 扩展说明：`icons/kebab-vertical-16.svg` 为**自绘扩展**（按 kebab-horizontal 同规格竖排三点；官方 Octicons 无竖三点图标——v19.33.0 及 main 均无），MIT 风格自绘，着色沿用 OctIcon.fillColor。
+- 说明：官方 Octicons 无竖三点图标（v19.33.0 与 main 均只有 kebab-horizontal）。应用内竖三点 = `oct_kebab_horizontal_16` 旋转 90°（ArkUI Image.rotate），不使用自绘 SVG。

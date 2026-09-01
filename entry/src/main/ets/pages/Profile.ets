@@ -253,7 +253,7 @@ export struct ProfileView {
           })
         // ··· 菜单：Follow/Unfollow（自关注时隐藏，见 Spec 边界）
         if (this.profile !== null && !isSelfProfile(this.profile.viewerLogin, this.profile.user.login)) {
-          OctIcon({ res: $r('app.media.oct_kebab_vertical_16'), iconSize: 20, iconColor: $r('app.color.text_primary') })
+          OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 20, iconColor: $r('app.color.text_primary') })
             .bindMenu([
               {
                 value: this.profile.viewerIsFollowing

@@ -169,7 +169,7 @@ export struct FileTreeView {
           .onClick(() => {
             this.copyText(this.findUrl(), $r('app.string.file_link_copied'));
           })
-        OctIcon({ res: $r('app.media.oct_kebab_vertical_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
+        OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
           .margin({ left: 12 })
           .bindMenu(this.menuItems())
       }

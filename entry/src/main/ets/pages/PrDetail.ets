@@ -142,7 +142,7 @@ export struct PrDetailView {
           promptAction.showToast({ message: $r('app.string.home_feature_coming') });
         })
         Stack() {
-          OctIcon({ res: $r('app.media.oct_kebab_vertical_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+          OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
         }
 .width(44)
 .height(44)

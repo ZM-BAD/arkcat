@@ -88,7 +88,7 @@ export struct StarredRepositoriesView {
           .layoutWeight(1)
         Stack() {
   OctIcon({
-          res: $r('app.media.oct_kebab_vertical_16'),
+          res: $r('app.media.oct_kebab_horizontal_16'),
           iconSize: 15,
           iconColor: $r('app.color.text_secondary')
   })
@@ -190,7 +190,7 @@ export struct StarredRepositoriesView {
           .padding(6)
         Stack() {
   OctIcon({
-          res: $r('app.media.oct_kebab_vertical_16'),
+          res: $r('app.media.oct_kebab_horizontal_16'),
           iconSize: 18,
           iconColor: $r('app.color.text_secondary')
   })

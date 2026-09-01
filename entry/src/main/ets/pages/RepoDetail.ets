@@ -423,7 +423,12 @@ export struct RepoDetailView {
     Column() {
       // 结构：git-branch 图标最左，右侧为 Current branch 文字 + main ✓ 上下排布
       Row({ space: 12 }) {
-        OctIcon({ res: $r('app.media.oct_git_branch_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+        Stack() {
+          OctIcon({ res: $r('app.media.oct_git_branch_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+        }
+        .width(32)
+        .height(32)
+        .borderRadius(6)
         Column({ space: 2 }) {
           Text($r('app.string.repo_current_branch'))
             .fontSize($r('app.float.caption_font_size'))
@@ -539,10 +544,11 @@ export struct RepoDetailView {
         .onClick(() => this.comingSoon())
         Stack() {
           OctIcon({
-            res: $r('app.media.oct_kebab_vertical_16'),
+            res: $r('app.media.oct_kebab_horizontal_16'),
             iconSize: 18,
             iconColor: $r('app.color.link_blue')
           })
+          .rotate({ angle: 90 })
         }
 .width(44)
 .height(44)
