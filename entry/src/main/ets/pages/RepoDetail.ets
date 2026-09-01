@@ -206,7 +206,7 @@ export struct RepoDetailView {
       }
 
       Row({ space: 5 }) {
-        OctIcon({ res: $r('app.media.oct_star_16'), iconSize: 14, iconColor: $r('app.color.star_gold') })
+        OctIcon({ res: $r('app.media.oct_star_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
         Text(`${this.detail?.stargazerCount ?? 0}`)
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
@@ -336,8 +336,14 @@ export struct RepoDetailView {
   moreSection() {
     Column() {
       if (!this.moreExpanded) {
-      Row({ space: 8 }) {
-        OctIcon({ res: $r('app.media.oct_kebab_vertical_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+      Row({ space: 12 }) {
+        Stack() {
+          OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 14, iconColor: $r('app.color.text_primary') })
+        }
+        .width(32)
+        .height(32)
+        .backgroundColor($r('app.color.bg_page'))
+        .borderRadius(6)
         Text($r('app.string.repo_more'))
           .fontSize($r('app.float.body_font_size'))
           .fontWeight(FontWeight.Medium)
@@ -355,35 +361,53 @@ export struct RepoDetailView {
 
       if (this.moreExpanded) {
         Row({ space: 12 }) {
-          OctIcon({ res: $r('app.media.oct_people_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_people_16'), iconSize: 16, iconColor: $r('app.color.danger_text') })
+          }
+          .width(32)
+          .height(32)
+          .backgroundColor($r('app.color.checks_failure_bg'))
+          .borderRadius(6)
           Text($r('app.string.repo_contributors'))
             .fontSize($r('app.float.body_font_size'))
             .fontColor($r('app.color.text_primary'))
         }
         .width('100%')
-        .height(44)
+        .height(48)
         .padding({ left: 16, right: 16 })
         .onClick(() => this.comingSoon())
 
         Row({ space: 12 }) {
-          OctIcon({ res: $r('app.media.oct_eye_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_eye_16'), iconSize: 16, iconColor: $r('app.color.warning_text') })
+          }
+          .width(32)
+          .height(32)
+          .backgroundColor($r('app.color.checks_pending_bg'))
+          .borderRadius(6)
           Text($r('app.string.repo_watchers'))
             .fontSize($r('app.float.body_font_size'))
             .fontColor($r('app.color.text_primary'))
         }
         .width('100%')
-        .height(44)
+        .height(48)
         .padding({ left: 16, right: 16 })
         .onClick(() => this.comingSoon())
 
         Row({ space: 12 }) {
-          OctIcon({ res: $r('app.media.oct_law_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_law_16'), iconSize: 16, iconColor: $r('app.color.warning_text') })
+          }
+          .width(32)
+          .height(32)
+          .backgroundColor($r('app.color.checks_pending_bg'))
+          .borderRadius(6)
           Text($r('app.string.repo_license'))
             .fontSize($r('app.float.body_font_size'))
             .fontColor($r('app.color.text_primary'))
         }
         .width('100%')
-        .height(44)
+        .height(48)
         .padding({ left: 16, right: 16 })
         .onClick(() => this.comingSoon())
       }
@@ -397,33 +421,46 @@ export struct RepoDetailView {
   @Builder
   branchSection() {
     Column() {
-      // 垂排：标题在上，分支名在下（官方布局，绿色 ✓）
-      Text($r('app.string.repo_current_branch'))
-        .fontSize($r('app.float.caption_font_size'))
-        .fontColor($r('app.color.text_secondary'))
-        .width('100%')
-        .padding({ left: 16, right: 16, top: 10 })
-
-      Row({ space: 6 }) {
-        OctIcon({ res: $r('app.media.oct_git_branch_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
-        Text(this.detail?.defaultBranchRefName ?? 'main')
-          .fontSize($r('app.float.body_font_size'))
-          .fontColor($r('app.color.text_primary'))
-        OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 14, iconColor: $r('app.color.success_text') })
-        Blank()
+      // 结构：git-branch 图标最左，右侧为 Current branch 文字 + main ✓ 上下排布
+      Row({ space: 12 }) {
+        Stack() {
+          OctIcon({ res: $r('app.media.oct_git_branch_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+        }
+        .width(32)
+        .height(32)
+        .backgroundColor($r('app.color.heat_empty'))
+        .borderRadius(6)
+        Column({ space: 2 }) {
+          Text($r('app.string.repo_current_branch'))
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor($r('app.color.text_secondary'))
+          Row({ space: 6 }) {
+            Text(this.detail?.defaultBranchRefName ?? 'main')
+              .fontSize($r('app.float.body_font_size'))
+              .fontColor($r('app.color.text_primary'))
+            OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 14, iconColor: $r('app.color.success_text') })
+          }
+        }
+        .alignItems(HorizontalAlign.Start)
+        .layoutWeight(1)
         Text($r('app.string.repo_change'))
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.link_blue'))
           .onClick(() => this.comingSoon())
       }
       .width('100%')
-      .height(44)
-      .padding({ left: 16, right: 16 })
+      .padding({ left: 16, right: 16, top: 10, bottom: 10 })
 
       Divider().color($r('app.color.divider')).margin({ left: 16, right: 16 })
 
       Row({ space: 12 }) {
-        OctIcon({ res: $r('app.media.oct_file_code_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+        Stack() {
+          OctIcon({ res: $r('app.media.oct_file_code_16'), iconSize: 16, iconColor: Color.White })
+        }
+        .width(32)
+        .height(32)
+        .backgroundColor($r('app.color.text_secondary'))
+        .borderRadius(6)
         Text($r('app.string.repo_code'))
           .fontSize($r('app.float.body_font_size'))
           .fontColor($r('app.color.text_primary'))
@@ -436,7 +473,13 @@ export struct RepoDetailView {
       Divider().color($r('app.color.divider')).margin({ left: 72 })
 
       Row({ space: 12 }) {
-        OctIcon({ res: $r('app.media.oct_git_commit_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+        Stack() {
+          OctIcon({ res: $r('app.media.oct_git_commit_16'), iconSize: 16, iconColor: Color.White })
+        }
+        .width(32)
+        .height(32)
+        .backgroundColor($r('app.color.text_secondary'))
+        .borderRadius(6)
         Text($r('app.string.repo_commits'))
           .fontSize($r('app.float.body_font_size'))
           .fontColor($r('app.color.text_primary'))
@@ -504,7 +547,7 @@ export struct RepoDetailView {
           OctIcon({
             res: $r('app.media.oct_kebab_vertical_16'),
             iconSize: 18,
-            iconColor: $r('app.color.text_primary')
+            iconColor: $r('app.color.link_blue')
           })
         }
 .width(44)
@@ -525,7 +568,7 @@ export struct RepoDetailView {
             this.actionBar()
 
             Column() {
-              this.countRow($r('app.media.oct_issue_opened_16'), $r('app.color.text_secondary'), $r('app.string.repo_issues_link'), this.detail.issueCount, () => this.openIssues())
+              this.countRow($r('app.media.oct_issue_opened_16'), $r('app.color.success_text'), $r('app.string.repo_issues_link'), this.detail.issueCount, () => this.openIssues())
               Divider().color($r('app.color.divider')).margin({ left: 72 })
               this.countRow($r('app.media.oct_git_pull_request_16'), $r('app.color.link_blue'), $r('app.string.repo_pr_link'), this.detail.prCount, () => this.openPrs())
               Divider().color($r('app.color.divider')).margin({ left: 72 })
