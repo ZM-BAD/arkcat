@@ -41,6 +41,7 @@
 - **API Layer: GitHub GraphQL API v4** (GraphQL primary, REST fallback)
 - Network: @kit.NetworkKit (wrapped GraphQL Client)
 - UI Framework: ArkUI (native components)
+- Design System: **GitHub Primer** (official tokens & rules, see [DESIGN.md](DESIGN.md))
 - State Management: V2 (`@ComponentV2` / `@Local`, API 18+)
 - **Architecture: Client-side direct connection to GitHub GraphQL API**, no BFF/backend
 - Auth: GitHub Personal Access Token (user-generated, stored locally)

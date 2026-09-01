@@ -25,6 +25,7 @@
 - **UI**：ArkUI 原生组件（不用三方 UI 库）；**网络**：`@kit.NetworkKit` 自封装 GraphQL Client
 - **状态管理**：V2（`@ComponentV2` / `@Local`，API 18+；简单页面可用 V1）
 - **路由**：Navigation（`NavPathStack` + `navDestination` 模式，见 `pages/Index.ets`）
+- **设计规范**：GitHub Primer（[DESIGN.md](DESIGN.md) 为唯一依据；色值/尺寸/字号/圆角/阴影必须用官方令牌——颜色走 resources base/dark 双套 color.json，其余走 `utils/PrimerTokens.ets` 常量，禁止硬编码随意数值）
 
 ### 2.2 代码风格
 - **命名**：文件 `kebab-case`（`user-profile.ets`）；组件 `PascalCase`（`UserProfile`）；变量/函数 `camelCase`
