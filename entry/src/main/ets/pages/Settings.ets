@@ -220,13 +220,13 @@ export struct SettingsView {
       Scroll() {
         Column() {
           this.sectionTitle($r('app.string.settings_notifications'))
-          this.row($r('app.string.settings_notification_options'), '', () => this.comingSoon())
+          this.row($r('app.string.settings_notification_options'), '', () => this.pathStack.pushPathByName('notificationSettings', ''))
 
           this.sectionTitle($r('app.string.settings_general'))
           this.row($r('app.string.settings_theme'),
             this.themeLabel(),
             () => this.pickTheme())
-          this.row($r('app.string.settings_code_options'), '', () => this.comingSoon())
+          this.row($r('app.string.settings_code_options'), '', () => this.pathStack.pushPathByName('codeOptions', ''))
           this.row($r('app.string.settings_language'),
             this.language === 'zh' ? this.stringOf($r('app.string.settings_language_zh')) : this.stringOf($r('app.string.settings_language_en')),
             () => this.pickLanguage())

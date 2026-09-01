@@ -903,6 +903,102 @@
     {
       "name": "comment_button",
       "value": "评论"
+    },
+    {
+      "name": "settings_working_hours",
+      "value": "工作时间"
+    },
+    {
+      "name": "settings_off",
+      "value": "关"
+    },
+    {
+      "name": "settings_push_notif_types",
+      "value": "推送通知类型"
+    },
+    {
+      "name": "settings_notif_direct_mentions",
+      "value": "直接提及"
+    },
+    {
+      "name": "settings_notif_review_requested",
+      "value": "请求评审"
+    },
+    {
+      "name": "settings_notif_assigned",
+      "value": "分派给我"
+    },
+    {
+      "name": "settings_notif_deployment_review",
+      "value": "部署评审"
+    },
+    {
+      "name": "settings_notif_pull_request_review",
+      "value": "PR 评审"
+    },
+    {
+      "name": "settings_notif_workflow_runs",
+      "value": "工作流运行"
+    },
+    {
+      "name": "settings_live_notifications",
+      "value": "实时通知"
+    },
+    {
+      "name": "settings_cloud_agent_updates",
+      "value": "云端 Agent 更新"
+    },
+    {
+      "name": "settings_remote_session_updates",
+      "value": "远程会话更新"
+    },
+    {
+      "name": "settings_swipe_options",
+      "value": "滑动选项"
+    },
+    {
+      "name": "settings_left_swipe",
+      "value": "左滑"
+    },
+    {
+      "name": "settings_right_swipe",
+      "value": "右滑"
+    },
+    {
+      "name": "settings_mark_as_done",
+      "value": "标记为已完成"
+    },
+    {
+      "name": "settings_unsubscribe",
+      "value": "退订"
+    },
+    {
+      "name": "settings_change",
+      "value": "更改"
+    },
+    {
+      "name": "settings_code_scrollable_path",
+      "value": "可滚动文件路径"
+    },
+    {
+      "name": "settings_code_line_numbers",
+      "value": "显示行号"
+    },
+    {
+      "name": "settings_code_dark_theme",
+      "value": "始终使用暗色主题"
+    },
+    {
+      "name": "settings_code_override_font",
+      "value": "覆盖系统字体大小"
+    },
+    {
+      "name": "settings_code_wrap_lines",
+      "value": "自动换行"
+    },
+    {
+      "name": "settings_preview",
+      "value": "预览"
     }
   ]
 }
