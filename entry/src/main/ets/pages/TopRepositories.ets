@@ -93,29 +93,29 @@ export struct TopRepositoriesView {
 
   @Builder
   repoRow(repo: WorkTopRepoItem) {
-    Row({ space: 12 }) {
+    Row({ space: 20 }) {
       if (repo.ownerAvatar !== '') {
         Image(repo.ownerAvatar)
-          .width(40)
-          .height(40)
-          .borderRadius(20)
+          .width(34)
+          .height(34)
+          .borderRadius(17)
           .backgroundColor($r('app.color.heat_empty'))
       } else {
         Text('◯')
-          .fontSize(32)
-          .width(40)
-          .height(40)
-          .borderRadius(20)
+          .fontSize(28)
+          .width(34)
+          .height(34)
+          .borderRadius(17)
           .textAlign(TextAlign.Center)
           .backgroundColor($r('app.color.heat_empty'))
       }
-      Column({ space: 2 }) {
+      Column({ space: 3 }) {
         Text(repo.ownerLogin)
-          .fontSize($r('app.float.caption_font_size'))
+          .fontSize($r('app.float.body_font_size'))
           .fontColor($r('app.color.text_secondary'))
           .width('100%')
         Text(repo.name)
-          .fontSize(16)
+          .fontSize(17)
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.text_primary'))
           .maxLines(1)
@@ -126,8 +126,8 @@ export struct TopRepositoriesView {
       .alignItems(HorizontalAlign.Start)
     }
     .width('100%')
-    .height(64)
-    .padding({ left: 12, right: 12 })
+    .height(73)
+    .padding({ left: 0, right: 0 })
     .onClick(() => {
       this.pathStack.pushPathByName('repoDetail', `${repo.ownerLogin}/${repo.name}`);
     })

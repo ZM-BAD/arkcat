@@ -53,6 +53,18 @@
       "value": "12fp"
     },
     {
+      "name": "chip_font_size",
+      "value": "15fp"
+    },
+    {
+      "name": "menu_font_size",
+      "value": "17fp"
+    },
+    {
+      "name": "menu_row_height",
+      "value": "52vp"
+    },
+    {
       "name": "avatar_size_medium",
       "value": "56vp"
     },
