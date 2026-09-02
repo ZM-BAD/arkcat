@@ -5,10 +5,11 @@
 import { OctIcon } from './OctIcon';
 import { resText } from '../utils/I18n';
 
-/** 下拉选项（调用方以当前语言文案构建） */
+/** 下拉选项（调用方以当前语言文案构建；isGroupStart=true 时该项上方画组间分隔线） */
 export interface FilterDropdownOption {
   key: string;
   label: string;
+  isGroupStart?: boolean;
 }
 
 /** bindPopup 弹出状态事件 */
@@ -34,6 +35,13 @@ export struct FilterDropdownChip {
   dropdownCard() {
     Column() {
       ForEach(this.options, (opt: FilterDropdownOption) => {
+        if (opt.isGroupStart) {
+          Divider()
+            .color($r('app.color.divider'))
+            .strokeWidth(1)
+            .margin({ top: 4, bottom: 4 })
+            .width('100%')
+        }
         Row() {
           Text(opt.label)
             .fontSize($r('app.float.body_font_size'))

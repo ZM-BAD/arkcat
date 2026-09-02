@@ -80,6 +80,9 @@ export interface WorkProjectItem {
   number: number;
   title: string;
   closed: boolean;
+  /** 模板项目（ProjectV2.template；三态之一，见 filterWorkProjects） */
+  template: boolean;
+  createdAt: string;
   updatedAt: string;
   ownerLogin: string;
 }
@@ -436,25 +439,53 @@ export function mapWorkDiscussionsPage(data: JsonMap): WorkDiscussionsPage {
 }
 
 /** Project 客户端过滤（纯函数）：范围 + 状态，排序：Open 前置 + updatedAt 降序 */
+/** Projects 过滤（纯函数）：范围（全部/我创建）+ 三态（open/closed/template，官方 Template 项目） */
 export function filterWorkProjects(projects: WorkProjectItem[], ownedOnly: boolean,
-  viewerLogin: string, closedOnly: boolean): WorkProjectItem[] {
+  viewerLogin: string, stateFilter: string): WorkProjectItem[] {
   const result: WorkProjectItem[] = [];
   for (const project of projects) {
     if (ownedOnly && project.ownerLogin !== viewerLogin) {
       continue;
     }
-    if (closedOnly !== project.closed) {
+    if (stateFilter === 'closed' && !project.closed) {
+      continue;
+    }
+    if (stateFilter === 'template' && !project.template) {
+      continue;
+    }
+    if (stateFilter === 'open' && (project.closed || project.template)) {
       continue;
     }
     result.push(project);
   }
-  result.sort((a: WorkProjectItem, b: WorkProjectItem): number => {
-    if (a.closed !== b.closed) {
-      return a.closed ? 1 : -1;
-    }
-    return Date.parse(b.updatedAt) - Date.parse(a.updatedAt);
-  });
   return result;
+}
+
+/** Projects 排序（纯函数）：官方 8 项；viewed 两项以本会话浏览记录为准（无记录视为 0） */
+export function sortWorkProjects(projects: WorkProjectItem[], sortKey: string,
+  viewedAt: Record<string, number>): WorkProjectItem[] {
+  const sorted: WorkProjectItem[] = [...projects];
+  sorted.sort((a: WorkProjectItem, b: WorkProjectItem): number => {
+    switch (sortKey) {
+      case 'least_viewed':
+        return (viewedAt[a.id] ?? 0) - (viewedAt[b.id] ?? 0);
+      case 'updated_newest':
+        return b.updatedAt.localeCompare(a.updatedAt);
+      case 'updated_oldest':
+        return a.updatedAt.localeCompare(b.updatedAt);
+      case 'created_newest':
+        return b.createdAt.localeCompare(a.createdAt);
+      case 'created_oldest':
+        return a.createdAt.localeCompare(b.createdAt);
+      case 'title_az':
+        return a.title.localeCompare(b.title);
+      case 'title_za':
+        return b.title.localeCompare(a.title);
+      default:
+        return (viewedAt[b.id] ?? 0) - (viewedAt[a.id] ?? 0);
+    }
+  });
+  return sorted;
 }
 
 /** viewer.projectsV2 响应 → WorkProjectsPage */
@@ -471,6 +502,8 @@ export function mapWorkProjectsPage(data: JsonMap): WorkProjectsPage {
       number: Json.num(node, 'number'),
       title: Json.str(node, 'title'),
       closed: Json.bool(node, 'closed'),
+      template: Json.bool(node, 'template'),
+      createdAt: Json.str(node, 'createdAt'),
       updatedAt: Json.str(node, 'updatedAt'),
       ownerLogin: owner !== null ? Json.str(owner, 'login') : ''
     });

@@ -4,7 +4,8 @@
  */
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
-import { WorkProjectItem, WorkProjectsPage, filterWorkProjects } from '../models/WorkModels';
+import { FilterDropdownChip, FilterDropdownOption } from '../components/FilterDropdownChip';
+import { WorkProjectItem, WorkProjectsPage, filterWorkProjects, sortWorkProjects } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
 import { WorkEmptyView } from '../components/WorkEmptyView';
@@ -16,10 +17,12 @@ export struct ProjectsView {
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
   @Local ownedOnly: boolean = false;
-  @Local closedOnly: boolean = false;
+  /** 'open' | 'closed' | 'template' */
+  @Local stateFilter: string = 'open';
+  /** 'most_viewed' | 'least_viewed' | 'updated_newest' | 'updated_oldest' | 'created_newest' | 'created_oldest' | 'title_az' | 'title_za' */
+  @Local sortKey: string = 'most_viewed';
   @Local allProjects: WorkProjectItem[] = [];
   @Local filtered: WorkProjectItem[] = [];
-  @Local sortViewed: boolean = true;
   @Local viewedAt: Record<string, number> = {};
   @Local viewerLogin: string = '';
   @Local cursor: string = '';
@@ -76,9 +79,14 @@ export struct ProjectsView {
       });
   }
 
-  /** 客户端过滤 + 排序（纯函数在 WorkModels，便于单测） */
+  /** 客户端范围+三态过滤（纯函数在 WorkModels，便于单测） */
   private applyFilters(): void {
-    this.filtered = filterWorkProjects(this.allProjects, this.ownedOnly, this.viewerLogin, this.closedOnly);
+    this.filtered = filterWorkProjects(this.allProjects, this.ownedOnly, this.viewerLogin, this.stateFilter);
+  }
+
+  /** 客户端排序（Most/Least viewed 以本会话浏览记录为准） */
+  private visibleProjects(): WorkProjectItem[] {
+    return sortWorkProjects(this.filtered, this.sortKey, this.viewedAt);
   }
 
   private scopeName(): string {
@@ -100,50 +108,57 @@ export struct ProjectsView {
   }
 
   private statusLabel(): string {
-    return this.closedOnly
-      ? this.stringOf($r('app.string.issues_state_closed'))
-      : this.stringOf($r('app.string.issues_state_open'));
-  }
-
-  @Builder
-  filterChip(label: string, menu: MenuElement[], active: boolean) {
-    Row() {
-      Text(label)
-        .fontSize($r('app.float.caption_font_size'))
-        .fontColor(active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
-      OctIcon({
-        res: $r('app.media.oct_chevron_down_16'),
-        iconSize: 12,
-        iconColor: active ? $r('app.color.link_blue') : $r('app.color.text_secondary')
-      })
-        .margin({ left: 4 })
+    if (this.stateFilter === 'closed') {
+      return this.stringOf($r('app.string.issues_state_closed'));
     }
-    .height(30)
-    .padding({ left: 12, right: 10 })
-    .borderRadius(12)
-    .backgroundColor(active ? $r('app.color.chip_active_bg') : $r('app.color.card_background'))
-    .margin({ right: 8 })
-    .border({ width: 1, color: active ? $r('app.color.chip_active_border') : $r('app.color.border') })
-    .bindMenu(menu)
+    if (this.stateFilter === 'template') {
+      return this.stringOf($r('app.string.projects_filter_template'));
+    }
+    return this.stringOf($r('app.string.issues_state_open'));
   }
 
-  /** 排序标签：Most recently viewed（本会话浏览记录兜底）/ Most recently updated */
+  private rangeOptions(): FilterDropdownOption[] {
+    return [
+      { key: 'all', label: this.stringOf($r('app.string.work_project_filter_all')) },
+      { key: 'mine', label: this.stringOf($r('app.string.work_project_filter_mine')) }
+    ];
+  }
+
+  /** 状态三态：open/closed/template（官方图 2；GraphQL ProjectV2State 一致） */
+  private statusOptions(): FilterDropdownOption[] {
+    return [
+      { key: 'open', label: this.stringOf($r('app.string.issues_state_open')) },
+      { key: 'closed', label: this.stringOf($r('app.string.issues_state_closed')) },
+      { key: 'template', label: this.stringOf($r('app.string.projects_filter_template')) }
+    ];
+  }
+
+  /** 排序 8 项（官方图 3，四组、组间细线分隔）；label 为值时，chip 由 sortLabel 加前缀 */
+  private sortOptions(): FilterDropdownOption[] {
+    return [
+      { key: 'most_viewed', label: this.stringOf($r('app.string.work_projects_sort_visited')) },
+      { key: 'least_viewed', label: this.stringOf($r('app.string.projects_sort_least_viewed')) },
+      { key: 'updated_newest', label: this.stringOf($r('app.string.projects_sort_updated_newest')), isGroupStart: true },
+      { key: 'updated_oldest', label: this.stringOf($r('app.string.projects_sort_updated_oldest')) },
+      { key: 'created_newest', label: this.stringOf($r('app.string.projects_sort_created_newest')), isGroupStart: true },
+      { key: 'created_oldest', label: this.stringOf($r('app.string.projects_sort_created_oldest')) },
+      { key: 'title_az', label: this.stringOf($r('app.string.projects_sort_title_az')), isGroupStart: true },
+      { key: 'title_za', label: this.stringOf($r('app.string.projects_sort_title_za')) }
+    ];
+  }
+
+  private sortLabelCore(): string {
+    for (const opt of this.sortOptions()) {
+      if (opt.key === this.sortKey) {
+        return opt.label;
+      }
+    }
+    return this.stringOf($r('app.string.work_projects_sort_visited'));
+  }
+
+  /** 排序 chip 标签：Sort: + 当前值（官方图 3） */
   private sortLabel(): string {
-    return resText(this.getUIContext(), $r('app.string.work_projects_sort_label'),
-      this.stringOf(this.sortViewed ? $r('app.string.work_projects_sort_visited') : $r('app.string.work_sort_updated')));
-  }
-
-  /** Most recently viewed：按本会话点击浏览时间降序（无浏览记录视为 0）；updated 按 updatedAt 降序 */
-  private visibleProjects(): WorkProjectItem[] {
-    const sorted: WorkProjectItem[] = [...this.filtered];
-    if (this.sortViewed) {
-      sorted.sort((a: WorkProjectItem, b: WorkProjectItem) => {
-        return (this.viewedAt[b.id] ?? 0) - (this.viewedAt[a.id] ?? 0);
-      });
-    } else {
-      sorted.sort((a: WorkProjectItem, b: WorkProjectItem) => b.updatedAt.localeCompare(a.updatedAt));
-    }
-    return sorted;
+    return resText(this.getUIContext(), $r('app.string.work_projects_sort_label'), this.sortLabelCore());
   }
 
   @Builder
@@ -168,11 +183,15 @@ export struct ProjectsView {
           Text(`#${project.number}`)
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))
-          Text(project.closed
-            ? this.stringOf($r('app.string.issues_state_closed'))
-            : this.stringOf($r('app.string.issues_state_open')))
+          Text(project.template
+            ? this.stringOf($r('app.string.projects_filter_template'))
+            : project.closed
+              ? this.stringOf($r('app.string.issues_state_closed'))
+              : this.stringOf($r('app.string.issues_state_open')))
             .fontSize($r('app.float.caption_font_size'))
-            .fontColor(project.closed ? $r('app.color.text_tertiary') : $r('app.color.success_text'))
+            .fontColor(project.template || project.closed
+              ? $r('app.color.text_tertiary')
+              : $r('app.color.success_text'))
           Text(this.timeText(timeParts(project.updatedAt, Date.now())))
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))
@@ -252,38 +271,38 @@ export struct ProjectsView {
         Column() {
           Scroll() {
           Row() {
-            this.filterChip(this.rangeLabel(), [
-              {
-                value: this.stringOf($r('app.string.work_project_filter_all')),
-                action: (): void => { this.ownedOnly = false; this.applyFilters(); }
-              },
-              {
-                value: this.stringOf($r('app.string.work_project_filter_mine')),
-                action: (): void => { this.ownedOnly = true; this.applyFilters(); }
+            FilterDropdownChip({
+              label: this.rangeLabel(),
+              active: this.ownedOnly,
+              options: this.rangeOptions(),
+              selectedKey: this.ownedOnly ? 'mine' : 'all',
+              onPick: (key: string): void => {
+                this.ownedOnly = key === 'mine';
+                this.applyFilters();
               }
-            ], this.ownedOnly)
+            })
 
-            this.filterChip(this.statusLabel(), [
-              {
-                value: this.stringOf($r('app.string.issues_state_open')),
-                action: (): void => { this.closedOnly = false; this.applyFilters(); }
-              },
-              {
-                value: this.stringOf($r('app.string.issues_state_closed')),
-                action: (): void => { this.closedOnly = true; this.applyFilters(); }
+            FilterDropdownChip({
+              label: this.statusLabel(),
+              active: this.stateFilter !== 'open',
+              options: this.statusOptions(),
+              selectedKey: this.stateFilter,
+              onPick: (key: string): void => {
+                this.stateFilter = key;
+                this.applyFilters();
               }
-            ], this.closedOnly)
+            })
 
-            this.filterChip(this.sortLabel(), [
-              {
-                value: this.stringOf($r('app.string.work_projects_sort_visited')),
-                action: (): void => { this.sortViewed = true; }
-              },
-              {
-                value: this.stringOf($r('app.string.work_sort_updated')),
-                action: (): void => { this.sortViewed = false; }
+            FilterDropdownChip({
+              label: this.sortLabel(),
+              active: this.sortKey !== 'most_viewed',
+              options: this.sortOptions(),
+              selectedKey: this.sortKey,
+              onPick: (key: string): void => {
+                this.sortKey = key;
+                this.applyFilters();
               }
-            ], !this.sortViewed)
+            })
           }
           .width('100%')
           }

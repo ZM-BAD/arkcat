@@ -66,14 +66,14 @@ query WorkDiscussions($query: String!, $first: Int = 25, $after: String) {
 }`;
 
 const WORK_PROJECTS_QUERY = `
-query WorkProjects($first: Int = 30) {
+query WorkProjects($first: Int = 30, $after: String) {
   viewer {
     login
-    projectsV2(first: $first) {
+    projectsV2(first: $first, after: $after) {
       totalCount
       pageInfo { hasNextPage endCursor }
       nodes {
-        title number closed updatedAt
+        title number closed template createdAt updatedAt
         owner { ... on Organization { login } ... on User { login } }
       }
     }
@@ -182,7 +182,7 @@ export class WorkService {
     return mapWorkDiscussionsPage(data);
   }
 
-  /** 工作区 Projects（viewer.projectsV2，排序/过滤在客户端） */
+  /** 工作区 Projects（viewer.projectsV2；三态/范围/排序均在客户端） */
   static async fetchProjects(token: string, cursor: string): Promise<WorkProjectsPage> {
     const variables: Record<string, Object> = { 'first': 30 };
     if (cursor !== '') {

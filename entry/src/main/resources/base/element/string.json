@@ -794,7 +794,7 @@
     },
     {
       "name": "work_project_filter_mine",
-      "value": "Owned by me"
+      "value": "Created by me"
     },
     {
       "name": "work_projects_sort_label",
@@ -803,6 +803,38 @@
     {
       "name": "work_projects_sort_visited",
       "value": "Most recently viewed"
+    },
+    {
+      "name": "projects_filter_template",
+      "value": "Template"
+    },
+    {
+      "name": "projects_sort_least_viewed",
+      "value": "Least recently viewed"
+    },
+    {
+      "name": "projects_sort_updated_newest",
+      "value": "Updated · Newest"
+    },
+    {
+      "name": "projects_sort_updated_oldest",
+      "value": "Updated · Oldest"
+    },
+    {
+      "name": "projects_sort_created_newest",
+      "value": "Created · Newest"
+    },
+    {
+      "name": "projects_sort_created_oldest",
+      "value": "Created · Oldest"
+    },
+    {
+      "name": "projects_sort_title_az",
+      "value": "Title · A-Z"
+    },
+    {
+      "name": "projects_sort_title_za",
+      "value": "Title · Z-A"
     },
     {
       "name": "work_starred_my_lists",

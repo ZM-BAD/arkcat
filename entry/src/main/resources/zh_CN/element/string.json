@@ -794,7 +794,7 @@
     },
     {
       "name": "work_project_filter_mine",
-      "value": "我拥有的"
+      "value": "我创建的"
     },
     {
       "name": "work_projects_sort_label",
@@ -1395,6 +1395,38 @@
     {
       "name": "discussions_sort_top_year",
       "value": "热门：过去一年"
+    },
+    {
+      "name": "projects_filter_template",
+      "value": "模板"
+    },
+    {
+      "name": "projects_sort_least_viewed",
+      "value": "最近最少查看"
+    },
+    {
+      "name": "projects_sort_updated_newest",
+      "value": "更新 · 最新"
+    },
+    {
+      "name": "projects_sort_updated_oldest",
+      "value": "更新 · 最旧"
+    },
+    {
+      "name": "projects_sort_created_newest",
+      "value": "创建 · 最新"
+    },
+    {
+      "name": "projects_sort_created_oldest",
+      "value": "创建 · 最旧"
+    },
+    {
+      "name": "projects_sort_title_az",
+      "value": "标题 · A-Z"
+    },
+    {
+      "name": "projects_sort_title_za",
+      "value": "标题 · Z-A"
     }
   ]
 }

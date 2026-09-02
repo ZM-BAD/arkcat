@@ -15,7 +15,7 @@ import { RepoPrItem } from '../../../main/ets/models/RepoSubModels';
 import {
   buildWorkIssuesQuery, buildWorkPrsQuery, buildWorkDiscussionsQuery, buildTopReposPrivacy,
   mapWorkIssue, workIssueIconKey, mapWorkPr, workPrIconKey,
-  mapWorkStarredPage, filterWorkProjects, WorkProjectItem,
+  mapWorkStarredPage, filterWorkProjects, sortWorkProjects, WorkProjectItem,
   mapWorkProjectsPage, mapWorkTopReposPage, mapWorkOrgsPage
 } from '../../../main/ets/models/WorkModels';
 import { mapUser, mapRepo, mapViewerBasic, mapNotifications, issueNumberFromUrl } from '../../../main/ets/models/GitHubModels';
@@ -549,18 +549,27 @@ export default function logicTest(testsuiteName: string) {
     });
 
     it('filterWorkProjects_scoping', 0, () => {
-      const p1: WorkProjectItem = { 'id': 'A', 'number': 1, 'title': 'a', 'closed': false, 'updatedAt': '2026-08-01T00:00:00Z', 'ownerLogin': 'me' };
-      const p2: WorkProjectItem = { 'id': 'B', 'number': 2, 'title': 'b', 'closed': true, 'updatedAt': '2026-08-02T00:00:00Z', 'ownerLogin': 'me' };
-      const p3: WorkProjectItem = { 'id': 'C', 'number': 3, 'title': 'c', 'closed': false, 'updatedAt': '2026-08-03T00:00:00Z', 'ownerLogin': 'other' };
-      const all = filterWorkProjects([p1, p2, p3], false, 'me', false);
+      const p1: WorkProjectItem = { 'id': 'A', 'number': 1, 'title': 'a', 'closed': false, 'template': false, 'createdAt': '2026-07-01T00:00:00Z', 'updatedAt': '2026-08-01T00:00:00Z', 'ownerLogin': 'me' };
+      const p2: WorkProjectItem = { 'id': 'B', 'number': 2, 'title': 'b', 'closed': true, 'template': false, 'createdAt': '2026-07-02T00:00:00Z', 'updatedAt': '2026-08-02T00:00:00Z', 'ownerLogin': 'me' };
+      const p3: WorkProjectItem = { 'id': 'C', 'number': 3, 'title': 'c', 'closed': false, 'template': false, 'createdAt': '2026-07-03T00:00:00Z', 'updatedAt': '2026-08-03T00:00:00Z', 'ownerLogin': 'other' };
+      const p4: WorkProjectItem = { 'id': 'D', 'number': 4, 'title': 'd', 'closed': false, 'template': true, 'createdAt': '2026-07-04T00:00:00Z', 'updatedAt': '2026-08-04T00:00:00Z', 'ownerLogin': 'me' };
+      const all = filterWorkProjects([p1, p2, p3, p4], false, 'me', 'open');
       expect(all.length).assertEqual(2);
-      expect(all[0].id).assertEqual('C');
-      const mine = filterWorkProjects([p1, p2, p3], true, 'me', false);
+      const mine = filterWorkProjects([p1, p2, p3, p4], true, 'me', 'open');
       expect(mine.length).assertEqual(1);
       expect(mine[0].id).assertEqual('A');
-      const closed = filterWorkProjects([p1, p2], false, 'me', true);
+      const closed = filterWorkProjects([p1, p2, p3, p4], false, 'me', 'closed');
       expect(closed.length).assertEqual(1);
       expect(closed[0].id).assertEqual('B');
+      const template = filterWorkProjects([p1, p2, p3, p4], false, 'me', 'template');
+      expect(template.length).assertEqual(1);
+      expect(template[0].id).assertEqual('D');
+      const sortViewed = sortWorkProjects([p1, p2], 'most_viewed', { 'B': 100 });
+      expect(sortViewed[0].id).assertEqual('B');
+      const sortTitle = sortWorkProjects([p2, p1], 'title_az', {});
+      expect(sortTitle[0].id).assertEqual('A');
+      const sortCreatedOldest = sortWorkProjects([p1, p2], 'created_oldest', {});
+      expect(sortCreatedOldest[0].id).assertEqual('A');
     });
 
     it('mapWorkViewerConnections(projects/tops/orgs)', 0, () => {
