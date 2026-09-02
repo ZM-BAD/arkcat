@@ -1371,6 +1371,30 @@
     {
       "name": "work_filter_nothing",
       "value": "Nothing to see here"
+    },
+    {
+      "name": "discussions_filter_scope_commented",
+      "value": "Commented by me"
+    },
+    {
+      "name": "discussions_sort_top_all",
+      "value": "Top: All"
+    },
+    {
+      "name": "discussions_sort_top_yesterday",
+      "value": "Top: Yesterday"
+    },
+    {
+      "name": "discussions_sort_top_week",
+      "value": "Top: Past week"
+    },
+    {
+      "name": "discussions_sort_top_month",
+      "value": "Top: Past month"
+    },
+    {
+      "name": "discussions_sort_top_year",
+      "value": "Top: Past year"
     }
   ]
 }

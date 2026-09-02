@@ -482,8 +482,10 @@ export default function logicTest(testsuiteName: string) {
         .assertEqual('is:pr is:merged author:@me is:private sort:created-desc');
       expect(buildWorkPrsQuery('queued', 'review_requested', 'all', 'most_commented', ['ZM-BAD'], ['ZM-BAD/starraft']))
         .assertEqual('is:pr is:queued review-requested:@me org:ZM-BAD repo:ZM-BAD/starraft sort:comments-desc');
-      expect(buildWorkDiscussionsQuery('open', 'mentioned', true)).assertEqual('is:discussion is:open mentions:@me is:unanswered');
-      expect(buildWorkDiscussionsQuery('all', 'created', false)).assertEqual('is:discussion author:@me');
+      expect(buildWorkDiscussionsQuery('all', 'created', false, 'new'))
+        .assertEqual('is:discussion author:@me sort:created-desc');
+      expect(buildWorkDiscussionsQuery('open', 'commented', true, 'top_all'))
+        .assertEqual('is:discussion is:open commenter:@me is:unanswered sort:interactions-desc');
       expect(buildTopReposPrivacy('all')).assertEqual('');
       expect(buildTopReposPrivacy('public')).assertEqual('PUBLIC');
       expect(buildTopReposPrivacy('private')).assertEqual('PRIVATE');

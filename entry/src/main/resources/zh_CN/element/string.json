@@ -1371,6 +1371,30 @@
     {
       "name": "work_filter_nothing",
       "value": "这里没有任何内容"
+    },
+    {
+      "name": "discussions_filter_scope_commented",
+      "value": "我评论过的"
+    },
+    {
+      "name": "discussions_sort_top_all",
+      "value": "热门：全部"
+    },
+    {
+      "name": "discussions_sort_top_yesterday",
+      "value": "热门：昨天"
+    },
+    {
+      "name": "discussions_sort_top_week",
+      "value": "热门：过去一周"
+    },
+    {
+      "name": "discussions_sort_top_month",
+      "value": "热门：过去一个月"
+    },
+    {
+      "name": "discussions_sort_top_year",
+      "value": "热门：过去一年"
     }
   ]
 }

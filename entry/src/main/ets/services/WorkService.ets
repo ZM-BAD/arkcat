@@ -168,11 +168,11 @@ export class WorkService {
     return mapWorkPrsPage(data);
   }
 
-  /** 工作区 Discussion 列表（search type: DISCUSSION） */
+  /** 工作区 Discussion 列表（search type: DISCUSSION；排序 Sort: New / Top 时间窗进服务端） */
   static async fetchDiscussions(token: string, state: string, scope: string, unanswered: boolean,
-    cursor: string): Promise<WorkDiscussionsPage> {
+    sortKey: string, cursor: string): Promise<WorkDiscussionsPage> {
     const variables: Record<string, Object> = {
-      'query': buildWorkDiscussionsQuery(state, scope, unanswered),
+      'query': buildWorkDiscussionsQuery(state, scope, unanswered, sortKey),
       'first': 25
     };
     if (cursor !== '') {

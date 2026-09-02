@@ -154,6 +154,9 @@ export function workScopeQualifier(scope: string): string {
   if (scope === 'review_requested') {
     return 'review-requested:@me';
   }
+  if (scope === 'commented') {
+    return 'commenter:@me';
+  }
   return 'author:@me';
 }
 
@@ -241,8 +244,34 @@ export function buildWorkPrsQuery(state: string, scope: string, visibility: stri
   return query;
 }
 
-/** 工作区 Discussion 搜索串：is:discussion + 状态 + 归属 + unanswered */
-export function buildWorkDiscussionsQuery(state: string, scope: string, unanswered: boolean): string {
+/** N 天前的日期（UTC YYYY-MM-DD，供 Top 时间窗 used qualifier） */
+export function pastDate(days: number): string {
+  return new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+}
+
+/** Discussion 排序键 → search 片段（官方 Sort: New / Top: 时间窗；Top 用 interactions 加权近似） */
+export function discussionSortQualifier(sortKey: string): string {
+  if (sortKey === 'top_yesterday') {
+    return `updated:>=${pastDate(1)} sort:interactions-desc`;
+  }
+  if (sortKey === 'top_week') {
+    return `updated:>=${pastDate(7)} sort:interactions-desc`;
+  }
+  if (sortKey === 'top_month') {
+    return `updated:>=${pastDate(30)} sort:interactions-desc`;
+  }
+  if (sortKey === 'top_year') {
+    return `updated:>=${pastDate(365)} sort:interactions-desc`;
+  }
+  if (sortKey === 'top_all') {
+    return 'sort:interactions-desc';
+  }
+  return 'sort:created-desc';
+}
+
+/** 工作区 Discussion 搜索串：is:discussion + 状态 + 归属 + unanswered + 排序（New/Top 时间窗） */
+export function buildWorkDiscussionsQuery(state: string, scope: string, unanswered: boolean,
+  sortKey: string): string {
   let query = 'is:discussion';
   if (state === 'open') {
     query += ' is:open';
@@ -253,6 +282,7 @@ export function buildWorkDiscussionsQuery(state: string, scope: string, unanswer
   if (unanswered) {
     query += ' is:unanswered';
   }
+  query += ` ${discussionSortQualifier(sortKey)}`;
   return query;
 }
 
