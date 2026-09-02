@@ -4,6 +4,7 @@
  * Projects/TopRepos/Orgs/Starred 走 viewer 连接。
  */
 import { graphql } from './GitHttpClient';
+import { Json, JsonMap } from '../utils/Json';
 import {
   WorkIssuesPage, WorkPrsPage, WorkDiscussionsPage, WorkProjectsPage,
   WorkOrgsPage, WorkTopReposPage, WorkStarredPage,
@@ -11,6 +12,11 @@ import {
   mapWorkIssuesPage, mapWorkPrsPage, mapWorkDiscussionsPage,
   mapWorkProjectsPage, mapWorkOrgsPage, mapWorkTopReposPage, mapWorkStarredPage
 } from '../models/WorkModels';
+
+const VIEWER_LOGIN_QUERY = `
+query ViewerLogin {
+  viewer { login }
+}`;
 
 const WORK_ISSUES_QUERY = `
 query WorkIssues($query: String!, $first: Int = 25, $after: String) {
@@ -134,11 +140,11 @@ query UserStarred($login: String!, $first: Int = 30, $after: String) {
 }`;
 
 export class WorkService {
-  /** 工作区 Issue 列表（search type: ISSUE） */
+  /** 工作区 Issue 列表（search type: ISSUE；排序/组织/仓库多选进服务端 qualifier） */
   static async fetchIssues(token: string, state: string, scope: string, visibility: string,
-    cursor: string): Promise<WorkIssuesPage> {
+    sortKey: string, orgs: string[], repos: string[], cursor: string): Promise<WorkIssuesPage> {
     const variables: Record<string, Object> = {
-      'query': buildWorkIssuesQuery(state, scope, visibility),
+      'query': buildWorkIssuesQuery(state, scope, visibility, sortKey, orgs, repos),
       'first': 25
     };
     if (cursor !== '') {
@@ -208,6 +214,13 @@ export class WorkService {
     }
     const data = await graphql(WORK_ORGS_QUERY, variables, token);
     return mapWorkOrgsPage(data);
+  }
+
+  /** viewer login（任何 scope 的 PAT 均可） */
+  static async fetchViewerLogin(token: string): Promise<string> {
+    const data = await graphql(VIEWER_LOGIN_QUERY, {}, token);
+    const viewer = Json.obj(data, 'viewer') ?? ({} as JsonMap);
+    return Json.str(viewer, 'login');
   }
 
   /** 星标仓库列表：同 v1 走 viewer；传入 login 时展示目标用户星标（Spec 035） */

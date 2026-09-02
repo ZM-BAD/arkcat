@@ -470,8 +470,14 @@ export default function logicTest(testsuiteName: string) {
     });
 
     it('workQueries_builders', 0, () => {
-      expect(buildWorkIssuesQuery('all', 'created', 'all')).assertEqual('is:issue author:@me sort:updated-desc');
-      expect(buildWorkIssuesQuery('open', 'assigned', 'public')).assertEqual('is:issue is:open assignee:@me is:public sort:updated-desc');
+      expect(buildWorkIssuesQuery('all', 'created', 'all', 'newest', [], []))
+        .assertEqual('is:issue author:@me sort:created-desc');
+      expect(buildWorkIssuesQuery('open', 'assigned', 'public', 'most_commented', ['ZM-BAD'], ['ZM-BAD/starraft']))
+        .assertEqual('is:issue is:open assignee:@me is:public org:ZM-BAD repo:ZM-BAD/starraft sort:comments-desc');
+      expect(buildWorkIssuesQuery('closed', 'involved', 'private', 'reactions:+1', [], []))
+        .assertEqual('is:issue is:closed involves:@me is:private sort:reactions-+1-desc');
+      expect(buildWorkIssuesQuery('open', 'created', 'all', 'least_recently_updated', [], []))
+        .assertEqual('is:issue is:open author:@me sort:updated-asc');
       expect(buildWorkPrsQuery('merged', 'created', 'private')).assertEqual('is:pr is:merged author:@me is:private sort:updated-desc');
       expect(buildWorkDiscussionsQuery('open', 'mentioned', true)).assertEqual('is:discussion is:open mentions:@me is:unanswered');
       expect(buildWorkDiscussionsQuery('all', 'created', false)).assertEqual('is:discussion author:@me');

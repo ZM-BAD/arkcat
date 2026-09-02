@@ -148,6 +148,9 @@ export function workScopeQualifier(scope: string): string {
   if (scope === 'mentioned') {
     return 'mentions:@me';
   }
+  if (scope === 'involved') {
+    return 'involves:@me';
+  }
   return 'author:@me';
 }
 
@@ -162,8 +165,30 @@ export function workVisibilityQualifier(visibility: string): string {
   return '';
 }
 
-/** 工作区 Issue 搜索串：is:issue + 状态 + 归属 + 可见性 + 更新时间倒序 */
-export function buildWorkIssuesQuery(state: string, scope: string, visibility: string): string {
+/** Issue 排序键 → search sort qualifier（官方 Sort by 四组；反应排序键与文档一致） */
+export function workIssuesSortQualifier(sortKey: string): string {
+  const map: Record<string, string> = {
+    'newest': 'sort:created-desc',
+    'oldest': 'sort:created-asc',
+    'most_commented': 'sort:comments-desc',
+    'least_commented': 'sort:comments-asc',
+    'recently_updated': 'sort:updated-desc',
+    'least_recently_updated': 'sort:updated-asc',
+    'reactions:+1': 'sort:reactions-+1-desc',
+    'reactions:-1': 'sort:reactions--1-desc',
+    'reactions:laugh': 'sort:reactions-smile-desc',
+    'reactions:hooray': 'sort:reactions-tada-desc',
+    'reactions:heart': 'sort:reactions-heart-desc',
+    'reactions:rocket': 'sort:reactions-rocket-desc',
+    'reactions:eyes': 'sort:reactions-eyes-desc'
+  };
+  const qualifier = map[sortKey];
+  return qualifier !== undefined ? qualifier : 'sort:created-desc';
+}
+
+/** 工作区 Issue 搜索串：is:issue + 状态 + 归属 + 可见性 + 组织/仓库（多值）+ 排序 */
+export function buildWorkIssuesQuery(state: string, scope: string, visibility: string,
+  sortKey: string, orgs: string[], repos: string[]): string {
   let query = 'is:issue';
   if (state === 'open') {
     query += ' is:open';
@@ -175,7 +200,14 @@ export function buildWorkIssuesQuery(state: string, scope: string, visibility: s
   if (vis !== '') {
     query += ` ${vis}`;
   }
-  return `${query} sort:updated-desc`;
+  orgs.forEach((o: string) => {
+    query += ` org:${o}`;
+  });
+  repos.forEach((r: string) => {
+    query += ` repo:${r}`;
+  });
+  query += ` ${workIssuesSortQualifier(sortKey)}`;
+  return query;
 }
 
 /** 工作区 PR 搜索串：is:pr + 状态（含 merged）+ 归属 + 可见性 */

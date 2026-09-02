@@ -1287,6 +1287,78 @@
     {
       "name": "work_clear_all_filters",
       "value": "清空所有筛选"
+    },
+    {
+      "name": "issues_filter_scope_created",
+      "value": "我创建的"
+    },
+    {
+      "name": "issues_filter_scope_assigned",
+      "value": "分配给我的"
+    },
+    {
+      "name": "issues_filter_scope_mentioned",
+      "value": "提及我的"
+    },
+    {
+      "name": "issues_filter_scope_involved",
+      "value": "涉及我的"
+    },
+    {
+      "name": "issues_filter_visibility_all",
+      "value": "全部显示"
+    },
+    {
+      "name": "issues_filter_visibility_private",
+      "value": "仅私有仓库"
+    },
+    {
+      "name": "issues_filter_visibility_public",
+      "value": "仅公开仓库"
+    },
+    {
+      "name": "issues_filter_org_title",
+      "value": "按组织筛选"
+    },
+    {
+      "name": "issues_filter_repo_title",
+      "value": "按仓库筛选"
+    },
+    {
+      "name": "issues_sort_title",
+      "value": "排序方式"
+    },
+    {
+      "name": "issues_sort_newest",
+      "value": "最新"
+    },
+    {
+      "name": "issues_sort_oldest",
+      "value": "最旧"
+    },
+    {
+      "name": "issues_sort_most_commented",
+      "value": "评论最多"
+    },
+    {
+      "name": "issues_sort_least_commented",
+      "value": "评论最少"
+    },
+    {
+      "name": "issues_sort_recently_updated",
+      "value": "最近更新"
+    },
+    {
+      "name": "issues_sort_least_recently_updated",
+      "value": "最久未更新"
+    },
+    {
+      "name": "issues_sort_most_reactions",
+      "value": "反应最多"
+    },
+    {
+      "name": "issues_filter_sort_prefix",
+      "value": "排序：%1$s"
     }
   ]
 }

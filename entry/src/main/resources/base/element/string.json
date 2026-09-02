@@ -1287,6 +1287,78 @@
     {
       "name": "work_clear_all_filters",
       "value": "Clear all filters"
+    },
+    {
+      "name": "issues_filter_scope_created",
+      "value": "Created by me"
+    },
+    {
+      "name": "issues_filter_scope_assigned",
+      "value": "Assigned to me"
+    },
+    {
+      "name": "issues_filter_scope_mentioned",
+      "value": "Mentions me"
+    },
+    {
+      "name": "issues_filter_scope_involved",
+      "value": "Involved"
+    },
+    {
+      "name": "issues_filter_visibility_all",
+      "value": "Show all"
+    },
+    {
+      "name": "issues_filter_visibility_private",
+      "value": "Private repositories only"
+    },
+    {
+      "name": "issues_filter_visibility_public",
+      "value": "Public repositories only"
+    },
+    {
+      "name": "issues_filter_org_title",
+      "value": "Filter by organization"
+    },
+    {
+      "name": "issues_filter_repo_title",
+      "value": "Filter by repository"
+    },
+    {
+      "name": "issues_sort_title",
+      "value": "Sort by"
+    },
+    {
+      "name": "issues_sort_newest",
+      "value": "Newest"
+    },
+    {
+      "name": "issues_sort_oldest",
+      "value": "Oldest"
+    },
+    {
+      "name": "issues_sort_most_commented",
+      "value": "Most commented"
+    },
+    {
+      "name": "issues_sort_least_commented",
+      "value": "Least commented"
+    },
+    {
+      "name": "issues_sort_recently_updated",
+      "value": "Recently updated"
+    },
+    {
+      "name": "issues_sort_least_recently_updated",
+      "value": "Least recently updated"
+    },
+    {
+      "name": "issues_sort_most_reactions",
+      "value": "Most reactions"
+    },
+    {
+      "name": "issues_filter_sort_prefix",
+      "value": "Sort: %1$s"
     }
   ]
 }

@@ -1,31 +1,100 @@
 /**
- * 工作区 Issue 列表页（Spec 017）：跨仓库 Issues（search type: ISSUE）。
- * 三组筛选（状态/归属/可见性）+ 状态图标（open/completed/not_planned）+ 标签胶囊 + 评论数。
+ * 工作区 Issue 列表页（Spec 017 修订）：跨仓库 Issues（search type: ISSUE）。
+ * 官方筛选行对齐：State/Scope/Visibility 自绘下拉（选中蓝勾 + 遮罩点击关闭）；
+ * Organization/Repository 多选 Bottom Sheet（头像 + 搜索 + 蓝勾 toggle）；
+ * Sort by 四组单选 Sheet（radio + Most reactions emoji 网格，confused 槽位按官方置灰禁用）。
+ * 全部筛选进服务端 qualifier（org:/repo: 多值、sort: 键），多选即重查。
  */
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
-import { WorkIssueItem, WorkIssuesPage, WorkLabel } from '../models/WorkModels';
+import {
+  WorkIssueItem, WorkIssuesPage, WorkLabel, WorkOrgItem,
+  WorkTopRepoItem, WorkTopReposPage
+} from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
+import { ProfileListService } from '../services/ProfileListService';
+import { OrgListPage, OrgSummary } from '../models/ProfileModels';
 import { StateView } from '../components/StateView';
 import { WorkEmptyView } from '../components/WorkEmptyView';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
+/** 自绘下拉选项 */
+interface DropdownOption {
+  key: string;
+  label: string;
+}
+
+/** Sort by 单选选项 */
+interface SortOption {
+  key: string;
+  label: string;
+}
+
+/** Most reactions emoji 槽位（disabled：官方置灰，服务端无对应排序键） */
+interface ReactionOption {
+  key: string;
+  emoji: string;
+  disabled: boolean;
+}
+
+/** bindPopup 弹出状态事件 */
+interface PopupState {
+  isVisible: boolean;
+}
+
+/** 筛选 chip 参数（按引用传递，@Builder 传值参数不随状态刷新，须走对象引用） */
+interface ChipState {
+  kind: string;
+  label: string;
+  active: boolean;
+}
+
+/** Sort 单选圆钮参数（按引用传递） */
+interface SortRadioState {
+  selected: boolean;
+}
+
 @ComponentV2
 export struct WorkIssuesView {
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
-  @Local state: string = 'all';
+  /** 官方默认态：Open / Created by me / Show all / Sort: Newest */
+  @Local state: string = 'open';
   @Local scope: string = 'created';
   @Local visibilityFilter: string = 'all';
-  @Local orgFilter: string = '';
-  @Local repoFilter: string = '';
-  @Local sortNewest: boolean = true;
+  @Local sortKey: string = 'newest';
+  @Local selectedOrgs: string[] = [];
+  @Local selectedRepos: string[] = [];
   @Local issues: WorkIssueItem[] = [];
   @Local cursor: string = '';
   @Local hasNextPage: boolean = false;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  /** 当前打开的弹出下拉（'state' | 'scope' | 'visibility' | ''） */
+  @Local dropdownOpen: string = '';
+  /** 弹层内容（'' | 'org' | 'repo' | 'sort'）：同一组件只挂一个 bindSheet，内部切换内容 */
+  @Local sheetKind: string = '';
+  @Local orgList: WorkOrgItem[] = [];
+  @Local repoList: WorkTopRepoItem[] = [];
+  @Local viewerLogin: string = '';
+  @Local orgListLoading: boolean = false;
+  @Local repoListLoading: boolean = false;
+  @Local orgSearch: string = '';
+  @Local repoSearch: string = '';
+  @Local orgSearchShow: boolean = false;
+  @Local repoSearchShow: boolean = false;
+
+  private static readonly REACTIONS: ReactionOption[] = [
+    { key: 'reactions:+1', emoji: '👍', disabled: false },
+    { key: 'reactions:-1', emoji: '👎', disabled: false },
+    { key: 'reactions:laugh', emoji: '😂', disabled: false },
+    { key: 'reactions:hooray', emoji: '🎉', disabled: false },
+    { key: 'reactions:confused', emoji: '😕', disabled: true },
+    { key: 'reactions:heart', emoji: '❤️', disabled: false },
+    { key: 'reactions:rocket', emoji: '🚀', disabled: false },
+    { key: 'reactions:eyes', emoji: '👀', disabled: false }
+  ];
 
   aboutToAppear(): void {
     this.refresh();
@@ -34,7 +103,8 @@ export struct WorkIssuesView {
   private refresh(): void {
     this.loading = true;
     this.errorMsg = '';
-    WorkService.fetchIssues(this.token, this.state, this.scope, this.visibilityFilter, '')
+    WorkService.fetchIssues(this.token, this.state, this.scope, this.visibilityFilter,
+      this.sortKey, this.selectedOrgs, this.selectedRepos, '')
       .then((page: WorkIssuesPage) => {
         this.issues = page.issues;
         this.cursor = page.endCursor;
@@ -52,7 +122,8 @@ export struct WorkIssuesView {
       return;
     }
     this.loading = true;
-    WorkService.fetchIssues(this.token, this.state, this.scope, this.visibilityFilter, this.cursor)
+    WorkService.fetchIssues(this.token, this.state, this.scope, this.visibilityFilter,
+      this.sortKey, this.selectedOrgs, this.selectedRepos, this.cursor)
       .then((page: WorkIssuesPage) => {
         this.issues = this.issues.concat(page.issues);
         this.cursor = page.endCursor;
@@ -75,10 +146,10 @@ export struct WorkIssuesView {
     return parts !== null ? githubShortTime(parts) : '';
   }
 
-  /** 激活的筛选数（漏斗徽标） */
+  /** 激活的筛选组数（漏斗徽标，按筛选组计） */
   private activeFilterCount(): number {
     let count = 0;
-    if (this.state !== 'all') {
+    if (this.state !== 'open') {
       count++;
     }
     if (this.scope !== 'created') {
@@ -87,107 +158,16 @@ export struct WorkIssuesView {
     if (this.visibilityFilter !== 'all') {
       count++;
     }
-    if (this.orgFilter !== '') {
+    if (this.selectedOrgs.length > 0) {
       count++;
     }
-    if (this.repoFilter !== '') {
+    if (this.selectedRepos.length > 0) {
+      count++;
+    }
+    if (this.sortKey !== 'newest') {
       count++;
     }
     return count;
-  }
-
-  private scopeLabel(): string {
-    if (this.scope === 'assigned') {
-      return this.stringOf($r('app.string.work_scope_assigned'));
-    }
-    if (this.scope === 'mentioned') {
-      return this.stringOf($r('app.string.work_scope_mentioned'));
-    }
-    return this.stringOf($r('app.string.work_scope_created'));
-  }
-
-  private visibilityLabel(): string {
-    if (this.visibilityFilter === 'public') {
-      return this.stringOf($r('app.string.work_visibility_public'));
-    }
-    if (this.visibilityFilter === 'private') {
-      return this.stringOf($r('app.string.work_visibility_private'));
-    }
-    return this.stringOf($r('app.string.work_visibility'));
-  }
-
-  private orgLabel(): string {
-    return this.orgFilter !== '' ? this.orgFilter : this.stringOf($r('app.string.work_filter_organization'));
-  }
-
-  private repoLabel(): string {
-    return this.repoFilter !== '' ? this.repoFilter : this.stringOf($r('app.string.work_filter_repository'));
-  }
-
-  private sortLabel(): string {
-    return this.sortNewest
-      ? this.stringOf($r('app.string.work_filter_sort_newest'))
-      : this.stringOf($r('app.string.work_filter_sort_oldest'));
-  }
-
-  /** Organization 下拉：All organizations + 当前页数据中出现的组织（仓库属主） */
-  private orgMenu(): MenuElement[] {
-    const opts: string[] = [];
-    this.issues.forEach((it: WorkIssueItem) => {
-      const owner = it.repoFullName.split('/')[0];
-      if (owner !== '' && !opts.includes(owner)) {
-        opts.push(owner);
-      }
-    });
-    const items: MenuElement[] = [{
-      value: this.stringOf($r('app.string.work_filter_all_orgs')),
-      action: (): void => { this.orgFilter = ''; }
-    }];
-    opts.forEach((o: string) => {
-      items.push({
-        value: o,
-        action: (): void => { this.orgFilter = o; }
-      });
-    });
-    return items;
-  }
-
-  /** Repository 下拉：All repositories + 当前页数据中出现的仓库 */
-  private repoMenu(): MenuElement[] {
-    const opts: string[] = [];
-    this.issues.forEach((it: WorkIssueItem) => {
-      if (!opts.includes(it.repoFullName)) {
-        opts.push(it.repoFullName);
-      }
-    });
-    const items: MenuElement[] = [{
-      value: this.stringOf($r('app.string.work_filter_all_repos')),
-      action: (): void => { this.repoFilter = ''; }
-    }];
-    opts.forEach((r: string) => {
-      items.push({
-        value: r,
-        action: (): void => { this.repoFilter = r; }
-      });
-    });
-    return items;
-  }
-
-  /** 客户端组合过滤 + 排序（Organization / Repository / Sort） */
-  private visibleIssues(): WorkIssueItem[] {
-    let list: WorkIssueItem[] = this.issues;
-    if (this.orgFilter !== '') {
-      list = list.filter((it: WorkIssueItem) => it.repoFullName.split('/')[0] === this.orgFilter);
-    }
-    if (this.repoFilter !== '') {
-      list = list.filter((it: WorkIssueItem) => it.repoFullName === this.repoFilter);
-    }
-    const sorted: WorkIssueItem[] = [...list];
-    sorted.sort((a: WorkIssueItem, b: WorkIssueItem) => {
-      const cmp = a.createdAt.localeCompare(b.createdAt);
-      return this.sortNewest ? -cmp : cmp;
-    });
-    return sorted;
   }
 
   private stateLabel(): string {
@@ -200,15 +180,611 @@ export struct WorkIssuesView {
     return this.stringOf($r('app.string.work_filter_all'));
   }
 
+  private scopeLabel(): string {
+    if (this.scope === 'assigned') {
+      return this.stringOf($r('app.string.issues_filter_scope_assigned'));
+    }
+    if (this.scope === 'mentioned') {
+      return this.stringOf($r('app.string.issues_filter_scope_mentioned'));
+    }
+    if (this.scope === 'involved') {
+      return this.stringOf($r('app.string.issues_filter_scope_involved'));
+    }
+    return this.stringOf($r('app.string.issues_filter_scope_created'));
+  }
+
+  /** 可见性：未筛选时 chip 显示名称（官方图 3），选中后显示值 */
+  private visibilityLabel(): string {
+    if (this.visibilityFilter === 'private') {
+      return this.stringOf($r('app.string.issues_filter_visibility_private'));
+    }
+    if (this.visibilityFilter === 'public') {
+      return this.stringOf($r('app.string.issues_filter_visibility_public'));
+    }
+    return this.stringOf($r('app.string.work_visibility'));
+  }
+
+  private sortLabel(): string {
+    return resText(this.getUIContext(), $r('app.string.issues_filter_sort_prefix'), this.sortLabelCore());
+  }
+
+  private sortLabelCore(): string {
+    if (this.sortKey === 'oldest') {
+      return this.stringOf($r('app.string.issues_sort_oldest'));
+    }
+    if (this.sortKey === 'most_commented') {
+      return this.stringOf($r('app.string.issues_sort_most_commented'));
+    }
+    if (this.sortKey === 'least_commented') {
+      return this.stringOf($r('app.string.issues_sort_least_commented'));
+    }
+    if (this.sortKey === 'recently_updated') {
+      return this.stringOf($r('app.string.issues_sort_recently_updated'));
+    }
+    if (this.sortKey === 'least_recently_updated') {
+      return this.stringOf($r('app.string.issues_sort_least_recently_updated'));
+    }
+    if (this.sortKey.startsWith('reactions:')) {
+      return this.stringOf($r('app.string.issues_sort_most_reactions'));
+    }
+    return this.stringOf($r('app.string.issues_sort_newest'));
+  }
+
   private resetFilters(): void {
-    this.state = 'all';
+    this.state = 'open';
     this.scope = 'created';
     this.visibilityFilter = 'all';
-    this.orgFilter = '';
-    this.repoFilter = '';
-    this.sortNewest = true;
+    this.sortKey = 'newest';
+    this.selectedOrgs = [];
+    this.selectedRepos = [];
     this.refresh();
   }
+
+  // ────────────────────────── 自绘下拉（State/Scope/Visibility） ──────────────────────────
+
+  private menuOptions(kind: string): DropdownOption[] {
+    const items: DropdownOption[] = [];
+    if (kind === 'state') {
+      items.push({ key: 'open', label: this.stringOf($r('app.string.issues_state_open')) });
+      items.push({ key: 'closed', label: this.stringOf($r('app.string.issues_state_closed')) });
+      items.push({ key: 'all', label: this.stringOf($r('app.string.work_filter_all')) });
+    } else if (kind === 'scope') {
+      items.push({ key: 'created', label: this.stringOf($r('app.string.issues_filter_scope_created')) });
+      items.push({ key: 'assigned', label: this.stringOf($r('app.string.issues_filter_scope_assigned')) });
+      items.push({ key: 'mentioned', label: this.stringOf($r('app.string.issues_filter_scope_mentioned')) });
+      items.push({ key: 'involved', label: this.stringOf($r('app.string.issues_filter_scope_involved')) });
+    } else {
+      items.push({ key: 'all', label: this.stringOf($r('app.string.issues_filter_visibility_all')) });
+      items.push({ key: 'private', label: this.stringOf($r('app.string.issues_filter_visibility_private')) });
+      items.push({ key: 'public', label: this.stringOf($r('app.string.issues_filter_visibility_public')) });
+    }
+    return items;
+  }
+
+  private menuSelected(kind: string, key: string): boolean {
+    if (kind === 'state') {
+      return this.state === key;
+    }
+    if (kind === 'scope') {
+      return this.scope === key;
+    }
+    return this.visibilityFilter === key;
+  }
+
+  private onMenuPick(kind: string, key: string): void {
+    if (kind === 'state') {
+      this.state = key;
+    } else if (kind === 'scope') {
+      this.scope = key;
+    } else {
+      this.visibilityFilter = key;
+    }
+    this.dropdownOpen = '';
+    this.refresh();
+  }
+
+  @Builder
+  dropdownCard(kind: string) {
+    Column() {
+      ForEach(this.menuOptions(kind), (opt: DropdownOption) => {
+        Row() {
+          Text(opt.label)
+            .fontSize($r('app.float.body_font_size'))
+            .fontColor($r('app.color.text_primary'))
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .layoutWeight(1)
+          if (this.menuSelected(kind, opt.key)) {
+            OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 16, iconColor: $r('app.color.link_blue') })
+              .margin({ left: 8 })
+          }
+        }
+        .width('100%')
+        .height(44)
+        .padding({ left: 14, right: 14 })
+        .onClick((): void => this.onMenuPick(kind, opt.key))
+      }, (opt: DropdownOption) => `${kind}:${opt.key}`)
+    }
+    .padding({ top: 6, bottom: 6 })
+    .width(210)
+    .borderRadius(12)
+    .backgroundColor($r('app.color.card_background'))
+    .shadow({ radius: 16, color: '#29000000', offsetY: 4 })
+  }
+
+  @Builder
+  filterChip($$: ChipState) {
+    Row() {
+      Text($$.label)
+
+        .fontSize($r('app.float.caption_font_size'))
+        .fontColor($$.active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
+      OctIcon({
+        res: $r('app.media.oct_chevron_down_16'),
+        iconSize: 12,
+        iconColor: $$.active ? $r('app.color.link_blue') : $r('app.color.text_secondary')
+      })
+        .margin({ left: 4 })
+    }
+    .height(30)
+    .padding({ left: 12, right: 10 })
+    .borderRadius(12)
+    .backgroundColor($$.active ? $r('app.color.chip_active_bg') : $r('app.color.card_background'))
+    .margin({ right: 8 })
+    .border({ width: 1, color: $$.active ? $r('app.color.chip_active_border') : $r('app.color.border') })
+    .onClick((): void => {
+      if ($$.kind === 'org') {
+        this.openOrgSheet();
+      } else if ($$.kind === 'repo') {
+        this.openRepoSheet();
+      } else if ($$.kind === 'sort') {
+        this.sheetKind = 'sort';
+      } else {
+        this.dropdownOpen = this.dropdownOpen === $$.kind ? '' : $$.kind;
+      }
+    })
+    .bindPopup(this.dropdownOpen === $$.kind, {
+      builder: (): void => this.dropdownCard($$.kind),
+      placement: Placement.Bottom,
+      enableArrow: false,
+      mask: true,
+      onStateChange: (e: PopupState): void => {
+        if (!e.isVisible) {
+          this.dropdownOpen = '';
+        }
+      }
+    })
+  }
+
+  // ────────────────────────── 筛选弹层（Organization/Repository 多选） ──────────────────────────
+
+  private openOrgSheet(): void {
+    this.sheetKind = 'org';
+    if (this.orgList.length === 0 && !this.orgListLoading) {
+      this.loadOrgList();
+    }
+  }
+
+  /** 组织列表：viewer login（GraphQL）→ REST /users/{login}/orgs（免 read:org scope） */
+  private loadOrgList(): void {
+    this.orgListLoading = true;
+    const load = (login: string): void => {
+      ProfileListService.fetchOrganizations(this.token, login, '')
+        .then((page: OrgListPage) => {
+          this.orgList = page.orgs.map((o: OrgSummary): WorkOrgItem => ({
+            id: o.login,
+            login: o.login,
+            name: o.name !== '' ? o.name : o.login,
+            avatarUrl: o.avatarUrl
+          }));
+          this.orgListLoading = false;
+        })
+        .catch(() => {
+          this.orgListLoading = false;
+        });
+    };
+    if (this.viewerLogin !== '') {
+      load(this.viewerLogin);
+      return;
+    }
+    WorkService.fetchViewerLogin(this.token)
+      .then((login: string) => {
+        this.viewerLogin = login;
+        load(login);
+      })
+      .catch(() => {
+        this.orgListLoading = false;
+      });
+  }
+
+  private openRepoSheet(): void {
+    this.sheetKind = 'repo';
+    if (this.repoList.length === 0 && !this.repoListLoading) {
+      this.repoListLoading = true;
+      WorkService.fetchTopRepositories(this.token, 'all', '')
+        .then((page: WorkTopReposPage) => {
+          this.repoList = page.repos;
+          this.repoListLoading = false;
+        })
+        .catch(() => {
+          this.repoListLoading = false;
+        });
+    }
+  }
+
+  private filteredOrgs(): WorkOrgItem[] {
+    if (this.orgSearch === '') {
+      return this.orgList;
+    }
+    const needle = this.orgSearch.toLowerCase();
+    return this.orgList.filter((o: WorkOrgItem) =>
+      o.login.toLowerCase().includes(needle) || o.name.toLowerCase().includes(needle));
+  }
+
+  private filteredRepos(): WorkTopRepoItem[] {
+    if (this.repoSearch === '') {
+      return this.repoList;
+    }
+    const needle = this.repoSearch.toLowerCase();
+    return this.repoList.filter((r: WorkTopRepoItem) =>
+      r.name.toLowerCase().includes(needle) || r.ownerLogin.toLowerCase().includes(needle));
+  }
+
+  private toggleOrg(login: string): void {
+    const idx = this.selectedOrgs.indexOf(login);
+    if (idx >= 0) {
+      this.selectedOrgs.splice(idx, 1);
+    } else {
+      this.selectedOrgs.push(login);
+    }
+    this.refresh();
+  }
+
+  private toggleRepo(nameWithOwner: string): void {
+    const idx = this.selectedRepos.indexOf(nameWithOwner);
+    if (idx >= 0) {
+      this.selectedRepos.splice(idx, 1);
+    } else {
+      this.selectedRepos.push(nameWithOwner);
+    }
+    this.refresh();
+  }
+
+  @Builder
+  sheetHeader(title: Resource, close: () => void, onSearchToggle: () => void) {
+    Row() {
+      Stack() {
+        OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 18, iconColor: $r('app.color.text_primary') })
+      }
+      .width(44)
+      .height(44)
+      .onClick(close)
+      Text(title)
+        .fontSize($r('app.float.title_font_size'))
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.text_primary'))
+        .layoutWeight(1)
+      Stack() {
+        OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 18, iconColor: $r('app.color.link_blue') })
+      }
+      .width(44)
+      .height(44)
+      .onClick(onSearchToggle)
+    }
+    .padding({ left: 8, right: 8 })
+  }
+
+  /** 弹层内联搜索框（点右上放大镜展开） */
+  @Builder
+  sheetSearch(value: string, onChange: (v: string) => void) {
+    TextInput({ placeholder: this.stringOf($r('app.string.search_placeholder')), text: value })
+      .height(40)
+      .fontSize($r('app.float.body_font_size'))
+      .margin({ left: 16, right: 16, bottom: 4 })
+      .borderRadius(8)
+      .backgroundColor($r('app.color.chip_bg'))
+      .onChange(onChange)
+  }
+
+
+  @Builder
+  orgSheetRow(org: WorkOrgItem) {
+    Row({ space: 12 }) {
+      if (org.avatarUrl !== '') {
+        Image(org.avatarUrl)
+          .width(40)
+          .height(40)
+          .borderRadius(20)
+          .backgroundColor($r('app.color.chip_bg'))
+      } else {
+        Text('◯')
+          .fontSize(28)
+          .width(40)
+          .height(40)
+          .borderRadius(20)
+          .textAlign(TextAlign.Center)
+          .backgroundColor($r('app.color.chip_bg'))
+      }
+      Column({ space: 2 }) {
+        Text(org.name)
+          .fontSize($r('app.float.body_font_size'))
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.text_primary'))
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+        Text(org.login)
+          .fontSize($r('app.float.caption_font_size'))
+          .fontColor($r('app.color.text_secondary'))
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+      if (this.selectedOrgs.indexOf(org.login) >= 0) {
+        OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
+      }
+    }
+    .width('100%')
+    .height(64)
+    .padding({ left: 16, right: 16 })
+    .onClick((): void => this.toggleOrg(org.login))
+  }
+
+  @Builder
+  repoSheetRow(repo: WorkTopRepoItem) {
+    Row({ space: 12 }) {
+      if (repo.ownerAvatar !== '') {
+        Image(repo.ownerAvatar)
+          .width(40)
+          .height(40)
+          .borderRadius(20)
+          .backgroundColor($r('app.color.chip_bg'))
+      } else {
+        Text('◯')
+          .fontSize(28)
+          .width(40)
+          .height(40)
+          .borderRadius(20)
+          .textAlign(TextAlign.Center)
+          .backgroundColor($r('app.color.chip_bg'))
+      }
+      Column({ space: 2 }) {
+        Text(repo.ownerLogin)
+          .fontSize($r('app.float.caption_font_size'))
+          .fontColor($r('app.color.text_secondary'))
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+        Text(repo.name)
+          .fontSize($r('app.float.body_font_size'))
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.text_primary'))
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+      if (this.selectedRepos.indexOf(`${repo.ownerLogin}/${repo.name}`) >= 0) {
+        OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
+      }
+    }
+    .width('100%')
+    .height(64)
+    .padding({ left: 16, right: 16 })
+    .onClick((): void => this.toggleRepo(`${repo.ownerLogin}/${repo.name}`))
+  }
+
+  /** 弹层分派（单个 bindSheet 内切换内容，规避同组件多 bindSheet 失效） */
+  @Builder
+  overlaySheet() {
+    if (this.sheetKind === 'org') {
+      this.orgSheet()
+    } else if (this.sheetKind === 'repo') {
+      this.repoSheet()
+    } else {
+      this.sortSheet()
+    }
+  }
+
+  @Builder
+  orgSheet() {
+    Column() {
+      this.sheetHeader($r('app.string.issues_filter_org_title'),
+        (): void => { this.sheetKind = ''; },
+        (): void => { this.orgSearchShow = !this.orgSearchShow; })
+      if (this.orgSearchShow) {
+        this.sheetSearch(this.orgSearch, (v: string): void => {
+          this.orgSearch = v;
+        })
+      }
+      if (this.orgListLoading) {
+        StateView({ loading: true })
+      } else {
+        Scroll() {
+          Column() {
+            ForEach(this.filteredOrgs(), (org: WorkOrgItem) => {
+              this.orgSheetRow(org)
+            }, (org: WorkOrgItem) => org.id)
+          }
+        }
+        .layoutWeight(1)
+        .scrollBar(BarState.Off)
+      }
+    }
+    .width('100%')
+    .height('100%')
+  }
+
+  @Builder
+  repoSheet() {
+    Column() {
+      this.sheetHeader($r('app.string.issues_filter_repo_title'),
+        (): void => { this.sheetKind = ''; },
+        (): void => { this.repoSearchShow = !this.repoSearchShow; })
+      if (this.repoSearchShow) {
+        this.sheetSearch(this.repoSearch, (v: string): void => {
+          this.repoSearch = v;
+        })
+      }
+      if (this.repoListLoading) {
+        StateView({ loading: true })
+      } else {
+        Scroll() {
+          Column() {
+            ForEach(this.filteredRepos(), (repo: WorkTopRepoItem) => {
+              this.repoSheetRow(repo)
+            }, (repo: WorkTopRepoItem) => repo.id)
+          }
+        }
+        .layoutWeight(1)
+        .scrollBar(BarState.Off)
+      }
+    }
+    .width('100%')
+    .height('100%')
+  }
+
+  // ────────────────────────── Sort by 弹层（四组单选） ──────────────────────────
+
+  /** Sort by 单选圆钮（按引用传递，勾选态随状态刷新） */
+  @Builder
+  radioCircle($$: SortRadioState) {
+    Stack() {
+      Circle()
+        .width(20)
+        .height(20)
+        .fill(Color.Transparent)
+        .stroke($$.selected ? $r('app.color.link_blue') : $r('app.color.text_tertiary'))
+        .strokeWidth(2)
+      if ($$.selected) {
+        Circle()
+          .width(10)
+          .height(10)
+          .fill($r('app.color.link_blue'))
+      }
+    }
+  }
+
+  @Builder
+  sortGroup(opts: SortOption[]) {
+    Column() {
+      ForEach(opts, (opt: SortOption) => {
+        Row() {
+          Text(opt.label)
+            .fontSize($r('app.float.body_font_size'))
+            .fontColor($r('app.color.text_primary'))
+            .layoutWeight(1)
+          this.radioCircle({ selected: this.sortKey === opt.key })
+        }
+        .width('100%')
+        .height(52)
+        .padding({ left: 16, right: 16 })
+        .onClick((): void => {
+          this.sortKey = opt.key;
+          this.refresh();
+          this.sheetKind = '';
+        })
+      }, (opt: SortOption) => opt.key)
+    }
+    .backgroundColor($r('app.color.card_background'))
+    .borderRadius(12)
+    .margin({ left: 12, right: 12, bottom: 12 })
+  }
+
+  @Builder
+  reactionsGroup() {
+    Column() {
+      Text($r('app.string.issues_sort_most_reactions'))
+        .fontSize($r('app.float.caption_font_size'))
+        .fontColor($r('app.color.text_secondary'))
+        .width('100%')
+        .padding({ left: 16, top: 14, bottom: 6 })
+      Grid() {
+        ForEach(WorkIssuesView.REACTIONS, (it: ReactionOption) => {
+          GridItem() {
+            Stack() {
+              Text(it.emoji)
+                .fontSize(26)
+                .opacity(it.disabled ? 0.45 : 1)
+              if (it.disabled) {
+                OctIcon({ res: $r('app.media.oct_x_circle_16'), iconSize: 14, iconColor: $r('app.color.badge_red') })
+                  .margin({ top: -26, left: 26 })
+              }
+            }
+            .width(64)
+            .height(56)
+            .borderRadius(8)
+            .border({
+              width: 1,
+              color: this.sortKey === it.key ? $r('app.color.link_blue') : Color.Transparent
+            })
+            .backgroundColor(this.sortKey === it.key ? $r('app.color.chip_active_bg') : Color.Transparent)
+            .onClick((): void => {
+              if (it.disabled) {
+                return;
+              }
+              this.sortKey = it.key;
+              this.refresh();
+              this.sheetKind = '';
+            })
+          }
+        }, (it: ReactionOption) => it.key)
+      }
+      .columnsTemplate('1fr 1fr 1fr 1fr')
+      .rowsGap(8)
+      .columnsGap(8)
+      .padding({ left: 12, right: 12, bottom: 20 })
+      .width('100%')
+    }
+    .backgroundColor($r('app.color.card_background'))
+    .borderRadius(12)
+    .margin({ left: 12, right: 12, bottom: 12 })
+  }
+
+  @Builder
+  sortSheet() {
+    Column() {
+      Row() {
+        Stack() {
+          OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 18, iconColor: $r('app.color.text_primary') })
+        }
+        .width(44)
+        .height(44)
+        .onClick((): void => {
+          this.sheetKind = '';
+        })
+        Text($r('app.string.issues_sort_title'))
+          .fontSize($r('app.float.title_font_size'))
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.text_primary'))
+          .layoutWeight(1)
+      }
+      .padding({ left: 8, right: 8 })
+      Scroll() {
+        Column() {
+          this.sortGroup([
+            { key: 'newest', label: this.stringOf($r('app.string.issues_sort_newest')) },
+            { key: 'oldest', label: this.stringOf($r('app.string.issues_sort_oldest')) }
+          ])
+          this.sortGroup([
+            { key: 'most_commented', label: this.stringOf($r('app.string.issues_sort_most_commented')) },
+            { key: 'least_commented', label: this.stringOf($r('app.string.issues_sort_least_commented')) }
+          ])
+          this.sortGroup([
+            { key: 'recently_updated', label: this.stringOf($r('app.string.issues_sort_recently_updated')) },
+            { key: 'least_recently_updated', label: this.stringOf($r('app.string.issues_sort_least_recently_updated')) }
+          ])
+          this.reactionsGroup()
+        }
+        .padding({ top: 8, bottom: 16 })
+      }
+      .layoutWeight(1)
+      .scrollBar(BarState.Off)
+    }
+    .width('100%')
+    .height('100%')
+  }
+
+  // ────────────────────────── 列表 ──────────────────────────
 
   /** 状态图标（Spec 017/024：OPEN 绿 / COMPLETED 紫 / NOT_PLANNED 灰） */
   private issueIcon(issue: WorkIssueItem): Resource {
@@ -225,28 +801,6 @@ export struct WorkIssuesView {
       return $r('app.color.success_text');
     }
     return issue.iconKey === 'not_planned' ? $r('app.color.text_tertiary') : $r('app.color.shortcut_purple_fg');
-  }
-
-  @Builder
-  filterChip(label: string, menu: MenuElement[], active: boolean) {
-    Row() {
-      Text(label)
-        .fontSize($r('app.float.caption_font_size'))
-        .fontColor(active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
-      OctIcon({
-        res: $r('app.media.oct_chevron_down_16'),
-        iconSize: 12,
-        iconColor: active ? $r('app.color.link_blue') : $r('app.color.text_secondary')
-      })
-        .margin({ left: 4 })
-    }
-    .height(30)
-    .padding({ left: 12, right: 10 })
-    .borderRadius(12)
-    .backgroundColor(active ? $r('app.color.chip_active_bg') : $r('app.color.card_background'))
-    .margin({ right: 8 })
-    .border({ width: 1, color: active ? $r('app.color.chip_active_border') : $r('app.color.border') })
-    .bindMenu(menu)
   }
 
   @Builder
@@ -321,55 +875,55 @@ export struct WorkIssuesView {
     Column() {
       Row({ space: 8 }) {
         Stack() {
-  OctIcon({
-          res: $r('app.media.oct_arrow_left_24'),
-          iconSize: 20,
-          iconColor: $r('app.color.text_primary')
-  })
-}
-.width(44)
-.height(44)
+          OctIcon({
+            res: $r('app.media.oct_arrow_left_24'),
+            iconSize: 20,
+            iconColor: $r('app.color.text_primary')
+          })
+        }
+        .width(44)
+        .height(44)
         .accessibilityDescription($r('app.string.a11y_back'))
         .focusable(true)
-.onClick((): void => {
-            this.pathStack.pop();
-          })
+        .onClick((): void => {
+          this.pathStack.pop();
+        })
         Text($r('app.string.nav_issues_title'))
           .fontSize($r('app.float.title_font_size'))
           .fontWeight(FontWeight.Bold)
           .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
         Stack() {
-  OctIcon({
-          res: $r('app.media.oct_search_24'),
-          iconSize: 20,
-          iconColor: $r('app.color.link_blue')
-  })
-}
-.width(44)
-.height(44)
+          OctIcon({
+            res: $r('app.media.oct_search_24'),
+            iconSize: 20,
+            iconColor: $r('app.color.link_blue')
+          })
+        }
+        .width(44)
+        .height(44)
+        .padding(6)
         .accessibilityDescription($r('app.string.a11y_search'))
         .focusable(true)
-.onClick((): void => {
-            this.pathStack.pushPathByName('search', '');
-          })
-          .padding(6)
+        .onClick((): void => {
+          this.pathStack.pushPathByName('search', '');
+        })
         Stack() {
-  OctIcon({
-          res: $r('app.media.oct_kebab_horizontal_16'),
-          iconSize: 18,
-          iconColor: $r('app.color.link_blue')
-  })
-  .rotate({ angle: 90 })
-}
-.width(44)
-.height(44)
+          OctIcon({
+            res: $r('app.media.oct_kebab_horizontal_16'),
+            iconSize: 18,
+            iconColor: $r('app.color.link_blue')
+          })
+          .rotate({ angle: 90 })
+        }
+        .width(44)
+        .height(44)
+        .padding(6)
         .accessibilityDescription($r('app.string.a11y_more'))
         .focusable(true)
-.onClick((): void => {
-            promptAction.showToast({ message: $r('app.string.home_feature_coming') });
-          })
-          .padding(6)
+        .onClick((): void => {
+          promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+        })
       }
       .width('100%')
       .height(48)
@@ -379,7 +933,7 @@ export struct WorkIssuesView {
         Column() {
           Scroll() {
           Row() {
-            // 漏斗徽标：激活筛选数
+            // 漏斗徽标：激活筛选组数
             if (this.activeFilterCount() > 0) {
               Row({ space: 4 }) {
                 OctIcon({
@@ -417,63 +971,24 @@ export struct WorkIssuesView {
               ])
             }
 
-            this.filterChip(this.stateLabel(), [
-              {
-                value: this.stringOf($r('app.string.work_filter_all')),
-                action: (): void => { this.state = 'all'; this.refresh(); }
-              },
-              {
-                value: this.stringOf($r('app.string.issues_state_open')),
-                action: (): void => { this.state = 'open'; this.refresh(); }
-              },
-              {
-                value: this.stringOf($r('app.string.issues_state_closed')),
-                action: (): void => { this.state = 'closed'; this.refresh(); }
-              }
-            ], this.state !== 'all')
-
-            this.filterChip(this.scopeLabel(), [
-              {
-                value: this.stringOf($r('app.string.work_scope_created')),
-                action: (): void => { this.scope = 'created'; this.refresh(); }
-              },
-              {
-                value: this.stringOf($r('app.string.work_scope_assigned')),
-                action: (): void => { this.scope = 'assigned'; this.refresh(); }
-              },
-              {
-                value: this.stringOf($r('app.string.work_scope_mentioned')),
-                action: (): void => { this.scope = 'mentioned'; this.refresh(); }
-              }
-            ], this.scope !== 'created')
-
-            this.filterChip(this.visibilityLabel(), [
-              {
-                value: this.stringOf($r('app.string.work_visibility')),
-                action: (): void => { this.visibilityFilter = 'all'; this.refresh(); }
-              },
-              {
-                value: this.stringOf($r('app.string.work_visibility_public')),
-                action: (): void => { this.visibilityFilter = 'public'; this.refresh(); }
-              },
-              {
-                value: this.stringOf($r('app.string.work_visibility_private')),
-                action: (): void => { this.visibilityFilter = 'private'; this.refresh(); }
-              }
-            ], this.visibilityFilter !== 'all')
-
-            this.filterChip(this.orgLabel(), this.orgMenu(), this.orgFilter !== '')
-            this.filterChip(this.repoLabel(), this.repoMenu(), this.repoFilter !== '')
-            this.filterChip(this.sortLabel(), [
-              {
-                value: this.stringOf($r('app.string.work_sort_newest')),
-                action: (): void => { this.sortNewest = true; }
-              },
-              {
-                value: this.stringOf($r('app.string.work_sort_oldest')),
-                action: (): void => { this.sortNewest = false; }
-              }
-            ], !this.sortNewest)
+            this.filterChip({ kind: 'state', label: this.stateLabel(), active: this.state !== 'open' })
+            this.filterChip({ kind: 'scope', label: this.scopeLabel(), active: this.scope !== 'created' })
+            this.filterChip({
+              kind: 'visibility',
+              label: this.visibilityLabel(),
+              active: this.visibilityFilter !== 'all'
+            })
+            this.filterChip({
+              kind: 'org',
+              label: this.stringOf($r('app.string.work_filter_organization')),
+              active: this.selectedOrgs.length > 0
+            })
+            this.filterChip({
+              kind: 'repo',
+              label: this.stringOf($r('app.string.work_filter_repository')),
+              active: this.selectedRepos.length > 0
+            })
+            this.filterChip({ kind: 'sort', label: this.sortLabel(), active: this.sortKey !== 'newest' })
           }
           .width('100%')
           }
@@ -481,10 +996,10 @@ export struct WorkIssuesView {
           .scrollBar(BarState.Off)
           .margin({ bottom: 12 })
 
-          if (this.visibleIssues().length > 0) {
-            ForEach(this.visibleIssues(), (issue: WorkIssueItem, index: number) => {
-              this.issueCard(issue, index === 0, index === this.visibleIssues().length - 1)
-              if (index !== this.visibleIssues().length - 1) {
+          if (this.issues.length > 0) {
+            ForEach(this.issues, (issue: WorkIssueItem, index: number) => {
+              this.issueCard(issue, index === 0, index === this.issues.length - 1)
+              if (index !== this.issues.length - 1) {
                 Divider()
                   .color($r('app.color.divider'))
                   .strokeWidth(1)
@@ -523,5 +1038,11 @@ export struct WorkIssuesView {
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
+    .bindSheet(this.sheetKind !== '', this.overlaySheet(), {
+      height: this.sheetKind === 'sort' ? 620 : 560,
+      backgroundColor: $r('app.color.bg_page'),
+      // 关闭钮与标题行均自绘，避免默认 ✕ 与放大镜重叠
+      showClose: false
+    })
   }
 }
