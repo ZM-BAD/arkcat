@@ -1427,6 +1427,38 @@
     {
       "name": "projects_sort_title_za",
       "value": "标题 · Z-A"
+    },
+    {
+      "name": "toprepos_filter_all",
+      "value": "全部"
+    },
+    {
+      "name": "toprepos_filter_archived",
+      "value": "已归档"
+    },
+    {
+      "name": "toprepos_filter_fork",
+      "value": "复刻"
+    },
+    {
+      "name": "toprepos_filter_mirror",
+      "value": "镜像"
+    },
+    {
+      "name": "toprepos_filter_private",
+      "value": "私有"
+    },
+    {
+      "name": "toprepos_filter_public",
+      "value": "公开"
+    },
+    {
+      "name": "toprepos_filter_source",
+      "value": "源码"
+    },
+    {
+      "name": "toprepos_filter_template",
+      "value": "模板"
     }
   ]
 }

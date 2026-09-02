@@ -367,7 +367,7 @@ export struct WorkFilterBar {
     this.sheetKind = 'repo';
     if (this.repoList.length === 0 && !this.repoListLoading) {
       this.repoListLoading = true;
-      WorkService.fetchTopRepositories(this.token, 'all', '')
+      WorkService.fetchTopRepositories(this.token, '')
         .then((page: WorkTopReposPage) => {
           this.repoList = page.repos;
           this.repoListLoading = false;

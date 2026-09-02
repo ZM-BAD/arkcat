@@ -15,7 +15,7 @@ import { RepoPrItem } from '../../../main/ets/models/RepoSubModels';
 import {
   buildWorkIssuesQuery, buildWorkPrsQuery, buildWorkDiscussionsQuery, buildTopReposPrivacy,
   mapWorkIssue, workIssueIconKey, mapWorkPr, workPrIconKey,
-  mapWorkStarredPage, filterWorkProjects, sortWorkProjects, WorkProjectItem,
+  mapWorkStarredPage, filterWorkProjects, sortWorkProjects, filterTopRepos, WorkTopRepoItem, WorkProjectItem,
   mapWorkProjectsPage, mapWorkTopReposPage, mapWorkOrgsPage
 } from '../../../main/ets/models/WorkModels';
 import { mapUser, mapRepo, mapViewerBasic, mapNotifications, issueNumberFromUrl } from '../../../main/ets/models/GitHubModels';
@@ -489,6 +489,15 @@ export default function logicTest(testsuiteName: string) {
       expect(buildTopReposPrivacy('all')).assertEqual('');
       expect(buildTopReposPrivacy('public')).assertEqual('PUBLIC');
       expect(buildTopReposPrivacy('private')).assertEqual('PRIVATE');
+      const r1: WorkTopRepoItem = { 'id': '1', 'name': 'a', 'ownerLogin': 'me', 'ownerAvatar': '', 'isArchived': false, 'isFork': true, 'isMirror': false, 'isTemplate': false, 'visibility': 'PUBLIC' };
+      const r2: WorkTopRepoItem = { 'id': '2', 'name': 'b', 'ownerLogin': 'me', 'ownerAvatar': '', 'isArchived': true, 'isFork': false, 'isMirror': false, 'isTemplate': false, 'visibility': 'PRIVATE' };
+      const r3: WorkTopRepoItem = { 'id': '3', 'name': 'c', 'ownerLogin': 'me', 'ownerAvatar': '', 'isArchived': false, 'isFork': false, 'isMirror': false, 'isTemplate': true, 'visibility': 'PUBLIC' };
+      expect(filterTopRepos([r1, r2, r3], 'all').length).assertEqual(3);
+      expect(filterTopRepos([r1, r2, r3], 'fork').length).assertEqual(1);
+      expect(filterTopRepos([r1, r2, r3], 'archived').length).assertEqual(1);
+      expect(filterTopRepos([r1, r2, r3], 'private').length).assertEqual(1);
+      expect(filterTopRepos([r1, r2, r3], 'source').length).assertEqual(0);
+      expect(filterTopRepos([r1, r2, r3], 'template').length).assertEqual(1);
     });
 
     it('mapWorkIssue_and_workPr', 0, () => {

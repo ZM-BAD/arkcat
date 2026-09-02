@@ -8,7 +8,7 @@ import { Json, JsonMap } from '../utils/Json';
 import {
   WorkIssuesPage, WorkPrsPage, WorkDiscussionsPage, WorkProjectsPage,
   WorkOrgsPage, WorkTopReposPage, WorkStarredPage,
-  buildWorkIssuesQuery, buildWorkPrsQuery, buildWorkDiscussionsQuery, buildTopReposPrivacy,
+  buildWorkIssuesQuery, buildWorkPrsQuery, buildWorkDiscussionsQuery,
   mapWorkIssuesPage, mapWorkPrsPage, mapWorkDiscussionsPage,
   mapWorkProjectsPage, mapWorkOrgsPage, mapWorkTopReposPage, mapWorkStarredPage
 } from '../models/WorkModels';
@@ -81,13 +81,13 @@ query WorkProjects($first: Int = 30, $after: String) {
 }`;
 
 const WORK_TOP_REPOS_QUERY = `
-query WorkTopRepositories($privacy: RepositoryPrivacy, $first: Int = 50, $after: String) {
+query WorkTopRepositories($first: Int = 50, $after: String) {
   viewer {
-    repositories(first: $first, after: $after, orderBy: { field: PUSHED_AT, direction: DESC }, privacy: $privacy) {
+    repositories(first: $first, after: $after, orderBy: { field: PUSHED_AT, direction: DESC }) {
       totalCount
       pageInfo { hasNextPage endCursor }
       nodes {
-        id name nameWithOwner
+        id name nameWithOwner isArchived isFork isMirror isTemplate visibility
         owner { login avatarUrl }
       }
     }
@@ -192,13 +192,9 @@ export class WorkService {
     return mapWorkProjectsPage(data);
   }
 
-  /** Top Repositories（viewer.repositories） */
-  static async fetchTopRepositories(token: string, privacy: string, cursor: string): Promise<WorkTopReposPage> {
+  /** Top Repositories（viewer.repositories 全量，8 项仓库筛选维度在客户端） */
+  static async fetchTopRepositories(token: string, cursor: string): Promise<WorkTopReposPage> {
     const variables: Record<string, Object> = { 'first': 50 };
-    const privacyEnum = buildTopReposPrivacy(privacy);
-    if (privacyEnum !== '') {
-      variables['privacy'] = privacyEnum;
-    }
     if (cursor !== '') {
       variables['after'] = cursor;
     }

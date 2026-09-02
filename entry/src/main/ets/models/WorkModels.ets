@@ -114,6 +114,12 @@ export interface WorkTopRepoItem {
   name: string;
   ownerLogin: string;
   ownerAvatar: string;
+  isArchived: boolean;
+  isFork: boolean;
+  isMirror: boolean;
+  isTemplate: boolean;
+  /** RepositoryVisibility：PUBLIC | PRIVATE | INTERNAL */
+  visibility: string;
 }
 
 export interface WorkTopReposPage {
@@ -550,8 +556,41 @@ export function mapTopRepo(raw: JsonMap): WorkTopRepoItem {
     id: Json.str(raw, 'id'),
     name: Json.str(raw, 'name'),
     ownerLogin: owner !== null ? Json.str(owner, 'login') : '',
-    ownerAvatar: owner !== null ? Json.str(owner, 'avatarUrl') : ''
+    ownerAvatar: owner !== null ? Json.str(owner, 'avatarUrl') : '',
+    isArchived: Json.bool(raw, 'isArchived'),
+    isFork: Json.bool(raw, 'isFork'),
+    isMirror: Json.bool(raw, 'isMirror'),
+    isTemplate: Json.bool(raw, 'isTemplate'),
+    visibility: Json.str(raw, 'visibility')
   };
+}
+
+/** 仓库筛选维度（官方 Top Repositories 下拉）：All/Archived/Fork/Mirror/Private/Public/Source/Template */
+export function filterTopRepos(repos: WorkTopRepoItem[], filterKey: string): WorkTopRepoItem[] {
+  return repos.filter((r: WorkTopRepoItem) => {
+    if (filterKey === 'archived') {
+      return r.isArchived;
+    }
+    if (filterKey === 'fork') {
+      return r.isFork;
+    }
+    if (filterKey === 'mirror') {
+      return r.isMirror;
+    }
+    if (filterKey === 'private') {
+      return r.visibility === 'PRIVATE';
+    }
+    if (filterKey === 'public') {
+      return r.visibility === 'PUBLIC' || r.visibility === 'INTERNAL';
+    }
+    if (filterKey === 'source') {
+      return !r.isFork && !r.isMirror && !r.isArchived;
+    }
+    if (filterKey === 'template') {
+      return r.isTemplate;
+    }
+    return true;
+  });
 }
 
 /** viewer.repositories 响应 → WorkTopReposPage */

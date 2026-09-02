@@ -1427,6 +1427,38 @@
     {
       "name": "discussions_sort_top_year",
       "value": "Top: Past year"
+    },
+    {
+      "name": "toprepos_filter_all",
+      "value": "All"
+    },
+    {
+      "name": "toprepos_filter_archived",
+      "value": "Archived"
+    },
+    {
+      "name": "toprepos_filter_fork",
+      "value": "Fork"
+    },
+    {
+      "name": "toprepos_filter_mirror",
+      "value": "Mirror"
+    },
+    {
+      "name": "toprepos_filter_private",
+      "value": "Private"
+    },
+    {
+      "name": "toprepos_filter_public",
+      "value": "Public"
+    },
+    {
+      "name": "toprepos_filter_source",
+      "value": "Source"
+    },
+    {
+      "name": "toprepos_filter_template",
+      "value": "Template"
     }
   ]
 }
