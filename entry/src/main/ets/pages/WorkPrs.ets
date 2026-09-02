@@ -1,9 +1,11 @@
 /**
  * 工作区 PR 列表页（Spec 018）：跨仓库 Pull Requests（search type: PR）。
- * 状态（All/Open/Closed/Merged）+ Checks 胶囊（✔ Checks / ✗ Checks failed / ⏳ pending）。
+ * 筛选行由 WorkFilterBar（Spec 017/018 共用）承载：状态 5 项（Open/Merged/Closed/Queued/All）、
+ * 归属 5 项（含 Review requested）；本页只负责列表、Checks 胶囊与查询。
  */
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
+import { WorkFilterBar, WorkFilterOption, WorkFilterState, defaultWorkFilter } from '../components/WorkFilterBar';
 import { WorkPrItem, WorkPrsPage } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
@@ -15,12 +17,7 @@ import { resText } from '../utils/I18n';
 export struct WorkPrsView {
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
-  @Local state: string = 'all';
-  @Local scope: string = 'created';
-  @Local visibilityFilter: string = 'all';
-  @Local orgFilter: string = '';
-  @Local repoFilter: string = '';
-  @Local sortNewest: boolean = true;
+  @Local filterState: WorkFilterState = defaultWorkFilter();
   @Local prs: WorkPrItem[] = [];
   @Local cursor: string = '';
   @Local hasNextPage: boolean = false;
@@ -34,7 +31,9 @@ export struct WorkPrsView {
   private refresh(): void {
     this.loading = true;
     this.errorMsg = '';
-    WorkService.fetchPrs(this.token, this.state, this.scope, this.visibilityFilter, '')
+    WorkService.fetchPrs(this.token,
+      this.filterState.state, this.filterState.scope, this.filterState.visibility,
+      this.filterState.sortKey, this.filterState.orgs, this.filterState.repos, '')
       .then((page: WorkPrsPage) => {
         this.prs = page.prs;
         this.cursor = page.endCursor;
@@ -52,7 +51,9 @@ export struct WorkPrsView {
       return;
     }
     this.loading = true;
-    WorkService.fetchPrs(this.token, this.state, this.scope, this.visibilityFilter, this.cursor)
+    WorkService.fetchPrs(this.token,
+      this.filterState.state, this.filterState.scope, this.filterState.visibility,
+      this.filterState.sortKey, this.filterState.orgs, this.filterState.repos, this.cursor)
       .then((page: WorkPrsPage) => {
         this.prs = this.prs.concat(page.prs);
         this.cursor = page.endCursor;
@@ -65,149 +66,38 @@ export struct WorkPrsView {
       });
   }
 
+  private onQueryChange(s: WorkFilterState): void {
+    this.filterState = s;
+    this.refresh();
+  }
+
   private stringOf(res: Resource): string {
     return resText(this.getUIContext(), res);
   }
 
+  /** 相对时间结构化数据 → 当前语言文案 */
   private timeText(parts: TimeParts | null): string {
     return parts !== null ? githubShortTime(parts) : '';
   }
 
-  private activeFilterCount(): number {
-    let count = 0;
-    if (this.state !== 'all') {
-      count++;
-    }
-    if (this.scope !== 'created') {
-      count++;
-    }
-    if (this.visibilityFilter !== 'all') {
-      count++;
-    }
-    if (this.orgFilter !== '') {
-      count++;
-    }
-    if (this.repoFilter !== '') {
-      count++;
-    }
-    return count;
+  private stateOptions(): WorkFilterOption[] {
+    return [
+      { key: 'open', label: this.stringOf($r('app.string.issues_state_open')) },
+      { key: 'merged', label: this.stringOf($r('app.string.pr_state_merged')) },
+      { key: 'closed', label: this.stringOf($r('app.string.issues_state_closed')) },
+      { key: 'queued', label: this.stringOf($r('app.string.pr_filter_queued')) },
+      { key: 'all', label: this.stringOf($r('app.string.work_filter_all')) }
+    ];
   }
 
-  private stateLabel(): string {
-    if (this.state === 'open') {
-      return this.stringOf($r('app.string.issues_state_open'));
-    }
-    if (this.state === 'closed') {
-      return this.stringOf($r('app.string.issues_state_closed'));
-    }
-    if (this.state === 'merged') {
-      return this.stringOf($r('app.string.pr_state_merged'));
-    }
-    return this.stringOf($r('app.string.work_filter_all'));
-  }
-
-  private scopeLabel(): string {
-    if (this.scope === 'assigned') {
-      return this.stringOf($r('app.string.work_scope_assigned'));
-    }
-    if (this.scope === 'mentioned') {
-      return this.stringOf($r('app.string.work_scope_mentioned'));
-    }
-    return this.stringOf($r('app.string.work_scope_created'));
-  }
-
-  private visibilityLabel(): string {
-    if (this.visibilityFilter === 'public') {
-      return this.stringOf($r('app.string.work_visibility_public'));
-    }
-    if (this.visibilityFilter === 'private') {
-      return this.stringOf($r('app.string.work_visibility_private'));
-    }
-    return this.stringOf($r('app.string.work_visibility'));
-  }
-
-  private orgLabel(): string {
-    return this.orgFilter !== '' ? this.orgFilter : this.stringOf($r('app.string.work_filter_organization'));
-  }
-
-  private repoLabel(): string {
-    return this.repoFilter !== '' ? this.repoFilter : this.stringOf($r('app.string.work_filter_repository'));
-  }
-
-  private sortLabel(): string {
-    return this.sortNewest
-      ? this.stringOf($r('app.string.work_filter_sort_newest'))
-      : this.stringOf($r('app.string.work_filter_sort_oldest'));
-  }
-
-  /** Organization 下拉：All organizations + 当前页数据中出现的组织（仓库属主） */
-  private orgMenu(): MenuElement[] {
-    const opts: string[] = [];
-    this.prs.forEach((it: WorkPrItem) => {
-      const owner = it.repoFullName.split('/')[0];
-      if (owner !== '' && !opts.includes(owner)) {
-        opts.push(owner);
-      }
-    });
-    const items: MenuElement[] = [{
-      value: this.stringOf($r('app.string.work_filter_all_orgs')),
-      action: (): void => { this.orgFilter = ''; }
-    }];
-    opts.forEach((o: string) => {
-      items.push({
-        value: o,
-        action: (): void => { this.orgFilter = o; }
-      });
-    });
-    return items;
-  }
-
-  /** Repository 下拉：All repositories + 当前页数据中出现的仓库 */
-  private repoMenu(): MenuElement[] {
-    const opts: string[] = [];
-    this.prs.forEach((it: WorkPrItem) => {
-      if (!opts.includes(it.repoFullName)) {
-        opts.push(it.repoFullName);
-      }
-    });
-    const items: MenuElement[] = [{
-      value: this.stringOf($r('app.string.work_filter_all_repos')),
-      action: (): void => { this.repoFilter = ''; }
-    }];
-    opts.forEach((r: string) => {
-      items.push({
-        value: r,
-        action: (): void => { this.repoFilter = r; }
-      });
-    });
-    return items;
-  }
-
-  /** 客户端组合过滤 + 排序（Organization / Repository / Sort） */
-  private visiblePrs(): WorkPrItem[] {
-    let list: WorkPrItem[] = this.prs;
-    if (this.orgFilter !== '') {
-      list = list.filter((it: WorkPrItem) => it.repoFullName.split('/')[0] === this.orgFilter);
-    }
-    if (this.repoFilter !== '') {
-      list = list.filter((it: WorkPrItem) => it.repoFullName === this.repoFilter);
-    }
-    const sorted: WorkPrItem[] = [...list];
-    sorted.sort((a: WorkPrItem, b: WorkPrItem) => {
-      const cmp = a.createdAt.localeCompare(b.createdAt);
-      return this.sortNewest ? -cmp : cmp;
-    });
-    return sorted;
-  }
-
-  private resetFilters(): void {
-    this.state = 'all';
-    this.scope = 'created';
-    this.visibilityFilter = 'all';
-    this.orgFilter = '';
-    this.repoFilter = '';
-    this.sortNewest = true;
-    this.refresh();
+  private scopeOptions(): WorkFilterOption[] {
+    return [
+      { key: 'created', label: this.stringOf($r('app.string.issues_filter_scope_created')) },
+      { key: 'assigned', label: this.stringOf($r('app.string.issues_filter_scope_assigned')) },
+      { key: 'mentioned', label: this.stringOf($r('app.string.issues_filter_scope_mentioned')) },
+      { key: 'review_requested', label: this.stringOf($r('app.string.pr_filter_scope_review_requested')) },
+      { key: 'involved', label: this.stringOf($r('app.string.issues_filter_scope_involved')) }
+    ];
   }
 
   /** PR 状态图标（Spec 024：merged 紫 / open 绿 / closed 灰） */
@@ -264,28 +154,6 @@ export struct WorkPrsView {
       return $r('app.color.checks_failure_bg');
     }
     return $r('app.color.checks_pending_bg');
-  }
-
-  @Builder
-  filterChip(label: string, menu: MenuElement[], active: boolean) {
-    Row() {
-      Text(label)
-        .fontSize($r('app.float.caption_font_size'))
-        .fontColor(active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
-      OctIcon({
-        res: $r('app.media.oct_chevron_down_16'),
-        iconSize: 12,
-        iconColor: active ? $r('app.color.link_blue') : $r('app.color.text_secondary')
-      })
-        .margin({ left: 4 })
-    }
-    .height(30)
-    .padding({ left: 12, right: 10 })
-    .borderRadius(12)
-    .backgroundColor(active ? $r('app.color.chip_active_bg') : $r('app.color.card_background'))
-    .margin({ right: 8 })
-    .border({ width: 1, color: active ? $r('app.color.chip_active_border') : $r('app.color.border') })
-    .bindMenu(menu)
   }
 
   @Builder
@@ -366,55 +234,55 @@ export struct WorkPrsView {
     Column() {
       Row({ space: 8 }) {
         Stack() {
-  OctIcon({
-          res: $r('app.media.oct_arrow_left_24'),
-          iconSize: 20,
-          iconColor: $r('app.color.text_primary')
-  })
-}
-.width(44)
-.height(44)
+          OctIcon({
+            res: $r('app.media.oct_arrow_left_24'),
+            iconSize: 20,
+            iconColor: $r('app.color.text_primary')
+          })
+        }
+        .width(44)
+        .height(44)
         .accessibilityDescription($r('app.string.a11y_back'))
         .focusable(true)
-.onClick((): void => {
-            this.pathStack.pop();
-          })
+        .onClick((): void => {
+          this.pathStack.pop();
+        })
         Text($r('app.string.home_work_pull_requests'))
           .fontSize($r('app.float.title_font_size'))
           .fontWeight(FontWeight.Bold)
           .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
         Stack() {
-  OctIcon({
-          res: $r('app.media.oct_search_24'),
-          iconSize: 20,
-          iconColor: $r('app.color.link_blue')
-  })
-}
-.width(44)
-.height(44)
+          OctIcon({
+            res: $r('app.media.oct_search_24'),
+            iconSize: 20,
+            iconColor: $r('app.color.link_blue')
+          })
+        }
+        .width(44)
+        .height(44)
+        .padding(6)
         .accessibilityDescription($r('app.string.a11y_search'))
         .focusable(true)
-.onClick((): void => {
-            this.pathStack.pushPathByName('search', '');
-          })
-          .padding(6)
+        .onClick((): void => {
+          this.pathStack.pushPathByName('search', '');
+        })
         Stack() {
-  OctIcon({
-          res: $r('app.media.oct_kebab_horizontal_16'),
-          iconSize: 18,
-          iconColor: $r('app.color.link_blue')
-  })
-  .rotate({ angle: 90 })
-}
-.width(44)
-.height(44)
+          OctIcon({
+            res: $r('app.media.oct_kebab_horizontal_16'),
+            iconSize: 18,
+            iconColor: $r('app.color.link_blue')
+          })
+          .rotate({ angle: 90 })
+        }
+        .width(44)
+        .height(44)
+        .padding(6)
         .accessibilityDescription($r('app.string.a11y_more'))
         .focusable(true)
-.onClick((): void => {
-            promptAction.showToast({ message: $r('app.string.home_feature_coming') });
-          })
-          .padding(6)
+        .onClick((): void => {
+          promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+        })
       }
       .width('100%')
       .height(48)
@@ -422,115 +290,15 @@ export struct WorkPrsView {
 
       Scroll() {
         Column() {
-          Scroll() {
-          Row() {
-            if (this.activeFilterCount() > 0) {
-              Row({ space: 4 }) {
-                OctIcon({
-                  res: $r('app.media.oct_filter_16'),
-                  iconSize: 14,
-                  iconColor: $r('app.color.link_blue')
-                })
-                Stack() {
-                  Text(`${this.activeFilterCount()}`)
-                    .fontSize(12)
-                    .fontColor(Color.White)
-                }
-                .width(18)
-                .height(18)
-                .borderRadius(9)
-                .backgroundColor($r('app.color.link_blue'))
-              }
-              .height(30)
-              .padding({ left: 8, right: 8 })
-              .borderRadius(12)
-              .backgroundColor($r('app.color.card_background'))
-              .border({ width: 1, color: $r('app.color.border') })
-              .margin({ right: 8 })
-              .bindMenu([
-                {
-                  value: $r('app.string.work_filter_create_shortcut'),
-                  action: (): void => {
-                    promptAction.showToast({ message: $r('app.string.home_feature_coming') });
-                  }
-                },
-                {
-                  value: $r('app.string.work_clear_all_filters'),
-                  action: (): void => this.resetFilters()
-                }
-              ])
-            }
+          WorkFilterBar({
+            token: this.token,
+            stateOptions: this.stateOptions(),
+            scopeOptions: this.scopeOptions(),
+            onQueryChange: (s: WorkFilterState): void => this.onQueryChange(s)
+          })
 
-            this.filterChip(this.stateLabel(), [
-              {
-                value: this.stringOf($r('app.string.work_filter_all')),
-                action: (): void => { this.state = 'all'; this.refresh(); }
-              },
-              {
-                value: this.stringOf($r('app.string.issues_state_open')),
-                action: (): void => { this.state = 'open'; this.refresh(); }
-              },
-              {
-                value: this.stringOf($r('app.string.issues_state_closed')),
-                action: (): void => { this.state = 'closed'; this.refresh(); }
-              },
-              {
-                value: this.stringOf($r('app.string.pr_state_merged')),
-                action: (): void => { this.state = 'merged'; this.refresh(); }
-              }
-            ], this.state !== 'all')
-
-            this.filterChip(this.scopeLabel(), [
-              {
-                value: this.stringOf($r('app.string.work_scope_created')),
-                action: (): void => { this.scope = 'created'; this.refresh(); }
-              },
-              {
-                value: this.stringOf($r('app.string.work_scope_assigned')),
-                action: (): void => { this.scope = 'assigned'; this.refresh(); }
-              },
-              {
-                value: this.stringOf($r('app.string.work_scope_mentioned')),
-                action: (): void => { this.scope = 'mentioned'; this.refresh(); }
-              }
-            ], this.scope !== 'created')
-
-            this.filterChip(this.visibilityLabel(), [
-              {
-                value: this.stringOf($r('app.string.work_visibility')),
-                action: (): void => { this.visibilityFilter = 'all'; this.refresh(); }
-              },
-              {
-                value: this.stringOf($r('app.string.work_visibility_public')),
-                action: (): void => { this.visibilityFilter = 'public'; this.refresh(); }
-              },
-              {
-                value: this.stringOf($r('app.string.work_visibility_private')),
-                action: (): void => { this.visibilityFilter = 'private'; this.refresh(); }
-              }
-            ], this.visibilityFilter !== 'all')
-
-            this.filterChip(this.orgLabel(), this.orgMenu(), this.orgFilter !== '')
-            this.filterChip(this.repoLabel(), this.repoMenu(), this.repoFilter !== '')
-            this.filterChip(this.sortLabel(), [
-              {
-                value: this.stringOf($r('app.string.work_sort_newest')),
-                action: (): void => { this.sortNewest = true; }
-              },
-              {
-                value: this.stringOf($r('app.string.work_sort_oldest')),
-                action: (): void => { this.sortNewest = false; }
-              }
-            ], !this.sortNewest)
-          }
-          .width('100%')
-          }
-          .scrollable(ScrollDirection.Horizontal)
-          .scrollBar(BarState.Off)
-          .margin({ bottom: 12 })
-
-          if (this.visiblePrs().length > 0) {
-            ForEach(this.visiblePrs(), (item: WorkPrItem) => {
+          if (this.prs.length > 0) {
+            ForEach(this.prs, (item: WorkPrItem) => {
               this.prCard(item)
             }, (item: WorkPrItem) => item.id)
             if (this.hasNextPage) {
@@ -550,9 +318,7 @@ export struct WorkPrsView {
             WorkEmptyView({
               iconText: '🐱',
               title: $r('app.string.work_prs_empty'),
-              subtitle: $r('app.string.work_use_fewer_filters'),
-              button: $r('app.string.work_reset_all_filters'),
-              onButton: (): void => this.resetFilters()
+              subtitle: $r('app.string.work_use_fewer_filters')
             })
           }
         }

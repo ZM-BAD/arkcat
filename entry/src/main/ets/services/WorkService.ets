@@ -154,11 +154,11 @@ export class WorkService {
     return mapWorkIssuesPage(data);
   }
 
-  /** 工作区 PR 列表（search type: PR） */
+  /** 工作区 PR 列表（search type: PR；排序/组织/仓库多选进服务端 qualifier） */
   static async fetchPrs(token: string, state: string, scope: string, visibility: string,
-    cursor: string): Promise<WorkPrsPage> {
+    sortKey: string, orgs: string[], repos: string[], cursor: string): Promise<WorkPrsPage> {
     const variables: Record<string, Object> = {
-      'query': buildWorkPrsQuery(state, scope, visibility),
+      'query': buildWorkPrsQuery(state, scope, visibility, sortKey, orgs, repos),
       'first': 25
     };
     if (cursor !== '') {

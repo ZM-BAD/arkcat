@@ -151,6 +151,9 @@ export function workScopeQualifier(scope: string): string {
   if (scope === 'involved') {
     return 'involves:@me';
   }
+  if (scope === 'review_requested') {
+    return 'review-requested:@me';
+  }
   return 'author:@me';
 }
 
@@ -210,8 +213,9 @@ export function buildWorkIssuesQuery(state: string, scope: string, visibility: s
   return query;
 }
 
-/** 工作区 PR 搜索串：is:pr + 状态（含 merged）+ 归属 + 可见性 */
-export function buildWorkPrsQuery(state: string, scope: string, visibility: string): string {
+/** 工作区 PR 搜索串：is:pr + 状态（open/merged/closed/queued）+ 归属 + 可见性 + 组织/仓库（多值）+ 排序 */
+export function buildWorkPrsQuery(state: string, scope: string, visibility: string,
+  sortKey: string, orgs: string[], repos: string[]): string {
   let query = 'is:pr';
   if (state === 'open') {
     query += ' is:open';
@@ -219,13 +223,22 @@ export function buildWorkPrsQuery(state: string, scope: string, visibility: stri
     query += ' is:closed';
   } else if (state === 'merged') {
     query += ' is:merged';
+  } else if (state === 'queued') {
+    query += ' is:queued';
   }
   query += ` ${workScopeQualifier(scope)}`;
   const vis = workVisibilityQualifier(visibility);
   if (vis !== '') {
     query += ` ${vis}`;
   }
-  return `${query} sort:updated-desc`;
+  orgs.forEach((o: string) => {
+    query += ` org:${o}`;
+  });
+  repos.forEach((r: string) => {
+    query += ` repo:${r}`;
+  });
+  query += ` ${workIssuesSortQualifier(sortKey)}`;
+  return query;
 }
 
 /** 工作区 Discussion 搜索串：is:discussion + 状态 + 归属 + unanswered */

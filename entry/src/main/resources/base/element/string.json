@@ -1359,6 +1359,18 @@
     {
       "name": "issues_filter_sort_prefix",
       "value": "Sort: %1$s"
+    },
+    {
+      "name": "pr_filter_queued",
+      "value": "Queued"
+    },
+    {
+      "name": "pr_filter_scope_review_requested",
+      "value": "Review requested"
+    },
+    {
+      "name": "work_filter_nothing",
+      "value": "Nothing to see here"
     }
   ]
 }
