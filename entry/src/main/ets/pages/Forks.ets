@@ -98,26 +98,24 @@ export struct ForksView {
     promptAction.showToast({ message: $r('app.string.home_feature_coming') });
   }
 
-  /** 列表行（参考截图：无卡片底、留白分隔） */
+  /** 列表行（参考截图：头像与 owner 名同高同排，无卡片底、留白分隔） */
   @Builder
   forkRow(fork: ForkEntry) {
-    Row({ space: 12 }) {
-      Image(fork.ownerAvatarUrl)
-        .width(40)
-        .height(40)
-        .borderRadius(20)
-        .backgroundColor($r('app.color.text_tertiary'))
-      Column({ space: 4 }) {
-        Row({ space: 4 }) {
-          OctIcon({ res: $r('app.media.oct_repo_forked_16'), iconSize: 12, iconColor: $r('app.color.text_tertiary') })
-          Text(fork.ownerLogin)
-            .fontSize(15)
-            .fontColor($r('app.color.text_secondary'))
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .layoutWeight(1)
-        }
-        .width('100%')
+    Column({ space: 4 }) {
+      Row({ space: 8 }) {
+        Image(fork.ownerAvatarUrl)
+          .width(20)
+          .height(20)
+          .borderRadius(10)
+          .backgroundColor($r('app.color.text_tertiary'))
+        Text(fork.ownerLogin)
+          .fontSize(15)
+          .fontColor($r('app.color.text_secondary'))
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .layoutWeight(1)
+      }
+      .width('100%')
 
         Text(fork.name)
           .fontSize(17)
@@ -171,13 +169,11 @@ export struct ForksView {
         .width('100%')
       }
       .alignItems(HorizontalAlign.Start)
-      .layoutWeight(1)
-    }
-    .width('100%')
-    .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-    .onClick(() => {
-      this.pathStack.pushPathByName('repoDetail', fork.nameWithOwner);
-    })
+      .width('100%')
+      .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+      .onClick(() => {
+        this.pathStack.pushPathByName('repoDetail', fork.nameWithOwner);
+      })
   }
 
   build() {
@@ -243,12 +239,16 @@ export struct ForksView {
       .width('100%')
       .height(60)
       .padding({ left: 0, right: 0 })
+      Divider().strokeWidth(1).color($r('app.color.divider'))
 
       if (this.shownForks().length > 0) {
         Scroll() {
           Column() {
-            ForEach(this.shownForks(), (fork: ForkEntry) => {
+            ForEach(this.shownForks(), (fork: ForkEntry, index: number) => {
               this.forkRow(fork)
+              if (index < this.shownForks().length - 1) {
+                Divider().strokeWidth(1).color($r('app.color.divider')).margin({ left: 16 })
+              }
             }, (fork: ForkEntry) => fork.nameWithOwner)
             if (this.hasNextPage) {
               Text($r('app.string.issues_load_more'))

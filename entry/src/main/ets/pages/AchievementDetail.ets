@@ -7,7 +7,7 @@ import { common } from '@kit.AbilityKit';
 import { promptAction } from '@kit.ArkUI';
 import { systemShare } from '@kit.ShareKit';
 import { uniformTypeDescriptor as utd } from '@kit.ArkData';
-import { AchievementDetail } from '../models/AchievementModels';
+import { AchievementDetail, AchievementEvent } from '../models/AchievementModels';
 import { AchievementsService } from '../services/AchievementsService';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
@@ -47,8 +47,7 @@ export struct AchievementDetailView {
               description: '',
               badgeImageUrl: AchievementsService.cdnUrl(slug),
               unlockedAt: '',
-              eventRef: '',
-              eventLabel: ''
+              events: []
             });
           }
         }
@@ -71,9 +70,9 @@ export struct AchievementDetailView {
     return resText(this.getUIContext(), res);
   }
 
-  /** 解锁/事件行文案：事件引用可解析 → 「引用 · 标签」；不可见 → 仅标签 */
-  private eventLine(item: AchievementDetail): string {
-    return item.eventRef === '' ? item.eventLabel : `${item.eventRef} · ${item.eventLabel}`;
+  /** 单条事件文案：引用可解析 → 「引用 · 标签」；不可见（私有仓库） → 仅标签 */
+  private eventText(ev: AchievementEvent): string {
+    return ev.ref === '' ? ev.label : `${ev.ref} · ${ev.label}`;
   }
 
   /** 分享该徽章页面 URL（官方 ShareKit 系统分享面板；图片资源分享为边界外） */
@@ -140,22 +139,34 @@ export struct AchievementDetailView {
         .padding({ left: 40, right: 40, top: 14 })
         .justifyContent(FlexAlign.Start)
       }
-      if (this.eventLine(item) !== '') {
-        Row({ space: 10 }) {
-          Circle()
-            .width(5)
-            .height(5)
-            .fill(Color.White)
-            .opacity(0.7)
-          Text(this.eventLine(item))
-            .fontSize(13)
-            .fontColor(Color.White)
-            .opacity(0.85)
-            .layoutWeight(1)
+      if (item.events.length > 0) {
+        // 达成事件列表：多条（多次达成/多 tier）时区域受限内滚
+        Scroll() {
+          Column({ space: 10 }) {
+            ForEach(item.events, (ev: AchievementEvent, index: number) => {
+              Row({ space: 10 }) {
+                Circle()
+                  .width(5)
+                  .height(5)
+                  .fill(Color.White)
+                  .opacity(0.7)
+                  .margin({ top: 7 })
+                Text(this.eventText(ev))
+                  .fontSize(13)
+                  .fontColor(Color.White)
+                  .opacity(0.85)
+                  .layoutWeight(1)
+              }
+              .width('100%')
+            }, (ev: AchievementEvent, index: number) => `${item.slug}_${index}`)
+          }
+          .alignItems(HorizontalAlign.Start)
+          .width('100%')
         }
+        .scrollBar(BarState.Off)
         .width('100%')
+        .constraintSize({ maxHeight: 140 })
         .padding({ left: 40, right: 40, top: 4 })
-        .alignItems(VerticalAlign.Top)
       }
     }
     .width('100%')

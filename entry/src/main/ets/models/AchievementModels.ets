@@ -4,6 +4,14 @@
  * 解析函数保持纯函数，便于单元测试（失败由服务层降级/页面兜底）。
  */
 
+/** 单次达成事件（引用 + 标签；私有仓库引用不可见时 ref 为 ''） */
+export interface AchievementEvent {
+  /** 触发事件引用（owner/repo #N）；inaccessible/缺失为 '' */
+  ref: string;
+  /** 触发事件标签（Merged without a review 等） */
+  label: string;
+}
+
 /** 成就徽章详情（一页） */
 export interface AchievementDetail {
   /** 徽章 slug（yolo/quickdraw/…，兼作翻页 key） */
@@ -16,10 +24,8 @@ export interface AchievementDetail {
   badgeImageUrl: string;
   /** 解锁时间 ISO UTC（relative-time datetime）；未解析到为 '' */
   unlockedAt: string;
-  /** 触发事件引用（owner/repo #N）；私有仓库不可见时为 ''（原文 inaccessible） */
-  eventRef: string;
-  /** 触发事件标签（Merged without a review 等） */
-  eventLabel: string;
+  /** 达成事件列表（多次达成/多 tier 时多条；无则空数组，UI 隐藏区域） */
+  events: AchievementEvent[];
 }
 
 /** tab=achievements 页面 → 已解锁 slug 列表（按页面顺序、去重） */
@@ -57,18 +63,24 @@ export function parseAchievementDetail(html: string, slug: string, fallbackImage
     }
   }
   const timeMatch = /<relative-time[^>]*datetime="([^"]+)"/.exec(html);
-  let eventRef = '';
-  let eventLabel = '';
-  const tierIdx = html.indexOf('achievement-history-tier');
-  if (tierIdx >= 0) {
-    const tierHtml = html.substring(tierIdx);
+  const events: AchievementEvent[] = [];
+  // 每条「达成/层级」为一段 achievement-history-tier，内部为「引用 · 事件标签」（引用可为 inaccessible）
+  const tierRegex = /achievement-history-tier/g;
+  let tierMatch: RegExpExecArray | null = tierRegex.exec(html);
+  while (tierMatch !== null) {
+    const segStart = tierMatch.index;
+    tierMatch = tierRegex.exec(html);
+    const segEnd = tierMatch !== null ? tierMatch.index : html.length;
+    const tierHtml = html.substring(segStart, segEnd);
     const refLabel = /<span class="color-fg-muted">([^<]+)<\/span>\s*·\s*<span>([^<]+)<\/span>/.exec(tierHtml) ??
       /<a[^>]*>([^<]+)<\/a>\s*·\s*<span>([^<]+)<\/span>/.exec(tierHtml);
     if (refLabel !== null && (refLabel[2] ?? '') !== '') {
       const ref = (refLabel[1] ?? '').trim();
       // 私有仓库匿名不可见：隐藏引用，仅保留事件标签（移动端因登录态可见原文）
-      eventRef = ref === 'inaccessible' ? '' : ref;
-      eventLabel = (refLabel[2] ?? '').trim();
+      events.push({
+        ref: ref === 'inaccessible' ? '' : ref,
+        label: (refLabel[2] ?? '').trim()
+      });
     }
   }
   return {
@@ -77,7 +89,6 @@ export function parseAchievementDetail(html: string, slug: string, fallbackImage
     description: descMatch !== null && descMatch[1] !== undefined ? (descMatch[1] ?? '').trim() : '',
     badgeImageUrl: badgeImageUrl,
     unlockedAt: timeMatch !== null && timeMatch[1] !== undefined ? (timeMatch[1] ?? '').trim() : '',
-    eventRef: eventRef,
-    eventLabel: eventLabel
+    events: events
   };
 }

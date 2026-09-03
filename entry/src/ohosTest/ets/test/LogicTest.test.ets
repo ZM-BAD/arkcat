@@ -1119,16 +1119,30 @@ export default function logicTest(testsuiteName: string) {
       expect(d.badgeImageUrl).assertEqual('https://x/yolo-default-be0bbff04951.png');
       expect(d.unlockedAt).assertEqual('2026-08-31T19:09:34Z');
       // 私有仓库不可见引用 → 隐藏，事件标签保留
-      expect(d.eventRef).assertEqual('');
-      expect(d.eventLabel).assertEqual('Merged without a review');
+      expect(d.events.length).assertEqual(1);
+      expect(d.events[0].ref).assertEqual('');
+      expect(d.events[0].label).assertEqual('Merged without a review');
     });
 
     it('achievement_parse_anchor_ref', 0, () => {
       // 公共仓库事件：<a> 引用 + 事件标签
       const html = `<div><h3>YOLO</h3></div><div class="achievement-history-tier"><div class="TimelineItem-body"><a href="https://github.com/ZM-BAD/starraft/pull/3">ZM-BAD/starraft #3</a> · <span>Merged without a review</span></div></div>`;
       const d = parseAchievementDetail(html, 'yolo', 'fb.png');
-      expect(d.eventRef).assertEqual('ZM-BAD/starraft #3');
-      expect(d.eventLabel).assertEqual('Merged without a review');
+      expect(d.events[0].ref).assertEqual('ZM-BAD/starraft #3');
+      expect(d.events[0].label).assertEqual('Merged without a review');
+    });
+
+    it('achievement_parse_multi_tier', 0, () => {
+      // 多次达成/多 tier：解析出多条事件（保持顺序）
+      const html = `<div><h3>Pair Extraordinaire</h3></div>
+<div class="achievement-history-tier"><div class="TimelineItem-body"><a href="https://github.com/ZM-BAD/starraft/pull/1">ZM-BAD/starraft #1</a> · <span>Coauthored with @claude</span></div></div>
+<div class="achievement-history-tier"><div class="TimelineItem-body"><span class="color-fg-muted">inaccessible</span> · <span>Coauthored with @claude</span></div></div>`;
+      const d = parseAchievementDetail(html, 'pair-extraordinaire', 'fb.png');
+      expect(d.events.length).assertEqual(2);
+      expect(d.events[0].ref).assertEqual('ZM-BAD/starraft #1');
+      expect(d.events[0].label).assertEqual('Coauthored with @claude');
+      expect(d.events[1].ref).assertEqual('');
+      expect(d.events[1].label).assertEqual('Coauthored with @claude');
     });
 
     it('achievement_parse_invalid', 0, () => {

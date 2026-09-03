@@ -56,6 +56,8 @@ struct Index {
   @State currentTab: number = 0;
   /** 软键盘弹出时隐藏底栏（搜索输入态；窗口 keyboardHeightChange 监听） */
   @State keyboardOn: boolean = false;
+  /** 徽章详情等全屏沉浸页：隐藏底部四 Tab（页内 onShown/onHidden 切换） */
+  @State hideTabBar: boolean = false;
   @State profileLogin: string = '';
   @State repoOwner: string = '';
   @State repoName: string = '';
@@ -289,6 +291,13 @@ struct Index {
       const idx = full.indexOf('|');
       this.achLogin = idx >= 0 ? full.substring(0, idx) : full;
       this.achStart = idx >= 0 ? Number(full.substring(idx + 1)) : 0;
+    })
+    // 全屏沉浸页：进入隐藏底栏，pop 回恢复（官方 App 徽章详情为模态全屏）
+    .onShown(() => {
+      this.hideTabBar = true;
+    })
+    .onHidden(() => {
+      this.hideTabBar = false;
     })
     .hideTitleBar(true)
   }
@@ -833,8 +842,9 @@ struct Index {
           .layoutWeight(1)
 
           // 自绘底栏：白底 + 上投影 + 选中胶囊；选中态图标用官方 fill 变体
-          // 键盘弹起（搜索输入）时隐藏——键盘上方不显示 tab（用户 09-04 要求）
-          if (!this.keyboardOn) {
+          // 键盘弹起（搜索输入）时隐藏——键盘上方不显示 tab（用户 09-04 要求）；
+          // 徽章详情等全屏沉浸页同样隐藏（hideTabBar）
+          if (!this.keyboardOn && !this.hideTabBar) {
             Row() {
               this.tabItem($r('app.media.oct_home_16'), $r('app.media.oct_home_fill_16'), $r('app.string.tab_home'), 0)
               this.tabItem($r('app.media.oct_inbox_16'), $r('app.media.oct_inbox_fill_16'), $r('app.string.tab_inbox'), 1)
