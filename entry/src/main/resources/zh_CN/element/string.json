@@ -70,7 +70,7 @@
     },
     {
       "name": "home_pinned_section",
-      "value": "Pinned 仓库"
+      "value": "Pinned"
     },
     {
       "name": "home_contributions_total",
@@ -107,6 +107,10 @@
     {
       "name": "inbox_empty",
       "value": "暂无通知"
+    },
+    {
+      "name": "inbox_menu_refresh",
+      "value": "刷新"
     },
     {
       "name": "inbox_marked_read",
@@ -393,6 +397,50 @@
       "value": "仓库"
     },
     {
+      "name": "inbox_filter_title",
+      "value": "筛选通知"
+    },
+    {
+      "name": "inbox_view_saved",
+      "value": "已保存"
+    },
+    {
+      "name": "inbox_view_done",
+      "value": "已完成"
+    },
+    {
+      "name": "inbox_filter_assigned",
+      "value": "指派给我"
+    },
+    {
+      "name": "inbox_filter_participating",
+      "value": "参与的"
+    },
+    {
+      "name": "inbox_filter_mentioned",
+      "value": "提及我"
+    },
+    {
+      "name": "inbox_filter_team_mentioned",
+      "value": "团队提及我"
+    },
+    {
+      "name": "inbox_filter_review_requested",
+      "value": "待我审查"
+    },
+    {
+      "name": "inbox_repo_filter_title",
+      "value": "按仓库筛选"
+    },
+    {
+      "name": "inbox_saved_empty",
+      "value": "暂无已保存的通知"
+    },
+    {
+      "name": "inbox_done_empty",
+      "value": "暂无已完成的通知"
+    },
+    {
       "name": "explore_discover",
       "value": "发现"
     },
@@ -550,7 +598,7 @@
     },
     {
       "name": "search_placeholder",
-      "value": "搜索或跳转到..."
+      "value": "搜索 GitHub"
     },
     {
       "name": "search_suggestion_code",
@@ -585,12 +633,52 @@
       "value": "代码"
     },
     {
+      "name": "search_category_repositories",
+      "value": "仓库"
+    },
+    {
+      "name": "search_category_issues",
+      "value": "Issues"
+    },
+    {
+      "name": "search_category_prs",
+      "value": "Pull Requests"
+    },
+    {
+      "name": "search_category_people",
+      "value": "用户"
+    },
+    {
+      "name": "search_category_organizations",
+      "value": "组织"
+    },
+    {
       "name": "search_matches_more",
       "value": "显示更多 %1$d 条匹配"
     },
     {
       "name": "search_no_results",
       "value": "未找到结果"
+    },
+    {
+      "name": "search_empty_title",
+      "value": "找到你需要的内容。"
+    },
+    {
+      "name": "search_empty_text",
+      "value": "搜索 GitHub 全部内容：人员、仓库、组织、问题和拉取请求。"
+    },
+    {
+      "name": "search_recent_searches",
+      "value": "最近搜索"
+    },
+    {
+      "name": "search_clear_all",
+      "value": "清除"
+    },
+    {
+      "name": "search_jump_to",
+      "value": "跳转到 \"%1$s\""
     },
     {
       "name": "markdown_badge",
@@ -701,6 +789,38 @@
       "value": "私有"
     },
     {
+      "name": "work_filter_organization",
+      "value": "组织"
+    },
+    {
+      "name": "work_filter_repository",
+      "value": "仓库"
+    },
+    {
+      "name": "work_filter_all_orgs",
+      "value": "所有组织"
+    },
+    {
+      "name": "work_filter_all_repos",
+      "value": "所有仓库"
+    },
+    {
+      "name": "work_sort_newest",
+      "value": "最新"
+    },
+    {
+      "name": "work_sort_oldest",
+      "value": "最旧"
+    },
+    {
+      "name": "work_filter_sort_newest",
+      "value": "排序：最新"
+    },
+    {
+      "name": "work_filter_sort_oldest",
+      "value": "排序：最旧"
+    },
+    {
       "name": "work_issues_empty",
       "value": "暂无任何 Issue。"
     },
@@ -758,7 +878,7 @@
     },
     {
       "name": "work_project_filter_mine",
-      "value": "我拥有的"
+      "value": "我创建的"
     },
     {
       "name": "work_projects_sort_label",
@@ -766,7 +886,7 @@
     },
     {
       "name": "work_projects_sort_visited",
-      "value": "最近访问"
+      "value": "最近浏览"
     },
     {
       "name": "work_starred_my_lists",
@@ -1005,8 +1125,16 @@
       "value": "%1$d 关注者"
     },
     {
+      "name": "profile_followers_unit",
+      "value": " 关注者"
+    },
+    {
       "name": "profile_following_stat",
       "value": "%1$d 关注"
+    },
+    {
+      "name": "profile_following_unit",
+      "value": " 关注"
     },
     {
       "name": "user_list_followers",
@@ -1147,6 +1275,274 @@
     {
       "name": "file_link_unsupported",
       "value": "暂不支持此类型条目"
+    },
+    {
+      "name": "a11y_back",
+      "value": "返回"
+    },
+    {
+      "name": "a11y_search",
+      "value": "搜索"
+    },
+    {
+      "name": "a11y_share",
+      "value": "分享"
+    },
+    {
+      "name": "a11y_more",
+      "value": "更多"
+    },
+    {
+      "name": "a11y_settings",
+      "value": "设置"
+    },
+    {
+      "name": "a11y_new",
+      "value": "新建"
+    },
+    {
+      "name": "a11y_menu",
+      "value": "菜单"
+    },
+    {
+      "name": "a11y_close",
+      "value": "关闭"
+    },
+    {
+      "name": "a11y_star",
+      "value": "星标"
+    },
+    {
+      "name": "a11y_starred",
+      "value": "已收藏"
+    },
+    {
+      "name": "a11y_refresh",
+      "value": "刷新"
+    },
+    {
+      "name": "a11y_watch",
+      "value": "关注"
+    },
+    {
+      "name": "work_scope_hint",
+      "value": "Token 权限不足：请在生成 PAT 时包含 %1$s 权限（https://github.com/settings/tokens）"
+    },
+    {
+      "name": "repo_stars_label",
+      "value": "星标"
+    },
+    {
+      "name": "repo_forks_label",
+      "value": "复刻"
+    },
+    {
+      "name": "repo_contributors",
+      "value": "贡献者"
+    },
+    {
+      "name": "repo_watchers",
+      "value": "关注者"
+    },
+    {
+      "name": "repo_license",
+      "value": "许可"
+    },
+    {
+      "name": "repo_code",
+      "value": "代码"
+    },
+    {
+      "name": "work_sort_updated",
+      "value": "最近更新"
+    },
+    {
+      "name": "work_filter_sort_new",
+      "value": "排序：新"
+    },
+    {
+      "name": "work_sort_new",
+      "value": "新"
+    },
+    {
+      "name": "work_filter_create_shortcut",
+      "value": "创建快捷方式"
+    },
+    {
+      "name": "work_clear_all_filters",
+      "value": "清空所有筛选"
+    },
+    {
+      "name": "issues_filter_scope_created",
+      "value": "我创建的"
+    },
+    {
+      "name": "issues_filter_scope_assigned",
+      "value": "分配给我的"
+    },
+    {
+      "name": "issues_filter_scope_mentioned",
+      "value": "提及我的"
+    },
+    {
+      "name": "issues_filter_scope_involved",
+      "value": "涉及我的"
+    },
+    {
+      "name": "issues_filter_visibility_all",
+      "value": "全部显示"
+    },
+    {
+      "name": "issues_filter_visibility_private",
+      "value": "仅私有仓库"
+    },
+    {
+      "name": "issues_filter_visibility_public",
+      "value": "仅公开仓库"
+    },
+    {
+      "name": "issues_filter_org_title",
+      "value": "按组织筛选"
+    },
+    {
+      "name": "issues_filter_repo_title",
+      "value": "按仓库筛选"
+    },
+    {
+      "name": "issues_sort_title",
+      "value": "排序方式"
+    },
+    {
+      "name": "issues_sort_newest",
+      "value": "最新"
+    },
+    {
+      "name": "issues_sort_oldest",
+      "value": "最旧"
+    },
+    {
+      "name": "issues_sort_most_commented",
+      "value": "评论最多"
+    },
+    {
+      "name": "issues_sort_least_commented",
+      "value": "评论最少"
+    },
+    {
+      "name": "issues_sort_recently_updated",
+      "value": "最近更新"
+    },
+    {
+      "name": "issues_sort_least_recently_updated",
+      "value": "最久未更新"
+    },
+    {
+      "name": "issues_sort_most_reactions",
+      "value": "反应最多"
+    },
+    {
+      "name": "issues_filter_sort_prefix",
+      "value": "排序：%1$s"
+    },
+    {
+      "name": "pr_filter_queued",
+      "value": "排队中"
+    },
+    {
+      "name": "pr_filter_scope_review_requested",
+      "value": "请求审查"
+    },
+    {
+      "name": "work_filter_nothing",
+      "value": "这里没有任何内容"
+    },
+    {
+      "name": "discussions_filter_scope_commented",
+      "value": "我评论过的"
+    },
+    {
+      "name": "discussions_sort_top_all",
+      "value": "热门：全部"
+    },
+    {
+      "name": "discussions_sort_top_yesterday",
+      "value": "热门：昨天"
+    },
+    {
+      "name": "discussions_sort_top_week",
+      "value": "热门：过去一周"
+    },
+    {
+      "name": "discussions_sort_top_month",
+      "value": "热门：过去一个月"
+    },
+    {
+      "name": "discussions_sort_top_year",
+      "value": "热门：过去一年"
+    },
+    {
+      "name": "projects_filter_template",
+      "value": "模板"
+    },
+    {
+      "name": "projects_sort_least_viewed",
+      "value": "最近最少查看"
+    },
+    {
+      "name": "projects_sort_updated_newest",
+      "value": "更新 · 最新"
+    },
+    {
+      "name": "projects_sort_updated_oldest",
+      "value": "更新 · 最旧"
+    },
+    {
+      "name": "projects_sort_created_newest",
+      "value": "创建 · 最新"
+    },
+    {
+      "name": "projects_sort_created_oldest",
+      "value": "创建 · 最旧"
+    },
+    {
+      "name": "projects_sort_title_az",
+      "value": "标题 · A-Z"
+    },
+    {
+      "name": "projects_sort_title_za",
+      "value": "标题 · Z-A"
+    },
+    {
+      "name": "toprepos_filter_all",
+      "value": "全部"
+    },
+    {
+      "name": "toprepos_filter_archived",
+      "value": "已归档"
+    },
+    {
+      "name": "toprepos_filter_fork",
+      "value": "复刻"
+    },
+    {
+      "name": "toprepos_filter_mirror",
+      "value": "镜像"
+    },
+    {
+      "name": "toprepos_filter_private",
+      "value": "私有"
+    },
+    {
+      "name": "toprepos_filter_public",
+      "value": "公开"
+    },
+    {
+      "name": "toprepos_filter_source",
+      "value": "源码"
+    },
+    {
+      "name": "toprepos_filter_template",
+      "value": "模板"
     }
   ]
 }

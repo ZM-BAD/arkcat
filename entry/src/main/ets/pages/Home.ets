@@ -14,7 +14,7 @@ import { WorkSection, WorkConfigStore, visibleWorkSections } from '../utils/Work
 /** My Work 条目标识：图标/色/文案/路由（与 Edit My Work 013/016 一致） */
 interface WorkEntryMeta {
   iconRes: Resource;
-  color: string;
+  color: ResourceColor;
   label: Resource;
   route: string;
 }
@@ -61,7 +61,7 @@ export struct HomeView {
   header() {
     Row() {
       Text($r('app.string.tab_home'))
-        .fontSize(28)
+        .fontSize(32)
         .fontWeight(FontWeight.Bold)
         .fontColor($r('app.color.text_primary'))
       Blank()
@@ -69,9 +69,13 @@ export struct HomeView {
   OctIcon({
         res: $r('app.media.oct_search_24'),
         iconSize: 20,
-        iconColor: $r('app.color.text_primary')
+        iconColor: $r('app.color.link_blue')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_search'))
+        .focusable(true)
 .onClick((): void => {
           this.pathStack.pushPathByName('search', '');
         })
@@ -80,18 +84,26 @@ export struct HomeView {
   OctIcon({
         res: $r('app.media.oct_sync_16'),
         iconSize: 18,
-        iconColor: $r('app.color.text_primary')
+        iconColor: $r('app.color.link_blue')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_refresh'))
+        .focusable(true)
 .onClick((): void => this.refresh())
         .padding(6)
       Stack() {
   OctIcon({
-        res: $r('app.media.oct_plus_24'),
+        res: $r('app.media.oct_plus_circle_24'),
         iconSize: 20,
-        iconColor: $r('app.color.text_primary')
+        iconColor: $r('app.color.link_blue')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_new'))
+        .focusable(true)
 .onClick((): void => {
           promptAction.showToast({ message: $r('app.string.home_new_coming') });
         })
@@ -117,19 +129,19 @@ export struct HomeView {
   private workMeta(id: string): WorkEntryMeta {
     switch (id) {
       case 'prs':
-        return { iconRes: $r('app.media.oct_git_pull_request_16'), color: '#3C78D8', label: $r('app.string.home_work_pull_requests'), route: 'workPrs' };
+        return { iconRes: $r('app.media.oct_git_pull_request_16'), color: $r('app.color.link_blue'), label: $r('app.string.home_work_pull_requests'), route: 'workPrs' };
       case 'discussions':
-        return { iconRes: $r('app.media.oct_comment_discussion_16'), color: '#8250DF', label: $r('app.string.home_work_discussions'), route: 'discussions' };
+        return { iconRes: $r('app.media.oct_comment_discussion_16'), color: $r('app.color.shortcut_purple_fg'), label: $r('app.string.home_work_discussions'), route: 'discussions' };
       case 'projects':
-        return { iconRes: $r('app.media.oct_project_16'), color: '#57606A', label: $r('app.string.home_work_projects'), route: 'projects' };
+        return { iconRes: $r('app.media.oct_table_16'), color: $r('app.color.text_secondary'), label: $r('app.string.home_work_projects'), route: 'projects' };
       case 'topRepos':
-        return { iconRes: $r('app.media.oct_repo_16'), color: '#24292F', label: $r('app.string.home_work_top_repos'), route: 'topRepos' };
+        return { iconRes: $r('app.media.oct_repo_16'), color: $r('app.color.work_dark_bg'), label: $r('app.string.home_work_top_repos'), route: 'topRepos' };
       case 'orgs':
-        return { iconRes: $r('app.media.oct_organization_16'), color: '#E87B2E', label: $r('app.string.home_work_organizations'), route: 'organizations' };
+        return { iconRes: $r('app.media.oct_organization_16'), color: $r('app.color.shortcut_orange_fg'), label: $r('app.string.home_work_organizations'), route: 'organizations' };
       case 'starred':
-        return { iconRes: $r('app.media.oct_star_fill_16'), color: '#E3B341', label: $r('app.string.home_work_starred'), route: 'starred' };
+        return { iconRes: $r('app.media.oct_star_fill_16'), color: $r('app.color.star_gold'), label: $r('app.string.home_work_starred'), route: 'starred' };
       default:
-        return { iconRes: $r('app.media.oct_issue_opened_16'), color: '#2DA44E', label: $r('app.string.home_work_issues'), route: 'workIssues' };
+        return { iconRes: $r('app.media.oct_issue_opened_16'), color: $r('app.color.success_text'), label: $r('app.string.home_work_issues'), route: 'workIssues' };
     }
   }
 
@@ -140,10 +152,10 @@ export struct HomeView {
       Stack() {
           OctIcon({ res: meta.iconRes, iconSize: 18, iconColor: Color.White })
       }
-      .width(34)
-      .height(34)
+      .width(44)
+      .height(44)
       .backgroundColor(meta.color)
-      .borderRadius(8)
+      .borderRadius(6)
       Text(meta.label)
         .fontSize($r('app.float.body_font_size'))
         .fontColor($r('app.color.text_primary'))
@@ -172,6 +184,10 @@ export struct HomeView {
         iconColor: $r('app.color.text_secondary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
 .onClick((): void => {
           this.pathStack.pushPathByName('editMyWork', '');
         })
@@ -194,7 +210,7 @@ export struct HomeView {
       .fontSize($r('app.float.caption_font_size'))
       .fontColor($r('app.color.link_blue'))
       .backgroundColor(Color.Transparent)
-      .borderRadius(8)
+      .borderRadius(0)
       .border({ width: 1, color: $r('app.color.border') })
       .onClick(() => this.comingSoon())
   }
@@ -220,17 +236,16 @@ export struct HomeView {
     .width('100%')
   }
 
-  /** Shortcuts 圆形图标：浅色圆底 + 深色字形（bg/fg 走语义色 token） */
+  /** Shortcuts 圆形图标：浅色圆底 + 深色字形（bg/fg 走语义色 token）；8 枚紧贴居中排布 */
   @Builder
   shortcutGlyph(iconRes: Resource, bg: ResourceColor, fg: ResourceColor) {
     Stack() {
-      OctIcon({ res: iconRes, iconSize: 14, iconColor: fg })
+      OctIcon({ res: iconRes, iconSize: 12, iconColor: fg })
     }
-    .width(30)
-    .height(30)
+    .width(32)
+    .height(32)
     .backgroundColor(bg)
-    .borderRadius(15)
-    .margin({ right: 6 })
+    .borderRadius(16)
   }
 
   @Builder
@@ -244,17 +259,17 @@ export struct HomeView {
 
     Column({ space: 12 }) {
       Row() {
-        // 官方 App 顺序（2026-09-01 截图）：zap / issue / pr / discussion / project / people / briefcase / file
+        // 当前顺序：zap / issue / pr / discussion / organization / people / briefcase / file-diff
         this.shortcutGlyph($r('app.media.oct_zap_16'), $r('app.color.shortcut_zap_bg'), $r('app.color.shortcut_gray_fg'))
         this.shortcutGlyph($r('app.media.oct_issue_opened_16'), $r('app.color.shortcut_green_bg'), $r('app.color.shortcut_green_fg'))
         this.shortcutGlyph($r('app.media.oct_git_pull_request_16'), $r('app.color.shortcut_blue_bg'), $r('app.color.shortcut_blue_fg'))
         this.shortcutGlyph($r('app.media.oct_comment_discussion_16'), $r('app.color.shortcut_purple_bg'), $r('app.color.shortcut_purple_fg'))
-        this.shortcutGlyph($r('app.media.oct_project_16'), $r('app.color.shortcut_orange_bg'), $r('app.color.shortcut_orange_fg'))
+        this.shortcutGlyph($r('app.media.oct_organization_16'), $r('app.color.shortcut_orange_bg'), $r('app.color.shortcut_orange_fg'))
         this.shortcutGlyph($r('app.media.oct_people_16'), $r('app.color.shortcut_pink_bg'), $r('app.color.shortcut_pink_fg'))
         this.shortcutGlyph($r('app.media.oct_briefcase_16'), $r('app.color.shortcut_indigo_bg'), $r('app.color.shortcut_indigo_fg'))
-        this.shortcutGlyph($r('app.media.oct_file_16'), $r('app.color.shortcut_file_bg'), $r('app.color.shortcut_gray_fg'))
+        this.shortcutGlyph($r('app.media.oct_file_diff_16'), $r('app.color.shortcut_file_bg'), $r('app.color.shortcut_gray_fg'))
       }
-      .padding({ left: 8 })
+      .justifyContent(FlexAlign.Center)
 
       Text($r('app.string.home_shortcuts_title'))
         .fontSize($r('app.float.body_font_size'))

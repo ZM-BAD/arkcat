@@ -38,8 +38,8 @@ export struct CodeViewerView {
   @Local darkTheme: boolean = false;
   @Local overrideFont: boolean = true;
   @Local font: number = FONT_DEFAULT;
-  @Local codeBg: string = CODE_LIGHT_BG;
-  @Local codeText: string = '#1F2328';
+  @Local codeBg: ResourceColor = CODE_LIGHT_BG;
+  @Local codeText: ResourceColor = $r('app.color.text_primary');
   @Local contentLoaded: boolean = false;
   @Local settingsLoaded: boolean = false;
 
@@ -199,8 +199,10 @@ export struct CodeViewerView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
-        .width(32)
-        .height(32)
+        .width(44)
+        .height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
         .onClick(() => {
           this.pathStack.pop();
         })
@@ -213,11 +215,15 @@ export struct CodeViewerView {
           .layoutWeight(1)
         OctIcon({ res: $r('app.media.oct_share_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
           .margin({ left: 12 })
+        .accessibilityDescription($r('app.string.a11y_share'))
+        .focusable(true)
           .onClick(() => {
             this.copyText(this.content, $r('app.string.file_content_copied'));
           })
         OctIcon({ res: $r('app.media.oct_gear_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
           .margin({ left: 12 })
+        .accessibilityDescription($r('app.string.a11y_settings'))
+        .focusable(true)
           .onClick(() => {
             this.pathStack.pushPathByName('codeOptions', '');
           })

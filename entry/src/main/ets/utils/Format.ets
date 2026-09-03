@@ -61,6 +61,25 @@ export function compactCount(n: number): string {
   return `${k}k`;
 }
 
+/** GitHub 通知相对时间（官方风格）：now / 5m / 22h / 1d / 8d / 3mo / 2y */
+export function githubShortTime(parts: TimeParts): string {
+  switch (parts.unit) {
+    case 'just_now':
+      return 'now';
+    case 'minute':
+      return `${parts.value}m`;
+    case 'hour':
+      return `${parts.value}h`;
+    case 'day':
+      return `${parts.value}d`;
+    case 'month':
+      return `${parts.value}mo`;
+    case 'year':
+      return `${parts.value}y`;
+  }
+  return '';
+}
+
 /**
  * GitHub Notifications subject.type → 本地化 key。
  * 未知类型原样返回，UI 层未命中 key 时直接显示原文。

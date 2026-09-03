@@ -17,6 +17,7 @@ query UserProfile($login: String!) {
     company
     location
     websiteUrl
+    email
     twitterUsername
     viewerIsFollowing
     status { message emoji }
@@ -24,7 +25,8 @@ query UserProfile($login: String!) {
     following { totalCount }
     pinnedItems(first: 6, types: [REPOSITORY]) {
       nodes { ... on Repository {
-        id nameWithOwner description stargazerCount forkCount
+        id name nameWithOwner description stargazerCount forkCount
+        owner { login avatarUrl }
         primaryLanguage { name color }
       } }
     }

@@ -2,7 +2,9 @@
  * 通用加载/错误/空态视图。各页复用，保证一致的反馈。
  * emptyText 为 Resource，调用方直接传 $r()（Spec 012）。
  */
+import { OctIcon } from './OctIcon';
 @ComponentV2
+
 export struct StateView {
   @Param loading: boolean = false;
   @Param error: string = '';
@@ -21,8 +23,7 @@ export struct StateView {
           .fontSize($r('app.float.body_font_size'))
           .fontColor($r('app.color.text_secondary'))
       } else if (this.error !== '') {
-        Text('⚠️')
-          .fontSize(32)
+        OctIcon({ res: $r('app.media.oct_alert_16'), iconSize: 32, iconColor: $r('app.color.text_secondary') })
         Text(this.error)
           .fontSize($r('app.float.body_font_size'))
           .fontColor($r('app.color.text_secondary'))
@@ -31,8 +32,7 @@ export struct StateView {
           .buttonStyle(ButtonStyleMode.NORMAL)
           .onClick(() => this.onRetry())
       } else if (this.empty) {
-        Text('🗂')
-          .fontSize(32)
+        OctIcon({ res: $r('app.media.oct_file_directory_16'), iconSize: 32, iconColor: $r('app.color.text_secondary') })
         Text(this.emptyText)
           .fontSize($r('app.float.body_font_size'))
           .fontColor($r('app.color.text_secondary'))

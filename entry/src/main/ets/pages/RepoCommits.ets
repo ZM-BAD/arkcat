@@ -6,7 +6,7 @@ import { OctIcon } from '../components/OctIcon';
 import { RepoCommitItem, RepoCommitsPage } from '../models/RepoSubModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { StateView } from '../components/StateView';
-import { timeParts, TimeParts } from '../utils/Format';
+import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -60,24 +60,7 @@ export struct RepoCommitsView {
   }
 
   private timeText(parts: TimeParts | null): string {
-    if (parts === null) {
-      return '';
-    }
-    const ui = this.getUIContext();
-    switch (parts.unit) {
-      case 'just_now':
-        return resText(ui, $r('app.string.time_just_now'));
-      case 'minute':
-        return resText(ui, $r('app.string.time_minutes_ago'), parts.value);
-      case 'hour':
-        return resText(ui, $r('app.string.time_hours_ago'), parts.value);
-      case 'day':
-        return resText(ui, $r('app.string.time_days_ago'), parts.value);
-      case 'month':
-        return resText(ui, $r('app.string.time_months_ago'), parts.value);
-      case 'year':
-        return resText(ui, $r('app.string.time_years_ago'), parts.value);
-    }
+    return parts !== null ? githubShortTime(parts) : '';
   }
 
   @Builder
@@ -137,6 +120,10 @@ export struct RepoCommitsView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
         .onClick(() => {
           this.pathStack.pop();
         })

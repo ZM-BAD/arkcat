@@ -172,7 +172,7 @@ export struct NotificationSettingsView {
     .height(52)
     .padding({ left: 16, right: 16 })
     .backgroundColor($r('app.color.card_background'))
-    .borderRadius(10)
+    .borderRadius(12)
     .margin({ bottom: 2 })
   }
 
@@ -202,7 +202,7 @@ export struct NotificationSettingsView {
     .height(64)
     .padding({ left: 16, right: 16 })
     .backgroundColor($r('app.color.card_background'))
-    .borderRadius(10)
+    .borderRadius(12)
   }
 
   /** 骨架灰条 */
@@ -227,8 +227,8 @@ export struct NotificationSettingsView {
     }
     .width(44)
     .height(44)
-    .borderRadius(8)
-    .backgroundColor(this.swipeAction(side) === SWIPE_DONE ? '#2DA44E' : '#57606A')
+    .borderRadius(6)
+    .backgroundColor(this.swipeAction(side) === SWIPE_DONE ? $r('app.color.success_text') : $r('app.color.text_secondary'))
   }
 
   /** 滑动预览卡：骨架 + 动作块（左滑块在右，右滑块在左） */
@@ -260,7 +260,7 @@ export struct NotificationSettingsView {
     .height(64)
     .padding(12)
     .backgroundColor($r('app.color.card_background'))
-    .borderRadius(10)
+    .borderRadius(12)
     .margin({ bottom: 2 })
   }
 
@@ -270,6 +270,10 @@ export struct NotificationSettingsView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
         .onClick(() => {
           this.pathStack.pop();
         })
@@ -300,7 +304,7 @@ export struct NotificationSettingsView {
           .height(46)
           .padding({ left: 16, right: 16 })
           .backgroundColor($r('app.color.card_background'))
-          .borderRadius(10)
+          .borderRadius(12)
           .margin({ bottom: 2 })
 
           this.sectionTitle($r('app.string.settings_push_notif_types'))

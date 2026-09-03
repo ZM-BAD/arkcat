@@ -1,23 +1,23 @@
 /**
  * 工作区 PR 列表页（Spec 018）：跨仓库 Pull Requests（search type: PR）。
- * 状态（All/Open/Closed/Merged）+ Checks 胶囊（✔ Checks / ✗ Checks failed / ⏳ pending）。
+ * 筛选行由 WorkFilterBar（Spec 017/018 共用）承载：状态 5 项（Open/Merged/Closed/Queued/All）、
+ * 归属 5 项（含 Review requested）；本页只负责列表、Checks 胶囊与查询。
  */
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
+import { WorkFilterBar, WorkFilterOption, WorkFilterState, defaultWorkFilter } from '../components/WorkFilterBar';
 import { WorkPrItem, WorkPrsPage } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
 import { WorkEmptyView } from '../components/WorkEmptyView';
-import { timeParts, TimeParts } from '../utils/Format';
+import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
 export struct WorkPrsView {
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
-  @Local state: string = 'all';
-  @Local scope: string = 'created';
-  @Local visibilityFilter: string = 'all';
+  @Local filterState: WorkFilterState = defaultWorkFilter();
   @Local prs: WorkPrItem[] = [];
   @Local cursor: string = '';
   @Local hasNextPage: boolean = false;
@@ -31,7 +31,9 @@ export struct WorkPrsView {
   private refresh(): void {
     this.loading = true;
     this.errorMsg = '';
-    WorkService.fetchPrs(this.token, this.state, this.scope, this.visibilityFilter, '')
+    WorkService.fetchPrs(this.token,
+      this.filterState.state, this.filterState.scope, this.filterState.visibility,
+      this.filterState.sortKey, this.filterState.orgs, this.filterState.repos, '')
       .then((page: WorkPrsPage) => {
         this.prs = page.prs;
         this.cursor = page.endCursor;
@@ -49,7 +51,9 @@ export struct WorkPrsView {
       return;
     }
     this.loading = true;
-    WorkService.fetchPrs(this.token, this.state, this.scope, this.visibilityFilter, this.cursor)
+    WorkService.fetchPrs(this.token,
+      this.filterState.state, this.filterState.scope, this.filterState.visibility,
+      this.filterState.sortKey, this.filterState.orgs, this.filterState.repos, this.cursor)
       .then((page: WorkPrsPage) => {
         this.prs = this.prs.concat(page.prs);
         this.cursor = page.endCursor;
@@ -62,83 +66,38 @@ export struct WorkPrsView {
       });
   }
 
+  private onQueryChange(s: WorkFilterState): void {
+    this.filterState = s;
+    this.refresh();
+  }
+
   private stringOf(res: Resource): string {
     return resText(this.getUIContext(), res);
   }
 
+  /** 相对时间结构化数据 → 当前语言文案 */
   private timeText(parts: TimeParts | null): string {
-    if (parts === null) {
-      return '';
-    }
-    const ui = this.getUIContext();
-    switch (parts.unit) {
-      case 'just_now':
-        return resText(ui, $r('app.string.time_just_now'));
-      case 'minute':
-        return resText(ui, $r('app.string.time_minutes_ago'), parts.value);
-      case 'hour':
-        return resText(ui, $r('app.string.time_hours_ago'), parts.value);
-      case 'day':
-        return resText(ui, $r('app.string.time_days_ago'), parts.value);
-      case 'month':
-        return resText(ui, $r('app.string.time_months_ago'), parts.value);
-      case 'year':
-        return resText(ui, $r('app.string.time_years_ago'), parts.value);
-    }
+    return parts !== null ? githubShortTime(parts) : '';
   }
 
-  private activeFilterCount(): number {
-    let count = 0;
-    if (this.state !== 'all') {
-      count++;
-    }
-    if (this.scope !== 'created') {
-      count++;
-    }
-    if (this.visibilityFilter !== 'all') {
-      count++;
-    }
-    return count;
+  private stateOptions(): WorkFilterOption[] {
+    return [
+      { key: 'open', label: this.stringOf($r('app.string.issues_state_open')) },
+      { key: 'merged', label: this.stringOf($r('app.string.pr_state_merged')) },
+      { key: 'closed', label: this.stringOf($r('app.string.issues_state_closed')) },
+      { key: 'queued', label: this.stringOf($r('app.string.pr_filter_queued')) },
+      { key: 'all', label: this.stringOf($r('app.string.work_filter_all')) }
+    ];
   }
 
-  private stateLabel(): string {
-    if (this.state === 'open') {
-      return this.stringOf($r('app.string.issues_state_open'));
-    }
-    if (this.state === 'closed') {
-      return this.stringOf($r('app.string.issues_state_closed'));
-    }
-    if (this.state === 'merged') {
-      return this.stringOf($r('app.string.pr_state_merged'));
-    }
-    return this.stringOf($r('app.string.work_filter_all'));
-  }
-
-  private scopeLabel(): string {
-    if (this.scope === 'assigned') {
-      return this.stringOf($r('app.string.work_scope_assigned'));
-    }
-    if (this.scope === 'mentioned') {
-      return this.stringOf($r('app.string.work_scope_mentioned'));
-    }
-    return this.stringOf($r('app.string.work_scope_created'));
-  }
-
-  private visibilityLabel(): string {
-    if (this.visibilityFilter === 'public') {
-      return this.stringOf($r('app.string.work_visibility_public'));
-    }
-    if (this.visibilityFilter === 'private') {
-      return this.stringOf($r('app.string.work_visibility_private'));
-    }
-    return this.stringOf($r('app.string.work_visibility'));
-  }
-
-  private resetFilters(): void {
-    this.state = 'all';
-    this.scope = 'created';
-    this.visibilityFilter = 'all';
-    this.refresh();
+  private scopeOptions(): WorkFilterOption[] {
+    return [
+      { key: 'created', label: this.stringOf($r('app.string.issues_filter_scope_created')) },
+      { key: 'assigned', label: this.stringOf($r('app.string.issues_filter_scope_assigned')) },
+      { key: 'mentioned', label: this.stringOf($r('app.string.issues_filter_scope_mentioned')) },
+      { key: 'review_requested', label: this.stringOf($r('app.string.pr_filter_scope_review_requested')) },
+      { key: 'involved', label: this.stringOf($r('app.string.issues_filter_scope_involved')) }
+    ];
   }
 
   /** PR 状态图标（Spec 024：merged 紫 / open 绿 / closed 灰） */
@@ -151,9 +110,9 @@ export struct WorkPrsView {
 
   private prColor(item: WorkPrItem): ResourceColor {
     if (item.iconKey === 'merged') {
-      return '#8250DF';
+      return $r('app.color.shortcut_purple_fg');
     }
-    return item.iconKey === 'open' ? '#2DA44E' : $r('app.color.text_tertiary');
+    return item.iconKey === 'open' ? $r('app.color.success_text') : $r('app.color.text_tertiary');
   }
 
   /** Checks 胶囊文案（SUCCESS/FAILURE/PENDING；未知静默，图标由 checksIcon 提供） */
@@ -198,19 +157,6 @@ export struct WorkPrsView {
   }
 
   @Builder
-  filterChip(label: string, menu: MenuElement[], active: boolean) {
-    Text(`${label} ⌄`)
-      .fontSize($r('app.float.caption_font_size'))
-      .fontColor(active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
-      .padding({ left: 12, right: 12, top: 5, bottom: 5 })
-      .borderRadius(12)
-      .backgroundColor(active ? $r('app.color.chip_active_bg') : $r('app.color.card_background'))
-      .margin({ right: 8 })
-      .border({ width: 1, color: active ? $r('app.color.chip_active_border') : $r('app.color.border') })
-      .bindMenu(menu)
-  }
-
-  @Builder
   prCard(item: WorkPrItem) {
     Column({ space: 6 }) {
       Row() {
@@ -249,7 +195,7 @@ export struct WorkPrsView {
               .fontColor(this.checksColor(item.checksState))
           }
           .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-          .borderRadius(10)
+          .borderRadius(12)
           .backgroundColor(this.checksBg(item.checksState))
         }
         if (item.commentCount > 0) {
@@ -260,7 +206,7 @@ export struct WorkPrsView {
               .fontColor($r('app.color.text_secondary'))
           }
           .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-          .borderRadius(10)
+          .borderRadius(12)
           .backgroundColor($r('app.color.chip_bg'))
         }
         if (item.reviewCount > 0) {
@@ -271,7 +217,7 @@ export struct WorkPrsView {
               .fontColor($r('app.color.text_secondary'))
           }
           .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-          .borderRadius(10)
+          .borderRadius(12)
           .backgroundColor($r('app.color.chip_bg'))
         }
       }
@@ -288,42 +234,55 @@ export struct WorkPrsView {
     Column() {
       Row({ space: 8 }) {
         Stack() {
-  OctIcon({
-          res: $r('app.media.oct_arrow_left_24'),
-          iconSize: 20,
-          iconColor: $r('app.color.text_primary')
-  })
-}
-.onClick((): void => {
-            this.pathStack.pop();
+          OctIcon({
+            res: $r('app.media.oct_arrow_left_24'),
+            iconSize: 20,
+            iconColor: $r('app.color.text_primary')
           })
+        }
+        .width(44)
+        .height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
+        .onClick((): void => {
+          this.pathStack.pop();
+        })
         Text($r('app.string.home_work_pull_requests'))
           .fontSize($r('app.float.title_font_size'))
           .fontWeight(FontWeight.Bold)
           .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
         Stack() {
-  OctIcon({
-          res: $r('app.media.oct_search_24'),
-          iconSize: 20,
-          iconColor: $r('app.color.text_primary')
-  })
-}
-.onClick((): void => {
-            this.pathStack.pushPathByName('search', '');
+          OctIcon({
+            res: $r('app.media.oct_search_24'),
+            iconSize: 20,
+            iconColor: $r('app.color.link_blue')
           })
-          .padding(6)
+        }
+        .width(44)
+        .height(44)
+        .padding(6)
+        .accessibilityDescription($r('app.string.a11y_search'))
+        .focusable(true)
+        .onClick((): void => {
+          this.pathStack.pushPathByName('search', '');
+        })
         Stack() {
-  OctIcon({
-          res: $r('app.media.oct_kebab_horizontal_16'),
-          iconSize: 18,
-          iconColor: $r('app.color.text_secondary')
-  })
-}
-.onClick((): void => {
-            promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+          OctIcon({
+            res: $r('app.media.oct_kebab_horizontal_16'),
+            iconSize: 18,
+            iconColor: $r('app.color.link_blue')
           })
-          .padding(6)
+          .rotate({ angle: 90 })
+        }
+        .width(44)
+        .height(44)
+        .padding(6)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
+        .onClick((): void => {
+          promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+        })
       }
       .width('100%')
       .height(48)
@@ -331,82 +290,12 @@ export struct WorkPrsView {
 
       Scroll() {
         Column() {
-          Row() {
-            Stack({ alignContent: Alignment.TopEnd }) {
-              OctIcon({
-                res: $r('app.media.oct_filter_16'),
-                iconSize: 14,
-                iconColor: $r('app.color.text_primary')
-              })
-                .padding({ left: 8, right: 8, top: 5, bottom: 5 })
-                .borderRadius(12)
-                .backgroundColor($r('app.color.card_background'))
-                .border({ width: 1, color: $r('app.color.border') })
-              if (this.activeFilterCount() > 0) {
-                Circle()
-                  .width(12)
-                  .height(12)
-                  .fill($r('app.color.link_blue'))
-                  .margin({ top: -6, right: -6 })
-                Text(`${this.activeFilterCount()}`)
-                  .fontSize(8)
-                  .fontColor(Color.White)
-                  .margin({ top: -10, right: -3 })
-              }
-            }
-            .margin({ right: 8 })
-
-            this.filterChip(this.stateLabel(), [
-              {
-                value: this.stringOf($r('app.string.work_filter_all')),
-                action: (): void => { this.state = 'all'; this.refresh(); }
-              },
-              {
-                value: this.stringOf($r('app.string.issues_state_open')),
-                action: (): void => { this.state = 'open'; this.refresh(); }
-              },
-              {
-                value: this.stringOf($r('app.string.issues_state_closed')),
-                action: (): void => { this.state = 'closed'; this.refresh(); }
-              },
-              {
-                value: this.stringOf($r('app.string.pr_state_merged')),
-                action: (): void => { this.state = 'merged'; this.refresh(); }
-              }
-            ], this.state !== 'all')
-
-            this.filterChip(this.scopeLabel(), [
-              {
-                value: this.stringOf($r('app.string.work_scope_created')),
-                action: (): void => { this.scope = 'created'; this.refresh(); }
-              },
-              {
-                value: this.stringOf($r('app.string.work_scope_assigned')),
-                action: (): void => { this.scope = 'assigned'; this.refresh(); }
-              },
-              {
-                value: this.stringOf($r('app.string.work_scope_mentioned')),
-                action: (): void => { this.scope = 'mentioned'; this.refresh(); }
-              }
-            ], this.scope !== 'created')
-
-            this.filterChip(this.visibilityLabel(), [
-              {
-                value: this.stringOf($r('app.string.work_visibility')),
-                action: (): void => { this.visibilityFilter = 'all'; this.refresh(); }
-              },
-              {
-                value: this.stringOf($r('app.string.work_visibility_public')),
-                action: (): void => { this.visibilityFilter = 'public'; this.refresh(); }
-              },
-              {
-                value: this.stringOf($r('app.string.work_visibility_private')),
-                action: (): void => { this.visibilityFilter = 'private'; this.refresh(); }
-              }
-            ], this.visibilityFilter !== 'all')
-          }
-          .width('100%')
-          .margin({ bottom: 12 })
+          WorkFilterBar({
+            token: this.token,
+            stateOptions: this.stateOptions(),
+            scopeOptions: this.scopeOptions(),
+            onQueryChange: (s: WorkFilterState): void => this.onQueryChange(s)
+          })
 
           if (this.prs.length > 0) {
             ForEach(this.prs, (item: WorkPrItem) => {
@@ -429,9 +318,7 @@ export struct WorkPrsView {
             WorkEmptyView({
               iconText: '🐱',
               title: $r('app.string.work_prs_empty'),
-              subtitle: $r('app.string.work_use_fewer_filters'),
-              button: $r('app.string.work_reset_all_filters'),
-              onButton: (): void => this.resetFilters()
+              subtitle: $r('app.string.work_use_fewer_filters')
             })
           }
         }

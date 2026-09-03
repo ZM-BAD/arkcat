@@ -9,7 +9,7 @@
 export struct OctIcon {
   @Param res: Resource = $r('app.media.oct_arrow_left_24');
   @Param iconSize: number = 16;
-  @Param iconColor: ResourceColor = '#24292F';
+  @Param iconColor: ResourceColor = $r('app.color.text_primary');
 
   build() {
     Image(this.res)

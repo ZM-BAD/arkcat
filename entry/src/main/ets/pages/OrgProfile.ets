@@ -119,10 +119,10 @@ export struct OrgProfileView {
   }
 
   @Builder
-  metaRow(icon: string, text: string) {
+  metaRow(iconRes: Resource, text: string) {
     if (text !== '') {
       Row({ space: 8 }) {
-        Text(icon).fontSize(14)
+        OctIcon({ res: iconRes, iconSize: 14, iconColor: $r('app.color.text_secondary') })
         Text(text)
           .fontSize($r('app.float.body_font_size'))
           .fontColor($r('app.color.text_primary'))
@@ -181,9 +181,18 @@ export struct OrgProfileView {
         }
 
         Column({ space: 8 }) {
-          this.metaRow('🔗', org.websiteUrl)
-          this.metaRow('✉️', org.email)
-          this.metaRow('𝕏', org.twitterUsername !== '' ? `@${org.twitterUsername}` : '')
+          this.metaRow($r('app.media.oct_link_16'), org.websiteUrl)
+          this.metaRow($r('app.media.oct_mail_16'), org.email)
+          if (org.twitterUsername !== '') {
+            Row({ space: 6 }) {
+              Text('𝕏')
+                .fontSize(14)
+                .fontColor($r('app.color.text_secondary'))
+              Text(`@${org.twitterUsername}`)
+                .fontSize($r('app.float.caption_font_size'))
+                .fontColor($r('app.color.text_secondary'))
+            }
+          }
         }
         .margin({ top: 10 })
         .width('100%')
@@ -243,7 +252,7 @@ export struct OrgProfileView {
                     .fontColor($r('app.color.text_primary'))
                 }
                 .padding({ left: 14, right: 14, top: 8, bottom: 8 })
-                .borderRadius(20)
+                .borderRadius(12)
                 .backgroundColor($r('app.color.card_background'))
                 .borderWidth(1)
                 .borderColor($r('app.color.divider'))
@@ -263,6 +272,8 @@ export struct OrgProfileView {
                 })
               }
             }
+.width(44)
+.height(44)
             .alignContent(Alignment.Bottom)
           }
           .padding($r('app.float.card_padding'))
@@ -302,10 +313,10 @@ export struct OrgProfileView {
           Stack() {
             OctIcon({ res: $r('app.media.oct_repo_16'), iconSize: 16, iconColor: Color.White })
           }
-          .width(30)
-          .height(30)
-          .borderRadius(8)
-          .backgroundColor('#24292F')
+          .width(44)
+          .height(44)
+          .borderRadius(6)
+          .backgroundColor($r('app.color.work_dark_bg'))
           Text($r('app.string.org_repositories_row'))
             .fontSize($r('app.float.body_font_size'))
             .fontColor($r('app.color.text_primary'))
@@ -313,14 +324,12 @@ export struct OrgProfileView {
           Text(`${org.repositoriesCount}`)
             .fontSize($r('app.float.body_font_size'))
             .fontColor($r('app.color.text_secondary'))
-          Text('>')
-            .fontSize(14)
-            .fontColor($r('app.color.text_secondary'))
+          OctIcon({ res: $r('app.media.oct_chevron_right_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
             .margin({ left: 4 })
         }
         .width('100%')
         .padding(12)
-        .borderRadius(10)
+        .borderRadius(12)
         .backgroundColor($r('app.color.card_background'))
         .margin({ top: 6 })
         .onClick(() => {
@@ -350,6 +359,10 @@ export struct OrgProfileView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
         .onClick(() => {
           this.pathStack.pop();
         })
@@ -357,14 +370,22 @@ export struct OrgProfileView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_share_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
         }
+.width(44)
+.height(44)
         .padding(6)
+        .accessibilityDescription($r('app.string.a11y_share'))
+        .focusable(true)
         .onClick(() => {
           promptAction.showToast({ message: $r('app.string.home_feature_coming') });
         })
         Stack() {
           OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
         }
+.width(44)
+.height(44)
         .padding(6)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
         .onClick(() => {
           promptAction.showToast({ message: $r('app.string.home_feature_coming') });
         })

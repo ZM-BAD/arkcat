@@ -70,7 +70,7 @@
     },
     {
       "name": "home_pinned_section",
-      "value": "Pinned repositories"
+      "value": "Pinned"
     },
     {
       "name": "home_contributions_total",
@@ -107,6 +107,10 @@
     {
       "name": "inbox_empty",
       "value": "No notifications"
+    },
+    {
+      "name": "inbox_menu_refresh",
+      "value": "Refresh"
     },
     {
       "name": "inbox_marked_read",
@@ -393,6 +397,50 @@
       "value": "Repository"
     },
     {
+      "name": "inbox_filter_title",
+      "value": "Filter notifications by"
+    },
+    {
+      "name": "inbox_view_saved",
+      "value": "Saved"
+    },
+    {
+      "name": "inbox_view_done",
+      "value": "Done"
+    },
+    {
+      "name": "inbox_filter_assigned",
+      "value": "Assigned"
+    },
+    {
+      "name": "inbox_filter_participating",
+      "value": "Participating"
+    },
+    {
+      "name": "inbox_filter_mentioned",
+      "value": "Mentioned"
+    },
+    {
+      "name": "inbox_filter_team_mentioned",
+      "value": "Team mentioned"
+    },
+    {
+      "name": "inbox_filter_review_requested",
+      "value": "Review requested"
+    },
+    {
+      "name": "inbox_repo_filter_title",
+      "value": "Filter by repository"
+    },
+    {
+      "name": "inbox_saved_empty",
+      "value": "No saved notifications"
+    },
+    {
+      "name": "inbox_done_empty",
+      "value": "No done notifications"
+    },
+    {
       "name": "explore_discover",
       "value": "Discover"
     },
@@ -550,7 +598,7 @@
     },
     {
       "name": "search_placeholder",
-      "value": "Search or jump to..."
+      "value": "Search GitHub"
     },
     {
       "name": "search_suggestion_code",
@@ -585,12 +633,52 @@
       "value": "Code"
     },
     {
+      "name": "search_category_repositories",
+      "value": "Repositories"
+    },
+    {
+      "name": "search_category_issues",
+      "value": "Issues"
+    },
+    {
+      "name": "search_category_prs",
+      "value": "Pull Requests"
+    },
+    {
+      "name": "search_category_people",
+      "value": "People"
+    },
+    {
+      "name": "search_category_organizations",
+      "value": "Organizations"
+    },
+    {
       "name": "search_matches_more",
       "value": "Show %1$d more matches"
     },
     {
       "name": "search_no_results",
       "value": "No results found"
+    },
+    {
+      "name": "search_empty_title",
+      "value": "Find your stuff."
+    },
+    {
+      "name": "search_empty_text",
+      "value": "Search all of GitHub for People, Repositories, Organizations, Issues, and Pull Requests."
+    },
+    {
+      "name": "search_recent_searches",
+      "value": "Recent searches"
+    },
+    {
+      "name": "search_clear_all",
+      "value": "CLEAR"
+    },
+    {
+      "name": "search_jump_to",
+      "value": "Jump to \"%1$s\""
     },
     {
       "name": "markdown_badge",
@@ -701,6 +789,38 @@
       "value": "Private"
     },
     {
+      "name": "work_filter_organization",
+      "value": "Organization"
+    },
+    {
+      "name": "work_filter_repository",
+      "value": "Repository"
+    },
+    {
+      "name": "work_filter_all_orgs",
+      "value": "All organizations"
+    },
+    {
+      "name": "work_filter_all_repos",
+      "value": "All repositories"
+    },
+    {
+      "name": "work_sort_newest",
+      "value": "Newest"
+    },
+    {
+      "name": "work_sort_oldest",
+      "value": "Oldest"
+    },
+    {
+      "name": "work_filter_sort_newest",
+      "value": "Sort: Newest"
+    },
+    {
+      "name": "work_filter_sort_oldest",
+      "value": "Sort: Oldest"
+    },
+    {
       "name": "work_issues_empty",
       "value": "There aren't any issues."
     },
@@ -758,7 +878,7 @@
     },
     {
       "name": "work_project_filter_mine",
-      "value": "Owned by me"
+      "value": "Created by me"
     },
     {
       "name": "work_projects_sort_label",
@@ -766,7 +886,39 @@
     },
     {
       "name": "work_projects_sort_visited",
-      "value": "Most recently visited"
+      "value": "Most recently viewed"
+    },
+    {
+      "name": "projects_filter_template",
+      "value": "Template"
+    },
+    {
+      "name": "projects_sort_least_viewed",
+      "value": "Least recently viewed"
+    },
+    {
+      "name": "projects_sort_updated_newest",
+      "value": "Updated · Newest"
+    },
+    {
+      "name": "projects_sort_updated_oldest",
+      "value": "Updated · Oldest"
+    },
+    {
+      "name": "projects_sort_created_newest",
+      "value": "Created · Newest"
+    },
+    {
+      "name": "projects_sort_created_oldest",
+      "value": "Created · Oldest"
+    },
+    {
+      "name": "projects_sort_title_az",
+      "value": "Title · A-Z"
+    },
+    {
+      "name": "projects_sort_title_za",
+      "value": "Title · Z-A"
     },
     {
       "name": "work_starred_my_lists",
@@ -1005,8 +1157,16 @@
       "value": "%1$d followers"
     },
     {
+      "name": "profile_followers_unit",
+      "value": " followers"
+    },
+    {
       "name": "profile_following_stat",
       "value": "%1$d following"
+    },
+    {
+      "name": "profile_following_unit",
+      "value": " following"
     },
     {
       "name": "user_list_followers",
@@ -1147,6 +1307,242 @@
     {
       "name": "file_link_unsupported",
       "value": "This item is not supported"
+    },
+    {
+      "name": "a11y_back",
+      "value": "Back"
+    },
+    {
+      "name": "a11y_search",
+      "value": "Search"
+    },
+    {
+      "name": "a11y_share",
+      "value": "Share"
+    },
+    {
+      "name": "a11y_more",
+      "value": "More"
+    },
+    {
+      "name": "a11y_settings",
+      "value": "Settings"
+    },
+    {
+      "name": "a11y_new",
+      "value": "Create new"
+    },
+    {
+      "name": "a11y_menu",
+      "value": "Menu"
+    },
+    {
+      "name": "a11y_close",
+      "value": "Close"
+    },
+    {
+      "name": "a11y_star",
+      "value": "Star"
+    },
+    {
+      "name": "a11y_starred",
+      "value": "Starred"
+    },
+    {
+      "name": "a11y_refresh",
+      "value": "Refresh"
+    },
+    {
+      "name": "a11y_watch",
+      "value": "Watch"
+    },
+    {
+      "name": "work_scope_hint",
+      "value": "Token permission insufficient: create a PAT with the %1$s scope (https://github.com/settings/tokens)"
+    },
+    {
+      "name": "repo_stars_label",
+      "value": "stars"
+    },
+    {
+      "name": "repo_forks_label",
+      "value": "forks"
+    },
+    {
+      "name": "repo_contributors",
+      "value": "Contributors"
+    },
+    {
+      "name": "repo_watchers",
+      "value": "Watchers"
+    },
+    {
+      "name": "repo_license",
+      "value": "License"
+    },
+    {
+      "name": "repo_code",
+      "value": "Code"
+    },
+    {
+      "name": "work_sort_updated",
+      "value": "Most recently updated"
+    },
+    {
+      "name": "work_filter_sort_new",
+      "value": "Sort: New"
+    },
+    {
+      "name": "work_sort_new",
+      "value": "New"
+    },
+    {
+      "name": "work_filter_create_shortcut",
+      "value": "Create Shortcut"
+    },
+    {
+      "name": "work_clear_all_filters",
+      "value": "Clear all filters"
+    },
+    {
+      "name": "issues_filter_scope_created",
+      "value": "Created by me"
+    },
+    {
+      "name": "issues_filter_scope_assigned",
+      "value": "Assigned to me"
+    },
+    {
+      "name": "issues_filter_scope_mentioned",
+      "value": "Mentions me"
+    },
+    {
+      "name": "issues_filter_scope_involved",
+      "value": "Involved"
+    },
+    {
+      "name": "issues_filter_visibility_all",
+      "value": "Show all"
+    },
+    {
+      "name": "issues_filter_visibility_private",
+      "value": "Private repositories only"
+    },
+    {
+      "name": "issues_filter_visibility_public",
+      "value": "Public repositories only"
+    },
+    {
+      "name": "issues_filter_org_title",
+      "value": "Filter by organization"
+    },
+    {
+      "name": "issues_filter_repo_title",
+      "value": "Filter by repository"
+    },
+    {
+      "name": "issues_sort_title",
+      "value": "Sort by"
+    },
+    {
+      "name": "issues_sort_newest",
+      "value": "Newest"
+    },
+    {
+      "name": "issues_sort_oldest",
+      "value": "Oldest"
+    },
+    {
+      "name": "issues_sort_most_commented",
+      "value": "Most commented"
+    },
+    {
+      "name": "issues_sort_least_commented",
+      "value": "Least commented"
+    },
+    {
+      "name": "issues_sort_recently_updated",
+      "value": "Recently updated"
+    },
+    {
+      "name": "issues_sort_least_recently_updated",
+      "value": "Least recently updated"
+    },
+    {
+      "name": "issues_sort_most_reactions",
+      "value": "Most reactions"
+    },
+    {
+      "name": "issues_filter_sort_prefix",
+      "value": "Sort: %1$s"
+    },
+    {
+      "name": "pr_filter_queued",
+      "value": "Queued"
+    },
+    {
+      "name": "pr_filter_scope_review_requested",
+      "value": "Review requested"
+    },
+    {
+      "name": "work_filter_nothing",
+      "value": "Nothing to see here"
+    },
+    {
+      "name": "discussions_filter_scope_commented",
+      "value": "Commented by me"
+    },
+    {
+      "name": "discussions_sort_top_all",
+      "value": "Top: All"
+    },
+    {
+      "name": "discussions_sort_top_yesterday",
+      "value": "Top: Yesterday"
+    },
+    {
+      "name": "discussions_sort_top_week",
+      "value": "Top: Past week"
+    },
+    {
+      "name": "discussions_sort_top_month",
+      "value": "Top: Past month"
+    },
+    {
+      "name": "discussions_sort_top_year",
+      "value": "Top: Past year"
+    },
+    {
+      "name": "toprepos_filter_all",
+      "value": "All"
+    },
+    {
+      "name": "toprepos_filter_archived",
+      "value": "Archived"
+    },
+    {
+      "name": "toprepos_filter_fork",
+      "value": "Fork"
+    },
+    {
+      "name": "toprepos_filter_mirror",
+      "value": "Mirror"
+    },
+    {
+      "name": "toprepos_filter_private",
+      "value": "Private"
+    },
+    {
+      "name": "toprepos_filter_public",
+      "value": "Public"
+    },
+    {
+      "name": "toprepos_filter_source",
+      "value": "Source"
+    },
+    {
+      "name": "toprepos_filter_template",
+      "value": "Template"
     }
   ]
 }

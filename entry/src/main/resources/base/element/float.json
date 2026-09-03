@@ -2,7 +2,7 @@
   "float": [
     {
       "name": "page_text_font_size",
-      "value": "24fp"
+      "value": "20fp"
     },
     {
       "name": "sub_text_font_size",
@@ -42,7 +42,7 @@
     },
     {
       "name": "title_font_size",
-      "value": "18fp"
+      "value": "20fp"
     },
     {
       "name": "body_font_size",
@@ -51,6 +51,18 @@
     {
       "name": "caption_font_size",
       "value": "12fp"
+    },
+    {
+      "name": "chip_font_size",
+      "value": "15fp"
+    },
+    {
+      "name": "menu_font_size",
+      "value": "17fp"
+    },
+    {
+      "name": "menu_row_height",
+      "value": "52vp"
     },
     {
       "name": "avatar_size_medium",

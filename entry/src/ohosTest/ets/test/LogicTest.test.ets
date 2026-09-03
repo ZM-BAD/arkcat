@@ -3,7 +3,7 @@
  * 运行于模拟器（aa test），与主代码同一编译单元，可直接 import main ets。
  */
 import { describe, it, expect } from '@ohos/hypium';
-import { timeParts, contributionLevelColor, notificationTypeKey, compactCount } from '../../../main/ets/utils/Format';
+import { timeParts, compactCount, notificationTypeKey, githubShortTime } from '../../../main/ets/utils/Format';
 import { Json } from '../../../main/ets/utils/Json';
 import { WorkSection, defaultWorkSections, visibleWorkSections, workSectionsToStorage, workSectionsFromStorage } from '../../../main/ets/utils/WorkConfig';
 import {
@@ -15,12 +15,14 @@ import { RepoPrItem } from '../../../main/ets/models/RepoSubModels';
 import {
   buildWorkIssuesQuery, buildWorkPrsQuery, buildWorkDiscussionsQuery, buildTopReposPrivacy,
   mapWorkIssue, workIssueIconKey, mapWorkPr, workPrIconKey,
-  mapWorkStarredPage, filterWorkProjects, WorkProjectItem,
+  mapWorkStarredPage, filterWorkProjects, sortWorkProjects, filterTopRepos, WorkTopRepoItem, WorkProjectItem,
   mapWorkProjectsPage, mapWorkTopReposPage, mapWorkOrgsPage
 } from '../../../main/ets/models/WorkModels';
-import { mapUser, mapRepo, mapCalendar, mapViewerBasic, mapNotifications, issueNumberFromUrl } from '../../../main/ets/models/GitHubModels';
-import { buildNotificationsPath } from '../../../main/ets/services/NotificationsService';
-import { buildCodeQuery, mapCodeSearch } from '../../../main/ets/services/SearchService';
+import { mapUser, mapRepo, mapViewerBasic, mapNotifications, issueNumberFromUrl, NotificationItem } from '../../../main/ets/models/GitHubModels';
+import { buildNotificationsPath, pullRefFromUrl, buildPullStatesQuery, mapPullMerged, PrRef,
+  filterByReasons, filterByInboxView, collectRepoFilters, InboxReasonKey, InboxRepoFilterItem
+} from '../../../main/ets/services/NotificationsService';
+import { buildCodeQuery, mapCodeSearch, mapSearchNode, mapSearchResults, mapOrgSearchResults, buildQualifierInsert, pushSearchHistory } from '../../../main/ets/services/SearchService';
 import { buildTopicQuery } from '../../../main/ets/services/ExploreService';
 import { mapSearchResult } from '../../../main/ets/models/ExploreModels';
 import { mapUserProfile, isSelfProfile } from '../../../main/ets/models/ProfileModels';
@@ -49,6 +51,16 @@ export default function logicTest(testsuiteName: string) {
       expect(parts?.value).assertEqual(3);
       expect(parts?.unit).assertEqual('hour');
     });
+    it('githubShortTime_formats', 0, () => {
+      // GitHub 通知卡片风格：22h / 1d / 8d（无本地化后缀）
+      expect(githubShortTime({ value: 0, unit: 'just_now' })).assertEqual('now');
+      expect(githubShortTime({ value: 5, unit: 'minute' })).assertEqual('5m');
+      expect(githubShortTime({ value: 22, unit: 'hour' })).assertEqual('22h');
+      expect(githubShortTime({ value: 1, unit: 'day' })).assertEqual('1d');
+      expect(githubShortTime({ value: 8, unit: 'day' })).assertEqual('8d');
+      expect(githubShortTime({ value: 3, unit: 'month' })).assertEqual('3mo');
+      expect(githubShortTime({ value: 2, unit: 'year' })).assertEqual('2y');
+    });
     it('timeParts_days', 0, () => {
       const parts = timeParts('2026-08-29T12:00:00Z', NOW);
       expect(parts?.value).assertEqual(2);
@@ -62,14 +74,6 @@ export default function logicTest(testsuiteName: string) {
     });
     it('timeParts_invalid', 0, () => {
       expect(timeParts('not-a-date', NOW)).assertNull();
-    });
-
-    it('contributionLevelColor_levels', 0, () => {
-      expect(contributionLevelColor(0)).assertEqual('#EBEDF0');
-      expect(contributionLevelColor(2)).assertEqual('#9BE9A8');
-      expect(contributionLevelColor(5)).assertEqual('#40C463');
-      expect(contributionLevelColor(9)).assertEqual('#30A14E');
-      expect(contributionLevelColor(20)).assertEqual('#216E39');
     });
 
     it('notificationTypeKey_mapping', 0, () => {
@@ -126,17 +130,22 @@ export default function logicTest(testsuiteName: string) {
       expect(repo.stargazerCount).assertEqual(3);
     });
 
-    it('mapCalendar_colorFallbackAndTotal', 0, () => {
-      const day1: JsonMap = { 'date': '2026-08-30', 'contributionCount': 6, 'color': '' };
-      const day2: JsonMap = { 'date': '2026-08-31', 'contributionCount': 1, 'color': '#40C463' };
-      const week: JsonMap = { 'contributionDays': [day1, day2] };
-      const raw: JsonMap = { 'totalContributions': 0, 'weeks': [week] };
-      const calendar = mapCalendar(raw);
-      // API color 缺失时按贡献数兜底：count=6 → 等级 4 色
-      expect(calendar.weeks[0][0].color).assertEqual('#30A14E');
-      expect(calendar.weeks[0][1].color).assertEqual('#40C463');
-      // total 缺失时由 days 累加
-      expect(calendar.totalContributions).assertEqual(7);
+    it('mapRepo_ownerFields', 0, () => {
+      const owner: JsonMap = { 'login': 'zm_bad', 'avatarUrl': 'https://avatars.example/zm' };
+      const raw: JsonMap = {
+        'id': 'R_2',
+        'name': 'starraft',
+        'nameWithOwner': 'zm_bad/starraft',
+        'owner': owner
+      };
+      const repo = mapRepo(raw);
+      expect(repo.name).assertEqual('starraft');
+      expect(repo.ownerLogin).assertEqual('zm_bad');
+      expect(repo.ownerAvatarUrl).assertEqual('https://avatars.example/zm');
+      // 查询未带 owner 节点 → 兜底空串
+      const bare = mapRepo({ 'id': 'R_3' });
+      expect(bare.ownerLogin).assertEqual('');
+      expect(bare.ownerAvatarUrl).assertEqual('');
     });
 
     it('mapViewerBasic_basic', 0, () => {
@@ -163,6 +172,65 @@ export default function logicTest(testsuiteName: string) {
       expect(buildNotificationsPath(false, 1)).assertEqual('/notifications?all=false&per_page=1');
       // Spec 002 Focused：participating 模式
       expect(buildNotificationsPath(true, 30, true)).assertEqual('/notifications?participating=true&per_page=30');
+    });
+
+    it('filterByReasons_reasonKeys', 0, () => {
+      const mk = (threadId: string, reason: string): NotificationItem => {
+        return {
+          threadId: threadId, repoFullName: 'o/r', title: 't', subjectType: 'Issue', reason: reason,
+          unread: true, updatedAt: '', subjectUrl: '', ownerAvatarUrl: '', prMerged: false
+        };
+      };
+      const items = [
+        mk('1', 'assign'), mk('2', 'mention'), mk('3', 'team_mention'),
+        mk('4', 'review_requested'), mk('5', 'comment'), mk('6', 'subscribed'), mk('7', 'author'),
+        mk('8', 'state_change')
+      ];
+      // 空选 = 全量
+      expect(filterByReasons(items, []).length).assertEqual(8);
+      // 单选
+      expect(filterByReasons(items, ['mention']).length).assertEqual(1);
+      expect(filterByReasons(items, ['assign'])[0].threadId).assertEqual('1');
+      // 多选并集
+      const two: InboxReasonKey[] = ['assign', 'mention'];
+      expect(filterByReasons(items, two).length).assertEqual(2);
+      // Participating = comment/subscribed/author/mention/team_mention 并集
+      const part: InboxReasonKey[] = ['participating'];
+      expect(filterByReasons(items, part).length).assertEqual(5);
+    });
+
+    it('filterByInboxView_views', 0, () => {
+      const mk = (threadId: string, unread: boolean): NotificationItem => {
+        return {
+          threadId: threadId, repoFullName: 'o/r', title: 't', subjectType: 'Issue', reason: 'comment',
+          unread: unread, updatedAt: '', subjectUrl: '', ownerAvatarUrl: '', prMerged: false
+        };
+      };
+      const items = [mk('1', true), mk('2', false), mk('3', true)];
+      expect(filterByInboxView(items, 'inbox').length).assertEqual(3);
+      // Done=已读近似；Saved 无本地保存标记 → 空视图
+      expect(filterByInboxView(items, 'done')[0].threadId).assertEqual('2');
+      expect(filterByInboxView(items, 'saved').length).assertEqual(0);
+    });
+
+    it('collectRepoFilters_aggregate', 0, () => {
+      const mk = (threadId: string, fullName: string, avatar: string): NotificationItem => {
+        return {
+          threadId: threadId, repoFullName: fullName, title: 't', subjectType: 'Issue', reason: 'comment',
+          unread: true, updatedAt: '', subjectUrl: '', ownerAvatarUrl: avatar, prMerged: false
+        };
+      };
+      const items = [
+        mk('1', 'o/a', 'http://a'), mk('2', 'o/b', ''), mk('3', 'o/a', ''), mk('4', 'o/a', 'http://a2')
+      ];
+      const reps: InboxRepoFilterItem[] = collectRepoFilters(items);
+      // 保持首次出现顺序 + 计数 + 头像取最新非空
+      expect(reps.length).assertEqual(2);
+      expect(reps[0].fullName).assertEqual('o/a');
+      expect(reps[0].count).assertEqual(3);
+      expect(reps[0].avatarUrl).assertEqual('http://a');
+      expect(reps[1].fullName).assertEqual('o/b');
+      expect(reps[1].count).assertEqual(1);
     });
 
     it('issueNumberFromUrl_extract', 0, () => {
@@ -214,12 +282,99 @@ export default function logicTest(testsuiteName: string) {
       expect(result.repos[1].nameWithOwner).assertEqual('c/d');
     });
 
+    it('buildQualifierInsert', 0, () => {
+      expect(buildQualifierInsert('', 'repo')).assertEqual('repo:');
+      expect(buildQualifierInsert('foo', 'repo')).assertEqual('foo repo:');
+      expect(buildQualifierInsert('foo ', 'repo')).assertEqual('foo repo:');
+      expect(buildQualifierInsert('repo:', 'user')).assertEqual('repo:user:');
+    });
+
+    it('pushSearchHistory_dedupAndCap', 0, () => {
+      const next = pushSearchHistory(['a', 'b'], 'a');
+      expect(next.length).assertEqual(2);
+      expect(next[0]).assertEqual('a');
+      expect(next[1]).assertEqual('b');
+      const cap = pushSearchHistory(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'], 'k');
+      expect(cap.length).assertEqual(10);
+      expect(cap[0]).assertEqual('k');
+      expect(cap[9]).assertEqual('i');
+    });
+
+    it('mapSearchNode_kinds', 0, () => {
+      const lang: JsonMap = { 'name': 'TS', 'color': '#3178c6' };
+      const repoNode: JsonMap = {
+        '__typename': 'Repository', 'nameWithOwner': 'a/b', 'description': 'd',
+        'stargazerCount': 9, 'forkCount': 3,
+        'primaryLanguage': lang
+      };
+      const r = mapSearchNode(repoNode);
+      expect(r?.kind).assertEqual('repository');
+      expect(r?.title).assertEqual('a/b');
+      expect(r?.stars).assertEqual(9);
+      expect(r?.languageColor).assertEqual('#3178c6');
+      const repoIss: JsonMap = { 'nameWithOwner': 'c/d' };
+      const issueNode: JsonMap = {
+        '__typename': 'Issue', 'title': 't', 'state': 'OPEN', 'number': 12,
+        'repository': repoIss
+      };
+      const i = mapSearchNode(issueNode);
+      expect(i?.kind).assertEqual('issue');
+      expect(i?.repoFullName).assertEqual('c/d');
+      expect(i?.number).assertEqual(12);
+      const prNode: JsonMap = {
+        '__typename': 'PullRequest', 'title': 'p', 'state': 'MERGED', 'number': 7,
+        'repository': repoIss
+      };
+      const p = mapSearchNode(prNode);
+      expect(p?.kind).assertEqual('pr');
+      const followers: JsonMap = { 'totalCount': 2 };
+      const following: JsonMap = { 'totalCount': 5 };
+      const userNode: JsonMap = {
+        '__typename': 'User', 'login': 'foo', 'name': 'Foo', 'avatarUrl': 'a.png', 'bio': 'b',
+        'followers': followers, 'following': following
+      };
+      const u = mapSearchNode(userNode);
+      expect(u?.kind).assertEqual('user');
+      expect(u?.followers).assertEqual(2);
+      expect(mapSearchNode({ '__typename': 'Unknown' }) === null).assertTrue();
+    });
+
+    it('mapSearchResults_pageInfo', 0, () => {
+      const repoNode1: JsonMap = { '__typename': 'Repository', 'nameWithOwner': 'a/b' };
+      const repoNode2: JsonMap = { 'nameWithOwner': 'c/d' };
+      const issueNode: JsonMap = { '__typename': 'Issue', 'title': 't', 'number': 1, 'repository': repoNode2 };
+      const pageInfo: JsonMap = { 'hasNextPage': true, 'endCursor': 'abc' };
+      const nodes: JsonMap[] = [repoNode1, issueNode];
+      const searchNode: JsonMap = {
+        'repositoryCount': 2,
+        'pageInfo': pageInfo,
+        'nodes': nodes
+      };
+      const res = mapSearchResults({ 'search': searchNode });
+      expect(res.totalCount).assertEqual(2);
+      expect(res.hasNextPage).assertTrue();
+      expect(res.endCursor).assertEqual('abc');
+      expect(res.items.length).assertEqual(2);
+      expect(res.items[1].kind).assertEqual('issue');
+    });
+
+    it('mapOrgSearchResults', 0, () => {
+      const item1: JsonMap = { 'login': 'org1', 'name': 'Org One', 'avatar_url': 'o.png' };
+      const data: JsonMap = { 'items': [item1] };
+      const items = mapOrgSearchResults(data);
+      expect(items.length).assertEqual(1);
+      expect(items[0].kind).assertEqual('organization');
+      expect(items[0].title).assertEqual('org1');
+    });
+
     it('mapUserProfile_and_selfCheck', 0, () => {
       const followers: JsonMap = { 'totalCount': 3 };
       const following: JsonMap = { 'totalCount': 4 };
       const status: JsonMap = { 'message': 'building', 'emoji': '🚀' };
-      const repoNode: JsonMap = { 'id': 'R5', 'nameWithOwner': 'a/b', 'stargazerCount': 1 };
-      const reposWrap: JsonMap = { 'nodes': [repoNode] };
+      const owner: JsonMap = { 'login': 'zm_bad', 'avatarUrl': 'https://avatars.example/zm' };
+      const repoNode: JsonMap = { 'id': 'R5', 'name': 'b', 'nameWithOwner': 'a/b', 'stargazerCount': 1, 'owner': owner };
+      const pinnedWrap: JsonMap = { 'nodes': [repoNode] };
+      const countWrap: JsonMap = { 'totalCount': 9 };
       const userNode: JsonMap = {
         'id': 'U1',
         'login': 'zm_bad',
@@ -227,12 +382,15 @@ export default function logicTest(testsuiteName: string) {
         'company': '@example',
         'location': 'SH',
         'websiteUrl': 'https://zmbad.me',
+        'email': 'zm@example.com',
         'viewerIsFollowing': true,
         'status': status,
         'followers': followers,
         'following': following,
-        'repositories': reposWrap,
-        'starredRepositories': reposWrap
+        'pinnedItems': pinnedWrap,
+        'repositories': countWrap,
+        'starredRepositories': countWrap,
+        'organizations': countWrap
       };
       const viewer: JsonMap = { 'login': 'other' };
       const data: JsonMap = { 'viewer': viewer, 'user': userNode };
@@ -241,10 +399,14 @@ export default function logicTest(testsuiteName: string) {
       expect(profile.viewerLogin).assertEqual('other');
       expect(profile.userId).assertEqual('U1');
       expect(profile.company).assertEqual('@example');
+      expect(profile.email).assertEqual('zm@example.com');
       expect(profile.statusEmoji).assertEqual('🚀');
       expect(profile.viewerIsFollowing).assertTrue();
-      expect(profile.repos.length).assertEqual(1);
-      expect(profile.stars.length).assertEqual(1);
+      expect(profile.pinned.length).assertEqual(1);
+      expect(profile.pinned[0].ownerLogin).assertEqual('zm_bad');
+      expect(profile.repositoriesCount).assertEqual(9);
+      expect(profile.organizationsCount).assertEqual(9);
+      expect(profile.starredCount).assertEqual(9);
       // 自关注判断
       expect(isSelfProfile('zm_bad', 'zm_bad')).assertTrue();
       expect(isSelfProfile('other', 'zm_bad')).assertFalse();
@@ -366,10 +528,41 @@ export default function logicTest(testsuiteName: string) {
       expect(page.repoLabels[0]).assertEqual('docs');
     });
 
+    it('pullRefFromUrl_and_queries', 0, () => {
+      const ref = pullRefFromUrl('https://api.github.com/repos/ZM-BAD/starraft/pulls/123');
+      expect(ref?.owner).assertEqual('ZM-BAD');
+      expect(ref?.name).assertEqual('starraft');
+      expect(ref?.number).assertEqual(123);
+      // Issue URL / 非法路径 → null（不探测合并态）
+      expect(pullRefFromUrl('https://api.github.com/repos/a/b/issues/8')).assertNull();
+      expect(pullRefFromUrl('')).assertNull();
+      // 单查询多 alias
+      const refA: PrRef = { owner: 'a', name: 'b', number: 8 };
+      const refB: PrRef = { owner: 'c', name: 'd', number: 9 };
+      const q = buildPullStatesQuery([refA, refB]);
+      expect(q.indexOf('t0:repository(owner:"a", name:"b")') >= 0).assertTrue();
+      expect(q.indexOf('t1:repository(owner:"c", name:"d")') >= 0).assertTrue();
+      expect(q.indexOf('issueOrPullRequest(number:8)') >= 0).assertTrue();
+      // 别名解析：缺失节点兜底 false
+      const node1: JsonMap = { 'merged': true };
+      const node2: JsonMap = { 'merged': false };
+      const repo1: JsonMap = { 'issueOrPullRequest': node1 };
+      const repo2: JsonMap = { 'issueOrPullRequest': node2 };
+      const alias0: JsonMap = { 'repository': repo1 };
+      const alias1: JsonMap = { 'repository': repo2 };
+      const alias2: JsonMap = {};
+      const data: JsonMap = { 't0': alias0, 't1': alias1, 't2': alias2 };
+      const merged = mapPullMerged(data, 3);
+      expect(merged[0]).assertTrue();
+      expect(merged[1]).assertFalse();
+      expect(merged[2]).assertFalse();
+    });
+
     it('mapNotifications_parseAndInvalid', 0, () => {
       expect(mapNotifications('[]').length).assertEqual(0);
       expect(mapNotifications('not json').length).assertEqual(0);
-      const repo: JsonMap = { 'full_name': 'a/b' };
+      const owner: JsonMap = { 'login': 'zm_bad', 'avatar_url': 'https://avatars.example/zm' };
+      const repo: JsonMap = { 'full_name': 'a/b', 'owner': owner };
       const subject: JsonMap = { 'title': 'fix bug', 'type': 'Issue' };
       const item: JsonMap = {
         'id': 'T1',
@@ -384,6 +577,7 @@ export default function logicTest(testsuiteName: string) {
       expect(list[0].repoFullName).assertEqual('a/b');
       expect(list[0].subjectType).assertEqual('Issue');
       expect(list[0].unread).assertTrue();
+      expect(list[0].ownerAvatarUrl).assertEqual('https://avatars.example/zm');
     });
 
     it('timeParts_years_and_compactCount', 0, () => {
@@ -422,14 +616,34 @@ export default function logicTest(testsuiteName: string) {
     });
 
     it('workQueries_builders', 0, () => {
-      expect(buildWorkIssuesQuery('all', 'created', 'all')).assertEqual('is:issue author:@me sort:updated-desc');
-      expect(buildWorkIssuesQuery('open', 'assigned', 'public')).assertEqual('is:issue is:open assignee:@me is:public sort:updated-desc');
-      expect(buildWorkPrsQuery('merged', 'created', 'private')).assertEqual('is:pr is:merged author:@me is:private sort:updated-desc');
-      expect(buildWorkDiscussionsQuery('open', 'mentioned', true)).assertEqual('is:discussion is:open mentions:@me is:unanswered');
-      expect(buildWorkDiscussionsQuery('all', 'created', false)).assertEqual('is:discussion author:@me');
+      expect(buildWorkIssuesQuery('all', 'created', 'all', 'newest', [], []))
+        .assertEqual('is:issue author:@me sort:created-desc');
+      expect(buildWorkIssuesQuery('open', 'assigned', 'public', 'most_commented', ['ZM-BAD'], ['ZM-BAD/starraft']))
+        .assertEqual('is:issue is:open assignee:@me is:public org:ZM-BAD repo:ZM-BAD/starraft sort:comments-desc');
+      expect(buildWorkIssuesQuery('closed', 'involved', 'private', 'reactions:+1', [], []))
+        .assertEqual('is:issue is:closed involves:@me is:private sort:reactions-+1-desc');
+      expect(buildWorkIssuesQuery('open', 'created', 'all', 'least_recently_updated', [], []))
+        .assertEqual('is:issue is:open author:@me sort:updated-asc');
+      expect(buildWorkPrsQuery('merged', 'created', 'private', 'newest', [], []))
+        .assertEqual('is:pr is:merged author:@me is:private sort:created-desc');
+      expect(buildWorkPrsQuery('queued', 'review_requested', 'all', 'most_commented', ['ZM-BAD'], ['ZM-BAD/starraft']))
+        .assertEqual('is:pr is:queued review-requested:@me org:ZM-BAD repo:ZM-BAD/starraft sort:comments-desc');
+      expect(buildWorkDiscussionsQuery('all', 'created', false, 'new'))
+        .assertEqual('is:discussion author:@me sort:created-desc');
+      expect(buildWorkDiscussionsQuery('open', 'commented', true, 'top_all'))
+        .assertEqual('is:discussion is:open commenter:@me is:unanswered sort:interactions-desc');
       expect(buildTopReposPrivacy('all')).assertEqual('');
       expect(buildTopReposPrivacy('public')).assertEqual('PUBLIC');
       expect(buildTopReposPrivacy('private')).assertEqual('PRIVATE');
+      const r1: WorkTopRepoItem = { 'id': '1', 'name': 'a', 'ownerLogin': 'me', 'ownerAvatar': '', 'isArchived': false, 'isFork': true, 'isMirror': false, 'isTemplate': false, 'visibility': 'PUBLIC' };
+      const r2: WorkTopRepoItem = { 'id': '2', 'name': 'b', 'ownerLogin': 'me', 'ownerAvatar': '', 'isArchived': true, 'isFork': false, 'isMirror': false, 'isTemplate': false, 'visibility': 'PRIVATE' };
+      const r3: WorkTopRepoItem = { 'id': '3', 'name': 'c', 'ownerLogin': 'me', 'ownerAvatar': '', 'isArchived': false, 'isFork': false, 'isMirror': false, 'isTemplate': true, 'visibility': 'PUBLIC' };
+      expect(filterTopRepos([r1, r2, r3], 'all').length).assertEqual(3);
+      expect(filterTopRepos([r1, r2, r3], 'fork').length).assertEqual(1);
+      expect(filterTopRepos([r1, r2, r3], 'archived').length).assertEqual(1);
+      expect(filterTopRepos([r1, r2, r3], 'private').length).assertEqual(1);
+      expect(filterTopRepos([r1, r2, r3], 'source').length).assertEqual(1);
+      expect(filterTopRepos([r1, r2, r3], 'template').length).assertEqual(1);
     });
 
     it('mapWorkIssue_and_workPr', 0, () => {
@@ -475,7 +689,8 @@ export default function logicTest(testsuiteName: string) {
       const repoNode2: JsonMap = {
         'id': 'R2', 'name': 'nolang', 'description': '', 'stargazerCount': 3, 'owner': owner
       };
-      const starredWrap: JsonMap = { 'nodes': [repoNode, repoNode2] };
+      const pageInfo: JsonMap = { 'hasNextPage': false, 'endCursor': '' };
+      const starredWrap: JsonMap = { 'nodes': [repoNode, repoNode2], 'pageInfo': pageInfo };
       const viewer: JsonMap = {
         'login': 'zm_bad', 'starredRepositories': starredWrap
       };
@@ -489,18 +704,27 @@ export default function logicTest(testsuiteName: string) {
     });
 
     it('filterWorkProjects_scoping', 0, () => {
-      const p1: WorkProjectItem = { 'id': 'A', 'number': 1, 'title': 'a', 'closed': false, 'updatedAt': '2026-08-01T00:00:00Z', 'ownerLogin': 'me' };
-      const p2: WorkProjectItem = { 'id': 'B', 'number': 2, 'title': 'b', 'closed': true, 'updatedAt': '2026-08-02T00:00:00Z', 'ownerLogin': 'me' };
-      const p3: WorkProjectItem = { 'id': 'C', 'number': 3, 'title': 'c', 'closed': false, 'updatedAt': '2026-08-03T00:00:00Z', 'ownerLogin': 'other' };
-      const all = filterWorkProjects([p1, p2, p3], false, 'me', false);
+      const p1: WorkProjectItem = { 'id': 'A', 'number': 1, 'title': 'a', 'closed': false, 'template': false, 'createdAt': '2026-07-01T00:00:00Z', 'updatedAt': '2026-08-01T00:00:00Z', 'ownerLogin': 'me' };
+      const p2: WorkProjectItem = { 'id': 'B', 'number': 2, 'title': 'b', 'closed': true, 'template': false, 'createdAt': '2026-07-02T00:00:00Z', 'updatedAt': '2026-08-02T00:00:00Z', 'ownerLogin': 'me' };
+      const p3: WorkProjectItem = { 'id': 'C', 'number': 3, 'title': 'c', 'closed': false, 'template': false, 'createdAt': '2026-07-03T00:00:00Z', 'updatedAt': '2026-08-03T00:00:00Z', 'ownerLogin': 'other' };
+      const p4: WorkProjectItem = { 'id': 'D', 'number': 4, 'title': 'd', 'closed': false, 'template': true, 'createdAt': '2026-07-04T00:00:00Z', 'updatedAt': '2026-08-04T00:00:00Z', 'ownerLogin': 'me' };
+      const all = filterWorkProjects([p1, p2, p3, p4], false, 'me', 'open');
       expect(all.length).assertEqual(2);
-      expect(all[0].id).assertEqual('C');
-      const mine = filterWorkProjects([p1, p2, p3], true, 'me', false);
+      const mine = filterWorkProjects([p1, p2, p3, p4], true, 'me', 'open');
       expect(mine.length).assertEqual(1);
       expect(mine[0].id).assertEqual('A');
-      const closed = filterWorkProjects([p1, p2], false, 'me', true);
+      const closed = filterWorkProjects([p1, p2, p3, p4], false, 'me', 'closed');
       expect(closed.length).assertEqual(1);
       expect(closed[0].id).assertEqual('B');
+      const template = filterWorkProjects([p1, p2, p3, p4], false, 'me', 'template');
+      expect(template.length).assertEqual(1);
+      expect(template[0].id).assertEqual('D');
+      const sortViewed = sortWorkProjects([p1, p2], 'most_viewed', { 'B': 100 });
+      expect(sortViewed[0].id).assertEqual('B');
+      const sortTitle = sortWorkProjects([p2, p1], 'title_az', {});
+      expect(sortTitle[0].id).assertEqual('A');
+      const sortCreatedOldest = sortWorkProjects([p1, p2], 'created_oldest', {});
+      expect(sortCreatedOldest[0].id).assertEqual('A');
     });
 
     it('mapWorkViewerConnections(projects/tops/orgs)', 0, () => {

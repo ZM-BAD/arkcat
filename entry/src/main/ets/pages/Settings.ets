@@ -124,7 +124,7 @@ export struct SettingsView {
         buttons: [
           {
             text: resText(ui, $r('app.string.settings_cancel')),
-            color: '#57606A'
+            color: $r('app.color.text_secondary')
           },
           {
             text: resText(ui, $r('app.string.settings_confirm')),
@@ -180,16 +180,14 @@ export struct SettingsView {
           .fontSize($r('app.float.body_font_size'))
           .fontColor($r('app.color.text_secondary'))
       }
-      Text('>')
-        .fontSize(14)
-        .fontColor($r('app.color.text_secondary'))
+      OctIcon({ res: $r('app.media.oct_chevron_right_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
         .margin({ left: 6 })
     }
     .width('100%')
     .height(46)
     .padding({ left: 16, right: 16 })
     .backgroundColor($r('app.color.card_background'))
-    .borderRadius(10)
+    .borderRadius(12)
     .margin({ bottom: 2 })
     .onClick(onClick)
   }
@@ -204,6 +202,10 @@ export struct SettingsView {
           iconColor: $r('app.color.text_primary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
 .onClick((): void => {
             this.pathStack.pop();
           })

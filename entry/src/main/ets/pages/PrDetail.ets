@@ -6,7 +6,7 @@ import { OctIcon } from '../components/OctIcon';
 import { RepoComment, PrDetailPage } from '../models/RepoSubModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { StateView } from '../components/StateView';
-import { timeParts, TimeParts } from '../utils/Format';
+import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -43,24 +43,7 @@ export struct PrDetailView {
   }
 
   private timeText(parts: TimeParts | null): string {
-    if (parts === null) {
-      return '';
-    }
-    const ui = this.getUIContext();
-    switch (parts.unit) {
-      case 'just_now':
-        return resText(ui, $r('app.string.time_just_now'));
-      case 'minute':
-        return resText(ui, $r('app.string.time_minutes_ago'), parts.value);
-      case 'hour':
-        return resText(ui, $r('app.string.time_hours_ago'), parts.value);
-      case 'day':
-        return resText(ui, $r('app.string.time_days_ago'), parts.value);
-      case 'month':
-        return resText(ui, $r('app.string.time_months_ago'), parts.value);
-      case 'year':
-        return resText(ui, $r('app.string.time_years_ago'), parts.value);
-    }
+    return parts !== null ? githubShortTime(parts) : '';
   }
 
   @Builder
@@ -116,6 +99,10 @@ export struct PrDetailView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
         .onClick(() => {
           this.pathStack.pop();
         })
@@ -129,14 +116,22 @@ export struct PrDetailView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_share_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
         }
+.width(44)
+.height(44)
         .padding(6)
+        .accessibilityDescription($r('app.string.a11y_share'))
+        .focusable(true)
         .onClick(() => {
           promptAction.showToast({ message: $r('app.string.home_feature_coming') });
         })
         Stack() {
           OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
         }
+.width(44)
+.height(44)
         .padding(6)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
         .onClick(() => {
           promptAction.showToast({ message: $r('app.string.home_feature_coming') });
         })
@@ -151,7 +146,7 @@ export struct PrDetailView {
             // 标题 + 徽章
             Column({ space: 8 }) {
               Text(this.detail.title)
-                .fontSize(22)
+                .fontSize(20)
                 .fontWeight(FontWeight.Bold)
                 .fontColor($r('app.color.text_primary'))
                 .width('100%')
@@ -160,18 +155,18 @@ export struct PrDetailView {
               Row({ space: 8 }) {
                 if (this.detail.merged) {
                   Text($r('app.string.pr_merged_badge'))
-                    .fontSize(10)
+                    .fontSize(12)
                     .fontColor(Color.White)
                     .padding({ left: 8, right: 8, top: 3, bottom: 3 })
-                    .borderRadius(10)
+                    .borderRadius(12)
                     .backgroundColor('#2E5FC7')
                 }
                 if (this.detail.headRefName !== '') {
                   Text(this.detail.headRefName)
-                    .fontSize(10)
+                    .fontSize(12)
                     .fontColor(Color.White)
                     .padding({ left: 8, right: 8, top: 3, bottom: 3 })
-                    .borderRadius(10)
+                    .borderRadius(12)
                     .backgroundColor($r('app.color.primary'))
                 }
               }
@@ -314,7 +309,7 @@ export struct PrDetailView {
                   .fontSize($r('app.float.caption_font_size'))
                   .fontColor($r('app.color.text_secondary'))
                   .backgroundColor($r('app.color.card_background'))
-                  .borderRadius(8)
+                  .borderRadius(6)
                   .border({ width: 1, color: $r('app.color.border') })
                   .onClick(() => {
                     promptAction.showToast({ message: $r('app.string.home_feature_coming') });
@@ -342,12 +337,12 @@ export struct PrDetailView {
           .buttonStyle(ButtonStyleMode.NORMAL)
           .layoutWeight(1)
           .height(44)
-          .borderRadius(8)
+          .borderRadius(6)
           .onClick(() => {
             promptAction.showToast({ message: $r('app.string.home_feature_coming') });
           })
         Text('😊')
-          .fontSize(22)
+          .fontSize(20)
           .padding({ left: 10, right: 4 })
           .onClick(() => {
             promptAction.showToast({ message: $r('app.string.home_feature_coming') });

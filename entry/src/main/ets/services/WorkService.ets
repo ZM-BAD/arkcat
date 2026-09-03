@@ -4,13 +4,19 @@
  * Projects/TopRepos/Orgs/Starred 走 viewer 连接。
  */
 import { graphql } from './GitHttpClient';
+import { Json, JsonMap } from '../utils/Json';
 import {
   WorkIssuesPage, WorkPrsPage, WorkDiscussionsPage, WorkProjectsPage,
   WorkOrgsPage, WorkTopReposPage, WorkStarredPage,
-  buildWorkIssuesQuery, buildWorkPrsQuery, buildWorkDiscussionsQuery, buildTopReposPrivacy,
+  buildWorkIssuesQuery, buildWorkPrsQuery, buildWorkDiscussionsQuery,
   mapWorkIssuesPage, mapWorkPrsPage, mapWorkDiscussionsPage,
   mapWorkProjectsPage, mapWorkOrgsPage, mapWorkTopReposPage, mapWorkStarredPage
 } from '../models/WorkModels';
+
+const VIEWER_LOGIN_QUERY = `
+query ViewerLogin {
+  viewer { login }
+}`;
 
 const WORK_ISSUES_QUERY = `
 query WorkIssues($query: String!, $first: Int = 25, $after: String) {
@@ -50,7 +56,7 @@ query WorkDiscussions($query: String!, $first: Int = 25, $after: String) {
     pageInfo { hasNextPage endCursor }
     nodes {
       ... on Discussion {
-        id number title state createdAt
+        id number title createdAt
         repository { nameWithOwner }
         category { name }
         comments { totalCount }
@@ -60,14 +66,14 @@ query WorkDiscussions($query: String!, $first: Int = 25, $after: String) {
 }`;
 
 const WORK_PROJECTS_QUERY = `
-query WorkProjects($first: Int = 30) {
+query WorkProjects($first: Int = 30, $after: String) {
   viewer {
     login
-    projectsV2(first: $first) {
+    projectsV2(first: $first, after: $after) {
       totalCount
       pageInfo { hasNextPage endCursor }
       nodes {
-        title number closed updatedAt
+        title number closed template createdAt updatedAt
         owner { ... on Organization { login } ... on User { login } }
       }
     }
@@ -75,13 +81,13 @@ query WorkProjects($first: Int = 30) {
 }`;
 
 const WORK_TOP_REPOS_QUERY = `
-query WorkTopRepositories($privacy: RepositoryPrivacy, $first: Int = 50, $after: String) {
+query WorkTopRepositories($first: Int = 50, $after: String) {
   viewer {
-    repositories(first: $first, after: $after, orderBy: { field: PUSHED_AT, direction: DESC }, privacy: $privacy) {
+    repositories(first: $first, after: $after, orderBy: { field: PUSHED_AT, direction: DESC }) {
       totalCount
       pageInfo { hasNextPage endCursor }
       nodes {
-        id name nameWithOwner
+        id name nameWithOwner isArchived isFork isMirror isTemplate visibility
         owner { login avatarUrl }
       }
     }
@@ -134,11 +140,11 @@ query UserStarred($login: String!, $first: Int = 30, $after: String) {
 }`;
 
 export class WorkService {
-  /** 工作区 Issue 列表（search type: ISSUE） */
+  /** 工作区 Issue 列表（search type: ISSUE；排序/组织/仓库多选进服务端 qualifier） */
   static async fetchIssues(token: string, state: string, scope: string, visibility: string,
-    cursor: string): Promise<WorkIssuesPage> {
+    sortKey: string, orgs: string[], repos: string[], cursor: string): Promise<WorkIssuesPage> {
     const variables: Record<string, Object> = {
-      'query': buildWorkIssuesQuery(state, scope, visibility),
+      'query': buildWorkIssuesQuery(state, scope, visibility, sortKey, orgs, repos),
       'first': 25
     };
     if (cursor !== '') {
@@ -148,11 +154,11 @@ export class WorkService {
     return mapWorkIssuesPage(data);
   }
 
-  /** 工作区 PR 列表（search type: PR） */
+  /** 工作区 PR 列表（search type: PR；排序/组织/仓库多选进服务端 qualifier） */
   static async fetchPrs(token: string, state: string, scope: string, visibility: string,
-    cursor: string): Promise<WorkPrsPage> {
+    sortKey: string, orgs: string[], repos: string[], cursor: string): Promise<WorkPrsPage> {
     const variables: Record<string, Object> = {
-      'query': buildWorkPrsQuery(state, scope, visibility),
+      'query': buildWorkPrsQuery(state, scope, visibility, sortKey, orgs, repos),
       'first': 25
     };
     if (cursor !== '') {
@@ -162,11 +168,11 @@ export class WorkService {
     return mapWorkPrsPage(data);
   }
 
-  /** 工作区 Discussion 列表（search type: DISCUSSION） */
+  /** 工作区 Discussion 列表（search type: DISCUSSION；排序 Sort: New / Top 时间窗进服务端） */
   static async fetchDiscussions(token: string, state: string, scope: string, unanswered: boolean,
-    cursor: string): Promise<WorkDiscussionsPage> {
+    sortKey: string, cursor: string): Promise<WorkDiscussionsPage> {
     const variables: Record<string, Object> = {
-      'query': buildWorkDiscussionsQuery(state, scope, unanswered),
+      'query': buildWorkDiscussionsQuery(state, scope, unanswered, sortKey),
       'first': 25
     };
     if (cursor !== '') {
@@ -176,7 +182,7 @@ export class WorkService {
     return mapWorkDiscussionsPage(data);
   }
 
-  /** 工作区 Projects（viewer.projectsV2，排序/过滤在客户端） */
+  /** 工作区 Projects（viewer.projectsV2；三态/范围/排序均在客户端） */
   static async fetchProjects(token: string, cursor: string): Promise<WorkProjectsPage> {
     const variables: Record<string, Object> = { 'first': 30 };
     if (cursor !== '') {
@@ -186,13 +192,9 @@ export class WorkService {
     return mapWorkProjectsPage(data);
   }
 
-  /** Top Repositories（viewer.repositories） */
-  static async fetchTopRepositories(token: string, privacy: string, cursor: string): Promise<WorkTopReposPage> {
+  /** Top Repositories（viewer.repositories 全量，8 项仓库筛选维度在客户端） */
+  static async fetchTopRepositories(token: string, cursor: string): Promise<WorkTopReposPage> {
     const variables: Record<string, Object> = { 'first': 50 };
-    const privacyEnum = buildTopReposPrivacy(privacy);
-    if (privacyEnum !== '') {
-      variables['privacy'] = privacyEnum;
-    }
     if (cursor !== '') {
       variables['after'] = cursor;
     }
@@ -208,6 +210,13 @@ export class WorkService {
     }
     const data = await graphql(WORK_ORGS_QUERY, variables, token);
     return mapWorkOrgsPage(data);
+  }
+
+  /** viewer login（任何 scope 的 PAT 均可） */
+  static async fetchViewerLogin(token: string): Promise<string> {
+    const data = await graphql(VIEWER_LOGIN_QUERY, {}, token);
+    const viewer = Json.obj(data, 'viewer') ?? ({} as JsonMap);
+    return Json.str(viewer, 'login');
   }
 
   /** 星标仓库列表：同 v1 走 viewer；传入 login 时展示目标用户星标（Spec 035） */

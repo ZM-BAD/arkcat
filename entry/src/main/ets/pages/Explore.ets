@@ -9,6 +9,7 @@ import { ExploreService, FEATURED_TOPICS } from '../services/ExploreService';
 import { RepoCard } from '../components/RepoCard';
 import { StateView } from '../components/StateView';
 import { resText } from '../utils/I18n';
+import { OctIcon } from '../components/OctIcon';
 
 @ComponentV2
 export struct ExploreView {
@@ -68,16 +69,15 @@ export struct ExploreView {
 
   /** Discover 入口块：彩色方标 + 标题 */
   @Builder
-  discoverEntry(icon: string, color: string, labelRes: Resource) {
+  discoverEntry(iconRes: Resource, color: ResourceColor, labelRes: Resource) {
     Row({ space: 10 }) {
-      Text(icon)
-        .fontSize(20)
-        .fontColor(Color.White)
-        .width(36)
-        .height(36)
-        .textAlign(TextAlign.Center)
-        .backgroundColor(color)
-        .borderRadius(8)
+      Stack() {
+        OctIcon({ res: iconRes, iconSize: 16, iconColor: Color.White })
+      }
+      .width(44)
+      .height(44)
+      .backgroundColor(color)
+        .borderRadius(6)
       Text(labelRes)
         .fontSize($r('app.float.body_font_size'))
         .fontWeight(FontWeight.Medium)
@@ -125,7 +125,7 @@ export struct ExploreView {
         .fontColor($r('app.color.link_blue'))
         .backgroundColor(Color.Transparent)
         .height(36)
-        .borderRadius(8)
+        .borderRadius(6)
         .border({ width: 1, color: $r('app.color.border') })
         .onClick(() => this.comingSoon())
     }
@@ -165,8 +165,8 @@ export struct ExploreView {
             .width('100%')
             .margin({ top: 8, bottom: 8 })
 
-          this.discoverEntry('🔥', '#D94130', $r('app.string.explore_trending'))
-          this.discoverEntry('✦', '#8250DF', $r('app.string.explore_awesome'))
+          this.discoverEntry($r('app.media.oct_flame_16'), '#D94130', $r('app.string.explore_trending'))
+          this.discoverEntry($r('app.media.oct_sparkle_16'), $r('app.color.shortcut_purple_fg'), $r('app.string.explore_awesome'))
 
           // Activity 区（Spec 003 推荐流）
           Text($r('app.string.explore_activity'))

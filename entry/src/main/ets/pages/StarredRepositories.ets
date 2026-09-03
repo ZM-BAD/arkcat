@@ -31,6 +31,7 @@ export struct StarredRepositoriesView {
     this.errorMsg = '';
     WorkService.fetchStarred(this.token, '', this.login)
       .then((page: WorkStarredPage) => {
+        // 排序后续再定：当前直接展示服务端返回顺序
         this.repos = page.repos;
         this.viewerLogin = page.viewerLogin;
         this.cursor = page.endCursor;
@@ -93,6 +94,10 @@ export struct StarredRepositoriesView {
           iconColor: $r('app.color.text_secondary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
 .onClick((): void => this.comingSoon())
       }
       .width('100%')
@@ -118,11 +123,11 @@ export struct StarredRepositoriesView {
         OctIcon({ res: $r('app.media.oct_star_fill_16'), iconSize: 12, iconColor: $r('app.color.star_gold') })
         Text(compactCount(repo.stargazerCount))
           .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.star_gold'))
+          .fontColor($r('app.color.text_primary'))
         if (repo.language !== '') {
           Text('●')
-            .fontSize(10)
-            .fontColor(repo.languageColor !== '' ? repo.languageColor : '#57606A')
+            .fontSize(12)
+            .fontColor(repo.languageColor !== '' ? repo.languageColor : $r('app.color.text_secondary'))
           Text(repo.language)
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))
@@ -151,6 +156,10 @@ export struct StarredRepositoriesView {
           iconColor: $r('app.color.text_primary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
 .onClick((): void => {
             this.pathStack.pop();
           })
@@ -159,7 +168,7 @@ export struct StarredRepositoriesView {
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))
           Text($r('app.string.nav_starred_title'))
-            .fontSize(22)
+            .fontSize(20)
             .fontWeight(FontWeight.Bold)
             .fontColor($r('app.color.text_primary'))
         }
@@ -169,9 +178,13 @@ export struct StarredRepositoriesView {
   OctIcon({
           res: $r('app.media.oct_search_24'),
           iconSize: 20,
-          iconColor: $r('app.color.text_primary')
+          iconColor: $r('app.color.link_blue')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_search'))
+        .focusable(true)
 .onClick((): void => {
             this.pathStack.pushPathByName('search', '');
           })
@@ -180,9 +193,14 @@ export struct StarredRepositoriesView {
   OctIcon({
           res: $r('app.media.oct_kebab_horizontal_16'),
           iconSize: 18,
-          iconColor: $r('app.color.text_secondary')
+          iconColor: $r('app.color.link_blue')
   })
+  .rotate({ angle: 90 })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
 .onClick((): void => this.comingSoon())
           .padding(6)
       }
@@ -227,7 +245,7 @@ export struct StarredRepositoriesView {
               .fontSize($r('app.float.caption_font_size'))
               .fontColor($r('app.color.link_blue'))
               .backgroundColor(Color.Transparent)
-              .borderRadius(8)
+              .borderRadius(6)
               .border({ width: 1, color: $r('app.color.border') })
               .onClick(() => this.comingSoon())
           }

@@ -42,6 +42,9 @@ export interface RepoSummary {
   primaryLanguage: string;
   languageColor: string;
   isPrivate: boolean;
+  /** 仓库属主（Pinned 卡片头像/用户名；查询未带 owner 时为 ''） */
+  ownerLogin: string;
+  ownerAvatarUrl: string;
 }
 
 /** 通知条目（REST /notifications） */
@@ -54,6 +57,10 @@ export interface NotificationItem {
   unread: boolean;
   updatedAt: string;
   subjectUrl: string;
+  /** 仓库属主头像（REST repository.owner.avatar_url；缺失为 ''） */
+  ownerAvatarUrl: string;
+  /** PullRequest 是否已合并（GraphQL 批量探测；默认为 false 保持绿色 PR） */
+  prMerged: boolean;
 }
 
 /**
@@ -92,6 +99,7 @@ export function mapRepo(raw: JsonMap): RepoSummary {
     language = Json.str(langObj, 'name');
     languageColor = Json.str(langObj, 'color');
   }
+  const owner = Json.obj(raw, 'owner');
   return {
     id: Json.str(raw, 'id'),
     name: Json.str(raw, 'name'),
@@ -101,7 +109,9 @@ export function mapRepo(raw: JsonMap): RepoSummary {
     forkCount: Json.num(raw, 'forkCount'),
     primaryLanguage: language,
     languageColor: languageColor,
-    isPrivate: Json.bool(raw, 'isPrivate')
+    isPrivate: Json.bool(raw, 'isPrivate'),
+    ownerLogin: owner !== null ? Json.str(owner, 'login') : '',
+    ownerAvatarUrl: owner !== null ? Json.str(owner, 'avatarUrl') : ''
   };
 }
 
@@ -109,6 +119,7 @@ export function mapRepo(raw: JsonMap): RepoSummary {
 export function mapNotification(raw: JsonMap): NotificationItem {
   const repo = Json.obj(raw, 'repository');
   const subject = Json.obj(raw, 'subject');
+  const owner = repo !== null ? Json.obj(repo, 'owner') : null;
   return {
     threadId: Json.str(raw, 'id'),
     repoFullName: repo ? Json.str(repo, 'full_name') : '',
@@ -117,7 +128,25 @@ export function mapNotification(raw: JsonMap): NotificationItem {
     reason: Json.str(raw, 'reason'),
     unread: Json.bool(raw, 'unread'),
     updatedAt: Json.str(raw, 'updated_at'),
-    subjectUrl: subject ? Json.str(subject, 'url') : ''
+    subjectUrl: subject ? Json.str(subject, 'url') : '',
+    ownerAvatarUrl: owner !== null ? Json.str(owner, 'avatar_url') : '',
+    prMerged: false
+  };
+}
+
+/** 拷贝通知并替换合并态（GraphQL 批量探测回填用，避免动态属性） */
+export function withPrMerged(item: NotificationItem, merged: boolean): NotificationItem {
+  return {
+    threadId: item.threadId,
+    repoFullName: item.repoFullName,
+    title: item.title,
+    subjectType: item.subjectType,
+    reason: item.reason,
+    unread: item.unread,
+    updatedAt: item.updatedAt,
+    subjectUrl: item.subjectUrl,
+    ownerAvatarUrl: item.ownerAvatarUrl,
+    prMerged: merged
   };
 }
 

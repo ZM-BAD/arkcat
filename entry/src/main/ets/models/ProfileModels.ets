@@ -13,6 +13,8 @@ export interface UserProfile {
   location: string;
   websiteUrl: string;
   twitterUsername: string;
+  /** 公开邮箱（用户未公开时 GraphQL 返回 null → ''） */
+  email: string;
   statusEmoji: string;
   statusMessage: string;
   viewerIsFollowing: boolean;
@@ -45,6 +47,7 @@ export function mapUserProfile(data: JsonMap): UserProfile {
     location: Json.str(userNode, 'location'),
     websiteUrl: Json.str(userNode, 'websiteUrl'),
     twitterUsername: Json.str(userNode, 'twitterUsername'),
+    email: Json.str(userNode, 'email'),
     statusEmoji: status ? Json.str(status, 'emoji') : '',
     statusMessage: status ? Json.str(status, 'message') : '',
     viewerIsFollowing: Json.bool(userNode, 'viewerIsFollowing'),

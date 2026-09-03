@@ -14,7 +14,7 @@
     },
     {
       "name": "text_secondary",
-      "value": "#656D76"
+      "value": "#59636E"
     },
     {
       "name": "divider",
@@ -74,7 +74,7 @@
     },
     {
       "name": "star_gold",
-      "value": "#B88700"
+      "value": "#BF8700"
     },
     {
       "name": "success_text",
@@ -167,6 +167,14 @@
     {
       "name": "tab_active_bg",
       "value": "#DDF4FF"
+    },
+    {
+      "name": "work_dark_bg",
+      "value": "#1F2328"
+    },
+    {
+      "name": "attention_bg",
+      "value": "#BF8700"
     }
   ]
 }

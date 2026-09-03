@@ -6,7 +6,7 @@ import { OctIcon } from '../components/OctIcon';
 import { RepoComment, IssueDetailPage } from '../models/RepoSubModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { StateView } from '../components/StateView';
-import { timeParts, TimeParts } from '../utils/Format';
+import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -61,24 +61,7 @@ export struct IssueDetailView {
   }
 
   private timeText(parts: TimeParts | null): string {
-    if (parts === null) {
-      return '';
-    }
-    const ui = this.getUIContext();
-    switch (parts.unit) {
-      case 'just_now':
-        return resText(ui, $r('app.string.time_just_now'));
-      case 'minute':
-        return resText(ui, $r('app.string.time_minutes_ago'), parts.value);
-      case 'hour':
-        return resText(ui, $r('app.string.time_hours_ago'), parts.value);
-      case 'day':
-        return resText(ui, $r('app.string.time_days_ago'), parts.value);
-      case 'month':
-        return resText(ui, $r('app.string.time_months_ago'), parts.value);
-      case 'year':
-        return resText(ui, $r('app.string.time_years_ago'), parts.value);
-    }
+    return parts !== null ? githubShortTime(parts) : '';
   }
 
   private stateIcon(): Resource {
@@ -92,9 +75,9 @@ export struct IssueDetailView {
 
   private stateColor(): ResourceColor {
     if (this.detail?.state === 'OPEN') {
-      return '#2DA44E';
+      return $r('app.color.success_text');
     }
-    return this.detail?.stateReason === 'NOT_PLANNED' ? $r('app.color.text_tertiary') : '#8250DF';
+    return this.detail?.stateReason === 'NOT_PLANNED' ? $r('app.color.text_tertiary') : $r('app.color.shortcut_purple_fg');
   }
 
   @Builder
@@ -141,6 +124,10 @@ export struct IssueDetailView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
         .onClick(() => {
           this.pathStack.pop();
         })
@@ -154,14 +141,22 @@ export struct IssueDetailView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
+.width(44)
+.height(44)
         .padding(6)
+        .accessibilityDescription($r('app.string.a11y_search'))
+        .focusable(true)
         .onClick(() => {
           this.pathStack.pushPathByName('search', '');
         })
         Stack() {
           OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
         }
+.width(44)
+.height(44)
         .padding(6)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
         .onClick(() => {
           promptAction.showToast({ message: $r('app.string.home_feature_coming') });
         })
@@ -175,7 +170,7 @@ export struct IssueDetailView {
           if (this.detail !== null) {
             Column({ space: 8 }) {
               Text(this.detail.title)
-                .fontSize(22)
+                .fontSize(20)
                 .fontWeight(FontWeight.Bold)
                 .fontColor($r('app.color.text_primary'))
                 .width('100%')
@@ -250,12 +245,12 @@ export struct IssueDetailView {
           .buttonStyle(ButtonStyleMode.NORMAL)
           .layoutWeight(1)
           .height(44)
-          .borderRadius(8)
+          .borderRadius(6)
           .onClick(() => {
             promptAction.showToast({ message: $r('app.string.home_feature_coming') });
           })
         Text('😊')
-          .fontSize(22)
+          .fontSize(20)
           .padding({ left: 10, right: 4 })
           .onClick(() => {
             promptAction.showToast({ message: $r('app.string.home_feature_coming') });

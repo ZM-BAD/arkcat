@@ -161,7 +161,7 @@ export struct CodeOptionsView {
     .height(52)
     .padding({ left: 16, right: 16 })
     .backgroundColor($r('app.color.card_background'))
-    .borderRadius(10)
+    .borderRadius(12)
     .margin({ bottom: 2 })
   }
 
@@ -228,6 +228,10 @@ export struct CodeOptionsView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
         .onClick(() => {
           this.pathStack.pop();
         })
@@ -262,14 +266,14 @@ export struct CodeOptionsView {
                   this.saveSetting('code_font_size', value);
                 })
               Text('A')
-                .fontSize(22)
+                .fontSize(20)
                 .fontColor($r('app.color.text_secondary'))
             }
             .width('100%')
             .height(64)
             .padding({ left: 16, right: 16 })
             .backgroundColor($r('app.color.card_background'))
-            .borderRadius(10)
+            .borderRadius(12)
             .margin({ bottom: 2 })
           }
 
@@ -292,7 +296,7 @@ export struct CodeOptionsView {
               Row()
                 .width(20)
                 .height(20)
-                .borderRadius(4)
+                .borderRadius(6)
                 .border({ width: 1.5, color: $r('app.color.link_blue') })
                 .onClick(() => {
                   this.featureComing();
@@ -300,7 +304,11 @@ export struct CodeOptionsView {
               Stack() {
                 OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
               }
+.width(44)
+.height(44)
               .padding(4)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
               .onClick(() => {
                 this.featureComing();
               })
@@ -321,7 +329,7 @@ export struct CodeOptionsView {
             .backgroundColor(this.codeBg())
           }
           .width('100%')
-          .borderRadius(10)
+          .borderRadius(12)
           .backgroundColor($r('app.color.card_background'))
 
           Row()

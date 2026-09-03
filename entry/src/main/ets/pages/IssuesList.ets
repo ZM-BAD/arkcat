@@ -8,7 +8,7 @@ import { OctIcon } from '../components/OctIcon';
 import { IssueSummary, IssuesPage } from '../models/IssuesModels';
 import { IssuesService } from '../services/IssuesService';
 import { StateView } from '../components/StateView';
-import { timeParts, TimeParts } from '../utils/Format';
+import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -118,24 +118,7 @@ export struct IssuesListView {
   }
 
   private timeText(parts: TimeParts | null): string {
-    if (parts === null) {
-      return '';
-    }
-    const ui = this.getUIContext();
-    switch (parts.unit) {
-      case 'just_now':
-        return resText(ui, $r('app.string.time_just_now'));
-      case 'minute':
-        return resText(ui, $r('app.string.time_minutes_ago'), parts.value);
-      case 'hour':
-        return resText(ui, $r('app.string.time_hours_ago'), parts.value);
-      case 'day':
-        return resText(ui, $r('app.string.time_days_ago'), parts.value);
-      case 'month':
-        return resText(ui, $r('app.string.time_months_ago'), parts.value);
-      case 'year':
-        return resText(ui, $r('app.string.time_years_ago'), parts.value);
-    }
+    return parts !== null ? githubShortTime(parts) : '';
   }
 
   private stateLabel(): string {
@@ -170,7 +153,7 @@ export struct IssuesListView {
   }
 
   private issueColor(issue: IssueSummary): ResourceColor {
-    return issue.state === 'OPEN' ? '#2DA44E' : '#8250DF';
+    return issue.state === 'OPEN' ? $r('app.color.success_text') : $r('app.color.shortcut_purple_fg');
   }
 
   @Builder
@@ -225,11 +208,11 @@ export struct IssuesListView {
   @Builder
   labelChip(label: string) {
     Text(label)
-      .fontSize(10)
+      .fontSize(12)
       .fontColor(Color.White)
       .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-      .borderRadius(4)
-      .backgroundColor('#57606A')
+      .borderRadius(6)
+      .backgroundColor($r('app.color.text_secondary'))
       .margin({ right: 6 })
   }
 
@@ -265,7 +248,7 @@ export struct IssuesListView {
               .fontColor($r('app.color.text_secondary'))
           }
           .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-          .borderRadius(10)
+          .borderRadius(12)
           .backgroundColor($r('app.color.chip_bg'))
         }
         if (issue.linkedPrCount > 0) {
@@ -276,7 +259,7 @@ export struct IssuesListView {
               .fontColor($r('app.color.text_secondary'))
           }
           .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-          .borderRadius(10)
+          .borderRadius(12)
           .backgroundColor($r('app.color.chip_bg'))
         }
         Blank()
@@ -302,6 +285,10 @@ export struct IssuesListView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
         .onClick(() => {
           this.pathStack.pop();
         })
@@ -319,14 +306,22 @@ export struct IssuesListView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
+.width(44)
+.height(44)
         .padding(6)
+        .accessibilityDescription($r('app.string.a11y_search'))
+        .focusable(true)
         .onClick(() => {
           this.pathStack.pushPathByName('search', '');
         })
         Stack() {
           OctIcon({ res: $r('app.media.oct_plus_24'), iconSize: 20, iconColor: $r('app.color.link_blue') })
         }
+.width(44)
+.height(44)
         .padding(6)
+        .accessibilityDescription($r('app.string.a11y_new'))
+        .focusable(true)
         .onClick(() => {
           promptAction.showToast({ message: $r('app.string.issues_new_coming') });
         })
@@ -337,6 +332,7 @@ export struct IssuesListView {
 
       Scroll() {
         Column() {
+          Scroll() {
           Row() {
             Stack({ alignContent: Alignment.TopEnd }) {
               OctIcon({ res: $r('app.media.oct_filter_16'), iconSize: 14, iconColor: $r('app.color.text_primary') })
@@ -351,7 +347,7 @@ export struct IssuesListView {
                   .fill($r('app.color.link_blue'))
                   .margin({ top: -6, right: -6 })
                 Text(`${this.activeFilterCount()}`)
-                  .fontSize(8)
+                  .fontSize(12)
                   .fontColor(Color.White)
                   .margin({ top: -10, right: -3 })
               }
@@ -374,6 +370,9 @@ export struct IssuesListView {
               this.assigneeMenu(), this.assignee !== '')
           }
           .width('100%')
+          }
+          .scrollable(ScrollDirection.Horizontal)
+          .scrollBar(BarState.Off)
           .margin({ bottom: 12 })
 
           if (this.shown.length > 0) {

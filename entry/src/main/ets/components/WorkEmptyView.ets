@@ -15,11 +15,11 @@ export struct WorkEmptyView {
     Column({ space: 12 }) {
       if (this.iconText !== '') {
         Text(this.iconText)
-          .fontSize(56)
+          .fontSize(40)
           .margin({ top: 24 })
       }
       Text(this.title)
-        .fontSize(22)
+        .fontSize(20)
         .fontWeight(FontWeight.Bold)
         .fontColor($r('app.color.text_primary'))
         .textAlign(TextAlign.Center)
@@ -38,7 +38,7 @@ export struct WorkEmptyView {
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.link_blue'))
           .backgroundColor(Color.Transparent)
-          .borderRadius(8)
+          .borderRadius(6)
           .border({ width: 1, color: $r('app.color.border') })
           .margin({ top: 12 })
           .onClick(() => this.onButton())

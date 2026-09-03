@@ -9,7 +9,7 @@ import { WorkLabel } from '../models/WorkModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { StateView } from '../components/StateView';
 import { WorkEmptyView } from '../components/WorkEmptyView';
-import { timeParts, TimeParts } from '../utils/Format';
+import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -86,24 +86,7 @@ export struct RepoPrsView {
   }
 
   private timeText(parts: TimeParts | null): string {
-    if (parts === null) {
-      return '';
-    }
-    const ui = this.getUIContext();
-    switch (parts.unit) {
-      case 'just_now':
-        return resText(ui, $r('app.string.time_just_now'));
-      case 'minute':
-        return resText(ui, $r('app.string.time_minutes_ago'), parts.value);
-      case 'hour':
-        return resText(ui, $r('app.string.time_hours_ago'), parts.value);
-      case 'day':
-        return resText(ui, $r('app.string.time_days_ago'), parts.value);
-      case 'month':
-        return resText(ui, $r('app.string.time_months_ago'), parts.value);
-      case 'year':
-        return resText(ui, $r('app.string.time_years_ago'), parts.value);
-    }
+    return parts !== null ? githubShortTime(parts) : '';
   }
 
   private activeFilterCount(): number {
@@ -144,9 +127,9 @@ export struct RepoPrsView {
   private prColor(item: RepoPrItem): ResourceColor {
     const key = repoPrIconKey(item.state, item.merged);
     if (key === 'merged') {
-      return '#8250DF';
+      return $r('app.color.shortcut_purple_fg');
     }
-    return key === 'open' ? '#2DA44E' : $r('app.color.text_tertiary');
+    return key === 'open' ? $r('app.color.success_text') : $r('app.color.text_tertiary');
   }
 
   private labelMenu(): MenuElement[] {
@@ -201,11 +184,11 @@ export struct RepoPrsView {
   @Builder
   labelChip(label: WorkLabel) {
     Text(label.name)
-      .fontSize(10)
+      .fontSize(12)
       .fontColor(Color.White)
       .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-      .borderRadius(4)
-      .backgroundColor(label.color !== '' ? label.color : '#57606A')
+      .borderRadius(6)
+      .backgroundColor(label.color !== '' ? label.color : $r('app.color.text_secondary'))
       .margin({ right: 6 })
   }
 
@@ -241,7 +224,7 @@ export struct RepoPrsView {
               .fontColor($r('app.color.success_text'))
           }
           .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-          .borderRadius(10)
+          .borderRadius(12)
           .backgroundColor($r('app.color.checks_success_bg'))
         }
         if (item.commentCount > 0) {
@@ -252,7 +235,7 @@ export struct RepoPrsView {
               .fontColor($r('app.color.text_secondary'))
           }
           .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-          .borderRadius(10)
+          .borderRadius(12)
           .backgroundColor($r('app.color.chip_bg'))
         }
         if (item.authorAvatar !== '') {
@@ -285,6 +268,10 @@ export struct RepoPrsView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
         .onClick(() => {
           this.pathStack.pop();
         })
@@ -302,14 +289,22 @@ export struct RepoPrsView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
+.width(44)
+.height(44)
         .padding(6)
+        .accessibilityDescription($r('app.string.a11y_search'))
+        .focusable(true)
         .onClick(() => {
           this.pathStack.pushPathByName('search', '');
         })
         Stack() {
           OctIcon({ res: $r('app.media.oct_plus_24'), iconSize: 20, iconColor: $r('app.color.link_blue') })
         }
+.width(44)
+.height(44)
         .padding(6)
+        .accessibilityDescription($r('app.string.a11y_new'))
+        .focusable(true)
         .onClick(() => {
           promptAction.showToast({ message: $r('app.string.home_feature_coming') });
         })
@@ -320,6 +315,7 @@ export struct RepoPrsView {
 
       Scroll() {
         Column() {
+          Scroll() {
           Row() {
             Stack({ alignContent: Alignment.TopEnd }) {
               OctIcon({ res: $r('app.media.oct_filter_16'), iconSize: 14, iconColor: $r('app.color.text_primary') })
@@ -334,7 +330,7 @@ export struct RepoPrsView {
                   .fill($r('app.color.link_blue'))
                   .margin({ top: -6, right: -6 })
                 Text(`${this.activeFilterCount()}`)
-                  .fontSize(8)
+                  .fontSize(12)
                   .fontColor(Color.White)
                   .margin({ top: -10, right: -3 })
               }
@@ -358,6 +354,9 @@ export struct RepoPrsView {
               this.assigneeMenu(), this.assignee !== '')
           }
           .width('100%')
+          }
+          .scrollable(ScrollDirection.Horizontal)
+          .scrollBar(BarState.Off)
           .margin({ bottom: 12 })
 
           if (this.shown.length > 0) {

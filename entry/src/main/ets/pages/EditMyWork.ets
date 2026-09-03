@@ -10,7 +10,7 @@ import { resText } from '../utils/I18n';
 /** 条目元信息（图标/色/文案/路由 与 Home 013/024 保持一致） */
 interface WorkEntryMeta {
   iconRes: Resource;
-  color: string;
+  color: ResourceColor;
   label: Resource;
 }
 
@@ -36,19 +36,19 @@ export struct EditMyWorkView {
   private meta(id: string): WorkEntryMeta {
     switch (id) {
       case 'prs':
-        return { iconRes: $r('app.media.oct_git_pull_request_16'), color: '#3C78D8', label: $r('app.string.home_work_pull_requests') };
+        return { iconRes: $r('app.media.oct_git_pull_request_16'), color: $r('app.color.link_blue'), label: $r('app.string.home_work_pull_requests') };
       case 'discussions':
-        return { iconRes: $r('app.media.oct_comment_discussion_16'), color: '#8250DF', label: $r('app.string.home_work_discussions') };
+        return { iconRes: $r('app.media.oct_comment_discussion_16'), color: $r('app.color.shortcut_purple_fg'), label: $r('app.string.home_work_discussions') };
       case 'projects':
-        return { iconRes: $r('app.media.oct_project_16'), color: '#57606A', label: $r('app.string.home_work_projects') };
+        return { iconRes: $r('app.media.oct_table_16'), color: $r('app.color.text_secondary'), label: $r('app.string.home_work_projects') };
       case 'topRepos':
-        return { iconRes: $r('app.media.oct_repo_16'), color: '#24292F', label: $r('app.string.home_work_top_repos') };
+        return { iconRes: $r('app.media.oct_repo_16'), color: $r('app.color.text_primary'), label: $r('app.string.home_work_top_repos') };
       case 'orgs':
-        return { iconRes: $r('app.media.oct_organization_16'), color: '#E87B2E', label: $r('app.string.home_work_organizations') };
+        return { iconRes: $r('app.media.oct_organization_16'), color: $r('app.color.shortcut_orange_fg'), label: $r('app.string.home_work_organizations') };
       case 'starred':
-        return { iconRes: $r('app.media.oct_star_fill_16'), color: '#E3B341', label: $r('app.string.home_work_starred') };
+        return { iconRes: $r('app.media.oct_star_fill_16'), color: $r('app.color.star_gold'), label: $r('app.string.home_work_starred') };
       default:
-        return { iconRes: $r('app.media.oct_issue_opened_16'), color: '#2DA44E', label: $r('app.string.home_work_issues') };
+        return { iconRes: $r('app.media.oct_issue_opened_16'), color: $r('app.color.success_text'), label: $r('app.string.home_work_issues') };
     }
   }
 
@@ -83,8 +83,11 @@ export struct EditMyWorkView {
   @Builder
   workRow(item: WorkSection) {
     Row() {
-      Toggle({ type: ToggleType.Checkbox, isOn: item.visible })
+      // 官方 App 为方形勾选框：Checkbox 走 ROUNDED_SQUARE 形状（Toggle 默认圆形）
+      Checkbox()
+        .shape(CheckBoxShape.ROUNDED_SQUARE)
         .selectedColor($r('app.color.link_blue'))
+        .select(item.visible)
         .width(22)
         .height(22)
         .onChange((isOn: boolean) => {
@@ -97,10 +100,10 @@ export struct EditMyWorkView {
       Stack() {
           OctIcon({ res: this.meta(item.id).iconRes, iconSize: 18, iconColor: Color.White })
       }
-      .width(34)
-      .height(34)
+      .width(44)
+      .height(44)
       .backgroundColor(this.meta(item.id).color)
-      .borderRadius(8)
+      .borderRadius(6)
       .margin({ left: 12 })
       Text(this.meta(item.id).label)
         .fontSize($r('app.float.body_font_size'))
@@ -135,6 +138,10 @@ export struct EditMyWorkView {
           iconColor: $r('app.color.text_primary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
 .onClick((): void => {
             this.pathStack.pop();
           })
@@ -156,6 +163,10 @@ export struct EditMyWorkView {
           iconColor: $r('app.color.text_secondary')
   })
 }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
 .onClick((): void => {
             promptAction.showToast({ message: $r('app.string.home_feature_coming') });
           })
@@ -170,7 +181,7 @@ export struct EditMyWorkView {
           ListItem() {
             this.workRow(item)
           }
-          .borderRadius(8)
+          .borderRadius(6)
           .backgroundColor($r('app.color.card_background'))
           .margin({ bottom: 4 })
         }, (item: WorkSection) => item.id)

@@ -80,6 +80,9 @@ export interface WorkProjectItem {
   number: number;
   title: string;
   closed: boolean;
+  /** 模板项目（ProjectV2.template；三态之一，见 filterWorkProjects） */
+  template: boolean;
+  createdAt: string;
   updatedAt: string;
   ownerLogin: string;
 }
@@ -111,6 +114,12 @@ export interface WorkTopRepoItem {
   name: string;
   ownerLogin: string;
   ownerAvatar: string;
+  isArchived: boolean;
+  isFork: boolean;
+  isMirror: boolean;
+  isTemplate: boolean;
+  /** RepositoryVisibility：PUBLIC | PRIVATE | INTERNAL */
+  visibility: string;
 }
 
 export interface WorkTopReposPage {
@@ -148,6 +157,15 @@ export function workScopeQualifier(scope: string): string {
   if (scope === 'mentioned') {
     return 'mentions:@me';
   }
+  if (scope === 'involved') {
+    return 'involves:@me';
+  }
+  if (scope === 'review_requested') {
+    return 'review-requested:@me';
+  }
+  if (scope === 'commented') {
+    return 'commenter:@me';
+  }
   return 'author:@me';
 }
 
@@ -162,8 +180,30 @@ export function workVisibilityQualifier(visibility: string): string {
   return '';
 }
 
-/** 工作区 Issue 搜索串：is:issue + 状态 + 归属 + 可见性 + 更新时间倒序 */
-export function buildWorkIssuesQuery(state: string, scope: string, visibility: string): string {
+/** Issue 排序键 → search sort qualifier（官方 Sort by 四组；反应排序键与文档一致） */
+export function workIssuesSortQualifier(sortKey: string): string {
+  const map: Record<string, string> = {
+    'newest': 'sort:created-desc',
+    'oldest': 'sort:created-asc',
+    'most_commented': 'sort:comments-desc',
+    'least_commented': 'sort:comments-asc',
+    'recently_updated': 'sort:updated-desc',
+    'least_recently_updated': 'sort:updated-asc',
+    'reactions:+1': 'sort:reactions-+1-desc',
+    'reactions:-1': 'sort:reactions--1-desc',
+    'reactions:laugh': 'sort:reactions-smile-desc',
+    'reactions:hooray': 'sort:reactions-tada-desc',
+    'reactions:heart': 'sort:reactions-heart-desc',
+    'reactions:rocket': 'sort:reactions-rocket-desc',
+    'reactions:eyes': 'sort:reactions-eyes-desc'
+  };
+  const qualifier = map[sortKey];
+  return qualifier !== undefined ? qualifier : 'sort:created-desc';
+}
+
+/** 工作区 Issue 搜索串：is:issue + 状态 + 归属 + 可见性 + 组织/仓库（多值）+ 排序 */
+export function buildWorkIssuesQuery(state: string, scope: string, visibility: string,
+  sortKey: string, orgs: string[], repos: string[]): string {
   let query = 'is:issue';
   if (state === 'open') {
     query += ' is:open';
@@ -175,11 +215,19 @@ export function buildWorkIssuesQuery(state: string, scope: string, visibility: s
   if (vis !== '') {
     query += ` ${vis}`;
   }
-  return `${query} sort:updated-desc`;
+  orgs.forEach((o: string) => {
+    query += ` org:${o}`;
+  });
+  repos.forEach((r: string) => {
+    query += ` repo:${r}`;
+  });
+  query += ` ${workIssuesSortQualifier(sortKey)}`;
+  return query;
 }
 
-/** 工作区 PR 搜索串：is:pr + 状态（含 merged）+ 归属 + 可见性 */
-export function buildWorkPrsQuery(state: string, scope: string, visibility: string): string {
+/** 工作区 PR 搜索串：is:pr + 状态（open/merged/closed/queued）+ 归属 + 可见性 + 组织/仓库（多值）+ 排序 */
+export function buildWorkPrsQuery(state: string, scope: string, visibility: string,
+  sortKey: string, orgs: string[], repos: string[]): string {
   let query = 'is:pr';
   if (state === 'open') {
     query += ' is:open';
@@ -187,17 +235,52 @@ export function buildWorkPrsQuery(state: string, scope: string, visibility: stri
     query += ' is:closed';
   } else if (state === 'merged') {
     query += ' is:merged';
+  } else if (state === 'queued') {
+    query += ' is:queued';
   }
   query += ` ${workScopeQualifier(scope)}`;
   const vis = workVisibilityQualifier(visibility);
   if (vis !== '') {
     query += ` ${vis}`;
   }
-  return `${query} sort:updated-desc`;
+  orgs.forEach((o: string) => {
+    query += ` org:${o}`;
+  });
+  repos.forEach((r: string) => {
+    query += ` repo:${r}`;
+  });
+  query += ` ${workIssuesSortQualifier(sortKey)}`;
+  return query;
 }
 
-/** 工作区 Discussion 搜索串：is:discussion + 状态 + 归属 + unanswered */
-export function buildWorkDiscussionsQuery(state: string, scope: string, unanswered: boolean): string {
+/** N 天前的日期（UTC YYYY-MM-DD，供 Top 时间窗 used qualifier） */
+export function pastDate(days: number): string {
+  return new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+}
+
+/** Discussion 排序键 → search 片段（官方 Sort: New / Top: 时间窗；Top 用 interactions 加权近似） */
+export function discussionSortQualifier(sortKey: string): string {
+  if (sortKey === 'top_yesterday') {
+    return `updated:>=${pastDate(1)} sort:interactions-desc`;
+  }
+  if (sortKey === 'top_week') {
+    return `updated:>=${pastDate(7)} sort:interactions-desc`;
+  }
+  if (sortKey === 'top_month') {
+    return `updated:>=${pastDate(30)} sort:interactions-desc`;
+  }
+  if (sortKey === 'top_year') {
+    return `updated:>=${pastDate(365)} sort:interactions-desc`;
+  }
+  if (sortKey === 'top_all') {
+    return 'sort:interactions-desc';
+  }
+  return 'sort:created-desc';
+}
+
+/** 工作区 Discussion 搜索串：is:discussion + 状态 + 归属 + unanswered + 排序（New/Top 时间窗） */
+export function buildWorkDiscussionsQuery(state: string, scope: string, unanswered: boolean,
+  sortKey: string): string {
   let query = 'is:discussion';
   if (state === 'open') {
     query += ' is:open';
@@ -208,6 +291,7 @@ export function buildWorkDiscussionsQuery(state: string, scope: string, unanswer
   if (unanswered) {
     query += ' is:unanswered';
   }
+  query += ` ${discussionSortQualifier(sortKey)}`;
   return query;
 }
 
@@ -361,25 +445,53 @@ export function mapWorkDiscussionsPage(data: JsonMap): WorkDiscussionsPage {
 }
 
 /** Project 客户端过滤（纯函数）：范围 + 状态，排序：Open 前置 + updatedAt 降序 */
+/** Projects 过滤（纯函数）：范围（全部/我创建）+ 三态（open/closed/template，官方 Template 项目） */
 export function filterWorkProjects(projects: WorkProjectItem[], ownedOnly: boolean,
-  viewerLogin: string, closedOnly: boolean): WorkProjectItem[] {
+  viewerLogin: string, stateFilter: string): WorkProjectItem[] {
   const result: WorkProjectItem[] = [];
   for (const project of projects) {
     if (ownedOnly && project.ownerLogin !== viewerLogin) {
       continue;
     }
-    if (closedOnly !== project.closed) {
+    if (stateFilter === 'closed' && !project.closed) {
+      continue;
+    }
+    if (stateFilter === 'template' && !project.template) {
+      continue;
+    }
+    if (stateFilter === 'open' && (project.closed || project.template)) {
       continue;
     }
     result.push(project);
   }
-  result.sort((a: WorkProjectItem, b: WorkProjectItem): number => {
-    if (a.closed !== b.closed) {
-      return a.closed ? 1 : -1;
-    }
-    return Date.parse(b.updatedAt) - Date.parse(a.updatedAt);
-  });
   return result;
+}
+
+/** Projects 排序（纯函数）：官方 8 项；viewed 两项以本会话浏览记录为准（无记录视为 0） */
+export function sortWorkProjects(projects: WorkProjectItem[], sortKey: string,
+  viewedAt: Record<string, number>): WorkProjectItem[] {
+  const sorted: WorkProjectItem[] = [...projects];
+  sorted.sort((a: WorkProjectItem, b: WorkProjectItem): number => {
+    switch (sortKey) {
+      case 'least_viewed':
+        return (viewedAt[a.id] ?? 0) - (viewedAt[b.id] ?? 0);
+      case 'updated_newest':
+        return b.updatedAt.localeCompare(a.updatedAt);
+      case 'updated_oldest':
+        return a.updatedAt.localeCompare(b.updatedAt);
+      case 'created_newest':
+        return b.createdAt.localeCompare(a.createdAt);
+      case 'created_oldest':
+        return a.createdAt.localeCompare(b.createdAt);
+      case 'title_az':
+        return a.title.localeCompare(b.title);
+      case 'title_za':
+        return b.title.localeCompare(a.title);
+      default:
+        return (viewedAt[b.id] ?? 0) - (viewedAt[a.id] ?? 0);
+    }
+  });
+  return sorted;
 }
 
 /** viewer.projectsV2 响应 → WorkProjectsPage */
@@ -396,6 +508,8 @@ export function mapWorkProjectsPage(data: JsonMap): WorkProjectsPage {
       number: Json.num(node, 'number'),
       title: Json.str(node, 'title'),
       closed: Json.bool(node, 'closed'),
+      template: Json.bool(node, 'template'),
+      createdAt: Json.str(node, 'createdAt'),
       updatedAt: Json.str(node, 'updatedAt'),
       ownerLogin: owner !== null ? Json.str(owner, 'login') : ''
     });
@@ -442,8 +556,41 @@ export function mapTopRepo(raw: JsonMap): WorkTopRepoItem {
     id: Json.str(raw, 'id'),
     name: Json.str(raw, 'name'),
     ownerLogin: owner !== null ? Json.str(owner, 'login') : '',
-    ownerAvatar: owner !== null ? Json.str(owner, 'avatarUrl') : ''
+    ownerAvatar: owner !== null ? Json.str(owner, 'avatarUrl') : '',
+    isArchived: Json.bool(raw, 'isArchived'),
+    isFork: Json.bool(raw, 'isFork'),
+    isMirror: Json.bool(raw, 'isMirror'),
+    isTemplate: Json.bool(raw, 'isTemplate'),
+    visibility: Json.str(raw, 'visibility')
   };
+}
+
+/** 仓库筛选维度（官方 Top Repositories 下拉）：All/Archived/Fork/Mirror/Private/Public/Source/Template */
+export function filterTopRepos(repos: WorkTopRepoItem[], filterKey: string): WorkTopRepoItem[] {
+  return repos.filter((r: WorkTopRepoItem) => {
+    if (filterKey === 'archived') {
+      return r.isArchived;
+    }
+    if (filterKey === 'fork') {
+      return r.isFork;
+    }
+    if (filterKey === 'mirror') {
+      return r.isMirror;
+    }
+    if (filterKey === 'private') {
+      return r.visibility === 'PRIVATE';
+    }
+    if (filterKey === 'public') {
+      return r.visibility === 'PUBLIC' || r.visibility === 'INTERNAL';
+    }
+    if (filterKey === 'source') {
+      return !r.isFork && !r.isMirror && !r.isArchived;
+    }
+    if (filterKey === 'template') {
+      return r.isTemplate;
+    }
+    return true;
+  });
 }
 
 /** viewer.repositories 响应 → WorkTopReposPage */

@@ -6,7 +6,7 @@ import { OctIcon } from '../components/OctIcon';
 import { ReleaseItem, RepoReleasesPage, monthDayText } from '../models/RepoSubModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { StateView } from '../components/StateView';
-import { timeParts, TimeParts } from '../utils/Format';
+import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -64,24 +64,7 @@ export struct RepoReleasesView {
   }
 
   private timeText(parts: TimeParts | null): string {
-    if (parts === null) {
-      return '';
-    }
-    const ui = this.getUIContext();
-    switch (parts.unit) {
-      case 'just_now':
-        return resText(ui, $r('app.string.time_just_now'));
-      case 'minute':
-        return resText(ui, $r('app.string.time_minutes_ago'), parts.value);
-      case 'hour':
-        return resText(ui, $r('app.string.time_hours_ago'), parts.value);
-      case 'day':
-        return resText(ui, $r('app.string.time_days_ago'), parts.value);
-      case 'month':
-        return resText(ui, $r('app.string.time_months_ago'), parts.value);
-      case 'year':
-        return resText(ui, $r('app.string.time_years_ago'), parts.value);
-    }
+    return parts !== null ? githubShortTime(parts) : '';
   }
 
   @Builder
@@ -94,7 +77,7 @@ export struct RepoReleasesView {
           .fontColor($r('app.color.text_primary'))
         if (item.isLatest) {
           Text($r('app.string.releases_latest'))
-            .fontSize(10)
+            .fontSize(12)
             .fontColor($r('app.color.success_text'))
             .padding({ left: 6, right: 6, top: 2, bottom: 2 })
             .borderRadius(6)
@@ -116,6 +99,10 @@ export struct RepoReleasesView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
         .onClick(() => {
           this.pathStack.pop();
         })
@@ -141,12 +128,12 @@ export struct RepoReleasesView {
             // 最新版本头卡
             Column({ space: 8 }) {
               Text(this.releases[0].tagName)
-                .fontSize(28)
+                .fontSize(32)
                 .fontWeight(FontWeight.Bold)
                 .fontColor($r('app.color.text_primary'))
               if (this.releases[0].isLatest) {
                 Text($r('app.string.releases_latest'))
-                  .fontSize(10)
+                  .fontSize(12)
                   .fontColor($r('app.color.success_text'))
                   .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                   .borderRadius(6)
@@ -171,7 +158,7 @@ export struct RepoReleasesView {
 
               Column({ space: 6 }) {
                 Text('What\'s Changed')
-                  .fontSize(18)
+                  .fontSize(20)
                   .fontWeight(FontWeight.Bold)
                   .fontColor($r('app.color.text_primary'))
                 Text(this.releases[0].description !== '' ? this.releases[0].description : this.releases[0].body)

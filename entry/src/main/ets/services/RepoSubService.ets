@@ -55,7 +55,7 @@ query RepoReleases($owner: String!, $name: String!, $first: Int = 30, $after: St
     releases(first: $first, after: $after, orderBy: { field: CREATED_AT, direction: DESC }) {
       totalCount
       pageInfo { hasNextPage endCursor }
-      nodes { id tagName isLatest createdAt description body author { login avatarUrl } }
+      nodes { id tagName isLatest createdAt description author { login avatarUrl } }
     }
   }
 }`;

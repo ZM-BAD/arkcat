@@ -66,7 +66,7 @@ export struct OrgListView {
       Image(org.avatarUrl)
         .width(56)
         .height(56)
-        .borderRadius(8)
+        .borderRadius(6)
         .backgroundColor($r('app.color.heat_empty'))
       Column({ space: 3 }) {
         if (org.name !== '') {
@@ -108,6 +108,10 @@ export struct OrgListView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
+.width(44)
+.height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
         .onClick(() => {
           this.pathStack.pop();
         })

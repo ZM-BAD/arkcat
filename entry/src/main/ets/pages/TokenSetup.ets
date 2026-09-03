@@ -17,7 +17,7 @@ export struct TokenSetup {
       Blank().height(80)
 
       Text('🐙')
-        .fontSize(56)
+        .fontSize(40)
 
       Text($r('app.string.token_setup_title'))
         .fontSize($r('app.float.page_text_font_size'))
