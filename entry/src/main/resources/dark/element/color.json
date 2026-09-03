@@ -53,6 +53,14 @@
       "value": "#21262D"
     },
     {
+      "name": "search_chips_row_bg",
+      "value": "#21262D"
+    },
+    {
+      "name": "search_chip_bg",
+      "value": "#30363D"
+    },
+    {
       "name": "chip_active_bg",
       "value": "#4D1F6FEB"
     },

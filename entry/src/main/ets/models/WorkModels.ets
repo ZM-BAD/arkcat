@@ -648,3 +648,71 @@ export function mapWorkStarredPage(data: JsonMap): WorkStarredPage {
     repos: repos
   };
 }
+
+/** 星标列表（viewer.lists 节点，Spec 023） */
+export interface WorkUserList {
+  id: string;
+  name: string;
+  description: string;
+  /** 列表内仓库总数（items.totalCount） */
+  itemCount: number;
+  /** 列表内前 100 个仓库节点 id（成员判断用） */
+  repoIds: string[];
+}
+
+/** viewer.lists 响应 → WorkUserList[]（成员=列表内仓库节点 id 集合） */
+export function mapWorkUserLists(data: JsonMap): WorkUserList[] {
+  const viewer = Json.obj(data, 'viewer') ?? ({} as JsonMap);
+  const listsWrap = Json.obj(viewer, 'lists') ?? ({} as JsonMap);
+  const result: WorkUserList[] = [];
+  for (const nodeItem of Json.arr(listsWrap, 'nodes')) {
+    const node = nodeItem as JsonMap;
+    const itemsWrap = Json.obj(node, 'items') ?? ({} as JsonMap);
+    const repoIds: string[] = [];
+    for (const item of Json.arr(itemsWrap, 'nodes')) {
+      const id = Json.str(item as JsonMap, 'id');
+      if (id !== '') {
+        repoIds.push(id);
+      }
+    }
+    result.push({
+      id: Json.str(node, 'id'),
+      name: Json.str(node, 'name'),
+      description: Json.str(node, 'description'),
+      itemCount: Json.num(itemsWrap, 'totalCount'),
+      repoIds: repoIds
+    });
+  }
+  return result;
+}
+
+/** 列表详情（Spec 023）：名称/描述/成员仓库 + 归属人（viewer） */
+export interface WorkListDetail {
+  id: string;
+  name: string;
+  description: string;
+  itemCount: number;
+  viewerLogin: string;
+  viewerAvatar: string;
+  repos: WorkStarredRepoItem[];
+}
+
+/** node(id) + UserList 响应 → WorkListDetail（仓库节点复用 mapStarredRepo） */
+export function mapWorkListDetail(data: JsonMap): WorkListDetail {
+  const viewer = Json.obj(data, 'viewer') ?? ({} as JsonMap);
+  const node = Json.obj(data, 'node') ?? ({} as JsonMap);
+  const itemsWrap = Json.obj(node, 'items') ?? ({} as JsonMap);
+  const repos: WorkStarredRepoItem[] = [];
+  for (const item of Json.arr(itemsWrap, 'nodes')) {
+    repos.push(mapStarredRepo(item as JsonMap));
+  }
+  return {
+    id: Json.str(node, 'id'),
+    name: Json.str(node, 'name'),
+    description: Json.str(node, 'description'),
+    itemCount: Json.num(itemsWrap, 'totalCount'),
+    viewerLogin: Json.str(viewer, 'login'),
+    viewerAvatar: Json.str(viewer, 'avatarUrl'),
+    repos: repos
+  };
+}

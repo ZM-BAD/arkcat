@@ -27,6 +27,8 @@ export struct ProjectsView {
   @Local viewerLogin: string = '';
   @Local cursor: string = '';
   @Local hasNextPage: boolean = false;
+  @Local inSearch: boolean = false;
+  @Local searchQuery: string = '';
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
 
@@ -85,8 +87,32 @@ export struct ProjectsView {
   }
 
   /** 客户端排序（Most/Least viewed 以本会话浏览记录为准） */
+  /** 就地搜索：按项目标题过滤已加载列表（大小写不敏感） */
+  private searchFilteredProjects(): WorkProjectItem[] {
+    const q = this.searchQuery.trim().toLowerCase();
+    if (q === '') {
+      return this.filtered;
+    }
+    return this.filtered.filter((pr: WorkProjectItem) => pr.title.toLowerCase().includes(q));
+  }
+
+  /** 就地搜索默认不作用于服务端；visibleProjects 保持现有排序 */
   private visibleProjects(): WorkProjectItem[] {
-    return sortWorkProjects(this.filtered, this.sortKey, this.viewedAt);
+    return sortWorkProjects(this.searchFilteredProjects(), this.sortKey, this.viewedAt);
+  }
+
+  private enterSearch(): void {
+    this.inSearch = true;
+    this.searchQuery = '';
+    // 下一帧获焦，自动弹起软键盘
+    setTimeout((): void => {
+      this.getUIContext().getFocusController().requestFocus('work_projects_search');
+    }, 60);
+  }
+
+  private exitSearch(): void {
+    this.inSearch = false;
+    this.searchQuery = '';
   }
 
   private scopeName(): string {
@@ -226,12 +252,40 @@ export struct ProjectsView {
 .onClick((): void => {
             this.pathStack.pop();
           })
-        Text($r('app.string.nav_projects_title'))
-          .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.text_primary'))
-          .layoutWeight(1)
-        Stack() {
+        if (this.inSearch) {
+          TextInput({
+            placeholder: this.stringOf($r('app.string.page_search_projects')),
+            text: this.searchQuery
+          })
+            .id('work_projects_search')
+            .layoutWeight(1)
+            .height(44)
+            .fontSize($r('app.float.title_font_size'))
+            .fontColor($r('app.color.text_primary'))
+            .caretColor($r('app.color.link_blue'))
+            .backgroundColor(Color.Transparent)
+            .onChange((v: string) => {
+              this.searchQuery = v;
+            })
+        } else {
+          Text($r('app.string.nav_projects_title'))
+            .fontSize($r('app.float.title_font_size'))
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.text_primary'))
+            .layoutWeight(1)
+        }
+        if (this.inSearch) {
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+          }
+          .width(44)
+          .height(44)
+          .padding(6)
+          .accessibilityDescription($r('app.string.a11y_close'))
+          .focusable(true)
+          .onClick((): void => this.exitSearch())
+        } else {
+          Stack() {
   OctIcon({
           res: $r('app.media.oct_search_24'),
           iconSize: 20,
@@ -242,10 +296,9 @@ export struct ProjectsView {
 .height(44)
         .accessibilityDescription($r('app.string.a11y_search'))
         .focusable(true)
-.onClick((): void => {
-            this.pathStack.pushPathByName('search', '');
-          })
+.onClick((): void => this.enterSearch())
           .padding(6)
+        }
         Stack() {
   OctIcon({
           res: $r('app.media.oct_kebab_horizontal_16'),
@@ -258,14 +311,11 @@ export struct ProjectsView {
 .height(44)
         .accessibilityDescription($r('app.string.a11y_more'))
         .focusable(true)
-.onClick((): void => {
-            promptAction.showToast({ message: $r('app.string.home_feature_coming') });
-          })
           .padding(6)
       }
       .width('100%')
       .height(48)
-      .padding({ left: 16, right: 12 })
+      .padding({ left: 0, right: 0 })
 
       Scroll() {
         Column() {

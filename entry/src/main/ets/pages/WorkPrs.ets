@@ -21,6 +21,8 @@ export struct WorkPrsView {
   @Local prs: WorkPrItem[] = [];
   @Local cursor: string = '';
   @Local hasNextPage: boolean = false;
+  @Local inSearch: boolean = false;
+  @Local searchQuery: string = '';
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
 
@@ -73,6 +75,30 @@ export struct WorkPrsView {
 
   private stringOf(res: Resource): string {
     return resText(this.getUIContext(), res);
+  }
+
+  /** 就地搜索：按标题/仓库全名过滤已加载列表（大小写不敏感） */
+  private shownPrs(): WorkPrItem[] {
+    const q = this.searchQuery.trim().toLowerCase();
+    if (q === '') {
+      return this.prs;
+    }
+    return this.prs.filter((it: WorkPrItem) =>
+      it.title.toLowerCase().includes(q) || it.repoFullName.toLowerCase().includes(q));
+  }
+
+  private enterSearch(): void {
+    this.inSearch = true;
+    this.searchQuery = '';
+    // 下一帧获焦，自动弹起软键盘
+    setTimeout((): void => {
+      this.getUIContext().getFocusController().requestFocus('work_prs_search');
+    }, 60);
+  }
+
+  private exitSearch(): void {
+    this.inSearch = false;
+    this.searchQuery = '';
   }
 
   /** 相对时间结构化数据 → 当前语言文案 */
@@ -247,26 +273,53 @@ export struct WorkPrsView {
         .onClick((): void => {
           this.pathStack.pop();
         })
-        Text($r('app.string.home_work_pull_requests'))
-          .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.text_primary'))
-          .layoutWeight(1)
-        Stack() {
-          OctIcon({
-            res: $r('app.media.oct_search_24'),
-            iconSize: 20,
-            iconColor: $r('app.color.link_blue')
+        if (this.inSearch) {
+          TextInput({
+            placeholder: this.stringOf($r('app.string.page_search_prs')),
+            text: this.searchQuery
           })
+            .id('work_prs_search')
+            .layoutWeight(1)
+            .height(44)
+            .fontSize($r('app.float.title_font_size'))
+            .fontColor($r('app.color.text_primary'))
+            .caretColor($r('app.color.link_blue'))
+            .backgroundColor(Color.Transparent)
+            .onChange((v: string) => {
+              this.searchQuery = v;
+            })
+        } else {
+          Text($r('app.string.home_work_pull_requests'))
+            .fontSize($r('app.float.title_font_size'))
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.text_primary'))
+            .layoutWeight(1)
         }
-        .width(44)
-        .height(44)
-        .padding(6)
-        .accessibilityDescription($r('app.string.a11y_search'))
-        .focusable(true)
-        .onClick((): void => {
-          this.pathStack.pushPathByName('search', '');
-        })
+        if (this.inSearch) {
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+          }
+          .width(44)
+          .height(44)
+          .padding(6)
+          .accessibilityDescription($r('app.string.a11y_close'))
+          .focusable(true)
+          .onClick((): void => this.exitSearch())
+        } else {
+          Stack() {
+            OctIcon({
+              res: $r('app.media.oct_search_24'),
+              iconSize: 20,
+              iconColor: $r('app.color.link_blue')
+            })
+          }
+          .width(44)
+          .height(44)
+          .padding(6)
+          .accessibilityDescription($r('app.string.a11y_search'))
+          .focusable(true)
+          .onClick((): void => this.enterSearch())
+        }
         Stack() {
           OctIcon({
             res: $r('app.media.oct_kebab_horizontal_16'),
@@ -280,13 +333,10 @@ export struct WorkPrsView {
         .padding(6)
         .accessibilityDescription($r('app.string.a11y_more'))
         .focusable(true)
-        .onClick((): void => {
-          promptAction.showToast({ message: $r('app.string.home_feature_coming') });
-        })
       }
       .width('100%')
       .height(48)
-      .padding({ left: 16, right: 12 })
+      .padding({ left: 0, right: 0 })
 
       Scroll() {
         Column() {
@@ -297,8 +347,8 @@ export struct WorkPrsView {
             onQueryChange: (s: WorkFilterState): void => this.onQueryChange(s)
           })
 
-          if (this.prs.length > 0) {
-            ForEach(this.prs, (item: WorkPrItem) => {
+          if (this.shownPrs().length > 0) {
+            ForEach(this.shownPrs(), (item: WorkPrItem) => {
               this.prCard(item)
             }, (item: WorkPrItem) => item.id)
             if (this.hasNextPage) {
@@ -318,7 +368,6 @@ export struct WorkPrsView {
             WorkEmptyView({
               iconText: '🐱',
               title: $r('app.string.work_prs_empty'),
-              subtitle: $r('app.string.work_use_fewer_filters')
             })
           }
         }

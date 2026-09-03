@@ -4,6 +4,7 @@
  */
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
+import { FilterDropdownChip, FilterDropdownOption } from '../components/FilterDropdownChip';
 import { RepoPrItem, RepoPrsPage, filterPrsByAuthor, filterPrsByAssignee, repoPrIconKey } from '../models/RepoSubModels';
 import { WorkLabel } from '../models/WorkModels';
 import { RepoSubService } from '../services/RepoSubService';
@@ -132,53 +133,37 @@ export struct RepoPrsView {
     return key === 'open' ? $r('app.color.success_text') : $r('app.color.text_tertiary');
   }
 
-  private labelMenu(): MenuElement[] {
-    const items: MenuElement[] = [];
-    for (const l of this.labelOptions) {
-      items.push({
-        value: l,
-        action: (): void => { this.label = this.label === l ? '' : l; this.refresh(); }
-      });
-    }
-    if (items.length === 0) {
-      items.push({ value: this.stringOf($r('app.string.repo_prs_label')), action: (): void => { } });
-    }
-    return items;
+  private stateFilterOptions(): FilterDropdownOption[] {
+    return [
+      { key: 'all', label: this.stringOf($r('app.string.work_filter_all')) },
+      { key: 'open', label: this.stringOf($r('app.string.issues_state_open')) },
+      { key: 'closed', label: this.stringOf($r('app.string.issues_state_closed')) },
+      { key: 'merged', label: this.stringOf($r('app.string.pr_state_merged')) }
+    ];
   }
 
-  private authorMenu(): MenuElement[] {
-    const items: MenuElement[] = [];
-    for (const a of this.authorOptions) {
-      items.push({
-        value: a,
-        action: (): void => { this.author = this.author === a ? '' : a; this.applyFilters(); }
-      });
-    }
-    return items;
+  /** Label 下拉选项（仓库标签全集） */
+  private labelFilterOptions(): FilterDropdownOption[] {
+    return this.labelOptions.map((l: string): FilterDropdownOption => ({ key: l, label: l }));
   }
 
-  private assigneeMenu(): MenuElement[] {
-    const items: MenuElement[] = [];
-    for (const a of this.assigneeOptions) {
-      items.push({
-        value: a,
-        action: (): void => { this.assignee = this.assignee === a ? '' : a; this.applyFilters(); }
-      });
-    }
-    return items;
+  /** Author 下拉选项 */
+  private authorFilterOptions(): FilterDropdownOption[] {
+    return this.authorOptions.map((a: string): FilterDropdownOption => ({ key: a, label: a }));
   }
 
-  @Builder
-  filterChip(label: string, menu: MenuElement[], active: boolean) {
-    Text(`${label} ⌄`)
-      .fontSize($r('app.float.caption_font_size'))
-      .fontColor(active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
-      .padding({ left: 12, right: 12, top: 5, bottom: 5 })
-      .borderRadius(12)
-      .backgroundColor(active ? $r('app.color.chip_active_bg') : $r('app.color.card_background'))
-      .margin({ right: 8 })
-      .border({ width: 1, color: active ? $r('app.color.chip_active_border') : $r('app.color.border') })
-      .bindMenu(menu)
+  /** Assignee 下拉选项 */
+  private assigneeFilterOptions(): FilterDropdownOption[] {
+    return this.assigneeOptions.map((a: string): FilterDropdownOption => ({ key: a, label: a }));
+  }
+
+  /** 清空全部筛选（漏斗菜单） */
+  private clearAllFilters(): void {
+    this.state = 'all';
+    this.label = '';
+    this.author = '';
+    this.assignee = '';
+    this.refresh();
   }
 
   @Builder
@@ -311,49 +296,82 @@ export struct RepoPrsView {
       }
       .width('100%')
       .height(56)
-      .padding({ left: 16, right: 8 })
+      .padding({ left: 0, right: 0 })
 
       Scroll() {
         Column() {
           Scroll() {
           Row() {
-            Stack({ alignContent: Alignment.TopEnd }) {
-              OctIcon({ res: $r('app.media.oct_filter_16'), iconSize: 14, iconColor: $r('app.color.text_primary') })
-                .padding({ left: 8, right: 8, top: 5, bottom: 5 })
-                .borderRadius(12)
-                .backgroundColor($r('app.color.card_background'))
-                .border({ width: 1, color: $r('app.color.border') })
-              if (this.activeFilterCount() > 0) {
-                Circle()
-                  .width(12)
-                  .height(12)
-                  .fill($r('app.color.link_blue'))
-                  .margin({ top: -6, right: -6 })
-                Text(`${this.activeFilterCount()}`)
-                  .fontSize(12)
-                  .fontColor(Color.White)
-                  .margin({ top: -10, right: -3 })
+            // 漏斗徽标：激活筛选组数（工作区同款；无激活时隐藏）
+            if (this.activeFilterCount() > 0) {
+              Row({ space: 4 }) {
+                OctIcon({
+                  res: $r('app.media.oct_filter_16'),
+                  iconSize: 14,
+                  iconColor: $r('app.color.link_blue')
+                })
+                Stack() {
+                  Text(`${this.activeFilterCount()}`)
+                    .fontSize(12)
+                    .fontColor(Color.White)
+                }
+                .width(18)
+                .height(18)
+                .borderRadius(9)
+                .backgroundColor($r('app.color.link_blue'))
               }
+              .height(38)
+              .padding({ left: 10, right: 12 })
+              .borderRadius(19)
+              .backgroundColor($r('app.color.chip_bg'))
+              .border({ width: 1, color: $r('app.color.border') })
+              .margin({ right: 8 })
+              .bindMenu([
+                {
+                  value: $r('app.string.work_filter_create_shortcut'),
+                  action: (): void => {
+                    promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+                  }
+                },
+                {
+                  value: $r('app.string.work_clear_all_filters'),
+                  action: (): void => this.clearAllFilters()
+                }
+              ])
             }
-            .margin({ right: 8 })
 
-            this.filterChip(this.stateLabel(), [
-              { value: this.stringOf($r('app.string.work_filter_all')), action: (): void => { this.state = 'all'; this.refresh(); } },
-              { value: this.stringOf($r('app.string.issues_state_open')), action: (): void => { this.state = 'open'; this.refresh(); } },
-              { value: this.stringOf($r('app.string.issues_state_closed')), action: (): void => { this.state = 'closed'; this.refresh(); } },
-              { value: this.stringOf($r('app.string.pr_state_merged')), action: (): void => { this.state = 'merged'; this.refresh(); } }
-            ], this.state !== 'all')
+            FilterDropdownChip({
+              label: this.stateLabel(),
+              active: this.state !== 'all',
+              options: this.stateFilterOptions(),
+              selectedKey: this.state,
+              onPick: (key: string): void => { this.state = key; this.refresh(); }
+            })
 
-            this.filterChip(this.label === '' ? this.stringOf($r('app.string.repo_prs_label')) : this.label,
-              this.labelMenu(), this.label !== '')
+            FilterDropdownChip({
+              label: this.label === '' ? this.stringOf($r('app.string.repo_prs_label')) : this.label,
+              active: this.label !== '',
+              options: this.labelFilterOptions(),
+              selectedKey: this.label,
+              onPick: (key: string): void => { this.label = this.label === key ? '' : key; this.refresh(); }
+            })
 
-            this.filterChip(this.author === '' ? this.stringOf($r('app.string.repo_prs_author')) : this.author,
-              this.authorMenu(), this.author !== '')
+            FilterDropdownChip({
+              label: this.author === '' ? this.stringOf($r('app.string.repo_prs_author')) : this.author,
+              active: this.author !== '',
+              options: this.authorFilterOptions(),
+              selectedKey: this.author,
+              onPick: (key: string): void => { this.author = this.author === key ? '' : key; this.applyFilters(); }
+            })
 
-            this.filterChip(this.assignee === '' ? this.stringOf($r('app.string.repo_prs_assignee')) : this.assignee,
-              this.assigneeMenu(), this.assignee !== '')
+            FilterDropdownChip({
+              label: this.assignee === '' ? this.stringOf($r('app.string.repo_prs_assignee')) : this.assignee,
+              active: this.assignee !== '',
+              options: this.assigneeFilterOptions(),
+              selectedKey: this.assignee,
+              onPick: (key: string): void => { this.assignee = this.assignee === key ? '' : key; this.applyFilters(); }
+            })
           }
-          .width('100%')
           }
           .scrollable(ScrollDirection.Horizontal)
           .scrollBar(BarState.Off)

@@ -2,6 +2,8 @@
  * 通用筛选下拉 chip（Spec 017-019）：文字 + chevron + 自绘弹出卡片（选中项右侧主题蓝勾、遮罩点击关闭）。
  * 独立组件保证 label/selectedKey 经 @Param 更新可响应（@Builder 传值参数会卡旧值，须走组件状态）。
  */
+import { common } from '@kit.AbilityKit';
+import { window } from '@kit.ArkUI';
 import { OctIcon } from './OctIcon';
 import { resText } from '../utils/I18n';
 
@@ -26,6 +28,9 @@ interface PopupState {
   isVisible: boolean;
 }
 
+/** 实例自增 id：同页多实例时唯一（getRectangleById 锚点） */
+let chipInstanceSeq: number = 0;
+
 @ComponentV2
 export struct FilterDropdownChip {
   /** chip 显示文本（当前选中值，随选择刷新） */
@@ -37,6 +42,19 @@ export struct FilterDropdownChip {
   @Local open: boolean = false;
   /** chip 实时宽度（onAreaChange 测量，用于 popup 左对齐） */
   @Local chipWidth: number = 70;
+  /** 实例唯一 id（弹层屏幕内自适应锚点） */
+  private chipId: string = `filterchip_${chipInstanceSeq++}`;
+  /** 窗口宽度（vp；aboutToAppear 时缓存） */
+  private windowWidthVp: number = 0;
+
+  aboutToAppear(): void {
+    window.getLastWindow(this.getUIContext().getHostContext() as common.Context)
+      .then((w: window.Window) => {
+        this.windowWidthVp = this.getUIContext().px2vp(w.getWindowProperties().windowRect.width);
+      })
+      .catch(() => {
+      });
+  }
 
   private stringOf(res: Resource): string {
     return resText(this.getUIContext(), res);
@@ -90,6 +108,25 @@ export struct FilterDropdownChip {
     return Math.max(136, maxW + 52);
   }
 
+  /** 弹层水平偏移：左缘对齐 chip 左缘；右侧超屏时回收（自适应保留在屏幕内） */
+  private popupOffsetX(): number {
+    // bindPopup 默认水平居中于组件；左移半差使弹层左缘与 chip 左缘对齐
+    let x = (this.menuWidth() - this.chipWidth) / 2;
+    if (this.windowWidthVp > 0) {
+      try {
+        const rect = this.getUIContext().getComponentUtils().getRectangleById(this.chipId);
+        if (rect !== null && rect !== undefined) {
+          const chipLeft = this.getUIContext().px2vp(rect.windowOffset.x);
+          const maxLeft = this.windowWidthVp - this.menuWidth() - 8;
+          x += Math.min(0, maxLeft - chipLeft);
+        }
+      } catch (e) {
+        // 布局未就绪：仅按左缘对齐处理
+      }
+    }
+    return x;
+  }
+
   build() {
     Row() {
       Text(this.label)
@@ -108,6 +145,7 @@ export struct FilterDropdownChip {
     .backgroundColor(this.active ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
     .margin({ right: 8 })
     .border({ width: 1, color: this.active ? $r('app.color.chip_active_border') : $r('app.color.border') })
+    .id(this.chipId)
     .onAreaChange((_o: Area, n: Area): void => {
       // Area.width 为 Length（string|number），归一化为 number 存储
       if (typeof n.width === 'number') {
@@ -124,8 +162,7 @@ export struct FilterDropdownChip {
       placement: Placement.Bottom,
       enableArrow: false,
       mask: true,
-      // 官方菜单卡片左缘对齐 chip 左缘（bindPopup 默认水平居中于组件，手动左移半差）
-      offset: { x: (this.chipWidth - this.menuWidth()) / 2, y: 0 },
+      offset: { x: this.popupOffsetX(), y: 0 },
       onStateChange: (e: PopupState): void => {
         if (!e.isVisible) {
           this.open = false;

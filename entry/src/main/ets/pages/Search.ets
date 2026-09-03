@@ -6,7 +6,7 @@
  * - 六类建议入口 + Jump to "q"；点击入口行 → SearchResults 结果页
  */
 import { common } from '@kit.AbilityKit';
-import { promptAction } from '@kit.ArkUI';
+import { promptAction, KeyboardAvoidMode } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
 import {
   SearchService, QUALIFIER_CHIPS, pushSearchHistory, SearchHistoryStore,
@@ -24,7 +24,13 @@ export struct SearchView {
   @Local historyReady: boolean = false;
 
   aboutToAppear(): void {
+    // 键盘避让改压缩模式：快捷词汇行贴键盘显示（官方行为）；离开恢复默认上抬
+    this.getUIContext().setKeyboardAvoidMode(KeyboardAvoidMode.RESIZE);
     this.loadHistory();
+  }
+
+  aboutToDisappear(): void {
+    this.getUIContext().setKeyboardAvoidMode(KeyboardAvoidMode.OFFSET);
   }
 
   private ctx(): common.Context | undefined {
@@ -72,6 +78,16 @@ export struct SearchView {
     this.pathStack.pushPathByName('searchResults', `${kind}|${kw}`);
   }
 
+  /** 回车 → 聚合结果页（官方行为：直进全部类型结果） */
+  private openOverview(): void {
+    const kw = this.keyword.trim();
+    if (kw === '') {
+      return;
+    }
+    this.rememberKeyword(kw);
+    this.pathStack.pushPathByName('searchOverview', kw);
+  }
+
   /** Jump to：J1 首个匹配仓库 → 详情页；无匹配 toast */
   private jumpTo(): void {
     const kw = this.keyword.trim();
@@ -91,10 +107,6 @@ export struct SearchView {
   /** 历史行回填关键词（回到建议列表） */
   private useHistory(kw: string): void {
     this.keyword = kw;
-  }
-
-  private comingSoon(): void {
-    promptAction.showToast({ message: $r('app.string.home_feature_coming') });
   }
 
   private stringOf(res: Resource): string {
@@ -181,7 +193,7 @@ export struct SearchView {
     .justifyContent(FlexAlign.Center)
   }
 
-  /** 历史区：Recent searches + CLEAR + 词行（点击回填，↗ 灰图标） */
+  /** 历史区：Recent searches + CLEAR + 词行（点击回填，↖ 灰图标） */
   @Builder
   historyPanel() {
     Scroll() {
@@ -209,7 +221,7 @@ export struct SearchView {
               .maxLines(1)
               .textOverflow({ overflow: TextOverflow.Ellipsis })
               .layoutWeight(1)
-            OctIcon({ res: $r('app.media.oct_arrow_up_right_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+            OctIcon({ res: $r('app.media.oct_arrow_up_left_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
               .width(28)
           }
           .width('100%')
@@ -225,7 +237,7 @@ export struct SearchView {
     .align(Alignment.Top)
   }
 
-  /** qualifier chips 行（聚焦时底部显示） */
+  /** 快捷词汇行（贴键盘底部显示）：行底色浅灰、词汇矩形深灰、可左右滑动 */
   @Builder
   qualifierChips() {
     Scroll() {
@@ -234,18 +246,19 @@ export struct SearchView {
           Text(chip)
             .fontSize($r('app.float.chip_font_size'))
             .fontColor($r('app.color.text_primary'))
-            .height(40)
-            .padding({ left: 16, right: 16 })
-            .borderRadius(8)
-            .backgroundColor($r('app.color.chip_bg'))
+            .height(36)
+            .padding({ left: 12, right: 12 })
+            .borderRadius(6)
+            .backgroundColor($r('app.color.search_chip_bg'))
             .onClick(() => this.insertQualifier(chip))
         }, (chip: string) => chip)
       }
+      .height(52)
       .padding({ left: 16, right: 16 })
-      .width('100%')
     }
-    .height(52)
+    .scrollable(ScrollDirection.Horizontal)
     .scrollBar(BarState.Off)
+    .backgroundColor($r('app.color.search_chips_row_bg'))
     .align(Alignment.Start)
   }
 
@@ -280,6 +293,7 @@ export struct SearchView {
             .caretColor($r('app.color.link_blue'))
             .backgroundColor(Color.Transparent)
             .onChange((v: string) => this.onSearchInput(v))
+            .onSubmit(() => this.openOverview())
             .onFocus(() => {
               this.focused = true;
             })
@@ -300,30 +314,31 @@ export struct SearchView {
             })
           }
           Stack() {
-            OctIcon({ res: $r('app.media.oct_kebab_vertical_16'), iconSize: 18, iconColor: $r('app.color.link_blue') })
+            OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 18, iconColor: $r('app.color.link_blue') })
+              .rotate({ angle: 90 })
           }
           .width(44)
           .height(44)
           .accessibilityDescription($r('app.string.a11y_more'))
           .focusable(true)
-          .onClick((): void => this.comingSoon())
+          .bindMenu([
+            {
+              value: $r('app.string.search_menu_refresh'),
+              action: (): void => this.loadHistory()
+            }
+          ])
         }
         .width('100%')
         .height(48)
-        .padding({ left: 16, right: 12 })
+        .padding({ left: 0, right: 0 })
 
-        // 输入下划线（聚焦或已有输入时显示，官方样式）
-        if (this.focused || this.keyword.trim() !== '') {
-          Divider().strokeWidth(1).color($r('app.color.divider'))
-        }
+      // 输入下划线（聚焦或已有输入时显示，官方样式）
+      if (this.focused || this.keyword.trim() !== '') {
+        Divider().strokeWidth(1).color($r('app.color.divider'))
       }
+    }
 
-      // qualifier chips（聚焦时显示；鸿蒙软键盘不压缩页面，置于输入栏下方避免被键盘遮挡）
-      if (this.focused) {
-        this.qualifierChips()
-      }
-
-      if (this.keyword.trim() === '') {
+    if (this.keyword.trim() === '') {
         if (this.historyReady && this.history.length > 0) {
           this.historyPanel()
         } else {
@@ -358,6 +373,11 @@ export struct SearchView {
         .layoutWeight(1)
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
+      }
+
+      // 快捷词汇行：压缩模式下置于页面底部，紧贴键盘上沿
+      if (this.focused) {
+        this.qualifierChips()
       }
     }
     .width('100%')

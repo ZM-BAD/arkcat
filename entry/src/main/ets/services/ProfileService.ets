@@ -20,6 +20,7 @@ query UserProfile($login: String!) {
     email
     twitterUsername
     viewerIsFollowing
+    isDeveloperProgramMember
     status { message emoji }
     followers { totalCount }
     following { totalCount }

@@ -601,6 +601,118 @@
       "value": "Search GitHub"
     },
     {
+      "name": "page_search_issues",
+      "value": "Search Issues"
+    },
+    {
+      "name": "page_search_prs",
+      "value": "Search Pull Requests"
+    },
+    {
+      "name": "page_search_discussions",
+      "value": "Search"
+    },
+    {
+      "name": "page_search_projects",
+      "value": "Search"
+    },
+    {
+      "name": "page_search_starred",
+      "value": "Search Repositories"
+    },
+    {
+      "name": "starred_suggestions_title",
+      "value": "Suggestions"
+    },
+    {
+      "name": "starred_suggestion_future_ideas",
+      "value": "Future ideas"
+    },
+    {
+      "name": "starred_suggestion_my_stack",
+      "value": "My stack"
+    },
+    {
+      "name": "starred_suggestion_inspiration",
+      "value": "Inspiration"
+    },
+    {
+      "name": "starred_create_list",
+      "value": "Create list"
+    },
+    {
+      "name": "list_detail_edit",
+      "value": "Edit"
+    },
+    {
+      "name": "list_detail_delete",
+      "value": "Delete"
+    },
+    {
+      "name": "list_detail_delete_title",
+      "value": "Delete list?"
+    },
+    {
+      "name": "list_detail_delete_message",
+      "value": "The repositories in this list will remain starred."
+    },
+    {
+      "name": "list_detail_ok",
+      "value": "OK"
+    },
+    {
+      "name": "list_detail_cancel",
+      "value": "CANCEL"
+    },
+    {
+      "name": "list_deleted_toast",
+      "value": "List deleted"
+    },
+    {
+      "name": "create_list_edit_title",
+      "value": "Edit list"
+    },
+    {
+      "name": "create_list_save_action",
+      "value": "SAVE"
+    },
+    {
+      "name": "create_list_title",
+      "value": "Create list"
+    },
+    {
+      "name": "create_list_name_label",
+      "value": "Name"
+    },
+    {
+      "name": "create_list_name_placeholder",
+      "value": "Insert list name"
+    },
+    {
+      "name": "create_list_desc_label",
+      "value": "Description"
+    },
+    {
+      "name": "create_list_desc_placeholder",
+      "value": "Insert optional description"
+    },
+    {
+      "name": "create_list_action",
+      "value": "CREATE"
+    },
+    {
+      "name": "create_list_name_required",
+      "value": "Please enter a list name"
+    },
+    {
+      "name": "create_list_success",
+      "value": "List created"
+    },
+    {
+      "name": "discussions_create_title",
+      "value": "Create Discussion"
+    },
+    {
       "name": "search_suggestion_code",
       "value": "Code with \"%1$s\""
     },
@@ -661,6 +773,50 @@
       "value": "No results found"
     },
     {
+      "name": "search_see_more_code",
+      "value": "See more code results"
+    },
+    {
+      "name": "search_see_more_repositories",
+      "value": "See %1$s more repositories"
+    },
+    {
+      "name": "search_see_more_issues",
+      "value": "See %1$s more issues"
+    },
+    {
+      "name": "search_see_more_prs",
+      "value": "See %1$s more pull requests"
+    },
+    {
+      "name": "search_see_more_people",
+      "value": "See %1$s more people"
+    },
+    {
+      "name": "search_see_more_orgs",
+      "value": "See %1$s more organizations"
+    },
+    {
+      "name": "search_show_more",
+      "value": "Show more"
+    },
+    {
+      "name": "search_show_more_matches",
+      "value": "Show %1$d more matches"
+    },
+    {
+      "name": "search_checks_badge",
+      "value": "Checks"
+    },
+    {
+      "name": "search_reviews_badge",
+      "value": "Reviews"
+    },
+    {
+      "name": "search_file_type_text",
+      "value": "Text"
+    },
+    {
       "name": "search_empty_title",
       "value": "Find your stuff."
     },
@@ -675,6 +831,10 @@
     {
       "name": "search_clear_all",
       "value": "CLEAR"
+    },
+    {
+      "name": "search_menu_refresh",
+      "value": "Refresh"
     },
     {
       "name": "search_jump_to",
@@ -1159,6 +1319,10 @@
     {
       "name": "profile_followers_unit",
       "value": " followers"
+    },
+    {
+      "name": "profile_dev_program_member",
+      "value": "Developer Program Member"
     },
     {
       "name": "profile_following_stat",

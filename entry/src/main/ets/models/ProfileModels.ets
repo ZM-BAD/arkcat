@@ -18,6 +18,8 @@ export interface UserProfile {
   statusEmoji: string;
   statusMessage: string;
   viewerIsFollowing: boolean;
+  /** GitHub Developer Program 成员（true 时 Profile 显示 cpu 徽章行） */
+  isDeveloperProgramMember: boolean;
   pinned: RepoSummary[];
   repositoriesCount: number;
   organizationsCount: number;
@@ -51,6 +53,7 @@ export function mapUserProfile(data: JsonMap): UserProfile {
     statusEmoji: status ? Json.str(status, 'emoji') : '',
     statusMessage: status ? Json.str(status, 'message') : '',
     viewerIsFollowing: Json.bool(userNode, 'viewerIsFollowing'),
+    isDeveloperProgramMember: Json.bool(userNode, 'isDeveloperProgramMember'),
     pinned: pinned,
     repositoriesCount: repositoriesRaw ? Json.num(repositoriesRaw, 'totalCount') : 0,
     organizationsCount: organizationsRaw ? Json.num(organizationsRaw, 'totalCount') : 0,

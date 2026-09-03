@@ -601,6 +601,118 @@
       "value": "搜索 GitHub"
     },
     {
+      "name": "page_search_issues",
+      "value": "搜索 Issue"
+    },
+    {
+      "name": "page_search_prs",
+      "value": "搜索 Pull Requests"
+    },
+    {
+      "name": "page_search_discussions",
+      "value": "搜索"
+    },
+    {
+      "name": "page_search_projects",
+      "value": "搜索"
+    },
+    {
+      "name": "page_search_starred",
+      "value": "搜索仓库"
+    },
+    {
+      "name": "starred_suggestions_title",
+      "value": "建议"
+    },
+    {
+      "name": "starred_suggestion_future_ideas",
+      "value": "未来想法"
+    },
+    {
+      "name": "starred_suggestion_my_stack",
+      "value": "我的收藏夹"
+    },
+    {
+      "name": "starred_suggestion_inspiration",
+      "value": "灵感"
+    },
+    {
+      "name": "starred_create_list",
+      "value": "创建列表"
+    },
+    {
+      "name": "list_detail_edit",
+      "value": "编辑"
+    },
+    {
+      "name": "list_detail_delete",
+      "value": "删除"
+    },
+    {
+      "name": "list_detail_delete_title",
+      "value": "删除列表？"
+    },
+    {
+      "name": "list_detail_delete_message",
+      "value": "此列表中的仓库仍会保持星标状态。"
+    },
+    {
+      "name": "list_detail_ok",
+      "value": "确定"
+    },
+    {
+      "name": "list_detail_cancel",
+      "value": "取消"
+    },
+    {
+      "name": "list_deleted_toast",
+      "value": "列表已删除"
+    },
+    {
+      "name": "create_list_edit_title",
+      "value": "编辑列表"
+    },
+    {
+      "name": "create_list_save_action",
+      "value": "保存"
+    },
+    {
+      "name": "create_list_title",
+      "value": "创建列表"
+    },
+    {
+      "name": "create_list_name_label",
+      "value": "名称"
+    },
+    {
+      "name": "create_list_name_placeholder",
+      "value": "输入列表名称"
+    },
+    {
+      "name": "create_list_desc_label",
+      "value": "描述"
+    },
+    {
+      "name": "create_list_desc_placeholder",
+      "value": "输入描述（可选）"
+    },
+    {
+      "name": "create_list_action",
+      "value": "创建"
+    },
+    {
+      "name": "create_list_name_required",
+      "value": "请输入列表名称"
+    },
+    {
+      "name": "create_list_success",
+      "value": "列表已创建"
+    },
+    {
+      "name": "discussions_create_title",
+      "value": "创建讨论"
+    },
+    {
       "name": "search_suggestion_code",
       "value": "代码中搜索 \"%1$s\""
     },
@@ -661,6 +773,50 @@
       "value": "未找到结果"
     },
     {
+      "name": "search_see_more_code",
+      "value": "查看更多代码结果"
+    },
+    {
+      "name": "search_see_more_repositories",
+      "value": "查看更多仓库（%1$s）"
+    },
+    {
+      "name": "search_see_more_issues",
+      "value": "查看更多 Issues（%1$s）"
+    },
+    {
+      "name": "search_see_more_prs",
+      "value": "查看更多 Pull Requests（%1$s）"
+    },
+    {
+      "name": "search_see_more_people",
+      "value": "查看更多用户（%1$s）"
+    },
+    {
+      "name": "search_see_more_orgs",
+      "value": "查看更多组织（%1$s）"
+    },
+    {
+      "name": "search_show_more",
+      "value": "显示更多"
+    },
+    {
+      "name": "search_show_more_matches",
+      "value": "显示更多 %1$d 条匹配"
+    },
+    {
+      "name": "search_checks_badge",
+      "value": "Checks"
+    },
+    {
+      "name": "search_reviews_badge",
+      "value": "Reviews"
+    },
+    {
+      "name": "search_file_type_text",
+      "value": "文本"
+    },
+    {
       "name": "search_empty_title",
       "value": "找到你需要的内容。"
     },
@@ -675,6 +831,10 @@
     {
       "name": "search_clear_all",
       "value": "清除"
+    },
+    {
+      "name": "search_menu_refresh",
+      "value": "刷新"
     },
     {
       "name": "search_jump_to",
@@ -1127,6 +1287,10 @@
     {
       "name": "profile_followers_unit",
       "value": " 关注者"
+    },
+    {
+      "name": "profile_dev_program_member",
+      "value": "开发者计划成员"
     },
     {
       "name": "profile_following_stat",

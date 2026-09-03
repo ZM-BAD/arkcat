@@ -175,7 +175,7 @@ export struct FileTreeView {
       }
       .width('100%')
       .height(60)
-      .padding({ left: 16, right: 16 })
+      .padding({ left: 0, right: 0 })
 
       // 本地过滤行（find a file）
       if (this.filterOn) {

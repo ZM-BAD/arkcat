@@ -24,6 +24,8 @@ export struct DiscussionsView {
   @Local discussions: WorkDiscussionItem[] = [];
   @Local cursor: string = '';
   @Local hasNextPage: boolean = false;
+  @Local inSearch: boolean = false;
+  @Local searchQuery: string = '';
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
 
@@ -67,6 +69,30 @@ export struct DiscussionsView {
 
   private stringOf(res: Resource): string {
     return resText(this.getUIContext(), res);
+  }
+
+  /** 就地搜索：按标题/仓库全名过滤已加载列表（大小写不敏感） */
+  private shownDiscussions(): WorkDiscussionItem[] {
+    const q = this.searchQuery.trim().toLowerCase();
+    if (q === '') {
+      return this.discussions;
+    }
+    return this.discussions.filter((d: WorkDiscussionItem) =>
+      d.title.toLowerCase().includes(q) || d.repoFullName.toLowerCase().includes(q));
+  }
+
+  private enterSearch(): void {
+    this.inSearch = true;
+    this.searchQuery = '';
+    // 下一帧获焦，自动弹起软键盘
+    setTimeout((): void => {
+      this.getUIContext().getFocusController().requestFocus('work_discussions_search');
+    }, 60);
+  }
+
+  private exitSearch(): void {
+    this.inSearch = false;
+    this.searchQuery = '';
   }
 
   private timeText(parts: TimeParts | null): string {
@@ -229,12 +255,40 @@ export struct DiscussionsView {
 .onClick((): void => {
             this.pathStack.pop();
           })
-        Text($r('app.string.nav_discussions_title'))
-          .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.text_primary'))
-          .layoutWeight(1)
-        Stack() {
+        if (this.inSearch) {
+          TextInput({
+            placeholder: this.stringOf($r('app.string.page_search_discussions')),
+            text: this.searchQuery
+          })
+            .id('work_discussions_search')
+            .layoutWeight(1)
+            .height(44)
+            .fontSize($r('app.float.title_font_size'))
+            .fontColor($r('app.color.text_primary'))
+            .caretColor($r('app.color.link_blue'))
+            .backgroundColor(Color.Transparent)
+            .onChange((v: string) => {
+              this.searchQuery = v;
+            })
+        } else {
+          Text($r('app.string.nav_discussions_title'))
+            .fontSize($r('app.float.title_font_size'))
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.text_primary'))
+            .layoutWeight(1)
+        }
+        if (this.inSearch) {
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+          }
+          .width(44)
+          .height(44)
+          .padding(6)
+          .accessibilityDescription($r('app.string.a11y_close'))
+          .focusable(true)
+          .onClick((): void => this.exitSearch())
+        } else {
+          Stack() {
   OctIcon({
           res: $r('app.media.oct_search_24'),
           iconSize: 20,
@@ -245,10 +299,9 @@ export struct DiscussionsView {
 .height(44)
         .accessibilityDescription($r('app.string.a11y_search'))
         .focusable(true)
-.onClick((): void => {
-            this.pathStack.pushPathByName('search', '');
-          })
+.onClick((): void => this.enterSearch())
           .padding(6)
+        }
         Stack() {
   OctIcon({
           res: $r('app.media.oct_kebab_horizontal_16'),
@@ -261,14 +314,23 @@ export struct DiscussionsView {
 .height(44)
         .accessibilityDescription($r('app.string.a11y_more'))
         .focusable(true)
-.onClick((): void => {
-            promptAction.showToast({ message: $r('app.string.home_feature_coming') });
-          })
+.bindMenu([
+          {
+            value: $r('app.string.inbox_menu_refresh'),
+            action: (): void => this.refresh()
+          },
+          {
+            value: $r('app.string.discussions_create_title'),
+            action: (): void => {
+              promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+            }
+          }
+        ])
           .padding(6)
       }
       .width('100%')
       .height(48)
-      .padding({ left: 16, right: 12 })
+      .padding({ left: 0, right: 0 })
 
       Scroll() {
         Column() {
@@ -291,10 +353,10 @@ export struct DiscussionsView {
                 .borderRadius(9)
                 .backgroundColor($r('app.color.link_blue'))
               }
-              .height(30)
-              .padding({ left: 8, right: 8 })
-              .borderRadius(12)
-              .backgroundColor($r('app.color.card_background'))
+              .height(38)
+              .padding({ left: 10, right: 12 })
+              .borderRadius(19)
+              .backgroundColor($r('app.color.chip_bg'))
               .border({ width: 1, color: $r('app.color.border') })
               .margin({ right: 8 })
               .bindMenu([
@@ -333,14 +395,14 @@ export struct DiscussionsView {
               }
             })
 
-            // Unanswered 开关 chip（官方：只有选中/未选中两种状态，无下拉）
+            // Unanswered 开关 chip（官方：只有选中/未选中两种状态，无下拉；样式与下拉芯片一致）
             Text(this.stringOf($r('app.string.work_discussions_unanswered')))
-              .fontSize($r('app.float.caption_font_size'))
+              .fontSize($r('app.float.chip_font_size'))
               .fontColor(this.unanswered ? $r('app.color.link_blue') : $r('app.color.text_primary'))
-              .height(30)
+              .height(38)
               .padding({ left: 12, right: 12 })
-              .borderRadius(12)
-              .backgroundColor(this.unanswered ? $r('app.color.chip_active_bg') : $r('app.color.card_background'))
+              .borderRadius(19)
+              .backgroundColor(this.unanswered ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
               .border({ width: 1, color: this.unanswered ? $r('app.color.chip_active_border') : $r('app.color.border') })
               .margin({ right: 8 })
               .onClick(() => {
@@ -359,14 +421,13 @@ export struct DiscussionsView {
               }
             })
           }
-          .width('100%')
           }
           .scrollable(ScrollDirection.Horizontal)
           .scrollBar(BarState.Off)
           .margin({ bottom: 12 })
 
-          if (this.discussions.length > 0) {
-            ForEach(this.discussions, (item: WorkDiscussionItem) => {
+          if (this.shownDiscussions().length > 0) {
+            ForEach(this.shownDiscussions(), (item: WorkDiscussionItem) => {
               this.discussionCard(item)
             }, (item: WorkDiscussionItem) => item.id)
             if (this.hasNextPage) {
@@ -386,7 +447,6 @@ export struct DiscussionsView {
             WorkEmptyView({
               iconText: '🐱',
               title: $r('app.string.work_discussions_empty'),
-              subtitle: $r('app.string.work_use_fewer_filters')
             })
           }
         }

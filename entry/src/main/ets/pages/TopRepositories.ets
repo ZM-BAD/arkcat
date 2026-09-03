@@ -127,7 +127,7 @@ export struct TopRepositoriesView {
     }
     .width('100%')
     .height(73)
-    .padding({ left: 0, right: 0 })
+    .padding({ left: 16, right: 12 })
     .onClick(() => {
       this.pathStack.pushPathByName('repoDetail', `${repo.ownerLogin}/${repo.name}`);
     })
@@ -173,7 +173,7 @@ export struct TopRepositoriesView {
       }
       .width('100%')
       .height(48)
-      .padding({ left: 16, right: 12 })
+      .padding({ left: 0, right: 0 })
 
       Scroll() {
         Column() {
@@ -187,7 +187,6 @@ export struct TopRepositoriesView {
             }
           })
           .margin({ bottom: 12 })
-
           if (this.visibleRepos().length > 0) {
             ForEach(this.visibleRepos(), (repo: WorkTopRepoItem) => {
               this.repoRow(repo)
@@ -214,6 +213,7 @@ export struct TopRepositoriesView {
         }
         .padding({ left: 16, right: 16, bottom: 16 })
         .width('100%')
+        .alignItems(HorizontalAlign.Start)
       }
       .layoutWeight(1)
       .scrollBar(BarState.Off)

@@ -3,6 +3,7 @@
  * Inbox/Explore/Copilot 内容由 Spec 002/003/004 分支实现，当前为占位视图。
  */
 import { TokenStore } from '../services/TokenStore';
+import { window } from '@kit.ArkUI';
 import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { applyThemeMode } from '../utils/ThemeMode';
@@ -17,6 +18,7 @@ import { RepoDetailView } from './RepoDetail';
 import { IssuesListView } from './IssuesList';
 import { SettingsView } from './Settings';
 import { SearchView } from './Search';
+import { SearchOverviewView } from './SearchOverview';
 import { SearchResultsView } from './SearchResults';
 import { OctIcon } from '../components/OctIcon';
 import { EditMyWorkView } from './EditMyWork';
@@ -27,6 +29,8 @@ import { ProjectsView } from './Projects';
 import { TopRepositoriesView } from './TopRepositories';
 import { OrganizationsView } from './Organizations';
 import { StarredRepositoriesView } from './StarredRepositories';
+import { CreateListView } from './CreateList';
+import { ListDetailView } from './ListDetail';
 import { RepoPrsView } from './RepoPrs';
 import { RepoCommitsView } from './RepoCommits';
 import { RepoReleasesView } from './RepoReleases';
@@ -47,6 +51,8 @@ struct Index {
   @State token: string = '';
   @State checked: boolean = false;
   @State currentTab: number = 0;
+  /** 软键盘弹出时隐藏底栏（搜索输入态；窗口 keyboardHeightChange 监听） */
+  @State keyboardOn: boolean = false;
   @State profileLogin: string = '';
   @State repoOwner: string = '';
   @State repoName: string = '';
@@ -58,6 +64,13 @@ struct Index {
   @State reposOwner: string = '';
   @State reposMode: string = 'org';
   @State starredLogin: string = '';
+  /** Starred 页回显信号：子页 pop 回时自增，驱动 Starred 页重取列表 */
+  @State starredListsTick: number = 0;
+  /** 列表详情参数（listId）与回显信号（Edit 页 pop 回时自增） */
+  @State listDetailId: string = '';
+  @State listDetailTick: number = 0;
+  /** Create list 页编辑模式参数（''=新建；否则为被编辑列表 id） */
+  @State createListEditId: string = '';
   /** 文件路由参数（Spec 038/011 共用，格式 owner|name|path） */
   @State fileOwner: string = '';
   @State fileRepo: string = '';
@@ -70,6 +83,15 @@ struct Index {
   private pathStack: NavPathStack = new NavPathStack();
 
   aboutToAppear(): void {
+    // 软键盘高度监听：弹起时隐藏底部四 tab（官方 App 键盘态行为）
+    window.getLastWindow(this.getUIContext().getHostContext() as common.Context)
+      .then((w: window.Window) => {
+        w.on('keyboardHeightChange', (height: number) => {
+          this.keyboardOn = height > 0;
+        });
+      })
+      .catch(() => {
+      });
     // 启动恢复主题（Spec 026 三态：system/light/dark）
     preferences.getPreferences(this.getUIContext().getHostContext() as common.UIAbilityContext, 'starraft_settings')
       .then((pref: preferences.Preferences) => {
@@ -295,6 +317,22 @@ struct Index {
     .hideTitleBar(true)
   }
 
+  /** Spec 046：搜索聚合结果页（路由参数：keyword，回车直进） */
+  @Builder
+  searchOverviewDestination() {
+    NavDestination() {
+      SearchOverviewView({
+        keyword: this.searchKeyword,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.searchKeyword = context.pathInfo.param as string;
+    })
+    .hideTitleBar(true)
+  }
+
   @Builder
   editMyWorkDestination() {
     NavDestination() {
@@ -380,11 +418,51 @@ struct Index {
       StarredRepositoriesView({
         token: this.token,
         login: this.starredLogin,
-        pathStack: this.pathStack
+        pathStack: this.pathStack,
+        listsTick: this.starredListsTick
       })
     }
     .onReady((context: NavDestinationContext) => {
       this.starredLogin = context.pathInfo.param as string;
+    })
+    // 子页（Create list）pop 回时重取 My lists
+    .onShown(() => {
+      this.starredListsTick += 1;
+    })
+    .hideTitleBar(true)
+  }
+
+  @Builder
+  createListDestination() {
+    NavDestination() {
+      CreateListView({
+        token: this.token,
+        pathStack: this.pathStack,
+        editListId: this.createListEditId
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.createListEditId = context.pathInfo.param as string;
+    })
+    .hideTitleBar(true)
+  }
+
+  @Builder
+  listDetailDestination() {
+    NavDestination() {
+      ListDetailView({
+        token: this.token,
+        pathStack: this.pathStack,
+        listId: this.listDetailId,
+        listTick: this.listDetailTick
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.listDetailId = context.pathInfo.param as string;
+    })
+    // Edit 页 pop 回时重取列表详情
+    .onShown(() => {
+      this.listDetailTick += 1;
     })
     .hideTitleBar(true)
   }
@@ -551,6 +629,8 @@ struct Index {
       this.repositoriesListDestination()
     } else if (name === 'search') {
       this.searchDestination()
+    } else if (name === 'searchOverview') {
+      this.searchOverviewDestination()
     } else if (name === 'searchResults') {
       this.searchResultsDestination()
     } else if (name === 'editMyWork') {
@@ -583,49 +663,36 @@ struct Index {
       this.repoFilesDestination()
     } else if (name === 'codeViewer') {
       this.codeViewerDestination()
+    } else if (name === 'createList') {
+      this.createListDestination()
+    } else if (name === 'listDetail') {
+      this.listDetailDestination()
     }
   }
 
   @Builder
   mainTabs() {
-    Column() {
-      Tabs({ barPosition: BarPosition.End, controller: this.tabController }) {
-        TabContent() {
-          HomeView({ token: this.token, pathStack: this.pathStack, workVersion: this.homeWorkVersion })
-        }
-
-        TabContent() {
-          InboxView({ token: this.token })
-        }
-
-        TabContent() {
-          ExploreView({ token: this.token, pathStack: this.pathStack })
-        }
-
-        TabContent() {
-          CopilotView()
-        }
+    Tabs({ barPosition: BarPosition.End, controller: this.tabController }) {
+      TabContent() {
+        HomeView({ token: this.token, pathStack: this.pathStack, workVersion: this.homeWorkVersion })
       }
-      .onChange((index: number) => {
-        this.currentTab = index;
-      })
-      .barHeight(0)
-      .width('100%')
-      .layoutWeight(1)
 
-      // 自绘底栏（官方浮层样式）：白底 + 上投影 + 选中胶囊（Spec 013 官方截图对齐）
-      // 选中态图标用官方 fill 变体（hollow 图标内部区域填充）
-      Row() {
-        this.tabItem($r('app.media.oct_home_16'), $r('app.media.oct_home_fill_16'), $r('app.string.tab_home'), 0)
-        this.tabItem($r('app.media.oct_inbox_16'), $r('app.media.oct_inbox_fill_16'), $r('app.string.tab_inbox'), 1)
-        this.tabItem($r('app.media.oct_telescope_16'), $r('app.media.oct_telescope_fill_16'), $r('app.string.tab_explore'), 2)
-        this.tabItem($r('app.media.oct_copilot_16'), $r('app.media.oct_copilot_16'), $r('app.string.tab_copilot'), 3)
+      TabContent() {
+        InboxView({ token: this.token })
       }
-      .width('100%')
-      .height(56)
-      .backgroundColor($r('app.color.card_background'))
-      .shadow({ radius: 14, color: $r('app.color.shadow_resting'), offsetY: -3 })
+
+      TabContent() {
+        ExploreView({ token: this.token, pathStack: this.pathStack })
+      }
+
+      TabContent() {
+        CopilotView()
+      }
     }
+    .onChange((index: number) => {
+      this.currentTab = index;
+    })
+    .barHeight(0)
     .width('100%')
     .height('100%')
   }
@@ -668,6 +735,8 @@ struct Index {
     .height('100%')
     .justifyContent(FlexAlign.Center)
     .onClick(() => {
+      // 底栏全局常驻：切 tab 时清空二级页栈回根（官方 App 点 tab 回首个页面）
+      this.pathStack.clear();
       this.tabController.changeIndex(index);
     })
   }
@@ -687,12 +756,34 @@ struct Index {
           }
         })
       } else {
-        Navigation(this.pathStack) {
-          this.mainTabs()
+        // 全局壳：Navigation（四 Tab 内容 + 二级页栈）+ 常驻自绘底栏（官方浮层样式）
+        Column() {
+          Navigation(this.pathStack) {
+            this.mainTabs()
+          }
+          .mode(NavigationMode.Stack)
+          .hideTitleBar(true)
+          .navDestination(this.destinationMap)
+          .width('100%')
+          .layoutWeight(1)
+
+          // 自绘底栏：白底 + 上投影 + 选中胶囊；选中态图标用官方 fill 变体
+          // 键盘弹起（搜索输入）时隐藏——键盘上方不显示 tab（用户 09-04 要求）
+          if (!this.keyboardOn) {
+            Row() {
+              this.tabItem($r('app.media.oct_home_16'), $r('app.media.oct_home_fill_16'), $r('app.string.tab_home'), 0)
+              this.tabItem($r('app.media.oct_inbox_16'), $r('app.media.oct_inbox_fill_16'), $r('app.string.tab_inbox'), 1)
+              this.tabItem($r('app.media.oct_telescope_16'), $r('app.media.oct_telescope_fill_16'), $r('app.string.tab_explore'), 2)
+              this.tabItem($r('app.media.oct_copilot_16'), $r('app.media.oct_copilot_16'), $r('app.string.tab_copilot'), 3)
+            }
+            .width('100%')
+            .height(56)
+            .backgroundColor($r('app.color.card_background'))
+            .border({ width: { top: 1 }, color: $r('app.color.divider') })
+          }
         }
-        .mode(NavigationMode.Stack)
-        .hideTitleBar(true)
-        .navDestination(this.destinationMap)
+        .width('100%')
+        .height('100%')
       }
     }
 .width(44)

@@ -1,13 +1,15 @@
 /**
- * 搜索服务（Spec 015 v2）：
- * - Code/Repository/Issue/PR/User 搜索走 GraphQL search（type 分派；PR 无独立枚举，用 ISSUE 后按 __typename 分诊）
- * - Organizations 无 GraphQL search type，走 REST /search/users?type=organization 兜底
+ * 搜索服务（Spec 015 v2 / Spec 046 结果页批）：
+ * - Repository/Issue/PR/User/Org 搜索走 GraphQL search（type 分派；PR 无独立枚举，用 ISSUE + is:pr 分诊）
+ * - Organization 无 GraphQL search type，用 USER + type:org 限定词兜底（官方语义等价）
+ * - 聚合结果页：单次请求 6 路别名单（repos/issues/prs/users/orgs/codeFiles），code 正文走 CodeSearchService
  * - qualifier 快捷 chip（repo/user/org/path/symbol）+ 插入纯函数
  * - 搜索历史 Preferences 持久化（去重置顶、最多 10 条）
  */
 import { common } from '@kit.AbilityKit';
 import { preferences } from '@kit.ArkData';
 import { graphql, restGet, ApiError } from './GitHttpClient';
+import { CodeFileResult, CodeSearchPage, CodeSearchService } from './CodeSearchService';
 import { Json, JsonMap } from '../utils/Json';
 
 /** 首页/建议行类型（与 SEARCH_SUGGESTION_TYPES 一致） */
@@ -18,10 +20,18 @@ export const SEARCH_SUGGESTION_TYPES: string[] = [
   'code', 'repositories', 'issues', 'prs', 'people', 'orgs'
 ];
 
-/** qualifier 快捷 chips（官方入口页底部横排；第 5 项截图「sy…」截断按 symbol 推断） */
-export const QUALIFIER_CHIPS: string[] = ['repo', 'user', 'org', 'path', 'symbol'];
+/** qualifier 快捷词汇（官方底部贴键盘行；含语法操作符与正则 token） */
+export const QUALIFIER_CHIPS: string[] = [
+  'repo', 'user', 'org', 'path', 'symbol', 'language', 'content', '/regex/', 'AND', 'OR', 'NOT'
+];
 
-/** 统一搜索结果项（页面据此渲染四类行） */
+/** 标签（labelled pill） */
+export interface SearchLabel {
+  name: string;
+  color: string;
+}
+
+/** 统一搜索结果项（页面据此渲染各类行） */
 export interface SearchResultItem {
   kind: 'repository' | 'issue' | 'pr' | 'user' | 'organization';
   title: string;
@@ -37,6 +47,14 @@ export interface SearchResultItem {
   bio: string;
   followers: number;
   following: number;
+  /** issue/PR：ISO 时间戳（页面转相对时间） */
+  createdAt: string;
+  labels: SearchLabel[];
+  commentCount: number;
+  reactionCount: number;
+  /** statusCheckRollup.state：SUCCESS/FAILURE/PENDING/EXPECTED/ERROR */
+  checkState: string;
+  reviewDecision: string;
 }
 
 /** 搜索结果页（分页） */
@@ -47,27 +65,29 @@ export interface SearchResultPage {
   items: SearchResultItem[];
 }
 
-/** 代码搜索结果项 */
+/** 聚合结果页数据（六区块） */
+export interface SearchOverviewData {
+  repoItems: SearchResultItem[];
+  repoCount: number;
+  issueItems: SearchResultItem[];
+  issueCount: number;
+  prItems: SearchResultItem[];
+  prCount: number;
+  userItems: SearchResultItem[];
+  userCount: number;
+  orgItems: SearchResultItem[];
+  orgCount: number;
+  /** code 文件（含内容窗口/高亮/Show more） */
+  codeFiles: CodeFileResult[];
+}
+
+/** 代码搜索结果项（兼容旧单测：GraphQL CODE 元数据） */
 export interface CodeSearchItem {
   repoFullName: string;
   path: string;
   name: string;
   isMarkdown: boolean;
 }
-
-const CODE_SEARCH_QUERY = `
-query CodeSearch($query: String!, $first: Int = 10) {
-  search(query: $query, type: CODE, first: $first) {
-    codeCount
-    nodes {
-      ... on File {
-        repository { nameWithOwner }
-        path
-        name
-      }
-    }
-  }
-}`;
 
 const SEARCH_ALL_QUERY = `
 query SearchAll($query: String!, $type: SearchType!, $first: Int = 20, $after: String) {
@@ -81,28 +101,129 @@ query SearchAll($query: String!, $type: SearchType!, $first: Int = 20, $after: S
         __typename
         nameWithOwner description stargazerCount forkCount
         primaryLanguage { name color }
+        owner { avatarUrl(size: 48) }
       }
       ... on Issue {
-        __typename title state number
+        __typename title state number createdAt
         repository { nameWithOwner }
+        labels(first: 5) { nodes { name color } }
+        comments { totalCount }
+        reactions { totalCount }
       }
       ... on PullRequest {
-        __typename title state number
+        __typename title state number createdAt
         repository { nameWithOwner }
+        labels(first: 5) { nodes { name color } }
+        comments { totalCount }
+        reactions { totalCount }
+        statusCheckRollup { state }
+        reviewDecision
       }
       ... on User {
-        __typename login name avatarUrl bio
+        __typename login name bio avatarUrl
         followers { totalCount } following { totalCount }
+      }
+      ... on Organization {
+        __typename login name description avatarUrl
       }
     }
   }
 }`;
 
+const OVERVIEW_QUERY = `
+query SearchOverview($q: String!, $issueQ: String!, $prQ: String!, $userQ: String!, $orgQ: String!, $first: Int = 3) {
+  repos: search(query: $q, type: REPOSITORY, first: $first) {
+    repositoryCount
+    nodes { ... on Repository { __typename nameWithOwner description stargazerCount primaryLanguage { name color } owner { avatarUrl(size: 48) } } }
+  }
+  issues: search(query: $issueQ, type: ISSUE, first: $first) {
+    issueCount
+    nodes { ... on Issue { __typename title state number createdAt repository { nameWithOwner } labels(first: 3) { nodes { name color } } comments { totalCount } } }
+  }
+  prs: search(query: $prQ, type: ISSUE, first: $first) {
+    issueCount
+    nodes { ... on PullRequest { __typename title state number createdAt repository { nameWithOwner } labels(first: 3) { nodes { name color } } comments { totalCount } reactions { totalCount } statusCheckRollup { state } reviewDecision } }
+  }
+  users: search(query: $userQ, type: USER, first: $first) {
+    userCount
+    nodes { ... on User { __typename login name bio avatarUrl } ... on Organization { __typename login name description avatarUrl } }
+  }
+  orgs: search(query: $orgQ, type: USER, first: $first) {
+    userCount
+    nodes { ... on User { __typename login name bio avatarUrl } ... on Organization { __typename login name description avatarUrl } }
+  }
+}`;
+
 const ORG_SEARCH_REST = '/search/users?type=organization&per_page=20&q=';
 
-/** 构造搜索串（纯函数，便于单测）：关键词带引号，限定词不在引号内 */
+/**
+ * 构造搜索串（纯函数，便于单测）：关键词不带引号（保证 qualifier 能被解析）。
+ */
 export function buildCodeQuery(keyword: string): string {
-  return `"${keyword}"`;
+  return keyword.trim();
+}
+
+/** 类型限定词（官方分页语义）：issues→is:issue、prs→is:pr、people→type:user、orgs→type:org */
+export function buildSearchQuery(kind: SearchEntryKind, keyword: string): string {
+  const kw = keyword.trim();
+  switch (kind) {
+    case 'issues':
+      return `${kw} is:issue`;
+    case 'prs':
+      return `${kw} is:pr`;
+    case 'people':
+      return `${kw} type:user`;
+    case 'orgs':
+      return `${kw} type:org`;
+    default:
+      return kw;
+  }
+}
+
+/**
+ * 大数紧凑格式（See X more 行）：999→999、72k、2.2m、24.2m（整数去 .0）。
+ */
+export function formatBigCount(n: number): string {
+  if (n <= 0) {
+    return '0';
+  }
+  if (n >= 1000000) {
+    const m = Math.round(n / 100000) / 10;
+    return m % 1 === 0 ? `${m}m` : `${m.toFixed(1)}m`;
+  }
+  if (n >= 1000) {
+    const k = Math.round(n / 100) / 10;
+    return k % 1 === 0 ? `${k}k` : `${k.toFixed(1)}k`;
+  }
+  return `${n}`;
+}
+
+/** label 色（GraphQL #RRGGBB）是否浅色（决定白底 pill 文字颜色；纯函数） */
+export function isLightHexColor(hex: string): boolean {
+  if (hex.length !== 6) {
+    return false;
+  }
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) {
+    return false;
+  }
+  const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+  return luma > 160;
+}
+
+/** labels 连接 → SearchLabel[]（纯函数） */
+function mapSearchLabels(node: JsonMap, key: string): SearchLabel[] {
+  const wrap = Json.obj(node, key);
+  const out: SearchLabel[] = [];
+  if (wrap !== null) {
+    for (const nodeItem of Json.arr(wrap, 'nodes')) {
+      const n = nodeItem as JsonMap;
+      out.push({ name: Json.str(n, 'name'), color: Json.str(n, 'color') });
+    }
+  }
+  return out;
 }
 
 /** GraphQL CODE search 响应 → CodeSearchItem[] */
@@ -134,12 +255,13 @@ export function mapSearchNode(node: JsonMap): SearchResultItem | null {
   const typename = Json.str(node, '__typename');
   if (typename === 'Repository') {
     const lang = Json.obj(node, 'primaryLanguage');
+    const owner = Json.obj(node, 'owner');
     return {
       kind: 'repository',
       title: Json.str(node, 'nameWithOwner'),
       subtitle: Json.str(node, 'description'),
       state: '',
-      avatarUrl: '',
+      avatarUrl: owner ? Json.str(owner, 'avatarUrl') : '',
       repoFullName: '',
       number: 0,
       stars: Json.num(node, 'stargazerCount'),
@@ -148,11 +270,20 @@ export function mapSearchNode(node: JsonMap): SearchResultItem | null {
       languageColor: lang ? Json.str(lang, 'color') : '',
       bio: '',
       followers: 0,
-      following: 0
+      following: 0,
+      createdAt: '',
+      labels: [],
+      commentCount: 0,
+      reactionCount: 0,
+      checkState: '',
+      reviewDecision: ''
     };
   }
   const repo = Json.obj(node, 'repository');
   if (typename === 'PullRequest' || typename === 'Issue') {
+    const comments = Json.obj(node, 'comments');
+    const reactions = Json.obj(node, 'reactions');
+    const check = Json.obj(node, 'statusCheckRollup');
     return {
       kind: typename === 'PullRequest' ? 'pr' : 'issue',
       title: Json.str(node, 'title'),
@@ -167,7 +298,13 @@ export function mapSearchNode(node: JsonMap): SearchResultItem | null {
       languageColor: '',
       bio: '',
       followers: 0,
-      following: 0
+      following: 0,
+      createdAt: Json.str(node, 'createdAt'),
+      labels: mapSearchLabels(node, 'labels'),
+      commentCount: comments ? Json.num(comments, 'totalCount') : 0,
+      reactionCount: reactions ? Json.num(reactions, 'totalCount') : 0,
+      checkState: check ? Json.str(check, 'state') : '',
+      reviewDecision: Json.str(node, 'reviewDecision')
     };
   }
   if (typename === 'User') {
@@ -187,7 +324,13 @@ export function mapSearchNode(node: JsonMap): SearchResultItem | null {
       languageColor: '',
       bio: Json.str(node, 'bio'),
       followers: followers ? Json.num(followers, 'totalCount') : 0,
-      following: following ? Json.num(following, 'totalCount') : 0
+      following: following ? Json.num(following, 'totalCount') : 0,
+      createdAt: '',
+      labels: [],
+      commentCount: 0,
+      reactionCount: 0,
+      checkState: '',
+      reviewDecision: ''
     };
   }
   if (typename === 'Organization') {
@@ -203,9 +346,15 @@ export function mapSearchNode(node: JsonMap): SearchResultItem | null {
       forks: 0,
       language: '',
       languageColor: '',
-      bio: '',
+      bio: Json.str(node, 'description'),
       followers: 0,
-      following: 0
+      following: 0,
+      createdAt: '',
+      labels: [],
+      commentCount: 0,
+      reactionCount: 0,
+      checkState: '',
+      reviewDecision: ''
     };
   }
   return null;
@@ -232,6 +381,48 @@ export function mapSearchResults(data: JsonMap): SearchResultPage {
   };
 }
 
+/** aggregate 单区块解析结果 */
+export interface OverviewSection {
+  count: number;
+  items: SearchResultItem[];
+}
+
+/** 别名 search → { count, items }（纯函数） */
+function mapOverviewSection(data: JsonMap, alias: string): OverviewSection {
+  const search = Json.obj(data, alias) ?? ({} as JsonMap);
+  const items: SearchResultItem[] = [];
+  for (const nodeItem of Json.arr(search, 'nodes')) {
+    const item = mapSearchNode(nodeItem as JsonMap);
+    if (item !== null) {
+      items.push(item);
+    }
+  }
+  const count = Json.num(search, 'repositoryCount') + Json.num(search, 'issueCount') + Json.num(search, 'userCount');
+  return { count: count, items: items };
+}
+
+/** 聚合搜索响应 → 六区块数据（纯函数；code 走 REST 另行填充） */
+export function mapSearchOverview(data: JsonMap): SearchOverviewData {
+  const repos = mapOverviewSection(data, 'repos');
+  const issues = mapOverviewSection(data, 'issues');
+  const prs = mapOverviewSection(data, 'prs');
+  const users = mapOverviewSection(data, 'users');
+  const orgs = mapOverviewSection(data, 'orgs');
+  return {
+    repoItems: repos.items,
+    repoCount: repos.count,
+    issueItems: issues.items,
+    issueCount: issues.count,
+    prItems: prs.items,
+    prCount: prs.count,
+    userItems: users.items,
+    userCount: users.count,
+    orgItems: orgs.items,
+    orgCount: orgs.count,
+    codeFiles: []
+  };
+}
+
 /** REST org 搜索响应 → SearchResultItem[]（纯函数） */
 export function mapOrgSearchResults(data: JsonMap): SearchResultItem[] {
   const items: SearchResultItem[] = [];
@@ -251,7 +442,13 @@ export function mapOrgSearchResults(data: JsonMap): SearchResultItem[] {
       languageColor: '',
       bio: '',
       followers: 0,
-      following: 0
+      following: 0,
+      createdAt: '',
+      labels: [],
+      commentCount: 0,
+      reactionCount: 0,
+      checkState: '',
+      reviewDecision: ''
     });
   }
   return items;
@@ -334,6 +531,7 @@ function searchGqlType(kind: SearchEntryKind): string {
     case 'prs':
       return 'ISSUE';
     case 'people':
+    case 'orgs':
       return 'USER';
     default:
       return 'REPOSITORY';
@@ -341,20 +539,36 @@ function searchGqlType(kind: SearchEntryKind): string {
 }
 
 export class SearchService {
-  /** 代码搜索（GraphQL CODE） */
-  static async fetchCodeResults(token: string, keyword: string): Promise<CodeSearchItem[]> {
+  /** 聚合结果页：6 路单请求 + code 全文（REST 兜底内容） */
+  static async fetchOverview(token: string, keyword: string): Promise<SearchOverviewData> {
+    const q = keyword.trim();
     const variables: Record<string, Object> = {
-      'query': buildCodeQuery(keyword),
-      'first': 10
+      'q': q,
+      'issueQ': buildSearchQuery('issues', q),
+      'prQ': buildSearchQuery('prs', q),
+      'userQ': buildSearchQuery('people', q),
+      'orgQ': buildSearchQuery('orgs', q),
+      'first': 3
     };
-    const data = await graphql(CODE_SEARCH_QUERY, variables, token);
-    return mapCodeSearch(data);
+    const data = await graphql(OVERVIEW_QUERY, variables, token);
+    const overview = mapSearchOverview(data);
+    const rawPage = await CodeSearchService.fetchCodeRaw(token, q, 1, 3);
+    const repos: string[] = [];
+    for (const raw of rawPage.raws) {
+      repos.push(raw.repoFullName);
+    }
+    const avatarMap = await SearchService.loadCodeAvatars(token, repos);
+    overview.codeFiles = await CodeSearchService.buildCodeResults(rawPage.raws, avatarMap, token);
+    return overview;
   }
 
-  /** Repository/Issue/PR/User 搜索（GraphQL search，type 分派，分页） */
+  /**
+   * Repository/Issue/PR/User/Org 搜索（GraphQL search，type 分派，分页）。
+   * kind='code' 时走 REST /search/code（正文高亮见 CodeSearchService）。
+   */
   static async fetchSearchResults(token: string, kind: SearchEntryKind, keyword: string, after: string = ''): Promise<SearchResultPage> {
     const variables: Record<string, Object> = {
-      'query': buildCodeQuery(keyword),
+      'query': buildSearchQuery(kind, keyword),
       'type': searchGqlType(kind),
       'first': 20
     };
@@ -365,7 +579,59 @@ export class SearchService {
     return mapSearchResults(data);
   }
 
-  /** Organizations 搜索（REST 兜底） */
+  /** 代码仓库 owner 头像查询（动态别名；最多 8 个仓库，其余空头像） */
+  static async loadCodeAvatars(token: string, repoFullNames: string[]): Promise<Record<string, string>> {
+    const names: string[] = [];
+    for (const n of repoFullNames) {
+      if (names.indexOf(n) < 0) {
+        names.push(n);
+      }
+    }
+    const avatarMap: Record<string, string> = {};
+    if (names.length === 0) {
+      return avatarMap;
+    }
+    let query = 'query RepoAvatars(';
+    const variables: Record<string, Object> = {};
+    let fields = '';
+    for (let i = 0; i < names.length; i++) {
+      const full = names[i];
+      const slash = full.indexOf('/');
+      const owner = slash >= 0 ? full.substring(0, slash) : '';
+      const name = slash >= 0 ? full.substring(slash + 1) : full;
+      variables[`o${i}`] = owner;
+      variables[`n${i}`] = name;
+      query += `$o${i}: String!, $n${i}: String!`;
+      fields += ` r${i}: repository(owner: $o${i}, name: $n${i}) { owner { avatarUrl(size: 48) } }`;
+      if (i < names.length - 1) {
+        query += ', ';
+      }
+    }
+    query += `) {${fields} }`;
+    const data = await graphql(query, variables, token);
+    for (let i = 0; i < names.length; i++) {
+      const repo = Json.obj(data, `r${i}`);
+      if (repo !== null) {
+        const owner = Json.obj(repo, 'owner');
+        avatarMap[names[i]] = owner !== null ? Json.str(owner, 'avatarUrl') : '';
+      }
+    }
+    return avatarMap;
+  }
+
+  /** 代码搜索（REST text-match；分页 page） */
+  static async fetchCodeResults(token: string, keyword: string, page: number = 1): Promise<CodeSearchPage> {
+    const rawPage = await CodeSearchService.fetchCodeRaw(token, keyword.trim(), page, 10);
+    const repos: string[] = [];
+    for (const raw of rawPage.raws) {
+      repos.push(raw.repoFullName);
+    }
+    const avatarMap = await SearchService.loadCodeAvatars(token, repos);
+    const files = await CodeSearchService.buildCodeResults(rawPage.raws, avatarMap, token);
+    return { files: files, hasMore: page * 10 < rawPage.totalCount };
+  }
+
+  /** Organizations 搜索（REST 兜底，兼容旧接口） */
   static async fetchOrgResults(token: string, keyword: string): Promise<SearchResultItem[]> {
     const resp = await restGet(`${ORG_SEARCH_REST}${encodeURIComponent(keyword)}`, token);
     const data = Json.parse(resp.body);
