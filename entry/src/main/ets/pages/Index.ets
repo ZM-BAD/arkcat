@@ -614,11 +614,12 @@ struct Index {
       .layoutWeight(1)
 
       // 自绘底栏（官方浮层样式）：白底 + 上投影 + 选中胶囊（Spec 013 官方截图对齐）
+      // 选中态图标用官方 fill 变体（hollow 图标内部区域填充）
       Row() {
-        this.tabItem($r('app.media.oct_home_16'), $r('app.string.tab_home'), 0)
-        this.tabItem($r('app.media.oct_inbox_16'), $r('app.string.tab_inbox'), 1)
-        this.tabItem($r('app.media.oct_telescope_16'), $r('app.string.tab_explore'), 2)
-        this.tabItem($r('app.media.oct_copilot_16'), $r('app.string.tab_copilot'), 3)
+        this.tabItem($r('app.media.oct_home_16'), $r('app.media.oct_home_fill_16'), $r('app.string.tab_home'), 0)
+        this.tabItem($r('app.media.oct_inbox_16'), $r('app.media.oct_inbox_fill_16'), $r('app.string.tab_inbox'), 1)
+        this.tabItem($r('app.media.oct_telescope_16'), $r('app.media.oct_telescope_fill_16'), $r('app.string.tab_explore'), 2)
+        this.tabItem($r('app.media.oct_copilot_16'), $r('app.media.oct_copilot_16'), $r('app.string.tab_copilot'), 3)
       }
       .width('100%')
       .height(56)
@@ -630,7 +631,7 @@ struct Index {
   }
 
   @Builder
-  tabItem(iconRes: Resource, labelRes: Resource, index: number) {
+  tabItem(iconRes: Resource, iconResSelected: Resource, labelRes: Resource, index: number) {
     Column({ space: 2 }) {
       Stack({ alignContent: Alignment.Center }) {
         if (this.currentTab === index) {
@@ -643,7 +644,7 @@ struct Index {
         }
         Stack({ alignContent: Alignment.TopEnd }) {
           OctIcon({
-            res: iconRes,
+            res: this.currentTab === index ? iconResSelected : iconRes,
             iconSize: 20,
             iconColor: this.currentTab === index ? $r('app.color.link_blue') : $r('app.color.text_secondary')
           })
