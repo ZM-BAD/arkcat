@@ -47,6 +47,18 @@
 | 037 | [repositories-list.md](037-repositories-list.md) | 仓库列表（筛选/排序） | Level 3 | ✅ |
 | 038 | [file-tree.md](038-file-tree.md) | 仓库文件列表页（Files） | Level 3 | ✅ |
 | 039 | [primer-design-system.md](039-primer-design-system.md) | GitHub Primer 设计系统接入（横向规范） | Level 4 | ✅ |
+| 040 | [markdown-render.md](040-markdown-render.md) | Markdown 渲染底座（MarkdownView + MarkdownService，横向） | Level 4 | draft |
+| 041 | [comments-reactions.md](041-comments-reactions.md) | 评论与反应（Issue/PR/Discussion 统一书写链路） | Level 3 | draft |
+| 042 | [pr-review-merge.md](042-pr-review-merge.md) | PR 代码审阅与合并（review threads + merge 选项） | Level 3 | draft |
+| 043 | [issue-pr-create-edit.md](043-issue-pr-create-edit.md) | Issue/PR 创建与编辑（生命周期） | Level 3 | draft |
+| 044 | [triage-editors.md](044-triage-editors.md) | Issue/PR 元数据编排（Labels/Assignees/Milestone/Projects） | Level 3 | draft |
+| 045 | [notifications-subscriptions.md](045-notifications-subscriptions.md) | 通知与订阅增强（Inbox 高级 + 仓库 Watch） | Level 3 | draft |
+| 046 | [search-full.md](046-search-full.md) | 搜索全类型与最近搜索（Search 五类详情） | Level 3 | draft |
+| 047 | [releases-detail-download.md](047-releases-detail-download.md) | Release 详情与资产下载 | Level 3 | draft |
+| 048 | [actions-checks.md](048-actions-checks.md) | Actions/Checks 状态检查（Check runs 详情 + 一键重跑） | Level 3 | draft |
+| 049 | [multi-account-security.md](049-multi-account-security.md) | 多账号与安全（账号管理器 + App Lock 探测） | Level 3 | draft |
+| 050 | [home-favorites-shortcuts.md](050-home-favorites-shortcuts.md) | Home 个性化（Favorites 收藏 + Shortcuts 快捷入口） | Level 3 | draft |
+| 051 | [accessibility-multidevice.md](051-accessibility-multidevice.md) | 无障碍与多设备适配（横向规范） | Level 4 | draft |
 | 012 | [i18n.md](012-i18n.md) | 国际化（英/简中，默认英语） | Level 4 | ✅ |
 | 013 | [home-official.md](013-home-official.md) | Home Tab 官方布局（My Work/Favorites/Shortcuts） | Level 1 | ✅ |
 | 014 | [settings.md](014-settings.md) | Settings 设置页 | Level 3 | ✅ implemented |
