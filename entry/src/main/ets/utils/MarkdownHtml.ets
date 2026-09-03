@@ -107,3 +107,22 @@ export function buildSetOverflowJs(collapsed: boolean): string {
 export function buildMeasureJs(): string {
   return 'document.body.scrollHeight';
 }
+
+/**
+ * 官方 HTML 的相对路径未重写：img src → raw 前缀、a[href] → blob 前缀（GitHub 网页同款行为）。
+ * 绝对链接/锚点/邮件/协议相对不动；__mdFix 防重复注入。
+ */
+export function buildFixRelativeJs(imgBase: string, linkBase: string): string {
+  return '(function(){ if (window.__mdFix) return; window.__mdFix = true;'
+    + ' var ib = "' + imgBase + '", lb = "' + linkBase + '";'
+    + ' var abs = /^(https?:|data:|mailto:|#|\\/\\/)/;'
+    + ' document.querySelectorAll("img").forEach(function(img){'
+    + '   var s = img.getAttribute("src") || "";'
+    + '   if (s !== "" && !abs.test(s)) img.setAttribute("src", ib + s);'
+    + ' });'
+    + ' document.querySelectorAll("a[href]").forEach(function(a){'
+    + '   var h = a.getAttribute("href") || "";'
+    + '   if (h !== "" && !abs.test(h)) a.setAttribute("href", lb + h);'
+    + ' });'
+    + '})();';
+}
