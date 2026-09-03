@@ -156,6 +156,10 @@ export struct ProfileView {
               .height(24)
               .borderRadius(12)
               .backgroundColor($r('app.color.heat_empty'))
+              .padding(2)
+              .onClick(() => {
+                this.pathStack.pushPathByName('achievementDetail', `${this.login}|${index}`);
+              })
           }, (url: string, index: number) => `${url}_${index}`)
         }
       }

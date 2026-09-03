@@ -4,6 +4,7 @@
  * i18n 约定：纯函数仅产出结构化数据（value + unit/key），
  * 文案翻译由 UI 层通过 $r()/resourceManager 完成，见 Spec 012。
  */
+import { intl, i18n } from '@kit.LocalizationKit';
 
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 60 * MINUTE_MS;
@@ -78,6 +79,24 @@ export function githubShortTime(parts: TimeParts): string {
       return `${parts.value}y`;
   }
   return '';
+}
+
+/**
+ * ISO 解锁时间 → 本地「月 日」文本（如 September 1 / 9月1日，随设备语言时区）；
+ * 非法 ISO 返回 ''。Spec 052 成就解锁行。
+ */
+export function unlockDateText(iso: string): string {
+  const ts = Date.parse(iso);
+  if (Number.isNaN(ts)) {
+    return '';
+  }
+  try {
+    const locale = i18n.System.getSystemLocale();
+    const fmt = new intl.DateTimeFormat(locale, { month: 'long', day: 'numeric' });
+    return fmt.format(new Date(ts));
+  } catch (e) {
+    return '';
+  }
 }
 
 /**

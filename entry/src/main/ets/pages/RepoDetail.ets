@@ -210,24 +210,34 @@ export struct RepoDetailView {
       }
 
       Row({ space: 5 }) {
-        OctIcon({ res: $r('app.media.oct_star_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
-        Text(`${this.detail?.stargazerCount ?? 0}`)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-        Text($r('app.string.repo_stars_label'))
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
+        Row({ space: 5 }) {
+          OctIcon({ res: $r('app.media.oct_star_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
+          Text(`${this.detail?.stargazerCount ?? 0}`)
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor($r('app.color.text_secondary'))
+          Text($r('app.string.repo_stars_label'))
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor($r('app.color.text_secondary'))
+        }
+        .onClick(() => {
+          this.pathStack.pushPathByName('stargazers', `${this.owner}/${this.name}`);
+        })
         Text('·')
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_tertiary'))
-          .margin({ left: 4, right: 4 })
-        OctIcon({ res: $r('app.media.oct_repo_forked_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
-        Text(`${this.detail?.forkCount ?? 0}`)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-        Text($r('app.string.repo_forks_label'))
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
+          .margin({ left: 2, right: 2 })
+        Row({ space: 5 }) {
+          OctIcon({ res: $r('app.media.oct_repo_forked_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
+          Text(`${this.detail?.forkCount ?? 0}`)
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor($r('app.color.text_secondary'))
+          Text($r('app.string.repo_forks_label'))
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor($r('app.color.text_secondary'))
+        }
+        .onClick(() => {
+          this.pathStack.pushPathByName('forks', `${this.owner}/${this.name}`);
+        })
       }
       .width('100%')
     }

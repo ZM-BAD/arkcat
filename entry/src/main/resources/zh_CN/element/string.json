@@ -1723,6 +1723,54 @@
     {
       "name": "md_no_readme",
       "value": "该仓库没有 README"
+    },
+    {
+      "name": "social_stargazers",
+      "value": "星标者"
+    },
+    {
+      "name": "social_forks",
+      "value": "复刻"
+    },
+    {
+      "name": "social_fork_from",
+      "value": "复刻自 %1$s"
+    },
+    {
+      "name": "social_stargazers_empty",
+      "value": "还没有星标者。"
+    },
+    {
+      "name": "social_forks_empty",
+      "value": "还没有复刻。"
+    },
+    {
+      "name": "social_forks_search",
+      "value": "搜索复刻"
+    },
+    {
+      "name": "search_cancel",
+      "value": "取消"
+    },
+    {
+      "name": "achievement_unlocked_fmt",
+      "value": "解锁于 %1$s"
+    },
+    {
+      "name": "achievement_share",
+      "value": "分享"
+    },
+    {
+      "name": "achievement_share_failed",
+      "value": "分享失败"
+    },
+    {
+      "name": "achievement_close",
+      "value": "关闭"
+    },
+    {
+      "name": "achievement_load_failed",
+      "value": "成就数据加载失败"
     }
   ]
 }

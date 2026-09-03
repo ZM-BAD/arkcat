@@ -3,7 +3,7 @@
  * 运行于模拟器（aa test），与主代码同一编译单元，可直接 import main ets。
  */
 import { describe, it, expect } from '@ohos/hypium';
-import { timeParts, compactCount, notificationTypeKey, githubShortTime } from '../../../main/ets/utils/Format';
+import { timeParts, compactCount, notificationTypeKey, githubShortTime, unlockDateText } from '../../../main/ets/utils/Format';
 import { Json } from '../../../main/ets/utils/Json';
 import { WorkSection, defaultWorkSections, visibleWorkSections, workSectionsToStorage, workSectionsFromStorage } from '../../../main/ets/utils/WorkConfig';
 import {
@@ -29,6 +29,8 @@ import { buildTopicQuery } from '../../../main/ets/services/ExploreService';
 import { mapSearchResult } from '../../../main/ets/models/ExploreModels';
 import { mapUserProfile, isSelfProfile } from '../../../main/ets/models/ProfileModels';
 import { mapRepoDetail, nextStarAction } from '../../../main/ets/models/RepoDetailModels';
+import { parseAchievementDetail, extractAchievementSlugs } from '../../../main/ets/models/AchievementModels';
+import { mapFork, mapStargazerPage } from '../../../main/ets/models/RepoSocialModels';
 import { mapIssue, mapIssuesPage, issueOrderField } from '../../../main/ets/models/IssuesModels';
 import { MarkdownService } from '../../../main/ets/services/MarkdownService';
 
@@ -1092,6 +1094,123 @@ export default function logicTest(testsuiteName: string) {
       const rp = mapRepoReleasesPage(relData);
       expect(rp.releases[0].body).assertEqual('long body');
       expect(rp.releases[0].bodyHTML).assertEqual('<p>release html</p>');
+    });
+
+    it('achievement_parse_full', 0, () => {
+      // 官方详情片段（含 tier-badge 图/relative-time/私有仓库 inaccessible 引用）
+      const html = `<div class="d-flex flex-column">
+<div class="d-flex flex-items-center flex-justify-center tmp-p-3" style="background-image: url('https://x/yolo-detail-9511d3a21745.png')">
+<achievement-badge-flip tier-count="1"><img src="https://x/yolo-default-be0bbff04951.png" data-targets="achievement-badge-flip.tiers" width="140" alt="Achievement: YOLO" /></achievement-badge-flip>
+</div>
+<div class="tmp-p-3"><div class="d-flex flex-items-center"><h3>YOLO</h3></div><div class="mt-1">You want it? You merge it.</div></div>
+<div class="achievement-history"><h4>History</h4>
+<div class="TimelineItem TimelineItem--condensed achievement-history-unlocked-at">
+<div class="TimelineItem-badge"><svg class="octicon octicon-trophy"><path d="x"></path></svg></div>
+<div class="TimelineItem-body"><span class="color-fg-success text-bold">100% unlocked</span> · Unlocked
+<relative-time datetime="2026-08-31T19:09:34Z" month="short" day="numeric" threshold="PT0S">2026-08-31 19:09:34 UTC</relative-time>
+</div></div>
+<div class="TimelineItem TimelineItem--condensed achievement-history-tier">
+<div class="TimelineItem-badge"><svg class="octicon octicon-dot-fill"><path d="y"></path></svg></div>
+<div class="TimelineItem-body"><span class="color-fg-muted">inaccessible</span> · <span>Merged without a review</span></div>
+</div></div></div>`;
+      const d = parseAchievementDetail(html, 'yolo', 'fallback.png');
+      expect(d.name).assertEqual('YOLO');
+      expect(d.description).assertEqual('You want it? You merge it.');
+      expect(d.badgeImageUrl).assertEqual('https://x/yolo-default-be0bbff04951.png');
+      expect(d.unlockedAt).assertEqual('2026-08-31T19:09:34Z');
+      // 私有仓库不可见引用 → 隐藏，事件标签保留
+      expect(d.eventRef).assertEqual('');
+      expect(d.eventLabel).assertEqual('Merged without a review');
+    });
+
+    it('achievement_parse_anchor_ref', 0, () => {
+      // 公共仓库事件：<a> 引用 + 事件标签
+      const html = `<div><h3>YOLO</h3></div><div class="achievement-history-tier"><div class="TimelineItem-body"><a href="https://github.com/ZM-BAD/starraft/pull/3">ZM-BAD/starraft #3</a> · <span>Merged without a review</span></div></div>`;
+      const d = parseAchievementDetail(html, 'yolo', 'fb.png');
+      expect(d.eventRef).assertEqual('ZM-BAD/starraft #3');
+      expect(d.eventLabel).assertEqual('Merged without a review');
+    });
+
+    it('achievement_parse_invalid', 0, () => {
+      // 无 h3（非预期结构）→ 抛错由服务层/页面兜底
+      let caught = false;
+      try {
+        parseAchievementDetail('<div>no h3 here</div>', 'yolo', 'fb.png');
+      } catch (e) {
+        caught = true;
+      }
+      expect(caught).assertTrue();
+    });
+
+    it('achievement_parse_no_time', 0, () => {
+      // 无 relative-time/无事件行时字段置空，不崩溃
+      const html = `<img src="x.png" data-targets="achievement-badge-flip.tiers" /><h3>Starstruck</h3><div class="mt-1">d</div>`;
+      const d = parseAchievementDetail(html, 'starstruck', 'fb.png');
+      expect(d.name).assertEqual('Starstruck');
+      expect(d.unlockedAt).assertEqual('');
+      expect(d.badgeImageUrl).assertEqual('x.png');
+    });
+
+    it('achievement_slugs_dedup', 0, () => {
+      const html = `?achievement=yolo&amp;tab=achievements then ?achievement=quickdraw&amp;tab and yolo again`;
+      const slugs = extractAchievementSlugs(html);
+      expect(slugs.length).assertEqual(2);
+      expect(slugs[0]).assertEqual('yolo');
+      expect(slugs[1]).assertEqual('quickdraw');
+    });
+
+    it('unlockDateText_valid', 0, () => {
+      // 设备语言相关，仅断言非空（本地「月 日」）
+      expect(unlockDateText('2026-08-31T19:09:34Z') !== '').assertTrue();
+      expect(unlockDateText('not-a-date')).assertEqual('');
+    });
+
+    it('mapFork_full', 0, () => {
+      const langNode: JsonMap = { 'name': 'TypeScript', 'color': '#3178C6' };
+      const pOwner: JsonMap = { 'login': 'ZM-BAD' };
+      const parentNode: JsonMap = { 'name': 'DAG-chat', 'owner': pOwner };
+      const forkOwner: JsonMap = { 'login': 'yjnzen', 'avatarUrl': 'https://x/av.png' };
+      const node: JsonMap = {
+        'name': 'DAG-chat',
+        'description': 'Chat applications that use DAG',
+        'stargazerCount': 0,
+        'primaryLanguage': langNode,
+        'parent': parentNode,
+        'owner': forkOwner
+      };
+      const f = mapFork(node);
+      expect(f.name).assertEqual('DAG-chat');
+      expect(f.nameWithOwner).assertEqual('yjnzen/DAG-chat');
+      expect(f.ownerLogin).assertEqual('yjnzen');
+      expect(f.primaryLanguage).assertEqual('TypeScript');
+      expect(f.languageColor).assertEqual('#3178C6');
+      expect(f.parentNameWithOwner).assertEqual('ZM-BAD/DAG-chat');
+    });
+
+    it('mapFork_nullParent', 0, () => {
+      // 上游不可见/无语言 → 置空（UI 隐藏 Forked from / 语言段）
+      const forkOwner: JsonMap = { 'login': 'o', 'avatarUrl': '' };
+      const node: JsonMap = {
+        'name': 'R', 'description': '', 'stargazerCount': 1,
+        'owner': forkOwner
+      };
+      const f = mapFork(node);
+      expect(f.parentNameWithOwner).assertEqual('');
+      expect(f.primaryLanguage).assertEqual('');
+    });
+
+    it('mapStargazerPage_conn', 0, () => {
+      const stargazerNode: JsonMap = { 'login': 'a', 'name': 'A', 'bio': 'b', 'avatarUrl': 'u' };
+      const pageInfo: JsonMap = { 'hasNextPage': true, 'endCursor': 'CURSOR' };
+      const stargazers: JsonMap = { 'pageInfo': pageInfo, 'nodes': [stargazerNode] };
+      const repoNode: JsonMap = { 'stargazers': stargazers };
+      const data: JsonMap = { 'repository': repoNode };
+      const page = mapStargazerPage(data);
+      expect(page.users.length).assertEqual(1);
+      expect(page.users[0].login).assertEqual('a');
+      expect(page.users[0].bio).assertEqual('b');
+      expect(page.hasNextPage).assertTrue();
+      expect(page.endCursor).assertEqual('CURSOR');
     });
   });
 }

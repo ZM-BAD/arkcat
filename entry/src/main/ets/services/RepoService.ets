@@ -1,8 +1,9 @@
 /**
- * 仓库详情服务（Spec 006）：详情查询 + Star/Fork mutation。
+ * 仓库详情服务（Spec 006）：详情查询 + Star/Fork mutation + Spec 053 社交列表（stargazers/forks）。
  */
 import { graphql } from './GitHttpClient';
 import { RepoDetail, mapRepoDetail } from '../models/RepoDetailModels';
+import { StargazerPage, ForkPage, mapStargazerPage, mapForkPage } from '../models/RepoSocialModels';
 
 const REPO_QUERY = `
 query RepositoryDetail($owner: String!, $name: String!) {
@@ -54,6 +55,31 @@ mutation ForkRepo($repositoryId: ID!) {
   createFork(input: { repositoryId: $repositoryId }) { repository { nameWithOwner } }
 }`;
 
+const STARGAZERS_QUERY = `
+query RepoStargazers($owner: String!, $name: String!, $first: Int = 50, $after: String) {
+  repository(owner: $owner, name: $name) {
+    stargazers(first: $first, after: $after) {
+      pageInfo { hasNextPage endCursor }
+      nodes { login name bio avatarUrl }
+    }
+  }
+}`;
+
+const FORKS_QUERY = `
+query RepoForks($owner: String!, $name: String!, $first: Int = 50, $after: String) {
+  repository(owner: $owner, name: $name) {
+    forks(first: $first, after: $after) {
+      pageInfo { hasNextPage endCursor }
+      nodes {
+        name description stargazerCount
+        primaryLanguage { name color }
+        parent { name owner { login } }
+        owner { login avatarUrl }
+      }
+    }
+  }
+}`;
+
 export class RepoService {
   /** 拉取仓库详情聚合 */
   static async fetchRepoDetail(token: string, owner: string, name: string): Promise<RepoDetail> {
@@ -74,5 +100,25 @@ export class RepoService {
   static async createFork(token: string, repoId: string): Promise<void> {
     const variables: Record<string, Object> = { 'repositoryId': repoId };
     await graphql(CREATE_FORK_MUTATION, variables, token);
+  }
+
+  /** Stargazers 一页（Spec 053） */
+  static async fetchStargazers(token: string, owner: string, name: string, cursor: string): Promise<StargazerPage> {
+    const variables: Record<string, Object> = { 'owner': owner, 'name': name, 'first': 50 };
+    if (cursor !== '') {
+      variables['after'] = cursor;
+    }
+    const data = await graphql(STARGAZERS_QUERY, variables, token);
+    return mapStargazerPage(data);
+  }
+
+  /** Forks 一页（Spec 053） */
+  static async fetchForks(token: string, owner: string, name: string, cursor: string): Promise<ForkPage> {
+    const variables: Record<string, Object> = { 'owner': owner, 'name': name, 'first': 50 };
+    if (cursor !== '') {
+      variables['after'] = cursor;
+    }
+    const data = await graphql(FORKS_QUERY, variables, token);
+    return mapForkPage(data);
   }
 }
