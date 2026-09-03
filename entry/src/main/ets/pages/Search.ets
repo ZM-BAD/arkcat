@@ -78,6 +78,16 @@ export struct SearchView {
     this.pathStack.pushPathByName('searchResults', `${kind}|${kw}`);
   }
 
+  /** 回车 → 聚合结果页（官方行为：直进全部类型结果） */
+  private openOverview(): void {
+    const kw = this.keyword.trim();
+    if (kw === '') {
+      return;
+    }
+    this.rememberKeyword(kw);
+    this.pathStack.pushPathByName('searchOverview', kw);
+  }
+
   /** Jump to：J1 首个匹配仓库 → 详情页；无匹配 toast */
   private jumpTo(): void {
     const kw = this.keyword.trim();
@@ -283,6 +293,7 @@ export struct SearchView {
             .caretColor($r('app.color.link_blue'))
             .backgroundColor(Color.Transparent)
             .onChange((v: string) => this.onSearchInput(v))
+            .onSubmit(() => this.openOverview())
             .onFocus(() => {
               this.focused = true;
             })

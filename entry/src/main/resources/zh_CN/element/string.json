@@ -773,6 +773,50 @@
       "value": "未找到结果"
     },
     {
+      "name": "search_see_more_code",
+      "value": "查看更多代码结果"
+    },
+    {
+      "name": "search_see_more_repositories",
+      "value": "查看更多仓库（%1$s）"
+    },
+    {
+      "name": "search_see_more_issues",
+      "value": "查看更多 Issues（%1$s）"
+    },
+    {
+      "name": "search_see_more_prs",
+      "value": "查看更多 Pull Requests（%1$s）"
+    },
+    {
+      "name": "search_see_more_people",
+      "value": "查看更多用户（%1$s）"
+    },
+    {
+      "name": "search_see_more_orgs",
+      "value": "查看更多组织（%1$s）"
+    },
+    {
+      "name": "search_show_more",
+      "value": "显示更多"
+    },
+    {
+      "name": "search_show_more_matches",
+      "value": "显示更多 %1$d 条匹配"
+    },
+    {
+      "name": "search_checks_badge",
+      "value": "Checks"
+    },
+    {
+      "name": "search_reviews_badge",
+      "value": "Reviews"
+    },
+    {
+      "name": "search_file_type_text",
+      "value": "文本"
+    },
+    {
       "name": "search_empty_title",
       "value": "找到你需要的内容。"
     },

@@ -84,7 +84,6 @@ export struct StarredRepositoriesView {
   private fetchLists(): void {
     WorkService.fetchUserLists(this.token)
       .then((lists: WorkUserList[]) => {
-        console.info(`[STARRED_DEBUG] fetchLists done n=${lists.length} member=${this.sheetRepoId !== '' ? lists[0]?.repoIds.includes(this.sheetRepoId) : 'norepo'}`);
         this.lists = lists;
       })
       .catch(() => {
@@ -100,7 +99,6 @@ export struct StarredRepositoriesView {
   /** 切换仓库与某列表的成员关系：乐观更新（点击即翻转圆钮/计数），失败重取回滚 */
   private toggleListMember(list: WorkUserList): void {
     const targetMember = this.repoInList(list);
-    console.info(`[STARRED_DEBUG] toggle tap repo=${this.sheetRepoId} list=${list.id} toggling=${this.toggling} lists=${this.lists.length} member=${targetMember}`);
     if (this.sheetRepoId === '' || this.toggling) {
       return;
     }
@@ -135,16 +133,13 @@ export struct StarredRepositoriesView {
       }
     }
     this.toggling = true;
-    console.info(`[STARRED_DEBUG] optimistic set lists=${this.lists.length} member=${targetMember} sendIds=${sendIds.join(',')}`);
     WorkService.updateUserListsForItem(this.token, this.sheetRepoId, sendIds)
       .then(() => {
         this.toggling = false;
-        console.info('[STARRED_DEBUG] mutation success');
         this.fetchLists();
       })
       .catch((e: Error) => {
         this.toggling = false;
-        console.info(`[STARRED_DEBUG] mutation failed: ${e.message}`);
         promptAction.showToast({ message: e.message });
         this.fetchLists();
       });
@@ -216,7 +211,8 @@ export struct StarredRepositoriesView {
           .onClick((): void => {
             this.toggleListMember(list);
           })
-        }, (list: WorkUserList) => list.id)
+        // key 含 itemCount/成员集合：数据变更强制重建行（同 key 复用 => 闭包陈旧不刷新）
+        }, (list: WorkUserList) => `${list.id}_${list.itemCount}_${list.repoIds.join(',')}`)
       } else {
         // 无列表：官方 Suggestions 三件套（已建列表后由列表行替代）
         Text($r('app.string.starred_suggestions_title'))
@@ -508,7 +504,8 @@ export struct StarredRepositoriesView {
               .onClick((): void => {
                 this.pathStack.pushPathByName('listDetail', list.id);
               })
-            }, (list: WorkUserList) => list.id)
+            // key 含 itemCount：切换后计数重新渲染（同 key 复用 => 显示陈旧数量）
+            }, (list: WorkUserList) => `${list.id}_${list.itemCount}`)
           } else {
             // Create your first list 空态卡
             Column({ space: 12 }) {

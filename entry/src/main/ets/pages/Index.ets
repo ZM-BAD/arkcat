@@ -17,6 +17,7 @@ import { RepoDetailView } from './RepoDetail';
 import { IssuesListView } from './IssuesList';
 import { SettingsView } from './Settings';
 import { SearchView } from './Search';
+import { SearchOverviewView } from './SearchOverview';
 import { SearchResultsView } from './SearchResults';
 import { OctIcon } from '../components/OctIcon';
 import { EditMyWorkView } from './EditMyWork';
@@ -300,6 +301,22 @@ struct Index {
       const idx = full.indexOf('|');
       this.searchKind = idx >= 0 ? full.substring(0, idx) : 'repositories';
       this.searchKeyword = idx >= 0 ? full.substring(idx + 1) : full;
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 046：搜索聚合结果页（路由参数：keyword，回车直进） */
+  @Builder
+  searchOverviewDestination() {
+    NavDestination() {
+      SearchOverviewView({
+        keyword: this.searchKeyword,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.searchKeyword = context.pathInfo.param as string;
     })
     .hideTitleBar(true)
   }
@@ -600,6 +617,8 @@ struct Index {
       this.repositoriesListDestination()
     } else if (name === 'search') {
       this.searchDestination()
+    } else if (name === 'searchOverview') {
+      this.searchOverviewDestination()
     } else if (name === 'searchResults') {
       this.searchResultsDestination()
     } else if (name === 'editMyWork') {
@@ -641,44 +660,27 @@ struct Index {
 
   @Builder
   mainTabs() {
-    Column() {
-      Tabs({ barPosition: BarPosition.End, controller: this.tabController }) {
-        TabContent() {
-          HomeView({ token: this.token, pathStack: this.pathStack, workVersion: this.homeWorkVersion })
-        }
-
-        TabContent() {
-          InboxView({ token: this.token })
-        }
-
-        TabContent() {
-          ExploreView({ token: this.token, pathStack: this.pathStack })
-        }
-
-        TabContent() {
-          CopilotView()
-        }
+    Tabs({ barPosition: BarPosition.End, controller: this.tabController }) {
+      TabContent() {
+        HomeView({ token: this.token, pathStack: this.pathStack, workVersion: this.homeWorkVersion })
       }
-      .onChange((index: number) => {
-        this.currentTab = index;
-      })
-      .barHeight(0)
-      .width('100%')
-      .layoutWeight(1)
 
-      // 自绘底栏（官方浮层样式）：白底 + 上投影 + 选中胶囊（Spec 013 官方截图对齐）
-      // 选中态图标用官方 fill 变体（hollow 图标内部区域填充）
-      Row() {
-        this.tabItem($r('app.media.oct_home_16'), $r('app.media.oct_home_fill_16'), $r('app.string.tab_home'), 0)
-        this.tabItem($r('app.media.oct_inbox_16'), $r('app.media.oct_inbox_fill_16'), $r('app.string.tab_inbox'), 1)
-        this.tabItem($r('app.media.oct_telescope_16'), $r('app.media.oct_telescope_fill_16'), $r('app.string.tab_explore'), 2)
-        this.tabItem($r('app.media.oct_copilot_16'), $r('app.media.oct_copilot_16'), $r('app.string.tab_copilot'), 3)
+      TabContent() {
+        InboxView({ token: this.token })
       }
-      .width('100%')
-      .height(56)
-      .backgroundColor($r('app.color.card_background'))
-      .shadow({ radius: 14, color: $r('app.color.shadow_resting'), offsetY: -3 })
+
+      TabContent() {
+        ExploreView({ token: this.token, pathStack: this.pathStack })
+      }
+
+      TabContent() {
+        CopilotView()
+      }
     }
+    .onChange((index: number) => {
+      this.currentTab = index;
+    })
+    .barHeight(0)
     .width('100%')
     .height('100%')
   }
@@ -721,6 +723,8 @@ struct Index {
     .height('100%')
     .justifyContent(FlexAlign.Center)
     .onClick(() => {
+      // 底栏全局常驻：切 tab 时清空二级页栈回根（官方 App 点 tab 回首个页面）
+      this.pathStack.clear();
       this.tabController.changeIndex(index);
     })
   }
@@ -740,12 +744,31 @@ struct Index {
           }
         })
       } else {
-        Navigation(this.pathStack) {
-          this.mainTabs()
+        // 全局壳：Navigation（四 Tab 内容 + 二级页栈）+ 常驻自绘底栏（官方浮层样式）
+        Column() {
+          Navigation(this.pathStack) {
+            this.mainTabs()
+          }
+          .mode(NavigationMode.Stack)
+          .hideTitleBar(true)
+          .navDestination(this.destinationMap)
+          .width('100%')
+          .layoutWeight(1)
+
+          // 自绘底栏：白底 + 上投影 + 选中胶囊；选中态图标用官方 fill 变体
+          Row() {
+            this.tabItem($r('app.media.oct_home_16'), $r('app.media.oct_home_fill_16'), $r('app.string.tab_home'), 0)
+            this.tabItem($r('app.media.oct_inbox_16'), $r('app.media.oct_inbox_fill_16'), $r('app.string.tab_inbox'), 1)
+            this.tabItem($r('app.media.oct_telescope_16'), $r('app.media.oct_telescope_fill_16'), $r('app.string.tab_explore'), 2)
+            this.tabItem($r('app.media.oct_copilot_16'), $r('app.media.oct_copilot_16'), $r('app.string.tab_copilot'), 3)
+          }
+          .width('100%')
+          .height(56)
+          .backgroundColor($r('app.color.card_background'))
+          .border({ width: { top: 1 }, color: $r('app.color.divider') })
         }
-        .mode(NavigationMode.Stack)
-        .hideTitleBar(true)
-        .navDestination(this.destinationMap)
+        .width('100%')
+        .height('100%')
       }
     }
 .width(44)

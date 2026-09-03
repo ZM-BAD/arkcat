@@ -22,7 +22,9 @@ import { mapUser, mapRepo, mapViewerBasic, mapNotifications, issueNumberFromUrl,
 import { buildNotificationsPath, pullRefFromUrl, buildPullStatesQuery, mapPullMerged, PrRef,
   filterByReasons, filterByInboxView, collectRepoFilters, InboxReasonKey, InboxRepoFilterItem
 } from '../../../main/ets/services/NotificationsService';
-import { buildCodeQuery, mapCodeSearch, mapSearchNode, mapSearchResults, mapOrgSearchResults, buildQualifierInsert, pushSearchHistory } from '../../../main/ets/services/SearchService';
+import { buildCodeQuery, mapCodeSearch, mapSearchNode, mapSearchResults, mapOrgSearchResults, buildQualifierInsert, pushSearchHistory, buildSearchQuery, mapSearchOverview, formatBigCount, isLightHexColor } from '../../../main/ets/services/SearchService';
+import { buildCodeSnippet, splitLines, buildFragmentLines, parseCodeSearchItem, fileBadgeKey } from '../../../main/ets/services/CodeSearchService';
+import { RawMatch } from '../../../main/ets/services/CodeSearchService';
 import { buildTopicQuery } from '../../../main/ets/services/ExploreService';
 import { mapSearchResult } from '../../../main/ets/models/ExploreModels';
 import { mapUserProfile, isSelfProfile } from '../../../main/ets/models/ProfileModels';
@@ -244,7 +246,8 @@ export default function logicTest(testsuiteName: string) {
     });
 
     it('buildCodeQuery_and_map', 0, () => {
-      expect(buildCodeQuery('claude code')).assertEqual('"claude code"');
+      // qualifier 可解析：原词不带引号（gitHub search 语法）
+      expect(buildCodeQuery('claude code')).assertEqual('claude code');
       const repo1: JsonMap = { 'nameWithOwner': 'nvidia/trit' };
       const repo2: JsonMap = { 'nameWithOwner': 'jezwb/claude-skills' };
       const fileNode1: JsonMap = {
@@ -366,6 +369,162 @@ export default function logicTest(testsuiteName: string) {
       expect(items.length).assertEqual(1);
       expect(items[0].kind).assertEqual('organization');
       expect(items[0].title).assertEqual('org1');
+    });
+
+    it('searchQuery_qualifiers', 0, () => {
+      expect(buildSearchQuery('repositories', 'cli')).assertEqual('cli');
+      expect(buildSearchQuery('issues', 'cli')).assertEqual('cli is:issue');
+      expect(buildSearchQuery('prs', 'cli')).assertEqual('cli is:pr');
+      expect(buildSearchQuery('people', 'cli')).assertEqual('cli type:user');
+      expect(buildSearchQuery('orgs', 'cli')).assertEqual('cli type:org');
+      expect(buildSearchQuery('code', '  cli  ')).assertEqual('cli');
+    });
+
+    it('formatBigCount_display', 0, () => {
+      expect(formatBigCount(0)).assertEqual('0');
+      expect(formatBigCount(999)).assertEqual('999');
+      expect(formatBigCount(72000)).assertEqual('72k');
+      expect(formatBigCount(9999)).assertEqual('10k');
+      expect(formatBigCount(2200000)).assertEqual('2.2m');
+      expect(formatBigCount(24200000)).assertEqual('24.2m');
+      expect(formatBigCount(2000000)).assertEqual('2m');
+    });
+
+    it('isLightHexColor_luminance', 0, () => {
+      expect(isLightHexColor('F6F8FA')).assertTrue();
+      expect(isLightHexColor('0C4462')).assertFalse();
+      expect(isLightHexColor('')).assertFalse();
+      expect(isLightHexColor('zzzzzz')).assertFalse();
+    });
+
+    it('mapSearchNode_extendedFields', 0, () => {
+      const labelNodes: JsonMap[] = [ { 'name': 'bug-fix', 'color': '1F883D' } ];
+      const labels: JsonMap = { 'nodes': labelNodes };
+      const comments: JsonMap = { 'totalCount': 6 };
+      const reactions: JsonMap = { 'totalCount': 2 };
+      const check: JsonMap = { 'state': 'SUCCESS' };
+      const prRepo: JsonMap = { 'nameWithOwner': 'a/b' };
+      const prNode: JsonMap = {
+        '__typename': 'PullRequest', 'title': '[CLI]: Crash', 'state': 'OPEN', 'number': 7,
+        'createdAt': '2026-08-31T10:00:00Z', 'repository': prRepo,
+        'labels': labels, 'comments': comments, 'reactions': reactions,
+        'statusCheckRollup': check, 'reviewDecision': 'CHANGES_REQUESTED'
+      };
+      const item = mapSearchNode(prNode);
+      expect(item !== null).assertTrue();
+      if (item !== null) {
+        expect(item.labels.length).assertEqual(1);
+        expect(item.labels[0].name).assertEqual('bug-fix');
+        expect(item.commentCount).assertEqual(6);
+        expect(item.reactionCount).assertEqual(2);
+        expect(item.checkState).assertEqual('SUCCESS');
+        expect(item.reviewDecision).assertEqual('CHANGES_REQUESTED');
+        expect(item.createdAt).assertEqual('2026-08-31T10:00:00Z');
+      }
+      const ownerNode: JsonMap = { 'avatarUrl': 'o.png' };
+      const repoNode: JsonMap = {
+        '__typename': 'Repository', 'nameWithOwner': 'a/b', 'stargazerCount': 5,
+        'owner': ownerNode
+      };
+      const repoItem = mapSearchNode(repoNode);
+      expect(repoItem !== null && repoItem.avatarUrl === 'o.png').assertTrue();
+      const orgNode: JsonMap = {
+        '__typename': 'Organization', 'login': 'github', 'name': 'GitHub', 'description': 'build together',
+        'avatarUrl': 'g.png'
+      };
+      const orgItem = mapSearchNode(orgNode);
+      expect(orgItem !== null && orgItem.bio === 'build together').assertTrue();
+    });
+
+    it('mapSearchOverview_sections', 0, () => {
+      const repoNode: JsonMap = { '__typename': 'Repository', 'nameWithOwner': 'a/b' };
+      const orgNode: JsonMap = { '__typename': 'Organization', 'login': 'github', 'name': 'GitHub' };
+      const reposSec: JsonMap = { 'repositoryCount': 5, 'nodes': [repoNode] };
+      const issuesSec: JsonMap = { 'issueCount': 7, 'nodes': [] };
+      const prsSec: JsonMap = { 'issueCount': 9, 'nodes': [] };
+      const usersSec: JsonMap = { 'userCount': 11, 'nodes': [] };
+      const orgsSec: JsonMap = { 'userCount': 13, 'nodes': [orgNode] };
+      const data: JsonMap = {
+        'repos': reposSec,
+        'issues': issuesSec,
+        'prs': prsSec,
+        'users': usersSec,
+        'orgs': orgsSec
+      };
+      const ov = mapSearchOverview(data);
+      expect(ov.repoCount).assertEqual(5);
+      expect(ov.repoItems.length).assertEqual(1);
+      expect(ov.orgCount).assertEqual(13);
+      expect(ov.orgItems.length).assertEqual(1);
+      expect(ov.issueCount).assertEqual(7);
+      expect(ov.prCount).assertEqual(9);
+      expect(ov.userCount).assertEqual(11);
+    });
+
+    it('codeSnippet_tokenBoundary', 0, () => {
+      // "clients" 不应误命中 "cli"；"_cli_" 词内应命中
+      const content = 'clients connect via latest_tomatoes_cli_gem\nfoo cli bar\n';
+      const s = buildCodeSnippet(content, ['cli'], 20);
+      expect(s.totalMatches).assertEqual(2);
+      const line1 = s.window.find((l => l.no === 1));
+      expect(line1 !== undefined && line1.highlights.length === 1).assertTrue();
+      if (line1 !== undefined && line1.highlights.length === 1) {
+        // latest_tomatoes_cli_gem 中 cli 的绝对位置 36..39
+        expect(line1.highlights[0].start).assertEqual(36);
+        expect(line1.highlights[0].end).assertEqual(39);
+      }
+    });
+
+    it('codeSnippet_windowAndMore', 0, () => {
+      // 内容：第 2 行 1 处命中、第 4 行 1 处、第 10 行 1 处 → 窗口覆盖 2/4 附近行，10 行进 more
+      const content = 'A\ncli line2\nB\nline4 cli\nC\nD\nE\nF\nG\nH\ncli on 10\n';
+      const s = buildCodeSnippet(content, ['cli'], 6);
+      expect(s.totalMatches).assertEqual(3);
+      expect(s.window.length > 0).assertTrue();
+      expect(s.window[0].no).assertEqual(1); // 窗口从 1 起（含上下文）
+      expect(s.more.length > 0).assertTrue();
+      // 高亮区间定位：line2 的 cli 为 0..3
+      const line2 = s.window.find((l => l.no === 2));
+      expect(line2 !== undefined && line2.highlights[0].start === 0 && line2.highlights[0].end === 3).assertTrue();
+    });
+
+    it('codeSnippet_fragmentFallback', 0, () => {
+      const fragment = 'a line\nfoo CLI bar\nb line';
+      const match1: RawMatch = { 'text': 'CLI', 'indices': [11, 14] };
+      const matches: RawMatch[] = [match1];
+      expect(splitLines(fragment).length).assertEqual(3);
+      const out = buildFragmentLines(fragment, matches);
+      expect(out.length).assertEqual(3);
+      // 命中行（第 2 行起始偏移 7）：11-7=4..14-7=7
+      expect(out[1].highlights.length).assertEqual(1);
+      expect(out[1].highlights[0].start).assertEqual(4);
+      expect(out[1].highlights[0].end).assertEqual(7);
+    });
+
+    it('codeFile_parseAndBadge', 0, () => {
+      const m1: RawMatch = { 'text': 'CLI', 'indices': [2, 5] };
+      const matchesA: RawMatch[] = [m1];
+      const tm: JsonMap = {
+        'fragment': 'x CLI y',
+        'matches': matchesA
+      };
+      const repoInfo: JsonMap = { 'full_name': 'owner/repo' };
+      const item: JsonMap = {
+        'repository': repoInfo,
+        'path': 'docs/a.md',
+        'name': 'a.md',
+        'url': 'https://api.github.com/repositories/1/contents/docs/a.md',
+        'text_matches': [tm]
+      };
+      const f = parseCodeSearchItem(item);
+      expect(f !== null).assertTrue();
+      if (f !== null) {
+        expect(f.repoFullName).assertEqual('owner/repo');
+        expect(f.matches.length).assertEqual(1);
+        expect(f.matches[0].text).assertEqual('CLI');
+        expect(fileBadgeKey(f.name)).assertEqual('markdown');
+        expect(fileBadgeKey('NEWS')).assertEqual('text');
+      }
     });
 
     it('mapUserProfile_and_selfCheck', 0, () => {

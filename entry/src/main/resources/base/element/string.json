@@ -773,6 +773,50 @@
       "value": "No results found"
     },
     {
+      "name": "search_see_more_code",
+      "value": "See more code results"
+    },
+    {
+      "name": "search_see_more_repositories",
+      "value": "See %1$s more repositories"
+    },
+    {
+      "name": "search_see_more_issues",
+      "value": "See %1$s more issues"
+    },
+    {
+      "name": "search_see_more_prs",
+      "value": "See %1$s more pull requests"
+    },
+    {
+      "name": "search_see_more_people",
+      "value": "See %1$s more people"
+    },
+    {
+      "name": "search_see_more_orgs",
+      "value": "See %1$s more organizations"
+    },
+    {
+      "name": "search_show_more",
+      "value": "Show more"
+    },
+    {
+      "name": "search_show_more_matches",
+      "value": "Show %1$d more matches"
+    },
+    {
+      "name": "search_checks_badge",
+      "value": "Checks"
+    },
+    {
+      "name": "search_reviews_badge",
+      "value": "Reviews"
+    },
+    {
+      "name": "search_file_type_text",
+      "value": "Text"
+    },
+    {
       "name": "search_empty_title",
       "value": "Find your stuff."
     },

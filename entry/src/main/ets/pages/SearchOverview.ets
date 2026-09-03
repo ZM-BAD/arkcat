@@ -1,16 +1,18 @@
 /**
- * 搜索结果单类页（Spec 046 结果页批 / 官方 6 图版式）：
+ * 搜索结果聚合页（Spec 046 结果页批 / 官方 7 图：回车直进）：
  * - 头部：← + 搜索框（回车重搜）+ ✕ 返回 + ⋮ 刷新菜单
- * - repositories/issues/prs/people/orgs → GraphQL search（分页 Show more）
- * - code → REST /search/code（文件分组卡 + Show more 文件分页）
- * - 行版式与聚合页共用：SearchRows.ets / CodeSearchCard.ets
+ * - 六区块（Code/Repositories/Issues/Pull Requests/People/Organizations），
+ *   每区块 3 条预览 + 「See X more Y results」链接 → 单类结果页（searchResults）
+ * - 区块间细分割线；区块首（Code）不画上分隔线
  */
 import { OctIcon } from '../components/OctIcon';
 import { StateView } from '../components/StateView';
 import { CodeSearchCard } from '../components/CodeSearchCard';
 import { RepoSearchRow, IssuePrSearchRow, PersonSearchRow, OrgSearchRow } from '../components/SearchRows';
-import { SearchService, SearchResultItem, SearchResultPage, SearchEntryKind } from '../services/SearchService';
-import { CodeFileResult, CodeSearchPage } from '../services/CodeSearchService';
+import {
+  SearchService, SearchResultItem, SearchOverviewData, formatBigCount, SearchEntryKind
+} from '../services/SearchService';
+import { CodeFileResult } from '../services/CodeSearchService';
 import { resText } from '../utils/I18n';
 
 /** 代码分组（按 repo 聚合；组头 = 头像 + repo 名） */
@@ -21,58 +23,35 @@ interface CodeGroup {
 }
 
 @ComponentV2
-export struct SearchResultsView {
+export struct SearchOverviewView {
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
-  @Param kind: string = '';
   @Param keyword: string = '';
   @Local query: string = '';
-  @Local items: SearchResultItem[] = [];
-  @Local codeFiles: CodeFileResult[] = [];
+  @Local data: SearchOverviewData | null = null;
   @Local codeGroups: CodeGroup[] = [];
   @Local loading: boolean = false;
   @Local errorMsg: string = '';
-  @Local hasNext: boolean = false;
-  @Local cursor: string = '';
-  @Local codePage: number = 1;
   @Local loaded: boolean = false;
 
   aboutToAppear(): void {
     this.query = this.keyword;
-    this.loadFirst();
+    this.load();
   }
 
-  private loadFirst(): void {
+  private load(): void {
+    const q = this.query.trim();
+    if (q === '') {
+      this.pathStack.pop();
+      return;
+    }
     this.loading = true;
     this.errorMsg = '';
-    this.items = [];
-    this.codeFiles = [];
-    this.codeGroups = [];
-    this.hasNext = false;
-    this.cursor = '';
-    this.codePage = 1;
     this.loaded = false;
-    if (this.kind === 'code') {
-      SearchService.fetchCodeResults(this.token, this.query, 1)
-        .then((page: CodeSearchPage) => {
-          this.codeFiles = page.files;
-          this.codeGroups = this.groupCodes(page.files);
-          this.hasNext = page.hasMore;
-          this.loading = false;
-          this.loaded = true;
-        })
-        .catch((e: Error) => {
-          this.errorMsg = e.message;
-          this.loading = false;
-          this.loaded = true;
-        });
-      return;
-    }
-    SearchService.fetchSearchResults(this.token, this.kind as SearchEntryKind, this.query)
-      .then((page: SearchResultPage) => {
-        this.items = page.items;
-        this.hasNext = page.hasNextPage;
-        this.cursor = page.endCursor;
+    SearchService.fetchOverview(this.token, q)
+      .then((d: SearchOverviewData) => {
+        this.data = d;
+        this.codeGroups = this.groupCodes(d.codeFiles);
         this.loading = false;
         this.loaded = true;
       })
@@ -83,40 +62,7 @@ export struct SearchResultsView {
       });
   }
 
-  private loadMore(): void {
-    this.loading = true;
-    if (this.kind === 'code') {
-      SearchService.fetchCodeResults(this.token, this.query, this.codePage + 1)
-        .then((page: CodeSearchPage) => {
-          this.codePage += 1;
-          const merged = this.codeFiles.concat(page.files);
-          this.codeFiles = merged;
-          this.codeGroups = this.groupCodes(merged);
-          this.hasNext = page.hasMore;
-          this.loading = false;
-        })
-        .catch((e: Error) => {
-          this.errorMsg = e.message;
-          this.loading = false;
-        });
-      return;
-    }
-    if (this.cursor === '') {
-      return;
-    }
-    SearchService.fetchSearchResults(this.token, this.kind as SearchEntryKind, this.query, this.cursor)
-      .then((page: SearchResultPage) => {
-        this.items = this.items.concat(page.items);
-        this.hasNext = page.hasNextPage;
-        this.cursor = page.endCursor;
-        this.loading = false;
-      })
-      .catch((e: Error) => {
-        this.errorMsg = e.message;
-        this.loading = false;
-      });
-  }
-
+  /** codeFiles 按 repo 聚合（组序 = 首次出现顺序） */
   private groupCodes(files: CodeFileResult[]): CodeGroup[] {
     const groups: CodeGroup[] = [];
     for (const f of files) {
@@ -130,16 +76,21 @@ export struct SearchResultsView {
     return groups;
   }
 
+  private areAllEmpty(d: SearchOverviewData | null): boolean {
+    return d !== null && d.repoItems.length === 0 && d.issueItems.length === 0 && d.prItems.length === 0 &&
+      d.userItems.length === 0 && d.orgItems.length === 0 && d.codeFiles.length === 0;
+  }
+
+  private openKind(kind: SearchEntryKind): void {
+    const q = this.query.trim();
+    if (q === '') {
+      return;
+    }
+    this.pathStack.pushPathByName('searchResults', `${kind}|${q}`);
+  }
+
   private openRepo(item: SearchResultItem): void {
     this.pathStack.pushPathByName('repoDetail', item.title);
-  }
-
-  private openUser(item: SearchResultItem): void {
-    this.pathStack.pushPathByName('userProfile', item.title);
-  }
-
-  private openOrg(item: SearchResultItem): void {
-    this.pathStack.pushPathByName('orgProfile', item.title);
   }
 
   private openIssue(item: SearchResultItem): void {
@@ -156,19 +107,51 @@ export struct SearchResultsView {
     this.pathStack.pushPathByName('prDetail', `${item.repoFullName}/${item.number}`);
   }
 
+  private openUser(item: SearchResultItem): void {
+    this.pathStack.pushPathByName('userProfile', item.title);
+  }
+
+  private openOrg(item: SearchResultItem): void {
+    this.pathStack.pushPathByName('orgProfile', item.title);
+  }
+
   private stringOf(res: Resource, ...args: Array<string | number>): string {
     return resText(this.getUIContext(), res, ...args);
   }
 
-  /** 行内分隔线（repositories/issues/prs；people/orgs 无分隔线） */
+  /** 区块标题行 */
   @Builder
-  rowDivider() {
-    Divider().color($r('app.color.divider')).strokeWidth(1).margin({ left: 16 })
+  sectionHeader(res: Resource) {
+    Text(resText(this.getUIContext(), res))
+      .fontSize(20)
+      .fontWeight(FontWeight.Bold)
+      .fontColor($r('app.color.text_primary'))
+      .width('100%')
+      .padding({ top: 14, left: 16, right: 16, bottom: 8 })
+  }
+
+  /** See X more Y results 链接行 */
+  @Builder
+  moreLink(text: string, onOpen: () => void) {
+    Row() {
+      Text(text)
+        .fontSize(17)
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.text_primary'))
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .layoutWeight(1)
+      OctIcon({ res: $r('app.media.oct_chevron_right_16'), iconSize: 16, iconColor: $r('app.color.text_tertiary') })
+    }
+    .width('100%')
+    .height(52)
+    .padding({ left: 16, right: 16 })
+    .onClick(onOpen)
   }
 
   /** 代码分组：组头 + 文件名 + 卡 */
   @Builder
-  codeGroupBlock() {
+  codeGroupsBlock() {
     ForEach(this.codeGroups, (g: CodeGroup) => {
       Row({ space: 8 }) {
         Image(g.avatarUrl)
@@ -185,7 +168,7 @@ export struct SearchResultsView {
           .layoutWeight(1)
       }
       .width('100%')
-      .padding({ left: 16, right: 16, top: 8, bottom: 6 })
+      .padding({ left: 16, right: 16, top: 6, bottom: 6 })
       .onClick(() => this.pathStack.pushPathByName('repoDetail', g.repoFullName))
 
       ForEach(g.files, (f: CodeFileResult) => {
@@ -200,24 +183,11 @@ export struct SearchResultsView {
             .padding({ left: 16, right: 16, top: 2, bottom: 8 })
           CodeSearchCard({ file: f })
             .padding({ left: 16, right: 16 })
-            .margin({ bottom: 8 })
+            .margin({ bottom: 6 })
         }
         .width('100%')
       }, (f: CodeFileResult) => `${f.repoFullName}|${f.path}`)
     }, (g: CodeGroup) => `${g.repoFullName}-${g.files.length}`)
-  }
-
-  /** Show more 分页尾行 */
-  @Builder
-  moreRow() {
-    Text($r('app.string.search_show_more'))
-      .fontSize($r('app.float.body_font_size'))
-      .fontWeight(FontWeight.Medium)
-      .fontColor($r('app.color.link_blue'))
-      .padding({ top: 16, bottom: 20 })
-      .width('100%')
-      .textAlign(TextAlign.Center)
-      .onClick(() => this.loadMore())
   }
 
   build() {
@@ -248,7 +218,7 @@ export struct SearchResultsView {
           .onChange((v: string) => {
             this.query = v;
           })
-          .onSubmit(() => this.loadFirst())
+          .onSubmit(() => this.load())
 
         if (this.query.trim() !== '') {
           Stack() {
@@ -273,7 +243,7 @@ export struct SearchResultsView {
         .bindMenu([
           {
             value: $r('app.string.search_menu_refresh'),
-            action: (): void => this.loadFirst()
+            action: (): void => this.load()
           }
         ])
       }
@@ -290,53 +260,90 @@ export struct SearchResultsView {
               .width('100%')
               .padding({ top: 60 })
           } else if (this.errorMsg !== '') {
-            StateView({ loading: false, error: this.errorMsg, empty: false, onRetry: (): void => this.loadFirst() })
+            StateView({ loading: false, error: this.errorMsg, empty: false, onRetry: (): void => this.load() })
               .width('100%')
               .padding({ top: 60 })
-          } else if (this.items.length === 0 && this.codeFiles.length === 0) {
+          } else if (this.areAllEmpty(this.data)) {
             StateView({ loading: false, error: '', empty: true, emptyText: $r('app.string.search_no_results') })
               .width('100%')
               .padding({ top: 60 })
-          } else {
-            if (this.kind === 'code') {
-              this.codeGroupBlock()
-            } else if (this.kind === 'repositories') {
-              ForEach(this.items, (item: SearchResultItem) => {
+          } else if (this.data !== null) {
+            // 区块一：Code（无上分隔线）
+            if (this.codeGroups.length > 0) {
+              this.sectionHeader($r('app.string.search_category_code'))
+              this.codeGroupsBlock()
+              this.moreLink(this.stringOf($r('app.string.search_see_more_code')),
+                (): void => this.openKind('code'))
+            }
+            // 区块二：Repositories
+            if (this.data.repoItems.length > 0) {
+              Divider().color($r('app.color.divider'))
+              this.sectionHeader($r('app.string.search_category_repositories'))
+              ForEach(this.data.repoItems, (item: SearchResultItem) => {
                 RepoSearchRow({ item: item, onOpen: (): void => this.openRepo(item) })
                   .padding({ left: 16, right: 16 })
-                this.rowDivider()
               }, (item: SearchResultItem) => item.title)
-            } else if (this.kind === 'issues') {
-              ForEach(this.items, (item: SearchResultItem) => {
-                IssuePrSearchRow({ item: item, compact: false, onOpen: (): void => this.openIssue(item) })
+              this.moreLink(
+                this.stringOf($r('app.string.search_see_more_repositories'),
+                  formatBigCount(this.data.repoCount - this.data.repoItems.length)),
+                (): void => this.openKind('repositories'))
+            }
+            // 区块三：Issues
+            if (this.data.issueItems.length > 0) {
+              Divider().color($r('app.color.divider'))
+              this.sectionHeader($r('app.string.search_category_issues'))
+              ForEach(this.data.issueItems, (item: SearchResultItem) => {
+                IssuePrSearchRow({ item: item, onOpen: (): void => this.openIssue(item) })
                   .padding({ left: 16, right: 16 })
-                this.rowDivider()
               }, (item: SearchResultItem) => `${item.repoFullName}-${item.number}`)
-            } else if (this.kind === 'prs') {
-              ForEach(this.items, (item: SearchResultItem) => {
-                IssuePrSearchRow({ item: item, compact: false, onOpen: (): void => this.openPr(item) })
+              this.moreLink(
+                this.stringOf($r('app.string.search_see_more_issues'),
+                  formatBigCount(this.data.issueCount - this.data.issueItems.length)),
+                (): void => this.openKind('issues'))
+            }
+            // 区块四：Pull Requests
+            if (this.data.prItems.length > 0) {
+              Divider().color($r('app.color.divider'))
+              this.sectionHeader($r('app.string.search_category_prs'))
+              ForEach(this.data.prItems, (item: SearchResultItem) => {
+                IssuePrSearchRow({ item: item, onOpen: (): void => this.openPr(item) })
                   .padding({ left: 16, right: 16 })
-                this.rowDivider()
               }, (item: SearchResultItem) => `${item.repoFullName}-${item.number}`)
-            } else if (this.kind === 'people') {
-              ForEach(this.items, (item: SearchResultItem) => {
+              this.moreLink(
+                this.stringOf($r('app.string.search_see_more_prs'),
+                  formatBigCount(this.data.prCount - this.data.prItems.length)),
+                (): void => this.openKind('prs'))
+            }
+            // 区块五：People
+            if (this.data.userItems.length > 0) {
+              Divider().color($r('app.color.divider'))
+              this.sectionHeader($r('app.string.search_category_people'))
+              ForEach(this.data.userItems, (item: SearchResultItem) => {
                 PersonSearchRow({ item: item, onOpen: (): void => this.openUser(item) })
                   .padding({ left: 16, right: 16 })
               }, (item: SearchResultItem) => item.title)
-            } else if (this.kind === 'orgs') {
-              ForEach(this.items, (item: SearchResultItem) => {
+              this.moreLink(
+                this.stringOf($r('app.string.search_see_more_people'),
+                  formatBigCount(this.data.userCount - this.data.userItems.length)),
+                (): void => this.openKind('people'))
+            }
+            // 区块六：Organizations
+            if (this.data.orgItems.length > 0) {
+              Divider().color($r('app.color.divider'))
+              this.sectionHeader($r('app.string.search_category_organizations'))
+              ForEach(this.data.orgItems, (item: SearchResultItem) => {
                 OrgSearchRow({ item: item, onOpen: (): void => this.openOrg(item) })
                   .padding({ left: 16, right: 16 })
               }, (item: SearchResultItem) => item.title)
-            }
-
-            if (this.hasNext) {
-              this.moreRow()
+              this.moreLink(
+                this.stringOf($r('app.string.search_see_more_orgs'),
+                  formatBigCount(this.data.orgCount - this.data.orgItems.length)),
+                (): void => this.openKind('orgs'))
             }
           }
         }
         .width('100%')
-        .padding({ bottom: 16 })
+        .padding({ bottom: 24 })
       }
       .layoutWeight(1)
       .scrollBar(BarState.Off)

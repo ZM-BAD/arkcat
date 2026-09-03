@@ -4,6 +4,7 @@
 > 关联截图: 官方 Explore 搜索页（类型 tab + 结果列表 + 最近搜索历史）
 > 上游 Spec: 015（Search，未排期子页）
 > 状态: draft（2026-09-02 规划；仅做搜索类型补齐与结果接通，不扩大搜索范围）
+> 09-04 补充：六类结果页 + 聚合结果页（回车直进）已在 feature/ui-polish 分支实现（搜索批;未 push）；GraphQL `search` 无 CODE 类型 → code 走 REST /search/code + 内容级行号/高亮；组织用 `type:org` 限定词（USER 搜索返回 Organization 节点）、`type:user` 同理分型；label 徽章/Checks/Reviews/评论/反应计数由 SEARCH_ALL_QUERY 补字段
 
 ---
 
