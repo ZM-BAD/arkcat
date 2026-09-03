@@ -1723,6 +1723,54 @@
     {
       "name": "md_no_readme",
       "value": "This repository has no README"
+    },
+    {
+      "name": "social_stargazers",
+      "value": "Stargazers"
+    },
+    {
+      "name": "social_forks",
+      "value": "Forks"
+    },
+    {
+      "name": "social_fork_from",
+      "value": "Forked from %1$s"
+    },
+    {
+      "name": "social_stargazers_empty",
+      "value": "No stargazers yet."
+    },
+    {
+      "name": "social_forks_empty",
+      "value": "No forks yet."
+    },
+    {
+      "name": "social_forks_search",
+      "value": "Search forks"
+    },
+    {
+      "name": "search_cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "achievement_unlocked_fmt",
+      "value": "Unlocked %1$s"
+    },
+    {
+      "name": "achievement_share",
+      "value": "Share"
+    },
+    {
+      "name": "achievement_share_failed",
+      "value": "Share failed"
+    },
+    {
+      "name": "achievement_close",
+      "value": "Close"
+    },
+    {
+      "name": "achievement_load_failed",
+      "value": "Failed to load achievements"
     }
   ]
 }

@@ -39,6 +39,9 @@ import { PrDetailView } from './PrDetail';
 import { NotificationSettingsView } from './NotificationSettings';
 import { CodeOptionsView } from './CodeOptions';
 import { UserListView } from './UserList';
+import { StargazersView } from './Stargazers';
+import { ForksView } from './Forks';
+import { AchievementDetailView } from './AchievementDetail';
 import { OrgListView } from './OrgList';
 import { OrgProfileView } from './OrgProfile';
 import { RepositoriesListView } from './RepositoriesList';
@@ -53,6 +56,8 @@ struct Index {
   @State currentTab: number = 0;
   /** 软键盘弹出时隐藏底栏（搜索输入态；窗口 keyboardHeightChange 监听） */
   @State keyboardOn: boolean = false;
+  /** 徽章详情等全屏沉浸页：隐藏底部四 Tab（页内 onShown/onHidden 切换） */
+  @State hideTabBar: boolean = false;
   @State profileLogin: string = '';
   @State repoOwner: string = '';
   @State repoName: string = '';
@@ -60,6 +65,9 @@ struct Index {
   @State inboxHasUnread: boolean = false;
   @State listLogin: string = '';
   @State listKind: string = 'followers';
+  /** Spec 052：成就详情参数（login|startIndex） */
+  @State achLogin: string = '';
+  @State achStart: number = 0;
   @State orgLogin: string = '';
   @State reposOwner: string = '';
   @State reposMode: string = 'org';
@@ -230,6 +238,66 @@ struct Index {
       const idx = full.indexOf('|');
       this.listLogin = idx >= 0 ? full.substring(0, idx) : full;
       this.listKind = idx >= 0 ? full.substring(idx + 1) : 'followers';
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 053：Stargazers 列表页（路由参数：owner/name） */
+  @Builder
+  stargazersDestination() {
+    NavDestination() {
+      StargazersView({
+        owner: this.repoOwner,
+        name: this.repoName,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseRouteParam(context.pathInfo.param as string);
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 053：Forks 列表页（路由参数：owner/name） */
+  @Builder
+  forksDestination() {
+    NavDestination() {
+      ForksView({
+        owner: this.repoOwner,
+        name: this.repoName,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseRouteParam(context.pathInfo.param as string);
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 052：成就徽章详情页（路由参数：login|startIndex） */
+  @Builder
+  achievementDetailDestination() {
+    NavDestination() {
+      AchievementDetailView({
+        login: this.achLogin,
+        startIndex: this.achStart,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      const full = context.pathInfo.param as string;
+      const idx = full.indexOf('|');
+      this.achLogin = idx >= 0 ? full.substring(0, idx) : full;
+      this.achStart = idx >= 0 ? Number(full.substring(idx + 1)) : 0;
+    })
+    // 全屏沉浸页：进入隐藏底栏，pop 回恢复（官方 App 徽章详情为模态全屏）
+    .onShown(() => {
+      this.hideTabBar = true;
+    })
+    .onHidden(() => {
+      this.hideTabBar = false;
     })
     .hideTitleBar(true)
   }
@@ -667,6 +735,12 @@ struct Index {
       this.createListDestination()
     } else if (name === 'listDetail') {
       this.listDetailDestination()
+    } else if (name === 'stargazers') {
+      this.stargazersDestination()
+    } else if (name === 'forks') {
+      this.forksDestination()
+    } else if (name === 'achievementDetail') {
+      this.achievementDetailDestination()
     }
   }
 
@@ -768,8 +842,9 @@ struct Index {
           .layoutWeight(1)
 
           // 自绘底栏：白底 + 上投影 + 选中胶囊；选中态图标用官方 fill 变体
-          // 键盘弹起（搜索输入）时隐藏——键盘上方不显示 tab（用户 09-04 要求）
-          if (!this.keyboardOn) {
+          // 键盘弹起（搜索输入）时隐藏——键盘上方不显示 tab（用户 09-04 要求）；
+          // 徽章详情等全屏沉浸页同样隐藏（hideTabBar）
+          if (!this.keyboardOn && !this.hideTabBar) {
             Row() {
               this.tabItem($r('app.media.oct_home_16'), $r('app.media.oct_home_fill_16'), $r('app.string.tab_home'), 0)
               this.tabItem($r('app.media.oct_inbox_16'), $r('app.media.oct_inbox_fill_16'), $r('app.string.tab_inbox'), 1)

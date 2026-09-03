@@ -199,6 +199,22 @@
     {
       "name": "shadow_floating",
       "value": "#1A8F959F"
+    },
+    {
+      "name": "achievement_bg_top",
+      "value": "#343966"
+    },
+    {
+      "name": "achievement_bg_bottom",
+      "value": "#22264C"
+    },
+    {
+      "name": "achievement_share_bg",
+      "value": "#3B4080"
+    },
+    {
+      "name": "achievement_close_bg",
+      "value": "#2B2F5C"
     }
   ]
 }
