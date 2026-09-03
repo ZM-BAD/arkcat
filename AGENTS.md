@@ -71,15 +71,17 @@
 | Commit 格式 | commit-msg hook + CI | ✅ 是 |
 | 文件结构 / Spec 编号 | CI | ✅ 是 |
 | Secret 泄漏（gitleaks） | pre-commit + CI | ✅ 是（CI 2026-09-01 起） |
+| UI 硬编码颜色（#RRGGBB） | pre-commit + CI | ✅ 是 |
 | HarmonyOS 构建 | 本地 | 本地阻断 |
 
-CI（GitHub Actions）：**spec-lint** / **commit-lint** / **structure-check** / **gitleaks** / **harmony-build**（DevEco Studio 许可证限制，保留禁用、本地构建）。
+CI（GitHub Actions）：**spec-lint** / **commit-lint** / **structure-check** / **hardcoded-colors** / **gitleaks** / **harmony-build**（DevEco Studio 许可证限制，保留禁用、本地构建）。
 
 ---
 
 ## 六、设计理念
 
 > **「体验级复刻」**——复刻官方 App 的信息架构、页面层级、导航模式、交互反馈逻辑；不复刻平台特有控件样式。底层全部原生 ArkUI。
+> **样式红线**：页面骨架必须复用现有模式（自绘 AppBar/RepoCard/列表卡等），禁自创布局风格；图标必须走 OctIcon 组件；颜色一律官方 token（resources color.json / PrimerTokens），`entry/src/main/ets` 禁止直接写 `#RRGGBB`（`scripts/check-hardcoded-colors.py` 门禁，数据色板文件豁免）。
 
 ---
 
