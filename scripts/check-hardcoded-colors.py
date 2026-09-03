@@ -7,6 +7,7 @@
 豁免（数据色板文件，非 UI 样式，允许集中定义；其余一律禁止）：
 - utils/CodeTheme.ets          GitHub 官方代码高亮明/暗两套配色
 - models/LanguageColors.ets    GitHub linguist 常用语言色（REST 兜底字段缺失时）
+- utils/MarkdownPalette.ets    GitHub Markdown 官方明/暗配色（Spec 040，MarkdownView 引用）
 
 注释（// 与 /* */）中的色值不报；行号保留，便于定位。
 用法：python3 scripts/check-hardcoded-colors.py
@@ -21,7 +22,7 @@ ROOT = Path(__file__).resolve().parent.parent
 ETS_DIR = ROOT / 'entry/src/main/ets'
 
 # 数据色板白名单（相对 entry/src/main/ets 的文件名）
-ALLOWED = {'utils/CodeTheme.ets', 'models/LanguageColors.ets'}
+ALLOWED = {'utils/CodeTheme.ets', 'models/LanguageColors.ets', 'utils/MarkdownPalette.ets'}
 
 # 6 位（#RRGGBB）或 8 位（#AARRGGBB）
 HEX_RE = re.compile(r'#[0-9a-fA-F](?:[0-9a-fA-F]{5}|[0-9a-fA-F]{7})\b')

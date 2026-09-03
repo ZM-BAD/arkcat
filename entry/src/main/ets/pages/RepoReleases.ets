@@ -3,6 +3,7 @@
  */
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
+import { MarkdownView } from '../components/MarkdownView';
 import { ReleaseItem, RepoReleasesPage, monthDayText } from '../models/RepoSubModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { StateView } from '../components/StateView';
@@ -161,13 +162,13 @@ export struct RepoReleasesView {
                   .fontSize(20)
                   .fontWeight(FontWeight.Bold)
                   .fontColor($r('app.color.text_primary'))
-                Text(this.releases[0].description !== '' ? this.releases[0].description : this.releases[0].body)
-                  .fontSize($r('app.float.body_font_size'))
-                  .fontColor($r('app.color.text_secondary'))
-                  .maxLines(4)
-                  .textOverflow({ overflow: TextOverflow.Ellipsis })
-                  .width('100%')
-                  .lineHeight(20)
+                MarkdownView({
+                  html: this.releases[0].bodyHTML,
+                  fallbackText: this.releases[0].body !== '' ? this.releases[0].body : this.releases[0].description,
+                  onNavigate: (name: string, param: string) => {
+                    this.pathStack.pushPathByName(name, param);
+                  }
+                })
                 Text($r('app.string.releases_view_details'))
                   .fontSize($r('app.float.body_font_size'))
                   .fontColor($r('app.color.link_blue'))

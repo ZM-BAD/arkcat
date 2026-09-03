@@ -1543,6 +1543,22 @@
     {
       "name": "toprepos_filter_template",
       "value": "Template"
+    },
+    {
+      "name": "md_expand_all",
+      "value": "Expand all"
+    },
+    {
+      "name": "md_copy",
+      "value": "Copy"
+    },
+    {
+      "name": "md_copied",
+      "value": "Copied"
+    },
+    {
+      "name": "md_no_readme",
+      "value": "This repository has no README"
     }
   ]
 }

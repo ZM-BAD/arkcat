@@ -28,6 +28,7 @@ import { mapSearchResult } from '../../../main/ets/models/ExploreModels';
 import { mapUserProfile, isSelfProfile } from '../../../main/ets/models/ProfileModels';
 import { mapRepoDetail, nextStarAction } from '../../../main/ets/models/RepoDetailModels';
 import { mapIssue, mapIssuesPage, issueOrderField } from '../../../main/ets/models/IssuesModels';
+import { MarkdownService } from '../../../main/ets/services/MarkdownService';
 
 type JsonMap = Record<string, Object>;
 
@@ -862,6 +863,76 @@ export default function logicTest(testsuiteName: string) {
       expect(pp.additions).assertEqual(249);
       expect(pp.mergeOid).assertEqual('eb43eaa');
       expect(pp.checksState).assertEqual('SUCCESS');
+    });
+
+    it('markdown_routeOf', 0, () => {
+      // 站内仓库 → repoDetail（相对与绝对链接等价）
+      expect(MarkdownService.routeOf('/owner/repo')?.name).assertEqual('repoDetail');
+      expect(MarkdownService.routeOf('https://github.com/owner/repo')?.param).assertEqual('owner/repo');
+      expect(MarkdownService.routeOf('https://github.com/owner/repo/issues/12')?.name).assertEqual('issueDetail');
+      expect(MarkdownService.routeOf('/owner/repo/issues/12#L3')?.param).assertEqual('owner/repo/12');
+      expect(MarkdownService.routeOf('/owner/repo/pull/7')?.name).assertEqual('prDetail');
+      expect(MarkdownService.routeOf('https://github.com/owner/repo/pulls/7')?.name).assertEqual('prDetail');
+      expect(MarkdownService.routeOf('/owner/repo/blob/main/src/index.ets')?.name).assertEqual('codeViewer');
+      expect(MarkdownService.routeOf('/owner/repo/blob/main/src/index.ets')?.param).assertEqual('owner|repo|main/src/index.ets');
+      // 外站/非链接不路由
+      expect(MarkdownService.routeOf('https://example.com/a/b')).assertNull();
+      expect(MarkdownService.routeOf('mailto:a@b.c')).assertNull();
+      expect(MarkdownService.routeOf('#anchor')).assertNull();
+      expect(MarkdownService.routeOf('')).assertNull();
+      expect(MarkdownService.routeOf('/owner/repo/tree/main')).assertNull();
+      expect(MarkdownService.routeOf('/owner')).assertNull();
+    });
+
+    it('markdown_shouldCollapse', 0, () => {
+      expect(MarkdownService.shouldCollapse(5000, 4000)).assertTrue();
+      expect(MarkdownService.shouldCollapse(4000, 4000)).assertFalse();
+      expect(MarkdownService.shouldCollapse(10, 4000)).assertFalse();
+      // 阈值 0 = 不折叠（评论等短内容）
+      expect(MarkdownService.shouldCollapse(5000, 0)).assertFalse();
+    });
+
+    it('markdown_bodyHTML_mapping', 0, () => {
+      const author: JsonMap = { 'login': 'zm_bad' };
+      // 评论：body/bodyHTML 字段映射（顺带防回归：曾误读 description 导致正文恒空）
+      const cNode: JsonMap = { 'id': 'C1', 'body': 'plain', 'bodyHTML': '<p>rendered</p>', 'createdAt': '2026-08-02T00:00:00Z', 'author': author };
+      const issueComments: JsonMap = { 'totalCount': 1, 'nodes': [cNode] };
+      const emptyLabels: JsonMap = { 'nodes': [] };
+      const issueNode: JsonMap = {
+        'number': 1, 'title': 't', 'state': 'OPEN', 'stateReason': '', 'body': 'body text',
+        'bodyHTML': '<p>body html</p>', 'createdAt': '2026-08-01T00:00:00Z', 'author': author,
+        'labels': emptyLabels, 'comments': issueComments
+      };
+      const issueRepo: JsonMap = { 'issue': issueNode };
+      const issueData: JsonMap = { 'repository': issueRepo };
+      const ip = mapIssueDetail(issueData);
+      expect(ip.body).assertEqual('body text');
+      expect(ip.bodyHTML).assertEqual('<p>body html</p>');
+      expect(ip.comments[0].body).assertEqual('plain');
+      expect(ip.comments[0].bodyHTML).assertEqual('<p>rendered</p>');
+
+      const emptyPrComments: JsonMap = { 'totalCount': 0, 'nodes': [] };
+      const prNode: JsonMap = {
+        'number': 82, 'title': 'fix', 'state': 'MERGED', 'merged': true, 'isDraft': false,
+        'body': 'pb', 'bodyHTML': '<p>pr html</p>', 'createdAt': '2026-08-01T00:00:00Z', 'mergedAt': '2026-08-02T00:00:00Z',
+        'additions': 1, 'deletions': 1, 'author': author, 'headRefName': 'fix/1', 'baseRefName': 'main',
+        'comments': emptyPrComments
+      };
+      const prRepo: JsonMap = { 'pullRequest': prNode };
+      const prData: JsonMap = { 'repository': prRepo };
+      const pp = mapPrDetail(prData);
+      expect(pp.bodyHTML).assertEqual('<p>pr html</p>');
+
+      const relNode: JsonMap = {
+        'id': 'R1', 'tagName': '1.0', 'isLatest': true, 'createdAt': '2026-06-30T00:00:00Z',
+        'description': 'short', 'body': 'long body', 'bodyHTML': '<p>release html</p>', 'author': author
+      };
+      const relNodes: JsonMap = { 'nodes': [relNode] };
+      const relRepo: JsonMap = { 'releases': relNodes };
+      const relData: JsonMap = { 'repository': relRepo };
+      const rp = mapRepoReleasesPage(relData);
+      expect(rp.releases[0].body).assertEqual('long body');
+      expect(rp.releases[0].bodyHTML).assertEqual('<p>release html</p>');
     });
   });
 }
