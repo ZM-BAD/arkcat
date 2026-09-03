@@ -1,17 +1,16 @@
 /**
  * Markdown 渲染组件（Spec 040）：ArkWeb + 官方 HTML（bodyHTML / readme html / /markdown 渲染结果）。
- * 交互：站内链接 → onNavigate 路由回调；外链 → 系统浏览器；代码块复制（native 桥）；
- * 超长折叠（>foldThreshold 默认 4000 字符）；暗黑自适应（body class 双主题 CSS 变量）。
- * 降级：html 为空时展示 fallbackText 纯文本。
+ * 交互：站内链接 → 路由回调；外链 → 系统浏览器；代码块复制（native 桥）；超长折叠（>阈值 4000 字符）；
+ * 暗黑自适应（body class 双主题 CSS 变量）；html 为空展示 fallbackText 纯文本。
  */
 import { webview } from '@kit.ArkWeb';
 import { common } from '@kit.AbilityKit';
-import { mediaquery, promptAction } from '@kit.ArkUI';
+import { mediaquery, promptAction, display } from '@kit.ArkUI';
 import { preferences } from '@kit.ArkData';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { resText } from '../utils/I18n';
 import { MarkdownRoute, MarkdownService } from '../services/MarkdownService';
-import { buildCopyJs, buildMarkdownDoc, buildMeasureJs, buildSetOverflowJs, buildSetThemeJs } from '../utils/MarkdownHtml';
+import { buildCopyJs, buildFixRelativeJs, buildMarkdownDoc, buildMeasureJs, buildSetOverflowJs, buildSetThemeJs } from '../utils/MarkdownHtml';
 
 const PREFS_NAME = 'starraft_settings';
 const KEY_THEME = 'theme_mode';
@@ -37,8 +36,13 @@ export struct MarkdownView {
   @Param fallbackText: string = '';
   /** 超长折叠阈值（字符数；>0 生效） */
   @Param foldThreshold: number = 4000;
+  /** 是否启用长文折叠（false=全量一次性加载，无「展开全部」按钮） */
+  @Param collapse: boolean = true;
   /** 降级态是否显示重试（调用方数据拉取失败时置 true，配 onRetry 重新拉取） */
   @Param showRetry: boolean = false;
+  /** 官方 HTML 相对路径前缀：img→raw、链接→blob（默认 github 根） */
+  @Param imgBase: string = 'https://github.com/';
+  @Param linkBase: string = 'https://github.com/';
   /** 站内链接点击：name/param 对应 Index.ets destinationMap */
   @Event onNavigate: (name: string, param: string) => void = (name: string, param: string): void => { };
   /** 降级态重试按钮回调 */
@@ -57,16 +61,21 @@ export struct MarkdownView {
     const ui = this.getUIContext();
     this.resolveDark();
     copyToastLabel = resText(ui, $r('app.string.md_copied'));
-    this.collapsed = MarkdownService.shouldCollapse(this.html.length, this.foldThreshold);
+    this.resetCollapse();
     if (this.html === '') {
       this.loading = false;
     }
   }
 
+  /** 折叠状态：collapse=false 恒不折叠（全量加载）；否则按字符阈值判定 */
+  private resetCollapse(): void {
+    this.collapsed = this.collapse && MarkdownService.shouldCollapse(this.html.length, this.foldThreshold);
+  }
+
   /** @Param html 更新（异步数据后到）→ 重载文档 */
   @Monitor('html')
   onHtmlChanged(): void {
-    this.collapsed = MarkdownService.shouldCollapse(this.html.length, this.foldThreshold);
+    this.resetCollapse();
     if (this.attached) {
       this.reload();
     }
@@ -85,15 +94,17 @@ export struct MarkdownView {
     }
   }
 
-  /** onPageEnd：注入复制按钮、校准主题 class、测量内容高度（折叠/展开决策） */
+  /** onPageEnd：注入复制按钮、校准主题 class、重写相对路径、测量内容高度（折叠/展开决策） */
   private decorate(): void {
     const ui = this.getUIContext();
-    this.controller.runJavaScript(buildCopyJs(resText(ui, $r('app.string.md_copy'))))
+    this.controller.runJavaScript(buildCopyJs(resText(ui, $r('app.string.md_copied'))))
       .catch(() => {
       });
     this.controller.runJavaScript(buildSetThemeJs(this.dark))
       .catch(() => {
       });
+    this.controller.runJavaScript(buildFixRelativeJs(this.imgBase, this.linkBase))
+      .catch(() => { });
     this.controller.runJavaScript(buildSetOverflowJs(this.collapsed))
       .catch(() => {
       });
@@ -108,13 +119,24 @@ export struct MarkdownView {
         if (vp <= COLLAPSE_HEIGHT) {
           this.collapsed = false;
         }
-        this.webHeight = this.collapsed ? COLLAPSE_HEIGHT : vp;
+        // 全量模式：高度钳到窗口高，超出部分交给 Web 内滚（超大高度渲染上限会白屏）
+        const maxFull = this.windowHeightVp();
+        this.webHeight = this.collapsed ? COLLAPSE_HEIGHT : Math.min(vp, maxFull);
         this.controller.runJavaScript(buildSetOverflowJs(this.collapsed))
           .catch(() => {
           });
       })
       .catch(() => {
       });
+  }
+
+  /** 窗口高度（vp）；获取失败时兜底为大值（退化为旧的全高行为） */
+  private windowHeightVp(): number {
+    try {
+      return Math.max(this.getUIContext().px2vp(display.getDefaultDisplaySync().height), COLLAPSE_HEIGHT);
+    } catch (e) {
+      return COLLAPSE_HEIGHT * 3;
+    }
   }
 
   /** 链接导航拦截：站内 → 路由；外链 http(s) → 系统浏览器；其余放行 */
@@ -265,10 +287,7 @@ export struct MarkdownView {
       }
       if (this.loading && this.html !== '') {
         Column() {
-          LoadingProgress()
-            .width(28)
-            .height(28)
-            .color($r('app.color.link_blue'))
+          LoadingProgress().width(28).height(28).color($r('app.color.link_blue'))
         }
         .width('100%')
         .height(this.webHeight)

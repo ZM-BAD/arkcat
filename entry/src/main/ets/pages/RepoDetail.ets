@@ -506,6 +506,9 @@ export struct RepoDetailView {
           MarkdownView({
             html: this.readmeResult.html,
             fallbackText: this.detail?.readmeText ?? '',
+            collapse: false,
+            imgBase: `https://raw.githubusercontent.com/${this.owner}/${this.name}/${this.detail?.defaultBranchRefName ?? 'main'}/`,
+            linkBase: `https://github.com/${this.owner}/${this.name}/blob/${this.detail?.defaultBranchRefName ?? 'main'}/`,
             onNavigate: (name: string, param: string) => this.navigateLink(name, param)
           })
         } else if (this.readmeResult.status === 'notFound') {
