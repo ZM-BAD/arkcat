@@ -397,6 +397,50 @@
       "value": "仓库"
     },
     {
+      "name": "inbox_filter_title",
+      "value": "筛选通知"
+    },
+    {
+      "name": "inbox_view_saved",
+      "value": "已保存"
+    },
+    {
+      "name": "inbox_view_done",
+      "value": "已完成"
+    },
+    {
+      "name": "inbox_filter_assigned",
+      "value": "指派给我"
+    },
+    {
+      "name": "inbox_filter_participating",
+      "value": "参与的"
+    },
+    {
+      "name": "inbox_filter_mentioned",
+      "value": "提及我"
+    },
+    {
+      "name": "inbox_filter_team_mentioned",
+      "value": "团队提及我"
+    },
+    {
+      "name": "inbox_filter_review_requested",
+      "value": "待我审查"
+    },
+    {
+      "name": "inbox_repo_filter_title",
+      "value": "按仓库筛选"
+    },
+    {
+      "name": "inbox_saved_empty",
+      "value": "暂无已保存的通知"
+    },
+    {
+      "name": "inbox_done_empty",
+      "value": "暂无已完成的通知"
+    },
+    {
       "name": "explore_discover",
       "value": "发现"
     },

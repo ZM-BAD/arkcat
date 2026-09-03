@@ -1,11 +1,16 @@
 /**
  * Inbox Tab（Spec 002）：官方四筛选（Inbox▾/Focused/Unread/Repository▾）+ 通知卡片。
+ * Inbox▾/Repository▾ 为底部 sheet 面板（官方「Filter notifications by」/「Filter by repository」）：
+ * 视图单选（Inbox/Saved/Done）+ 类型多选（reason 本地过滤）、仓库单选列表（头像+计数+搜索）。
  * 卡片=仓库+编号 / 标题粗体 / 类型图标+摘要 / 右侧相对时间；点击标记已读。
  * 详情页为 Spec 008/009 范围，当前点击仅标记已读并提示。
  */
 import { promptAction } from '@kit.ArkUI';
 import { NotificationItem, issueNumberFromUrl } from '../models/GitHubModels';
-import { NotificationsService } from '../services/NotificationsService';
+import {
+  NotificationsService, filterByInboxView, filterByReasons, collectRepoFilters,
+  InboxRepoFilterItem, InboxReasonKey
+} from '../services/NotificationsService';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
 import { timeParts, githubShortTime, notificationTypeKey, TimeParts } from '../utils/Format';
@@ -13,14 +18,46 @@ import { resText } from '../utils/I18n';
 
 type InboxFilter = 'inbox' | 'focused' | 'unread' | 'repo';
 
+/** 视图组（单选）：inbox=全部；saved/done 本地近似，见 filterByInboxView */
+const VIEWS: string[] = ['inbox', 'saved', 'done'];
+
+/** 行元素（@Builder 传值参数不随状态刷新，须按引用传参） */
+interface RowState {
+  label: string;
+  selected: boolean;
+  emoji: string;
+}
+
+/** 类型组选项（key + 官方 emoji 图标 + 文案资源） */
+interface ReasonOption {
+  key: InboxReasonKey;
+  emoji: string;
+  labelRes: Resource;
+}
+
 @ComponentV2
 export struct InboxView {
+  /** 类型组（多选）：emoji 为官方 App 面板同款系统 emoji（Spec 002） */
+  private static readonly REASONS: ReasonOption[] = [
+    { key: 'assign', emoji: '🛡️', labelRes: $r('app.string.inbox_filter_assigned') },
+    { key: 'participating', emoji: '💬', labelRes: $r('app.string.inbox_filter_participating') },
+    { key: 'mention', emoji: '👋', labelRes: $r('app.string.inbox_filter_mentioned') },
+    { key: 'team_mention', emoji: '🙌', labelRes: $r('app.string.inbox_filter_team_mentioned') },
+    { key: 'review_requested', emoji: '🔍', labelRes: $r('app.string.inbox_filter_review_requested') }
+  ];
+
   @Param token: string = '';
   @Local filter: InboxFilter = 'inbox';
   @Local repoFilter: string = '';
+  /** 下拉面板内容（'' | 'filters' | 'repo'）：同一组件只挂一个 bindSheet，内部切换 */
+  @Local sheetKind: string = '';
+  @Local inboxView: string = 'inbox';
+  @Local reasonKeys: InboxReasonKey[] = [];
+  @Local repoFilters: InboxRepoFilterItem[] = [];
+  @Local repoSearch: string = '';
+  @Local repoSearchShow: boolean = false;
   @Local items: NotificationItem[] = [];
   @Local rawItems: NotificationItem[] = [];
-  @Local repoNames: string[] = [];
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
 
@@ -28,14 +65,15 @@ export struct InboxView {
     this.refresh();
   }
 
+  /** 拉取后：聚合仓库候选 → 本地链式过滤（视图 → 类型 → 仓库） */
   private refresh(): void {
     this.loading = true;
     this.errorMsg = '';
     NotificationsService.fetchNotifications(this.token, this.filter !== 'unread', 30, this.filter === 'focused')
       .then((items: NotificationItem[]) => {
         this.rawItems = items;
-        this.repoNames = InboxView.collectRepoNames(items);
-        this.applyRepoFilter();
+        this.repoFilters = collectRepoFilters(items);
+        this.applyFilters();
         this.loading = false;
       })
       .catch((e: Error) => {
@@ -44,39 +82,82 @@ export struct InboxView {
       });
   }
 
-  /** 从通知列表提取去重仓库名（Repository▾ 下拉候选，纯函数便于单测） */
-  static collectRepoNames(items: NotificationItem[]): string[] {
-    const seen: string[] = [];
-    for (const it of items) {
-      if (it.repoFullName !== '' && seen.indexOf(it.repoFullName) < 0) {
-        seen.push(it.repoFullName);
-      }
-    }
-    return seen;
-  }
-
-  /** Repository▾ 过滤：本地按选中仓库筛（其余 item 原样） */
-  private applyRepoFilter(): void {
+  /** 本地过滤链（面板选择后无需重新请求，纯函数见 NotificationsService） */
+  private applyFilters(): void {
+    let list = filterByInboxView(this.rawItems, this.inboxView);
+    list = filterByReasons(list, this.reasonKeys);
     if (this.filter === 'repo' && this.repoFilter !== '') {
-      this.items = this.rawItems.filter((it: NotificationItem) => it.repoFullName === this.repoFilter);
-    } else {
-      this.items = this.rawItems;
+      list = list.filter((it: NotificationItem) => it.repoFullName === this.repoFilter);
     }
+    this.items = list;
   }
 
+  /** Focused/Unread/回退 Inbox：服务端参数不同，需重新拉取 */
   private switchFilter(f: InboxFilter): void {
-    if (f === 'repo') {
-      this.filter = 'repo';
-      if (this.repoFilter === '' && this.repoNames.length > 0) {
-        this.repoFilter = this.repoNames[0];
-      }
-      this.applyRepoFilter();
+    if (this.filter === f) {
       return;
     }
-    if (this.filter !== f) {
-      this.filter = f;
+    this.filter = f;
+    this.refresh();
+  }
+
+  /** 视图单选：立即生效并关闭面板；数据源非 Inbox 时先切回重拉 */
+  private selectView(v: string): void {
+    this.inboxView = v;
+    this.sheetKind = '';
+    if (this.filter === 'inbox') {
+      this.applyFilters();
+    } else {
+      this.filter = 'inbox';
       this.refresh();
     }
+  }
+
+  /** 类型多选：toggle 后保持面板打开，可继续多选 */
+  private toggleReason(key: InboxReasonKey): void {
+    const idx = this.reasonKeys.indexOf(key);
+    if (idx >= 0) {
+      this.reasonKeys.splice(idx, 1);
+    } else {
+      this.reasonKeys.push(key);
+    }
+    if (this.filter === 'inbox') {
+      this.applyFilters();
+    } else {
+      this.filter = 'inbox';
+      this.refresh();
+    }
+  }
+
+  /** 仓库单选：点已选项取消（回到 Inbox 视图全量），选中即关 */
+  private toggleRepoFilter(fullName: string): void {
+    if (this.repoFilter === fullName) {
+      this.repoFilter = '';
+      this.filter = 'inbox';
+    } else {
+      this.repoFilter = fullName;
+      this.filter = 'repo';
+    }
+    this.sheetKind = '';
+    if (this.filter === 'repo' || this.rawLoadedAll()) {
+      this.applyFilters();
+    } else {
+      this.refresh();
+    }
+  }
+
+  /** 当前 rawItems 是否来自 Inbox 数据源（all=true）；focused/unread 拉取的是受限子集 */
+  private rawLoadedAll(): boolean {
+    return this.filter === 'inbox' || this.filter === 'repo';
+  }
+
+  /** 仓库搜索过滤（不区分大小写） */
+  private filteredRepos(): InboxRepoFilterItem[] {
+    const q = this.repoSearch.toLowerCase();
+    if (q === '') {
+      return this.repoFilters;
+    }
+    return this.repoFilters.filter((r: InboxRepoFilterItem) => r.fullName.toLowerCase().indexOf(q) >= 0);
   }
 
   private markRead(item: NotificationItem): void {
@@ -184,43 +265,203 @@ export struct InboxView {
     return parts !== null ? githubShortTime(parts) : '';
   }
 
-  @Builder
-  filterPill(label: string, active: boolean, onClick: () => void) {
-    Row() {
-      Text(label)
-        .fontSize($r('app.float.caption_font_size'))
-        .fontColor(active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
-      if (active) {
-        OctIcon({
-          res: $r('app.media.oct_chevron_down_16'),
-          iconSize: 12,
-          iconColor: $r('app.color.link_blue')
-        })
-          .margin({ left: 4 })
-      }
+  /** Inbox▾ chip 文本随当前视图（inbox/saved/done） */
+  private viewLabel(): string {
+    const ui = this.getUIContext();
+    switch (this.inboxView) {
+      case 'saved':
+        return resText(ui, $r('app.string.inbox_view_saved'));
+      case 'done':
+        return resText(ui, $r('app.string.inbox_view_done'));
+      default:
+        return resText(ui, $r('app.string.inbox_menu_inbox'));
     }
+  }
+
+  /** 视图 label（面板选项文本） */
+  private viewOptionLabel(v: string): string {
+    const ui = this.getUIContext();
+    switch (v) {
+      case 'saved':
+        return resText(ui, $r('app.string.inbox_view_saved'));
+      case 'done':
+        return resText(ui, $r('app.string.inbox_view_done'));
+      default:
+        return resText(ui, $r('app.string.inbox_menu_inbox'));
+    }
+  }
+
+  /** chip 公共样式（@Styles 不支持参数：文本/背景等动态部分行内设置） */
+  @Styles
+  filterPillStyle() {
     .height(30)
     .padding({ left: 12, right: 10 })
     .borderRadius(12)
-    .backgroundColor(active ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))
     .border({ width: 1, color: $r('app.color.border') })
+  }
+
+  /** 面板头部：✕ 关闭 + 粗体标题（+ 可选蓝色搜索钮，官方 repo 面板样式） */
+  @Builder
+  sheetHeader(title: Resource, showSearch: boolean, onSearchToggle: () => void) {
+    Row() {
+      Stack() {
+        OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 18, iconColor: $r('app.color.text_primary') })
+      }
+      .width(44)
+      .height(44)
+      .onClick((): void => {
+        this.sheetKind = '';
+      })
+      Text(title)
+        .fontSize($r('app.float.title_font_size'))
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.text_primary'))
+        .layoutWeight(1)
+      if (showSearch) {
+        Stack() {
+          OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 18, iconColor: $r('app.color.link_blue') })
+        }
+        .width(44)
+        .height(44)
+        .onClick(onSearchToggle)
+      } else {
+        Blank()
+          .width(44)
+      }
+    }
+    .padding({ left: 8, right: 8 })
+  }
+
+  /** 面板行：可选 emoji 图标 + 选项文本 + 选中蓝勾（$$ 引用参数随状态刷新） */
+  @Builder
+  sheetRow($$: RowState, onClick: () => void) {
+    Row() {
+      if ($$.emoji !== '') {
+        Text($$.emoji)
+          .fontSize(22)
+          .width(32)
+          .textAlign(TextAlign.Center)
+          .margin({ right: 8 })
+      }
+      Text($$.label)
+        .fontSize($r('app.float.body_font_size'))
+        .fontColor($r('app.color.text_primary'))
+        .layoutWeight(1)
+      if ($$.selected) {
+        OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 16, iconColor: $r('app.color.link_blue') })
+          .margin({ left: 8 })
+      }
+    }
+    .width('100%')
+    .height(52)
+    .padding({ left: 16, right: 16 })
     .onClick(onClick)
   }
 
-  /** Repository▾ 下拉菜单：从会话仓库提取（Spec 002） */
+  /** 面板一：Filter notifications by（视图单选组 + 分割线 + 类型多选组） */
   @Builder
-  repoMenu() {
-    Menu() {
-      ForEach(this.repoNames, (repo: string) => {
-        MenuItem({
-          content: repo
-        })
-          .onClick(() => {
-            this.repoFilter = repo;
-            this.filter = 'repo';
-            this.applyRepoFilter();
+  filtersSheet() {
+    Column() {
+      this.sheetHeader($r('app.string.inbox_filter_title'), false, (): void => { })
+      ForEach(VIEWS, (v: string) => {
+        this.sheetRow({
+          label: this.viewOptionLabel(v),
+          selected: this.inboxView === v,
+          emoji: ''
+        }, (): void => this.selectView(v))
+      }, (v: string) => v)
+      Divider()
+        .color($r('app.color.divider'))
+        .strokeWidth(1)
+        .margin({ top: 4, bottom: 4 })
+        .width('100%')
+      ForEach(InboxView.REASONS, (r: ReasonOption) => {
+        this.sheetRow({
+          label: this.stringOf(r.labelRes),
+          selected: this.reasonKeys.indexOf(r.key) >= 0,
+          emoji: r.emoji
+        }, (): void => this.toggleReason(r.key))
+      }, (r: ReasonOption) => r.key)
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor($r('app.color.card_background'))
+  }
+
+  /** 面板二：Filter by repository（✕+标题+蓝色放大镜，仓库行=头像+名称+计数） */
+  @Builder
+  repsSheet() {
+    Column() {
+      this.sheetHeader($r('app.string.inbox_repo_filter_title'), true, (): void => {
+        this.repoSearchShow = !this.repoSearchShow;
+      })
+      if (this.repoSearchShow) {
+        TextInput({ placeholder: this.stringOf($r('app.string.search_placeholder')), text: this.repoSearch })
+          .height(40)
+          .fontSize($r('app.float.body_font_size'))
+          .margin({ left: 16, right: 16, bottom: 4 })
+          .borderRadius(8)
+          .backgroundColor($r('app.color.chip_bg'))
+          .onChange((v: string): void => {
+            this.repoSearch = v;
           })
-      }, (repo: string) => repo)
+      }
+      Scroll() {
+        Column() {
+          ForEach(this.filteredRepos(), (r: InboxRepoFilterItem) => {
+            this.repoRow(r)
+          }, (r: InboxRepoFilterItem) => r.fullName)
+        }
+      }
+      .layoutWeight(1)
+      .scrollBar(BarState.Off)
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor($r('app.color.card_background'))
+  }
+
+  /** 仓库行：方形圆角属主头像 + owner/repo + 右侧计数（选中蓝勾） */
+  @Builder
+  repoRow(r: InboxRepoFilterItem) {
+    Row({ space: 12 }) {
+      Image(r.avatarUrl)
+        .width(40)
+        .height(40)
+        .borderRadius(8)
+        .backgroundColor($r('app.color.chip_bg'))
+      Text(r.fullName)
+        .fontSize($r('app.float.body_font_size'))
+        .fontColor($r('app.color.text_primary'))
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .layoutWeight(1)
+      Text(`${r.count}`)
+        .fontSize($r('app.float.body_font_size'))
+        .fontColor($r('app.color.text_secondary'))
+        .margin({ right: 8 })
+      if (this.repoFilter === r.fullName && this.filter === 'repo') {
+        OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 16, iconColor: $r('app.color.link_blue') })
+          .margin({ left: 8 })
+      }
+    }
+    .width('100%')
+    .height(56)
+    .padding({ left: 16, right: 16 })
+    .onClick((): void => this.toggleRepoFilter(r.fullName))
+  }
+
+  /** 弹层分派（单个 bindSheet 内切换内容，规避同组件多 bindSheet 失效） */
+  @Builder
+  overlaySheet() {
+    if (this.sheetKind === 'filters') {
+      this.filtersSheet()
+    } else if (this.sheetKind === 'repo') {
+      this.repsSheet()
+    } else {
+      Column()
+        .width('100%')
+        .height('100%')
     }
   }
 
@@ -332,32 +573,60 @@ export struct InboxView {
       .padding({ left: 16, right: 16, top: 8 })
 
       Scroll() {
+        // 四个筛选 chip 内联渲染：@Builder 传值/$$ 引用参数均不随状态刷新（V2 坑，见 memory），
+        // 文本/激活态直接读 @Local 才能随筛选变化实时更新
         Row({ space: 8 }) {
-        this.filterPill(this.stringOf($r('app.string.inbox_menu_inbox')), this.filter === 'inbox', (): void => this.switchFilter('inbox'))
-        this.filterPill(this.stringOf($r('app.string.inbox_menu_focused')), this.filter === 'focused', (): void => this.switchFilter('focused'))
-        this.filterPill(this.stringOf($r('app.string.inbox_menu_unread')), this.filter === 'unread', (): void => this.switchFilter('unread'))
         Row() {
-          Text(this.repoFilter !== ''
-            ? this.repoFilter
-            : this.stringOf($r('app.string.inbox_menu_repository')))
+          Text(this.viewLabel())
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor(this.filter === 'inbox' ? $r('app.color.link_blue') : $r('app.color.text_primary'))
+          if (this.filter === 'inbox') {
+            OctIcon({
+              res: $r('app.media.oct_chevron_down_16'),
+              iconSize: 12,
+              iconColor: $r('app.color.link_blue')
+            })
+              .margin({ left: 4 })
+          }
+        }
+        .filterPillStyle()
+        .backgroundColor(this.filter === 'inbox' ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))
+        .onClick((): void => { this.sheetKind = 'filters'; })
+
+        Row() {
+          Text(this.stringOf($r('app.string.inbox_menu_focused')))
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor(this.filter === 'focused' ? $r('app.color.link_blue') : $r('app.color.text_primary'))
+        }
+        .filterPillStyle()
+        .backgroundColor(this.filter === 'focused' ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))
+        .onClick((): void => this.switchFilter('focused'))
+
+        Row() {
+          Text(this.stringOf($r('app.string.inbox_menu_unread')))
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor(this.filter === 'unread' ? $r('app.color.link_blue') : $r('app.color.text_primary'))
+        }
+        .filterPillStyle()
+        .backgroundColor(this.filter === 'unread' ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))
+        .onClick((): void => this.switchFilter('unread'))
+
+        Row() {
+          Text(this.repoFilter !== '' ? this.repoFilter : this.stringOf($r('app.string.inbox_menu_repository')))
             .fontSize($r('app.float.caption_font_size'))
             .fontColor(this.filter === 'repo' ? $r('app.color.link_blue') : $r('app.color.text_primary'))
-          OctIcon({
-            res: $r('app.media.oct_chevron_down_16'),
-            iconSize: 12,
-            iconColor: this.filter === 'repo' ? $r('app.color.link_blue') : $r('app.color.text_secondary')
-          })
-            .margin({ left: 4 })
+          if (this.filter === 'repo') {
+            OctIcon({
+              res: $r('app.media.oct_chevron_down_16'),
+              iconSize: 12,
+              iconColor: $r('app.color.link_blue')
+            })
+              .margin({ left: 4 })
+          }
         }
-        .height(30)
-        .padding({ left: 12, right: 10 })
-        .borderRadius(12)
+        .filterPillStyle()
         .backgroundColor(this.filter === 'repo' ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))
-        .border({ width: 1, color: $r('app.color.border') })
-        .bindMenu(this.repoMenu())
-        .onClick(() => {
-          this.switchFilter('repo');
-        })
+        .onClick((): void => { this.sheetKind = 'repo'; })
       }
       .width('100%')
       }
@@ -382,7 +651,7 @@ export struct InboxView {
               loading: this.loading,
               error: this.errorMsg,
               empty: !this.loading && this.errorMsg === '',
-              emptyText: $r('app.string.inbox_empty')
+              emptyText: this.emptyText()
             })
           }
         }
@@ -396,5 +665,22 @@ export struct InboxView {
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
+    .bindSheet(this.sheetKind !== '', this.overlaySheet(), {
+      height: 600,
+      backgroundColor: $r('app.color.card_background'),
+      // 关闭钮与标题行均自绘，避免默认 ✕ 与自绘按钮重叠
+      showClose: false
+    })
+  }
+
+  /** 空态文案：按当前视图给出（Saved/Done 视图无数据时更贴切） */
+  private emptyText(): Resource {
+    if (this.inboxView === 'saved') {
+      return $r('app.string.inbox_saved_empty');
+    }
+    if (this.inboxView === 'done' && this.reasonKeys.length === 0 && this.repoFilter === '') {
+      return $r('app.string.inbox_done_empty');
+    }
+    return $r('app.string.inbox_empty');
   }
 }

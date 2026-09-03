@@ -397,6 +397,50 @@
       "value": "Repository"
     },
     {
+      "name": "inbox_filter_title",
+      "value": "Filter notifications by"
+    },
+    {
+      "name": "inbox_view_saved",
+      "value": "Saved"
+    },
+    {
+      "name": "inbox_view_done",
+      "value": "Done"
+    },
+    {
+      "name": "inbox_filter_assigned",
+      "value": "Assigned"
+    },
+    {
+      "name": "inbox_filter_participating",
+      "value": "Participating"
+    },
+    {
+      "name": "inbox_filter_mentioned",
+      "value": "Mentioned"
+    },
+    {
+      "name": "inbox_filter_team_mentioned",
+      "value": "Team mentioned"
+    },
+    {
+      "name": "inbox_filter_review_requested",
+      "value": "Review requested"
+    },
+    {
+      "name": "inbox_repo_filter_title",
+      "value": "Filter by repository"
+    },
+    {
+      "name": "inbox_saved_empty",
+      "value": "No saved notifications"
+    },
+    {
+      "name": "inbox_done_empty",
+      "value": "No done notifications"
+    },
+    {
       "name": "explore_discover",
       "value": "Discover"
     },

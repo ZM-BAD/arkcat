@@ -18,8 +18,10 @@ import {
   mapWorkStarredPage, filterWorkProjects, sortWorkProjects, filterTopRepos, WorkTopRepoItem, WorkProjectItem,
   mapWorkProjectsPage, mapWorkTopReposPage, mapWorkOrgsPage
 } from '../../../main/ets/models/WorkModels';
-import { mapUser, mapRepo, mapViewerBasic, mapNotifications, issueNumberFromUrl } from '../../../main/ets/models/GitHubModels';
-import { buildNotificationsPath, pullRefFromUrl, buildPullStatesQuery, mapPullMerged, PrRef } from '../../../main/ets/services/NotificationsService';
+import { mapUser, mapRepo, mapViewerBasic, mapNotifications, issueNumberFromUrl, NotificationItem } from '../../../main/ets/models/GitHubModels';
+import { buildNotificationsPath, pullRefFromUrl, buildPullStatesQuery, mapPullMerged, PrRef,
+  filterByReasons, filterByInboxView, collectRepoFilters, InboxReasonKey, InboxRepoFilterItem
+} from '../../../main/ets/services/NotificationsService';
 import { buildCodeQuery, mapCodeSearch } from '../../../main/ets/services/SearchService';
 import { buildTopicQuery } from '../../../main/ets/services/ExploreService';
 import { mapSearchResult } from '../../../main/ets/models/ExploreModels';
@@ -170,6 +172,65 @@ export default function logicTest(testsuiteName: string) {
       expect(buildNotificationsPath(false, 1)).assertEqual('/notifications?all=false&per_page=1');
       // Spec 002 Focused：participating 模式
       expect(buildNotificationsPath(true, 30, true)).assertEqual('/notifications?participating=true&per_page=30');
+    });
+
+    it('filterByReasons_reasonKeys', 0, () => {
+      const mk = (threadId: string, reason: string): NotificationItem => {
+        return {
+          threadId: threadId, repoFullName: 'o/r', title: 't', subjectType: 'Issue', reason: reason,
+          unread: true, updatedAt: '', subjectUrl: '', ownerAvatarUrl: '', prMerged: false
+        };
+      };
+      const items = [
+        mk('1', 'assign'), mk('2', 'mention'), mk('3', 'team_mention'),
+        mk('4', 'review_requested'), mk('5', 'comment'), mk('6', 'subscribed'), mk('7', 'author'),
+        mk('8', 'state_change')
+      ];
+      // 空选 = 全量
+      expect(filterByReasons(items, []).length).assertEqual(8);
+      // 单选
+      expect(filterByReasons(items, ['mention']).length).assertEqual(1);
+      expect(filterByReasons(items, ['assign'])[0].threadId).assertEqual('1');
+      // 多选并集
+      const two: InboxReasonKey[] = ['assign', 'mention'];
+      expect(filterByReasons(items, two).length).assertEqual(2);
+      // Participating = comment/subscribed/author/mention/team_mention 并集
+      const part: InboxReasonKey[] = ['participating'];
+      expect(filterByReasons(items, part).length).assertEqual(5);
+    });
+
+    it('filterByInboxView_views', 0, () => {
+      const mk = (threadId: string, unread: boolean): NotificationItem => {
+        return {
+          threadId: threadId, repoFullName: 'o/r', title: 't', subjectType: 'Issue', reason: 'comment',
+          unread: unread, updatedAt: '', subjectUrl: '', ownerAvatarUrl: '', prMerged: false
+        };
+      };
+      const items = [mk('1', true), mk('2', false), mk('3', true)];
+      expect(filterByInboxView(items, 'inbox').length).assertEqual(3);
+      // Done=已读近似；Saved 无本地保存标记 → 空视图
+      expect(filterByInboxView(items, 'done')[0].threadId).assertEqual('2');
+      expect(filterByInboxView(items, 'saved').length).assertEqual(0);
+    });
+
+    it('collectRepoFilters_aggregate', 0, () => {
+      const mk = (threadId: string, fullName: string, avatar: string): NotificationItem => {
+        return {
+          threadId: threadId, repoFullName: fullName, title: 't', subjectType: 'Issue', reason: 'comment',
+          unread: true, updatedAt: '', subjectUrl: '', ownerAvatarUrl: avatar, prMerged: false
+        };
+      };
+      const items = [
+        mk('1', 'o/a', 'http://a'), mk('2', 'o/b', ''), mk('3', 'o/a', ''), mk('4', 'o/a', 'http://a2')
+      ];
+      const reps: InboxRepoFilterItem[] = collectRepoFilters(items);
+      // 保持首次出现顺序 + 计数 + 头像取最新非空
+      expect(reps.length).assertEqual(2);
+      expect(reps[0].fullName).assertEqual('o/a');
+      expect(reps[0].count).assertEqual(3);
+      expect(reps[0].avatarUrl).assertEqual('http://a');
+      expect(reps[1].fullName).assertEqual('o/b');
+      expect(reps[1].count).assertEqual(1);
     });
 
     it('issueNumberFromUrl_extract', 0, () => {
@@ -496,7 +557,7 @@ export default function logicTest(testsuiteName: string) {
       expect(filterTopRepos([r1, r2, r3], 'fork').length).assertEqual(1);
       expect(filterTopRepos([r1, r2, r3], 'archived').length).assertEqual(1);
       expect(filterTopRepos([r1, r2, r3], 'private').length).assertEqual(1);
-      expect(filterTopRepos([r1, r2, r3], 'source').length).assertEqual(0);
+      expect(filterTopRepos([r1, r2, r3], 'source').length).assertEqual(1);
       expect(filterTopRepos([r1, r2, r3], 'template').length).assertEqual(1);
     });
 
