@@ -22,7 +22,7 @@ import { mapUser, mapRepo, mapViewerBasic, mapNotifications, issueNumberFromUrl,
 import { buildNotificationsPath, pullRefFromUrl, buildPullStatesQuery, mapPullMerged, PrRef,
   filterByReasons, filterByInboxView, collectRepoFilters, InboxReasonKey, InboxRepoFilterItem
 } from '../../../main/ets/services/NotificationsService';
-import { buildCodeQuery, mapCodeSearch } from '../../../main/ets/services/SearchService';
+import { buildCodeQuery, mapCodeSearch, mapSearchNode, mapSearchResults, mapOrgSearchResults, buildQualifierInsert, pushSearchHistory } from '../../../main/ets/services/SearchService';
 import { buildTopicQuery } from '../../../main/ets/services/ExploreService';
 import { mapSearchResult } from '../../../main/ets/models/ExploreModels';
 import { mapUserProfile, isSelfProfile } from '../../../main/ets/models/ProfileModels';
@@ -280,6 +280,91 @@ export default function logicTest(testsuiteName: string) {
       expect(result.repositoryCount).assertEqual(2);
       expect(result.repos.length).assertEqual(2);
       expect(result.repos[1].nameWithOwner).assertEqual('c/d');
+    });
+
+    it('buildQualifierInsert', 0, () => {
+      expect(buildQualifierInsert('', 'repo')).assertEqual('repo:');
+      expect(buildQualifierInsert('foo', 'repo')).assertEqual('foo repo:');
+      expect(buildQualifierInsert('foo ', 'repo')).assertEqual('foo repo:');
+      expect(buildQualifierInsert('repo:', 'user')).assertEqual('repo:user:');
+    });
+
+    it('pushSearchHistory_dedupAndCap', 0, () => {
+      const next = pushSearchHistory(['a', 'b'], 'a');
+      expect(next.length).assertEqual(2);
+      expect(next[0]).assertEqual('a');
+      expect(next[1]).assertEqual('b');
+      const cap = pushSearchHistory(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'], 'k');
+      expect(cap.length).assertEqual(10);
+      expect(cap[0]).assertEqual('k');
+      expect(cap[9]).assertEqual('i');
+    });
+
+    it('mapSearchNode_kinds', 0, () => {
+      const lang: JsonMap = { 'name': 'TS', 'color': '#3178c6' };
+      const repoNode: JsonMap = {
+        '__typename': 'Repository', 'nameWithOwner': 'a/b', 'description': 'd',
+        'stargazerCount': 9, 'forkCount': 3,
+        'primaryLanguage': lang
+      };
+      const r = mapSearchNode(repoNode);
+      expect(r?.kind).assertEqual('repository');
+      expect(r?.title).assertEqual('a/b');
+      expect(r?.stars).assertEqual(9);
+      expect(r?.languageColor).assertEqual('#3178c6');
+      const repoIss: JsonMap = { 'nameWithOwner': 'c/d' };
+      const issueNode: JsonMap = {
+        '__typename': 'Issue', 'title': 't', 'state': 'OPEN', 'number': 12,
+        'repository': repoIss
+      };
+      const i = mapSearchNode(issueNode);
+      expect(i?.kind).assertEqual('issue');
+      expect(i?.repoFullName).assertEqual('c/d');
+      expect(i?.number).assertEqual(12);
+      const prNode: JsonMap = {
+        '__typename': 'PullRequest', 'title': 'p', 'state': 'MERGED', 'number': 7,
+        'repository': repoIss
+      };
+      const p = mapSearchNode(prNode);
+      expect(p?.kind).assertEqual('pr');
+      const followers: JsonMap = { 'totalCount': 2 };
+      const following: JsonMap = { 'totalCount': 5 };
+      const userNode: JsonMap = {
+        '__typename': 'User', 'login': 'foo', 'name': 'Foo', 'avatarUrl': 'a.png', 'bio': 'b',
+        'followers': followers, 'following': following
+      };
+      const u = mapSearchNode(userNode);
+      expect(u?.kind).assertEqual('user');
+      expect(u?.followers).assertEqual(2);
+      expect(mapSearchNode({ '__typename': 'Unknown' }) === null).assertTrue();
+    });
+
+    it('mapSearchResults_pageInfo', 0, () => {
+      const repoNode1: JsonMap = { '__typename': 'Repository', 'nameWithOwner': 'a/b' };
+      const repoNode2: JsonMap = { 'nameWithOwner': 'c/d' };
+      const issueNode: JsonMap = { '__typename': 'Issue', 'title': 't', 'number': 1, 'repository': repoNode2 };
+      const pageInfo: JsonMap = { 'hasNextPage': true, 'endCursor': 'abc' };
+      const nodes: JsonMap[] = [repoNode1, issueNode];
+      const searchNode: JsonMap = {
+        'repositoryCount': 2,
+        'pageInfo': pageInfo,
+        'nodes': nodes
+      };
+      const res = mapSearchResults({ 'search': searchNode });
+      expect(res.totalCount).assertEqual(2);
+      expect(res.hasNextPage).assertTrue();
+      expect(res.endCursor).assertEqual('abc');
+      expect(res.items.length).assertEqual(2);
+      expect(res.items[1].kind).assertEqual('issue');
+    });
+
+    it('mapOrgSearchResults', 0, () => {
+      const item1: JsonMap = { 'login': 'org1', 'name': 'Org One', 'avatar_url': 'o.png' };
+      const data: JsonMap = { 'items': [item1] };
+      const items = mapOrgSearchResults(data);
+      expect(items.length).assertEqual(1);
+      expect(items[0].kind).assertEqual('organization');
+      expect(items[0].title).assertEqual('org1');
     });
 
     it('mapUserProfile_and_selfCheck', 0, () => {

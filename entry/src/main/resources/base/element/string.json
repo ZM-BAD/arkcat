@@ -598,7 +598,7 @@
     },
     {
       "name": "search_placeholder",
-      "value": "Search or jump to..."
+      "value": "Search GitHub"
     },
     {
       "name": "search_suggestion_code",
@@ -633,12 +633,52 @@
       "value": "Code"
     },
     {
+      "name": "search_category_repositories",
+      "value": "Repositories"
+    },
+    {
+      "name": "search_category_issues",
+      "value": "Issues"
+    },
+    {
+      "name": "search_category_prs",
+      "value": "Pull Requests"
+    },
+    {
+      "name": "search_category_people",
+      "value": "People"
+    },
+    {
+      "name": "search_category_organizations",
+      "value": "Organizations"
+    },
+    {
       "name": "search_matches_more",
       "value": "Show %1$d more matches"
     },
     {
       "name": "search_no_results",
       "value": "No results found"
+    },
+    {
+      "name": "search_empty_title",
+      "value": "Find your stuff."
+    },
+    {
+      "name": "search_empty_text",
+      "value": "Search all of GitHub for People, Repositories, Organizations, Issues, and Pull Requests."
+    },
+    {
+      "name": "search_recent_searches",
+      "value": "Recent searches"
+    },
+    {
+      "name": "search_clear_all",
+      "value": "CLEAR"
+    },
+    {
+      "name": "search_jump_to",
+      "value": "Jump to \"%1$s\""
     },
     {
       "name": "markdown_badge",

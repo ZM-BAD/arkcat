@@ -1,11 +1,17 @@
 /**
- * Search 页（Spec 015）：搜索栏 + 六类建议入口 + Code 结果卡。
- * GitHub GraphQL CODE search 只返回文件名/路径/仓库；代码行正文/高亮为后续 Spec。
+ * Search 页（Spec 015 v2）：
+ * - 空态「Find your stuff.」（无输入且无历史）
+ * - Recent searches 历史（CLEAR 清空；仅清空输入后且存在历史时替代空态）
+ * - qualifier chips（输入框聚焦键盘弹起时底部横排：repo/user/org/path/symbol）
+ * - 六类建议入口 + Jump to "q"；点击入口行 → SearchResults 结果页
  */
+import { common } from '@kit.AbilityKit';
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
-import { SearchService, CodeSearchItem, SEARCH_SUGGESTION_TYPES } from '../services/SearchService';
-import { StateView } from '../components/StateView';
+import {
+  SearchService, QUALIFIER_CHIPS, pushSearchHistory, SearchHistoryStore,
+  buildQualifierInsert
+} from '../services/SearchService';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -13,47 +19,84 @@ export struct SearchView {
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
   @Local keyword: string = '';
-  @Local activeCategory: string = '';
-  @Local results: CodeSearchItem[] = [];
-  @Local loading: boolean = false;
-  @Local errorMsg: string = '';
-  @Local searched: boolean = false;
+  @Local focused: boolean = false;
+  @Local history: string[] = [];
+  @Local historyReady: boolean = false;
+
+  aboutToAppear(): void {
+    this.loadHistory();
+  }
+
+  private ctx(): common.Context | undefined {
+    return this.getUIContext().getHostContext() as common.Context;
+  }
+
+  private loadHistory(): void {
+    SearchHistoryStore.load(this.ctx()).then((h: string[]) => {
+      this.history = h;
+      this.historyReady = true;
+    });
+  }
 
   private onSearchInput(v: string): void {
     this.keyword = v;
-    // 关键词变化后清空结果，回到建议列表
-    if (this.activeCategory !== '') {
-      this.activeCategory = '';
-      this.results = [];
-      this.searched = false;
-    }
   }
 
-  private runCodeSearch(): void {
+  private clearKeyword(): void {
+    this.keyword = '';
+  }
+
+  /** qualifier chip：把「repo:」等前缀插入当前输入（保持键盘） */
+  private insertQualifier(chip: string): void {
+    this.keyword = buildQualifierInsert(this.keyword, chip);
+  }
+
+  /** 记录历史：去重置顶、上限 10（同步内存 + 异步持久化） */
+  private rememberKeyword(kw: string): void {
+    this.history = pushSearchHistory(this.history, kw);
+    SearchHistoryStore.save(this.ctx(), this.history);
+  }
+
+  private clearHistory(): void {
+    this.history = [];
+    SearchHistoryStore.save(this.ctx(), []);
+  }
+
+  /** 建议入口（六类）→ 结果页 */
+  private openResults(kind: string): void {
     const kw = this.keyword.trim();
     if (kw === '') {
       return;
     }
-    this.activeCategory = 'code';
-    this.loading = true;
-    this.errorMsg = '';
-    this.searched = true;
-    SearchService.fetchCodeResults(this.token, kw)
-      .then((items: CodeSearchItem[]) => {
-        this.results = items;
-        this.loading = false;
+    this.rememberKeyword(kw);
+    this.pathStack.pushPathByName('searchResults', `${kind}|${kw}`);
+  }
+
+  /** Jump to：J1 首个匹配仓库 → 详情页；无匹配 toast */
+  private jumpTo(): void {
+    const kw = this.keyword.trim();
+    if (kw === '') {
+      return;
+    }
+    SearchService.fetchJumpToRepo(this.token, kw)
+      .then((full: string) => {
+        this.rememberKeyword(kw);
+        this.pathStack.pushPathByName('repoDetail', full);
       })
       .catch((e: Error) => {
-        this.errorMsg = e.message;
-        this.loading = false;
+        promptAction.showToast({ message: resText(this.getUIContext(), $r('app.string.search_no_results')) });
       });
+  }
+
+  /** 历史行回填关键词（回到建议列表） */
+  private useHistory(kw: string): void {
+    this.keyword = kw;
   }
 
   private comingSoon(): void {
     promptAction.showToast({ message: $r('app.string.home_feature_coming') });
   }
 
-  /** 资源 → 当前语言纯文案 */
   private stringOf(res: Resource): string {
     return resText(this.getUIContext(), res);
   }
@@ -99,23 +142,14 @@ export struct SearchView {
     }
   }
 
-  /** 文件卡片扩展名徽章（Markdown 等） */
-  private badgeText(item: CodeSearchItem): string {
-    if (item.isMarkdown) {
-      return this.stringOf($r('app.string.markdown_badge'));
-    }
-    const seg = item.name.split('.');
-    return seg.length > 1 ? seg[seg.length - 1].toUpperCase() : '';
-  }
-
   @Builder
-  suggestionRow(iconRes: Resource, label: string, onClick: () => void) {
+  suggestionRow(iconRes: Resource, type: string, onClick: () => void) {
     Row({ space: 14 }) {
-      OctIcon({ res: iconRes, iconSize: 18, iconColor: $r('app.color.text_secondary') })
+      OctIcon({ res: iconRes, iconSize: 18, iconColor: $r('app.color.text_primary') })
         .width(28)
         .align(Alignment.Center)
-      Text(label)
-        .fontSize($r('app.float.body_font_size'))
+      Text(this.suggestionLabel(type))
+        .fontSize($r('app.float.menu_font_size'))
         .fontColor($r('app.color.text_primary'))
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -126,175 +160,205 @@ export struct SearchView {
     .onClick(onClick)
   }
 
+  /** 空态：Find your stuff. + 五类说明（无输入且无历史时） */
   @Builder
-  codeCard(item: CodeSearchItem) {
-    Column({ space: 6 }) {
-      Row({ space: 6 }) {
-        OctIcon({ res: $r('app.media.oct_file_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
-        Text(item.repoFullName)
-          .fontSize($r('app.float.body_font_size'))
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.link_blue'))
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .layoutWeight(1)
-        Text(item.name)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .maxLines(1)
-      }
-      .width('100%')
-      .onClick(() => this.comingSoon())
-
-      Row({ space: 8 }) {
-        Circle()
-          .width(12)
-          .height(12)
-          .fill($r('app.color.shortcut_purple_fg'))
-        Text(this.badgeText(item))
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_primary'))
-      }
-      .width('100%')
-
-      // 代码行占位（正文从 REST 兜底，Spec 016 补充）
-      Text(item.path)
-        .fontSize($r('app.float.caption_font_size'))
+  emptyState() {
+    Column({ space: 10 }) {
+      Text($r('app.string.search_empty_title'))
+        .fontSize($r('app.float.title_font_size'))
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.text_primary'))
+      Text($r('app.string.search_empty_text'))
+        .fontSize($r('app.float.menu_font_size'))
         .fontColor($r('app.color.text_secondary'))
-        .maxLines(3)
-        .width('100%')
-        .padding(10)
-        .backgroundColor($r('app.color.chip_bg'))
-        .borderRadius(6)
+        .textAlign(TextAlign.Center)
+        .lineHeight(24)
     }
-    .padding($r('app.float.card_padding'))
-    .borderRadius($r('app.float.card_radius'))
-    .backgroundColor($r('app.color.card_background'))
     .width('100%')
-    .margin({ bottom: 8 })
+    .padding({ left: 40, right: 40 })
+    .alignItems(HorizontalAlign.Center)
+    .layoutWeight(1)
+    .justifyContent(FlexAlign.Center)
+  }
+
+  /** 历史区：Recent searches + CLEAR + 词行（点击回填，↗ 灰图标） */
+  @Builder
+  historyPanel() {
+    Scroll() {
+      Column() {
+        Row() {
+          Text($r('app.string.search_recent_searches'))
+            .fontSize($r('app.float.menu_font_size'))
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.text_primary'))
+          Blank()
+          Text($r('app.string.search_clear_all'))
+            .fontSize($r('app.float.menu_font_size'))
+            .fontColor($r('app.color.link_blue'))
+            .onClick(() => this.clearHistory())
+        }
+        .width('100%')
+        .height(52)
+        .padding({ left: 16, right: 16 })
+
+        ForEach(this.history, (kw: string) => {
+          Row({ space: 12 }) {
+            Text(kw)
+              .fontSize($r('app.float.menu_font_size'))
+              .fontColor($r('app.color.text_primary'))
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
+              .layoutWeight(1)
+            OctIcon({ res: $r('app.media.oct_arrow_up_right_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+              .width(28)
+          }
+          .width('100%')
+          .height(54)
+          .padding({ left: 16, right: 16 })
+          .onClick(() => this.useHistory(kw))
+        }, (kw: string) => kw)
+      }
+      .width('100%')
+    }
+    .layoutWeight(1)
+    .scrollBar(BarState.Off)
+    .align(Alignment.Top)
+  }
+
+  /** qualifier chips 行（聚焦时底部显示） */
+  @Builder
+  qualifierChips() {
+    Scroll() {
+      Row({ space: 8 }) {
+        ForEach(QUALIFIER_CHIPS, (chip: string) => {
+          Text(chip)
+            .fontSize($r('app.float.chip_font_size'))
+            .fontColor($r('app.color.text_primary'))
+            .height(40)
+            .padding({ left: 16, right: 16 })
+            .borderRadius(8)
+            .backgroundColor($r('app.color.chip_bg'))
+            .onClick(() => this.insertQualifier(chip))
+        }, (chip: string) => chip)
+      }
+      .padding({ left: 16, right: 16 })
+      .width('100%')
+    }
+    .height(52)
+    .scrollBar(BarState.Off)
+    .align(Alignment.Start)
   }
 
   build() {
     Column() {
-      // 搜索栏
-      Row({ space: 8 }) {
-        Stack() {
-  OctIcon({
-          res: $r('app.media.oct_arrow_left_24'),
-          iconSize: 20,
-          iconColor: $r('app.color.text_primary')
-  })
-}
-.width(44)
-.height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
-        .focusable(true)
-.onClick((): void => {
+      // 搜索栏（← / 输入框 / ✕ / ⋮ 竖三点蓝）
+      Column() {
+        Row({ space: 8 }) {
+          Stack() {
+            OctIcon({
+              res: $r('app.media.oct_arrow_left_24'),
+              iconSize: 20,
+              iconColor: $r('app.color.text_primary')
+            })
+          }
+          .width(44)
+          .height(44)
+          .accessibilityDescription($r('app.string.a11y_back'))
+          .focusable(true)
+          .onClick((): void => {
             this.pathStack.pop();
           })
-        TextInput({
-          placeholder: this.stringOf($r('app.string.search_placeholder')),
-          text: this.keyword
-        })
-          .layoutWeight(1)
-          .height(40)
-          .onChange((v: string) => this.onSearchInput(v))
-        if (this.keyword !== '') {
-          Stack() {
-  OctIcon({
-            res: $r('app.media.oct_x_16'),
-            iconSize: 18,
-            iconColor: $r('app.color.text_secondary')
-  })
-}
-.width(44)
-.height(44)
-        .accessibilityDescription($r('app.string.a11y_close'))
-        .focusable(true)
-.onClick((): void => {
-              this.keyword = '';
-              this.activeCategory = '';
-              this.results = [];
-              this.searched = false;
-            })
-        }
-        Stack() {
-  OctIcon({
-          res: $r('app.media.oct_kebab_horizontal_16'),
-          iconSize: 18,
-          iconColor: $r('app.color.text_secondary')
-  })
-}
-.width(44)
-.height(44)
-        .accessibilityDescription($r('app.string.a11y_more'))
-        .focusable(true)
-.onClick((): void => this.comingSoon())
-      }
-      .width('100%')
-      .height(48)
-      .padding({ left: 16, right: 12 })
 
-      Scroll() {
-        Column() {
-          if (this.keyword.trim() === '') {
-            // 未输入：空态提示（Spec 015）
-            Column({ space: 8 }) {
-              OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 40, iconColor: $r('app.color.text_secondary') })
-                .margin({ top: 60 })
-              Text($r('app.string.search_empty_query'))
-                .fontSize($r('app.float.body_font_size'))
-                .fontColor($r('app.color.text_secondary'))
+          TextInput({
+            placeholder: this.stringOf($r('app.string.search_placeholder')),
+            text: this.keyword
+          })
+            .layoutWeight(1)
+            .height(44)
+            .fontSize($r('app.float.title_font_size'))
+            .fontColor($r('app.color.text_primary'))
+            .caretColor($r('app.color.link_blue'))
+            .backgroundColor(Color.Transparent)
+            .onChange((v: string) => this.onSearchInput(v))
+            .onFocus(() => {
+              this.focused = true;
+            })
+            .onBlur(() => {
+              this.focused = false;
+            })
+
+          if (this.keyword !== '') {
+            Stack() {
+              OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+            }
+            .width(44)
+            .height(44)
+            .accessibilityDescription($r('app.string.a11y_close'))
+            .focusable(true)
+            .onClick((): void => {
+              this.clearKeyword();
+            })
+          }
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_kebab_vertical_16'), iconSize: 18, iconColor: $r('app.color.link_blue') })
+          }
+          .width(44)
+          .height(44)
+          .accessibilityDescription($r('app.string.a11y_more'))
+          .focusable(true)
+          .onClick((): void => this.comingSoon())
+        }
+        .width('100%')
+        .height(48)
+        .padding({ left: 16, right: 12 })
+
+        // 输入下划线（聚焦或已有输入时显示，官方样式）
+        if (this.focused || this.keyword.trim() !== '') {
+          Divider().strokeWidth(1).color($r('app.color.divider'))
+        }
+      }
+
+      // qualifier chips（聚焦时显示；鸿蒙软键盘不压缩页面，置于输入栏下方避免被键盘遮挡）
+      if (this.focused) {
+        this.qualifierChips()
+      }
+
+      if (this.keyword.trim() === '') {
+        if (this.historyReady && this.history.length > 0) {
+          this.historyPanel()
+        } else {
+          this.emptyState()
+        }
+      } else {
+        // 建议列表：六类入口 + Jump to
+        Scroll() {
+          Column() {
+            ForEach(['code', 'repositories', 'issues', 'prs', 'people', 'orgs'], (type: string) => {
+              this.suggestionRow(this.suggestionIcon(type), type,
+                (): void => this.openResults(type))
+            }, (type: string) => type)
+
+            Row({ space: 14 }) {
+              OctIcon({ res: $r('app.media.oct_arrow_right_16'), iconSize: 18, iconColor: $r('app.color.text_primary') })
+                .width(28)
+                .align(Alignment.Center)
+              Text(resText(this.getUIContext(), $r('app.string.search_jump_to'), this.keyword.trim()))
+                .fontSize($r('app.float.menu_font_size'))
+                .fontColor($r('app.color.text_primary'))
+                .maxLines(1)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
             }
             .width('100%')
-            .alignItems(HorizontalAlign.Center)
-          } else if (this.activeCategory === '') {
-            // 建议列表
-            ForEach(SEARCH_SUGGESTION_TYPES, (type: string) => {
-              this.suggestionRow(this.suggestionIcon(type), this.suggestionLabel(type),
-                (): void => {
-                  if (type === 'code') {
-                    this.runCodeSearch();
-                  } else {
-                    this.comingSoon();
-                  }
-                })
-            }, (type: string) => type)
-          } else if (this.activeCategory === 'code') {
-            // Code 结果
-            Text($r('app.string.search_category_code'))
-              .fontSize($r('app.float.title_font_size'))
-              .fontWeight(FontWeight.Bold)
-              .fontColor($r('app.color.text_primary'))
-              .width('100%')
-              .padding({ top: 8, bottom: 12 })
-
-            if (this.results.length > 0) {
-              ForEach(this.results, (item: CodeSearchItem) => {
-                this.codeCard(item)
-              }, (item: CodeSearchItem) => `${item.repoFullName}/${item.path}`)
-              // Show more（测试 6：分页后续）
-              Text(resText(this.getUIContext(), $r('app.string.search_matches_more'), 20))
-                .fontSize($r('app.float.caption_font_size'))
-                .fontColor($r('app.color.text_secondary'))
-                .padding(12)
-                .onClick(() => this.comingSoon())
-            } else {
-              StateView({
-                loading: this.loading,
-                error: this.errorMsg,
-                empty: !this.loading && this.errorMsg === '',
-                emptyText: $r('app.string.search_no_results')
-              })
-            }
+            .height(54)
+            .padding({ left: 16, right: 16 })
+            .onClick(() => this.jumpTo())
           }
+          .width('100%')
         }
-        .padding({ left: 16, right: 16 })
-        .width('100%')
+        .layoutWeight(1)
+        .scrollBar(BarState.Off)
+        .align(Alignment.Top)
       }
-      .layoutWeight(1)
-      .scrollBar(BarState.Off)
-      .align(Alignment.Top)
     }
     .width('100%')
     .height('100%')

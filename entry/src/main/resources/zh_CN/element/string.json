@@ -598,7 +598,7 @@
     },
     {
       "name": "search_placeholder",
-      "value": "搜索或跳转到..."
+      "value": "搜索 GitHub"
     },
     {
       "name": "search_suggestion_code",
@@ -633,12 +633,52 @@
       "value": "代码"
     },
     {
+      "name": "search_category_repositories",
+      "value": "仓库"
+    },
+    {
+      "name": "search_category_issues",
+      "value": "Issues"
+    },
+    {
+      "name": "search_category_prs",
+      "value": "Pull Requests"
+    },
+    {
+      "name": "search_category_people",
+      "value": "用户"
+    },
+    {
+      "name": "search_category_organizations",
+      "value": "组织"
+    },
+    {
       "name": "search_matches_more",
       "value": "显示更多 %1$d 条匹配"
     },
     {
       "name": "search_no_results",
       "value": "未找到结果"
+    },
+    {
+      "name": "search_empty_title",
+      "value": "找到你需要的内容。"
+    },
+    {
+      "name": "search_empty_text",
+      "value": "搜索 GitHub 全部内容：人员、仓库、组织、问题和拉取请求。"
+    },
+    {
+      "name": "search_recent_searches",
+      "value": "最近搜索"
+    },
+    {
+      "name": "search_clear_all",
+      "value": "清除"
+    },
+    {
+      "name": "search_jump_to",
+      "value": "跳转到 \"%1$s\""
     },
     {
       "name": "markdown_badge",

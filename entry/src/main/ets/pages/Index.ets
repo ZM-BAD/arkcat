@@ -17,6 +17,7 @@ import { RepoDetailView } from './RepoDetail';
 import { IssuesListView } from './IssuesList';
 import { SettingsView } from './Settings';
 import { SearchView } from './Search';
+import { SearchResultsView } from './SearchResults';
 import { OctIcon } from '../components/OctIcon';
 import { EditMyWorkView } from './EditMyWork';
 import { WorkIssuesView } from './WorkIssues';
@@ -61,6 +62,8 @@ struct Index {
   @State fileOwner: string = '';
   @State fileRepo: string = '';
   @State filePath: string = '';
+  @State searchKind: string = '';
+  @State searchKeyword: string = '';
   /** My Work 配置变更计数器：Edit My Work SAVE 后递增，泵到 HomeView 触发重渲染 */
   @State homeWorkVersion: number = 0;
   private tabController: TabsController = new TabsController();
@@ -269,6 +272,26 @@ struct Index {
         pathStack: this.pathStack
       })
     }
+    .hideTitleBar(true)
+  }
+
+  /** Spec 015 v2：搜索结果页（路由参数：kind|keyword） */
+  @Builder
+  searchResultsDestination() {
+    NavDestination() {
+      SearchResultsView({
+        kind: this.searchKind,
+        keyword: this.searchKeyword,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      const full = context.pathInfo.param as string;
+      const idx = full.indexOf('|');
+      this.searchKind = idx >= 0 ? full.substring(0, idx) : 'repositories';
+      this.searchKeyword = idx >= 0 ? full.substring(idx + 1) : full;
+    })
     .hideTitleBar(true)
   }
 
@@ -528,6 +551,8 @@ struct Index {
       this.repositoriesListDestination()
     } else if (name === 'search') {
       this.searchDestination()
+    } else if (name === 'searchResults') {
+      this.searchResultsDestination()
     } else if (name === 'editMyWork') {
       this.editMyWorkDestination()
     } else if (name === 'workIssues') {
