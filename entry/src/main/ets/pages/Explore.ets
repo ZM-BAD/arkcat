@@ -165,7 +165,7 @@ export struct ExploreView {
             .width('100%')
             .margin({ top: 8, bottom: 8 })
 
-          this.discoverEntry($r('app.media.oct_flame_16'), '#D94130', $r('app.string.explore_trending'))
+          this.discoverEntry($r('app.media.oct_flame_16'), $r('app.color.flame_fg'), $r('app.string.explore_trending'))
           this.discoverEntry($r('app.media.oct_sparkle_16'), $r('app.color.shortcut_purple_fg'), $r('app.string.explore_awesome'))
 
           // Activity 区（Spec 003 推荐流）

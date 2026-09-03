@@ -6,43 +6,17 @@ import { promptAction } from '@kit.ArkUI';
 import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { OctIcon } from '../components/OctIcon';
+import {
+  CODE_LIGHT_BG, CODE_LIGHT_TEXT, CODE_LIGHT_KEYWORD, CODE_LIGHT_FUNC, CODE_LIGHT_COMMENT,
+  CODE_DARK_BG, CODE_DARK_TEXT, CODE_DARK_KEYWORD, CODE_DARK_FUNC, CODE_DARK_COMMENT,
+  CodeSpan, CodeLine
+} from '../utils/CodeTheme';
 
 const PREFS_NAME = 'starraft_settings';
 const FONT_MIN = 12;
 const FONT_MAX = 20;
 const FONT_DEFAULT = 16;
 const SAMPLE_PATH = 'n/code-scanning/new/README.md';
-
-// GitHub 官方明/暗两套代码配色
-const LIGHT_BG = '#F6F8FA';
-const LIGHT_TEXT = '#1F2328';
-const LIGHT_KEYWORD = '#CF222E';
-const LIGHT_FUNC = '#0550AE';
-const LIGHT_COMMENT = '#6E7781';
-const DARK_BG = '#0D1117';
-const DARK_TEXT = '#E6EDF3';
-const DARK_KEYWORD = '#FF7B72';
-const DARK_FUNC = '#D2A8FF';
-const DARK_COMMENT = '#8B949E';
-
-/** 代码行片段（固定示例的语法着色单元） */
-class CodeSpan {
-  text: string;
-  color: string;
-
-  constructor(text: string, color: string) {
-    this.text = text;
-    this.color = color;
-  }
-}
-
-class CodeLine {
-  spans: CodeSpan[];
-
-  constructor(spans: CodeSpan[]) {
-    this.spans = spans;
-  }
-}
 
 @ComponentV2
 export struct CodeOptionsView {
@@ -98,23 +72,23 @@ export struct CodeOptionsView {
   }
 
   private codeBg(): string {
-    return this.darkTheme ? DARK_BG : LIGHT_BG;
+    return this.darkTheme ? CODE_DARK_BG : CODE_LIGHT_BG;
   }
 
   private codeText(): string {
-    return this.darkTheme ? DARK_TEXT : LIGHT_TEXT;
+    return this.darkTheme ? CODE_DARK_TEXT : CODE_LIGHT_TEXT;
   }
 
   private keywordColor(): string {
-    return this.darkTheme ? DARK_KEYWORD : LIGHT_KEYWORD;
+    return this.darkTheme ? CODE_DARK_KEYWORD : CODE_LIGHT_KEYWORD;
   }
 
   private funcColor(): string {
-    return this.darkTheme ? DARK_FUNC : LIGHT_FUNC;
+    return this.darkTheme ? CODE_DARK_FUNC : CODE_LIGHT_FUNC;
   }
 
   private commentColor(): string {
-    return this.darkTheme ? DARK_COMMENT : LIGHT_COMMENT;
+    return this.darkTheme ? CODE_DARK_COMMENT : CODE_LIGHT_COMMENT;
   }
 
   /** 固定示例：GitHub 截图同款 fibonacci 片段（注释行用于演示换行） */

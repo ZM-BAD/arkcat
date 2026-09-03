@@ -162,7 +162,20 @@ jobs:
           echo "Run locally: hvigor assembleHap --mode debug"
 
   # ──────────────────────────────────────────
-  # Job 5: Secret 泄漏检测（gitleaks；与本地 pre-commit gate 对齐）
+  # Job 5: 样式门禁——禁止 UI 硬编码颜色（与 pre-commit 对齐）
+  # ──────────────────────────────────────────
+  hardcoded-colors:
+    name: Hardcoded Colors
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check hardcoded colors
+        run: python3 scripts/check-hardcoded-colors.py
+
+  # ──────────────────────────────────────────
+  # Job 6: Secret 泄漏检测（gitleaks；与本地 pre-commit gate 对齐）
   # ──────────────────────────────────────────
   gitleaks:
     name: Gitleaks

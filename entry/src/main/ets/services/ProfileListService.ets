@@ -14,6 +14,7 @@ import {
   UserListPage, OrgListPage, OrgProfile, OrgSummary, RepoListPage, mapUserListPage
 } from '../models/ProfileModels';
 import { RepoSummary, mapRepo } from '../models/GitHubModels';
+import { LANGUAGE_COLORS } from '../models/LanguageColors';
 
 const ORG_REST_PAGE_LIMIT = 100;
 
@@ -86,23 +87,7 @@ export interface RepoOrder {
   direction: string;
 }
 
-/** 常用语言色（REST 兜底无 language color 字段） */
-const LANGUAGE_COLORS: Record<string, string> = {
-  'Go': '#00ADD8',
-  'Rust': '#DEA584',
-  'TypeScript': '#3178C6',
-  'JavaScript': '#F1E05A',
-  'Python': '#3572A5',
-  'Java': '#B07219',
-  'C': '#555555',
-  'C++': '#F34B7D',
-  'C#': '#178600',
-  'Ruby': '#701516',
-  'Shell': '#89E051',
-  'Kotlin': '#A97BFF',
-  'Swift': '#F05138',
-  'Dart': '#00B4AB'
-};
+/** 常用语言色（REST 兜底无 language color 字段，数据色板见 models/LanguageColors.ets） */
 
 export class ProfileListService {
   /** followers/following 用户列表 */

@@ -128,7 +128,7 @@ export struct SettingsView {
           },
           {
             text: resText(ui, $r('app.string.settings_confirm')),
-            color: '#D1242F'
+            color: $r('app.color.badge_red')
           }
         ]
       },

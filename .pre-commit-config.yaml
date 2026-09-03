@@ -13,6 +13,8 @@ repos:
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
+        # oh-package-lock.json5 由 ohpm 管理、不保证尾部换行，常态化误杀——排除
+        exclude: ^oh-package-lock\.json5$
       - id: check-yaml
       - id: check-json
       - id: check-merge-conflict
@@ -44,6 +46,13 @@ repos:
       - id: spec-lint
         name: Spec 合规检查
         entry: bash scripts/check-spec.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+      - id: hardcoded-colors
+        name: 禁止 UI 硬编码颜色（走 color.json / PrimerTokens）
+        entry: python3 scripts/check-hardcoded-colors.py
         language: system
         pass_filenames: false
         always_run: true

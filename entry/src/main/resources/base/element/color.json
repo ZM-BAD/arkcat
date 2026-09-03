@@ -175,6 +175,22 @@
     {
       "name": "attention_bg",
       "value": "#BF8700"
+    },
+    {
+      "name": "merged_badge_bg",
+      "value": "#8250DF"
+    },
+    {
+      "name": "flame_fg",
+      "value": "#D94130"
+    },
+    {
+      "name": "shadow_resting",
+      "value": "#0A1F2328"
+    },
+    {
+      "name": "shadow_floating",
+      "value": "#338F959F"
     }
   ]
 }

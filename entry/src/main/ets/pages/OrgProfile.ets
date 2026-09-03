@@ -256,7 +256,7 @@ export struct OrgProfileView {
                 .backgroundColor($r('app.color.card_background'))
                 .borderWidth(1)
                 .borderColor($r('app.color.divider'))
-                .shadow({ radius: 8, color: '#40000000', offsetY: 2 })
+                .shadow({ radius: 8, color: $r('app.color.shadow_floating'), offsetY: 2 })
                 .onClick(() => {
                   this.readmeExpanded = true;
                 })

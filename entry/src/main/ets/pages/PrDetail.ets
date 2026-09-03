@@ -159,7 +159,7 @@ export struct PrDetailView {
                     .fontColor(Color.White)
                     .padding({ left: 8, right: 8, top: 3, bottom: 3 })
                     .borderRadius(12)
-                    .backgroundColor('#2E5FC7')
+                    .backgroundColor($r('app.color.merged_badge_bg'))
                 }
                 if (this.detail.headRefName !== '') {
                   Text(this.detail.headRefName)

@@ -623,7 +623,7 @@ struct Index {
       .width('100%')
       .height(56)
       .backgroundColor($r('app.color.card_background'))
-      .shadow({ radius: 14, color: '#1A000000', offsetY: -3 })
+      .shadow({ radius: 14, color: $r('app.color.shadow_resting'), offsetY: -3 })
     }
     .width('100%')
     .height('100%')

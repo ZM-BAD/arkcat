@@ -276,7 +276,7 @@ export struct WorkFilterBar {
     .width(210)
     .borderRadius(12)
     .backgroundColor($r('app.color.card_background'))
-    .shadow({ radius: 16, color: '#29000000', offsetY: 4 })
+    .shadow({ radius: 16, color: $r('app.color.shadow_floating'), offsetY: 4 })
   }
 
   @Builder

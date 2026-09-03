@@ -18,7 +18,13 @@ bash scripts/check-spec.sh || exit 1
 
 echo ""
 
-# 3. 检查是否有未解决的 TODO/FIXME 在已暂存文件中（仅警告）
+# 3. 样式门禁：禁止 UI 硬编码颜色（与 pre-commit 框架的 check-hardcoded-colors 一致）
+echo "🎨 检查硬编码颜色..."
+python3 scripts/check-hardcoded-colors.py || exit 1
+
+echo ""
+
+# 4. 检查是否有未解决的 TODO/FIXME 在已暂存文件中（仅警告）
 echo "🔎 扫描 TODO/FIXME..."
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || true)
 TODO_COUNT=0
