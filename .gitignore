@@ -39,3 +39,6 @@ skills/
 
 # Handoff（本地交接文档，不入库）
 /handoff.md
+
+# ZCode 会话调试截图（不入库）
+.zcode-tmp/
