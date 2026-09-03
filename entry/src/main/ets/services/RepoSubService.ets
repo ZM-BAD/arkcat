@@ -55,7 +55,7 @@ query RepoReleases($owner: String!, $name: String!, $first: Int = 30, $after: St
     releases(first: $first, after: $after, orderBy: { field: CREATED_AT, direction: DESC }) {
       totalCount
       pageInfo { hasNextPage endCursor }
-      nodes { id tagName isLatest createdAt description author { login avatarUrl } }
+      nodes { id tagName isLatest createdAt description body bodyHTML author { login avatarUrl } }
     }
   }
 }`;
@@ -64,13 +64,13 @@ const ISSUE_DETAIL_QUERY = `
 query IssueDetail($owner: String!, $name: String!, $number: Int!, $first: Int = 20, $after: String) {
   repository(owner: $owner, name: $name) {
     issue(number: $number) {
-      id title state stateReason body createdAt
+      id title state stateReason body bodyHTML createdAt
       author { login avatarUrl }
       labels(first: 10) { nodes { name } }
       comments(first: $first, after: $after) {
         totalCount
         pageInfo { hasNextPage endCursor }
-        nodes { id body createdAt author { login avatarUrl } }
+        nodes { id body bodyHTML createdAt author { login avatarUrl } }
       }
     }
   }
@@ -80,7 +80,7 @@ const PR_DETAIL_QUERY = `
 query PullRequestDetail($owner: String!, $name: String!, $number: Int!) {
   repository(owner: $owner, name: $name) {
     pullRequest(number: $number) {
-      id title state merged isDraft body createdAt mergedAt
+      id title state merged isDraft body bodyHTML createdAt mergedAt
       additions deletions
       author { login avatarUrl }
       headRefName baseRefName
@@ -89,7 +89,7 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!) {
       commits { totalCount }
       reviews { totalCount }
       statusCheckRollup { state }
-      comments(first: 15) { totalCount nodes { id body createdAt author { login avatarUrl } } }
+      comments(first: 15) { totalCount nodes { id body bodyHTML createdAt author { login avatarUrl } } }
     }
   }
 }`;

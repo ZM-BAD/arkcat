@@ -1543,6 +1543,22 @@
     {
       "name": "toprepos_filter_template",
       "value": "模板"
+    },
+    {
+      "name": "md_expand_all",
+      "value": "展开全部"
+    },
+    {
+      "name": "md_copy",
+      "value": "复制"
+    },
+    {
+      "name": "md_copied",
+      "value": "已复制"
+    },
+    {
+      "name": "md_no_readme",
+      "value": "该仓库没有 README"
     }
   ]
 }

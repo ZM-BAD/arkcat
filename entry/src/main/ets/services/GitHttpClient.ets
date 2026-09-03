@@ -109,6 +109,11 @@ export async function restGet(path: string, token: string, accept?: string): Pro
   return request(http.RequestMethod.GET, `${GITHUB_API}${path}`, token, undefined, accept);
 }
 
+/** REST POST（/markdown 渲染等带 JSON body 请求） */
+export async function restPost(path: string, token: string, body: string, accept?: string): Promise<RawResponse> {
+  return request(http.RequestMethod.POST, `${GITHUB_API}${path}`, token, body, accept);
+}
+
 /** REST PATCH（标记通知已读等） */
 export async function restPatch(path: string, token: string): Promise<RawResponse> {
   return request(http.RequestMethod.PATCH, `${GITHUB_API}${path}`, token);

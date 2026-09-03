@@ -58,6 +58,8 @@ export interface ReleaseItem {
   createdAt: string;
   description: string;
   body: string;
+  /** 官方渲染 HTML（Spec 040：MarkdownView 直渲，body 作降级） */
+  bodyHTML: string;
   authorLogin: string;
   authorAvatar: string;
 }
@@ -72,6 +74,8 @@ export interface RepoReleasesPage {
 export interface RepoComment {
   id: string;
   body: string;
+  /** 官方渲染 HTML（Spec 040），body 作降级 */
+  bodyHTML: string;
   createdAt: string;
   authorLogin: string;
   authorAvatar: string;
@@ -83,6 +87,8 @@ export interface IssueDetailPage {
   state: string;
   stateReason: string;
   body: string;
+  /** 官方渲染 HTML（Spec 040），body 作降级 */
+  bodyHTML: string;
   createdAt: string;
   authorLogin: string;
   authorAvatar: string;
@@ -100,6 +106,8 @@ export interface PrDetailPage {
   merged: boolean;
   isDraft: boolean;
   body: string;
+  /** 官方渲染 HTML（Spec 040），body 作降级 */
+  bodyHTML: string;
   createdAt: string;
   mergedAt: string;
   additions: number;
@@ -276,7 +284,8 @@ export function mapRelease(raw: JsonMap): ReleaseItem {
     isLatest: Json.bool(raw, 'isLatest'),
     createdAt: Json.str(raw, 'createdAt'),
     description: Json.str(raw, 'description'),
-    body: Json.str(raw, 'description'),
+    body: Json.str(raw, 'body'),
+    bodyHTML: Json.str(raw, 'bodyHTML'),
     authorLogin: author !== null ? Json.str(author, 'login') : '',
     authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : ''
   };
@@ -301,7 +310,8 @@ function mapComment(raw: JsonMap): RepoComment {
   const author = Json.obj(raw, 'author');
   return {
     id: Json.str(raw, 'id'),
-    body: Json.str(raw, 'description'),
+    body: Json.str(raw, 'body'),
+    bodyHTML: Json.str(raw, 'bodyHTML'),
     createdAt: Json.str(raw, 'createdAt'),
     authorLogin: author !== null ? Json.str(author, 'login') : '',
     authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : ''
@@ -331,6 +341,7 @@ export function mapIssueDetail(data: JsonMap): IssueDetailPage {
     state: Json.str(issue, 'state'),
     stateReason: Json.str(issue, 'stateReason'),
     body: Json.str(issue, 'body'),
+    bodyHTML: Json.str(issue, 'bodyHTML'),
     createdAt: Json.str(issue, 'createdAt'),
     authorLogin: author !== null ? Json.str(author, 'login') : '',
     authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : '',
@@ -363,6 +374,7 @@ export function mapPrDetail(data: JsonMap): PrDetailPage {
     merged: Json.bool(pr, 'merged'),
     isDraft: Json.bool(pr, 'isDraft'),
     body: Json.str(pr, 'body'),
+    bodyHTML: Json.str(pr, 'bodyHTML'),
     createdAt: Json.str(pr, 'createdAt'),
     mergedAt: Json.str(pr, 'mergedAt'),
     additions: Json.num(pr, 'additions'),

@@ -7,8 +7,10 @@
 import { promptAction } from '@kit.ArkUI';
 import { RepoDetail, FileEntry, LanguageSlice, ReleaseEntry } from '../models/RepoDetailModels';
 import { RepoService } from '../services/RepoService';
+import { MarkdownService, MarkdownFetchResult } from '../services/MarkdownService';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
+import { MarkdownView } from '../components/MarkdownView';
 import { resText } from '../utils/I18n';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 
@@ -23,6 +25,8 @@ export struct RepoDetailView {
   @Local errorMsg: string = '';
   @Local busy: boolean = false;
   @Local moreExpanded: boolean = false;
+  /** README 官方 HTML（REST /readme html+json；null=未加载） */
+  @Local readmeResult: MarkdownFetchResult | null = null;
 
   aboutToAppear(): void {
     this.refresh();
@@ -34,15 +38,32 @@ export struct RepoDetailView {
     }
     this.loading = true;
     this.errorMsg = '';
+    this.readmeResult = null;
     RepoService.fetchRepoDetail(this.token, this.owner, this.name)
       .then((detail: RepoDetail) => {
         this.detail = detail;
         this.loading = false;
+        this.loadReadme();
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
       });
+  }
+
+  /** README 走官方渲染管线（Spec 040：REST html+json；GraphQL readmeText 仅作降级） */
+  private loadReadme(): void {
+    MarkdownService.fetchReadmeHtml(this.token, this.owner, this.name)
+      .then((res: MarkdownFetchResult) => {
+        this.readmeResult = res;
+      })
+      .catch(() => {
+        this.readmeResult = { status: 'error', html: '' };
+      });
+  }
+
+  private navigateLink(name: string, param: string): void {
+    this.pathStack.pushPathByName(name, param);
   }
 
   private onStar(): void {
@@ -476,16 +497,31 @@ export struct RepoDetailView {
     .borderRadius(12)
   }
 
-  /** README 简化富文本：标题行加粗 + 普通行 */
+  /** README 卡片：官方 HTML 渲染（Spec 040）；404 → no README 占位；异常 → 纯文本降级 */
   @Builder
   readmeCard() {
-    Column({ space: 6 }) {
-      Text(this.detail?.readmeText ?? '')
-        .fontSize($r('app.float.body_font_size'))
-        .fontColor($r('app.color.text_primary'))
-        .maxLines(20)
-        .lineHeight(20)
-        .width('100%')
+    Column() {
+      if (this.readmeResult !== null) {
+        if (this.readmeResult.status === 'ok') {
+          MarkdownView({
+            html: this.readmeResult.html,
+            fallbackText: this.detail?.readmeText ?? '',
+            onNavigate: (name: string, param: string) => this.navigateLink(name, param)
+          })
+        } else if (this.readmeResult.status === 'notFound') {
+          Text(resText(this.getUIContext(), $r('app.string.md_no_readme')))
+            .fontSize($r('app.float.body_font_size'))
+            .fontColor($r('app.color.text_secondary'))
+            .width('100%')
+        } else if ((this.detail?.readmeText ?? '') !== '') {
+          MarkdownView({
+            html: '',
+            fallbackText: this.detail?.readmeText ?? '',
+            showRetry: true,
+            onRetry: () => this.loadReadme()
+          })
+        }
+      }
     }
     .alignItems(HorizontalAlign.Start)
     .padding($r('app.float.card_padding'))
@@ -567,7 +603,7 @@ export struct RepoDetailView {
 
             this.branchSection()
 
-            if (this.detail.readmeText !== '') {
+            if (this.readmeResult !== null) {
               this.readmeCard()
             }
           } else {

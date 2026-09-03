@@ -1,17 +1,17 @@
 /**
- * 组织主页（Spec 036）：头部/信息行/FOLLOW 真实切换/README Read more/Pinned/Repositories 入口。
+ * 组织主页（Spec 036）：头部/信息行/FOLLOW 真实切换/README 官方 HTML 渲染/Pinned/Repositories 入口。
  * 邮箱走 REST 兜底；README 源 = 组织 .github 仓库（取不到隐藏区块）。
  */
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
+import { MarkdownView } from '../components/MarkdownView';
 import { OrgProfile } from '../models/ProfileModels';
 import { ProfileListService } from '../services/ProfileListService';
+import { MarkdownService, MarkdownFetchResult } from '../services/MarkdownService';
 import { RepoCard } from '../components/RepoCard';
 import { StateView } from '../components/StateView';
 import { RepoSummary } from '../models/GitHubModels';
 import { resText } from '../utils/I18n';
-
-const README_COLLAPSED_LINES = 6;
 
 @ComponentV2
 export struct OrgProfileView {
@@ -19,7 +19,8 @@ export struct OrgProfileView {
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
   @Local org: OrgProfile | null = null;
-  @Local readmeExpanded: boolean = false;
+  /** README 官方 HTML（REST html+json；读不到时 readmeText 纯文本降级） */
+  @Local readmeResult: MarkdownFetchResult | null = null;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
 
@@ -33,15 +34,32 @@ export struct OrgProfileView {
     }
     this.loading = true;
     this.errorMsg = '';
+    this.readmeResult = null;
     ProfileListService.fetchOrgProfile(this.token, this.login)
       .then((org: OrgProfile) => {
         this.org = org;
         this.loading = false;
+        this.loadReadme();
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
       });
+  }
+
+  /** README 官方渲染（Spec 040）：先 .github/profile/README.md 再 .github/readme */
+  private loadReadme(): void {
+    MarkdownService.fetchOrgProfileReadme(this.token, this.login)
+      .then((res: MarkdownFetchResult) => {
+        this.readmeResult = res;
+      })
+      .catch(() => {
+        this.readmeResult = { status: 'error', html: '' };
+      });
+  }
+
+  private navigateLink(name: string, param: string): void {
+    this.pathStack.pushPathByName(name, param);
   }
 
   /** FOLLOW 真实切换：REST put/delete；失败（如无 user:follow scope）toast */
@@ -85,39 +103,6 @@ export struct OrgProfileView {
     return resText(this.getUIContext(), res);
   }
 
-  /** README 行：剥离 markdown 标记的展示行 */
-  private readmeLinesOf(org: OrgProfile): string[] {
-    if (org.readmeText === '') {
-      return [];
-    }
-    const lines: string[] = [];
-    for (const raw of org.readmeText.split('\n')) {
-      // 图片行（![alt](url)）显示 alt 文本；链接行保留文本
-      let line = raw.replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1');
-      line = line.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
-      lines.push(line);
-    }
-    return lines;
-  }
-
-  private isHeading(line: string): boolean {
-    return line.startsWith('#');
-  }
-
-  private headingText(line: string): string {
-    const trimmed = line.replace(/^#+\s*/, '');
-    return trimmed;
-  }
-
-  /** 折叠/展开后的可见行 */
-  private readmeVisibleLinesOf(org: OrgProfile): string[] {
-    const lines = this.readmeLinesOf(org);
-    if (this.readmeExpanded || lines.length <= README_COLLAPSED_LINES) {
-      return lines;
-    }
-    return lines.slice(0, README_COLLAPSED_LINES);
-  }
-
   @Builder
   metaRow(iconRes: Resource, text: string) {
     if (text !== '') {
@@ -130,17 +115,6 @@ export struct OrgProfileView {
       }
       .width('100%')
     }
-  }
-
-  @Builder
-  readmeLine(line: string) {
-    Text(this.isHeading(line) ? this.headingText(line) : line)
-      .fontSize(this.isHeading(line) ? $r('app.float.title_font_size') : $r('app.float.body_font_size'))
-      .fontWeight(this.isHeading(line) ? FontWeight.Bold : FontWeight.Normal)
-      .fontColor($r('app.color.text_primary'))
-      .lineHeight(22)
-      .width('100%')
-      .margin({ bottom: 4 })
   }
 
   /** 主体内容（org 非空时进入） */
@@ -236,45 +210,22 @@ export struct OrgProfileView {
             .width('100%')
             .padding({ bottom: 8 })
 
-            Stack() {
-              Column() {
-                ForEach(this.readmeVisibleLinesOf(org), (line: string, idx: number) => {
-                  this.readmeLine(line)
-                }, (line: string, idx: number) => idx + '-' + line)
-              }
-              .width('100%')
-
-              if (!this.readmeExpanded && this.readmeLinesOf(org).length > README_COLLAPSED_LINES) {
-                Row() {
-                  Text($r('app.string.org_read_more'))
-                    .fontSize($r('app.float.body_font_size'))
-                    .fontWeight(FontWeight.Medium)
-                    .fontColor($r('app.color.text_primary'))
-                }
-                .padding({ left: 14, right: 14, top: 8, bottom: 8 })
-                .borderRadius(12)
-                .backgroundColor($r('app.color.card_background'))
-                .borderWidth(1)
-                .borderColor($r('app.color.divider'))
-                .shadow({ radius: 8, color: $r('app.color.shadow_floating'), offsetY: 2 })
-                .onClick(() => {
-                  this.readmeExpanded = true;
+            if (this.readmeResult !== null) {
+              if (this.readmeResult.status === 'ok') {
+                MarkdownView({
+                  html: this.readmeResult.html,
+                  fallbackText: org.readmeText,
+                  onNavigate: (name: string, param: string) => this.navigateLink(name, param)
                 })
-              } else if (this.readmeLinesOf(org).length > README_COLLAPSED_LINES) {
-                Row() {
-                  Text($r('app.string.org_read_less'))
-                    .fontSize($r('app.float.caption_font_size'))
-                    .fontColor($r('app.color.link_blue'))
-                }
-                .padding(8)
-                .onClick(() => {
-                  this.readmeExpanded = false;
+              } else if (org.readmeText !== '') {
+                MarkdownView({
+                  html: '',
+                  fallbackText: org.readmeText,
+                  showRetry: true,
+                  onRetry: () => this.loadReadme()
                 })
               }
             }
-.width(44)
-.height(44)
-            .alignContent(Alignment.Bottom)
           }
           .padding($r('app.float.card_padding'))
           .borderRadius($r('app.float.card_radius'))

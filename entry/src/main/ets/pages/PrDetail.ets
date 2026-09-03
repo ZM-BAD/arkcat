@@ -3,6 +3,7 @@
  */
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
+import { MarkdownView } from '../components/MarkdownView';
 import { RepoComment, PrDetailPage } from '../models/RepoSubModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { StateView } from '../components/StateView';
@@ -55,6 +56,11 @@ export struct PrDetailView {
       .width('100%')
   }
 
+  /** MarkdownView 站内链接路由（正文/评论点击 GitHub 内部链接 → 对应页面） */
+  private navigateLink(name: string, param: string): void {
+    this.pathStack.pushPathByName(name, param);
+  }
+
   @Builder
   commentItem(item: RepoComment) {
     Column({ space: 6 }) {
@@ -78,13 +84,12 @@ export struct PrDetailView {
       }
       .width('100%')
 
-      Text(item.body)
-        .fontSize($r('app.float.body_font_size'))
-        .fontColor($r('app.color.text_secondary'))
-        .maxLines(8)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
-        .width('100%')
-        .lineHeight(20)
+      MarkdownView({
+        html: item.bodyHTML,
+        fallbackText: item.body,
+        foldThreshold: 0,
+        onNavigate: (name: string, param: string) => this.navigateLink(name, param)
+      })
     }
     .padding($r('app.float.card_padding'))
     .borderRadius($r('app.float.card_radius'))
@@ -189,21 +194,13 @@ export struct PrDetailView {
               }
               .width('100%')
 
-              if (this.detail.body !== '') {
+              if (this.detail.body !== '' || this.detail.bodyHTML !== '') {
                 Divider().color($r('app.color.divider'))
-                Text(this.detail.body)
-                  .fontSize($r('app.float.body_font_size'))
-                  .fontColor($r('app.color.text_secondary'))
-                  .maxLines(10)
-                  .textOverflow({ overflow: TextOverflow.Ellipsis })
-                  .width('100%')
-                  .lineHeight(20)
-                Text($r('app.string.issue_detail_read_more'))
-                  .fontSize($r('app.float.caption_font_size'))
-                  .fontColor($r('app.color.link_blue'))
-                  .onClick(() => {
-                    promptAction.showToast({ message: $r('app.string.home_feature_coming') });
-                  })
+                MarkdownView({
+                  html: this.detail.bodyHTML,
+                  fallbackText: this.detail.body,
+                  onNavigate: (name: string, param: string) => this.navigateLink(name, param)
+                })
               }
             }
             .padding($r('app.float.card_padding'))
