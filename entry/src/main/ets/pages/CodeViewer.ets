@@ -233,7 +233,7 @@ export struct CodeViewerView {
       }
       .width('100%')
       .height(60)
-      .padding({ left: 16, right: 16 })
+      .padding({ left: 0, right: 0 })
 
       // 大文件截断提示（GitHub 官方样式黄条）
       if (this.isTruncated) {

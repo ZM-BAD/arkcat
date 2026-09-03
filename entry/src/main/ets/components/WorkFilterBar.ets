@@ -46,7 +46,7 @@ interface SortOption {
   label: string;
 }
 
-/** Most reactions emoji 槽位（disabled：官方置灰，服务端无对应排序键） */
+/** Most reactions emoji 槽位（confused 无服务端排序键，保留位） */
 interface ReactionOption {
   key: string;
   emoji: string;
@@ -207,6 +207,12 @@ export struct WorkFilterBar {
       return this.stringOf($r('app.string.issues_sort_least_recently_updated'));
     }
     if (this.sortKey.startsWith('reactions:')) {
+      // 按 emoji 排序时，chip 显示 "Sort: <emoji>"（如 Sort: 👍）
+      for (const r of WorkFilterBar.REACTIONS) {
+        if (r.key === this.sortKey) {
+          return r.emoji;
+        }
+      }
       return this.stringOf($r('app.string.issues_sort_most_reactions'));
     }
     return this.stringOf($r('app.string.issues_sort_newest'));
@@ -283,19 +289,19 @@ export struct WorkFilterBar {
   filterChip($$: ChipState) {
     Row() {
       Text($$.label)
-        .fontSize($r('app.float.caption_font_size'))
+        .fontSize($r('app.float.chip_font_size'))
         .fontColor($$.active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
       OctIcon({
         res: $r('app.media.oct_chevron_down_16'),
         iconSize: 12,
         iconColor: $$.active ? $r('app.color.link_blue') : $r('app.color.text_secondary')
       })
-        .margin({ left: 4 })
+        .margin({ left: 8 })
     }
-    .height(30)
-    .padding({ left: 12, right: 10 })
-    .borderRadius(12)
-    .backgroundColor($$.active ? $r('app.color.chip_active_bg') : $r('app.color.card_background'))
+    .height(38)
+    .padding({ left: 10, right: 12 })
+    .borderRadius(19)
+    .backgroundColor($$.active ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
     .margin({ right: 8 })
     .border({ width: 1, color: $$.active ? $r('app.color.chip_active_border') : $r('app.color.border') })
     .onClick((): void => {
@@ -688,11 +694,6 @@ export struct WorkFilterBar {
             Stack() {
               Text(it.emoji)
                 .fontSize(26)
-                .opacity(it.disabled ? 0.45 : 1)
-              if (it.disabled) {
-                OctIcon({ res: $r('app.media.oct_x_circle_16'), iconSize: 14, iconColor: $r('app.color.badge_red') })
-                  .margin({ top: -26, left: 26 })
-              }
             }
             .width(64)
             .height(56)
@@ -790,10 +791,10 @@ export struct WorkFilterBar {
               .borderRadius(9)
               .backgroundColor($r('app.color.link_blue'))
             }
-            .height(30)
-            .padding({ left: 8, right: 8 })
-            .borderRadius(12)
-            .backgroundColor($r('app.color.card_background'))
+            .height(38)
+            .padding({ left: 10, right: 12 })
+            .borderRadius(19)
+            .backgroundColor($r('app.color.chip_bg'))
             .border({ width: 1, color: $r('app.color.border') })
             .margin({ right: 8 })
             .bindMenu([
@@ -829,7 +830,6 @@ export struct WorkFilterBar {
           })
           this.filterChip({ kind: 'sort', label: this.sortLabel(), active: this.sortKey !== 'newest' })
         }
-        .width('100%')
       }
       .scrollable(ScrollDirection.Horizontal)
       .scrollBar(BarState.Off)

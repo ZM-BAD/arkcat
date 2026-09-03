@@ -217,7 +217,7 @@ export struct CodeOptionsView {
       }
       .width('100%')
       .height(48)
-      .padding({ left: 16, right: 16 })
+      .padding({ left: 0, right: 0 })
 
       Scroll() {
         if (this.loaded) {

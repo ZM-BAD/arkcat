@@ -19,6 +19,8 @@ export struct StarredRepositoriesView {
   @Local viewerLogin: string = '';
   @Local cursor: string = '';
   @Local hasNextPage: boolean = false;
+  @Local inSearch: boolean = false;
+  @Local searchQuery: string = '';
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
 
@@ -64,6 +66,29 @@ export struct StarredRepositoriesView {
 
   private stringOf(res: Resource): string {
     return resText(this.getUIContext(), res);
+  }
+
+  /** 就地搜索：按仓库名过滤已加载列表（大小写不敏感） */
+  private shownRepos(): WorkStarredRepoItem[] {
+    const q = this.searchQuery.trim().toLowerCase();
+    if (q === '') {
+      return this.repos;
+    }
+    return this.repos.filter((r: WorkStarredRepoItem) => r.name.toLowerCase().includes(q));
+  }
+
+  private enterSearch(): void {
+    this.inSearch = true;
+    this.searchQuery = '';
+    // 下一帧获焦，自动弹起软键盘
+    setTimeout((): void => {
+      this.getUIContext().getFocusController().requestFocus('work_starred_search');
+    }, 60);
+  }
+
+  private exitSearch(): void {
+    this.inSearch = false;
+    this.searchQuery = '';
   }
 
   private comingSoon(): void {
@@ -148,7 +173,7 @@ export struct StarredRepositoriesView {
   build() {
     Column() {
       // 副标题（viewer login）+ 主标题 + 操作
-      Row({ space: 12 }) {
+      Row({ space: 8 }) {
         Stack() {
   OctIcon({
           res: $r('app.media.oct_arrow_left_24'),
@@ -163,18 +188,51 @@ export struct StarredRepositoriesView {
 .onClick((): void => {
             this.pathStack.pop();
           })
-        Column({ space: 2 }) {
-          Text(this.viewerLogin)
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-          Text($r('app.string.nav_starred_title'))
-            .fontSize(20)
-            .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.text_primary'))
+        if (this.inSearch) {
+          Column() {
+            TextInput({
+              placeholder: this.stringOf($r('app.string.page_search_starred')),
+              text: this.searchQuery
+            })
+              .id('work_starred_search')
+              .fontSize($r('app.float.title_font_size'))
+              .fontColor($r('app.color.text_primary'))
+              .caretColor($r('app.color.link_blue'))
+              .backgroundColor(Color.Transparent)
+              .onChange((v: string) => {
+                this.searchQuery = v;
+              })
+          }
+          .layoutWeight(1)
+          .alignItems(HorizontalAlign.Start)
+          .justifyContent(FlexAlign.Center)
+        } else {
+          Column({ space: 2 }) {
+            Text(this.viewerLogin)
+              .fontSize($r('app.float.caption_font_size'))
+              .fontColor($r('app.color.text_secondary'))
+            Text($r('app.string.nav_starred_title'))
+              .fontSize($r('app.float.title_font_size'))
+              .fontWeight(FontWeight.Bold)
+              .fontColor($r('app.color.text_primary'))
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
+          }
+          .layoutWeight(1)
+          .alignItems(HorizontalAlign.Start)
         }
-        .layoutWeight(1)
-        .alignItems(HorizontalAlign.Start)
-        Stack() {
+        if (this.inSearch) {
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+          }
+          .width(44)
+          .height(44)
+          .padding(6)
+          .accessibilityDescription($r('app.string.a11y_close'))
+          .focusable(true)
+          .onClick((): void => this.exitSearch())
+        } else {
+          Stack() {
   OctIcon({
           res: $r('app.media.oct_search_24'),
           iconSize: 20,
@@ -185,10 +243,9 @@ export struct StarredRepositoriesView {
 .height(44)
         .accessibilityDescription($r('app.string.a11y_search'))
         .focusable(true)
-.onClick((): void => {
-            this.pathStack.pushPathByName('search', '');
-          })
+.onClick((): void => this.enterSearch())
           .padding(6)
+        }
         Stack() {
   OctIcon({
           res: $r('app.media.oct_kebab_horizontal_16'),
@@ -201,12 +258,17 @@ export struct StarredRepositoriesView {
 .height(44)
         .accessibilityDescription($r('app.string.a11y_more'))
         .focusable(true)
-.onClick((): void => this.comingSoon())
+.bindMenu([
+          {
+            value: $r('app.string.inbox_menu_refresh'),
+            action: (): void => this.refresh()
+          }
+        ])
           .padding(6)
       }
       .width('100%')
       .height(56)
-      .padding({ left: 16, right: 12 })
+      .padding({ left: 0, right: 0 })
 
       Scroll() {
         Column() {
@@ -268,8 +330,8 @@ export struct StarredRepositoriesView {
           .width('100%')
           .height(40)
 
-          if (this.repos.length > 0) {
-            ForEach(this.repos, (repo: WorkStarredRepoItem) => {
+          if (this.shownRepos().length > 0) {
+            ForEach(this.shownRepos(), (repo: WorkStarredRepoItem) => {
               this.repoRow(repo)
             }, (repo: WorkStarredRepoItem) => repo.id)
             if (this.hasNextPage) {

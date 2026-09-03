@@ -471,7 +471,7 @@ export struct InboxView {
   }
 
   @Builder
-  notifyCard(item: NotificationItem, roundTop: boolean, roundBottom: boolean) {
+  notifyCard(item: NotificationItem) {
     Row({ space: 8 }) {
       // 左上角：通知类型图标（带色，PR 已合并为紫色 merge）；未读状态由标题加粗表达
       Stack() {
@@ -526,13 +526,9 @@ export struct InboxView {
     .alignItems(VerticalAlign.Top)
     .width('100%')
     .padding($r('app.float.card_padding'))
-    .borderRadius({
-      topLeft: roundTop ? $r('app.float.card_radius') : 0,
-      topRight: roundTop ? $r('app.float.card_radius') : 0,
-      bottomLeft: roundBottom ? $r('app.float.card_radius') : 0,
-      bottomRight: roundBottom ? $r('app.float.card_radius') : 0
-    })
+    .borderRadius($r('app.float.card_radius'))
     .backgroundColor($r('app.color.card_background'))
+    .margin({ bottom: 8 })
     .onClick(() => this.markRead(item))
   }
 
@@ -580,14 +576,12 @@ export struct InboxView {
           Text(this.viewLabel())
             .fontSize($r('app.float.caption_font_size'))
             .fontColor(this.filter === 'inbox' ? $r('app.color.link_blue') : $r('app.color.text_primary'))
-          if (this.filter === 'inbox') {
-            OctIcon({
-              res: $r('app.media.oct_chevron_down_16'),
-              iconSize: 12,
-              iconColor: $r('app.color.link_blue')
-            })
-              .margin({ left: 4 })
-          }
+          OctIcon({
+            res: $r('app.media.oct_chevron_down_16'),
+            iconSize: 12,
+            iconColor: this.filter === 'inbox' ? $r('app.color.link_blue') : $r('app.color.text_secondary')
+          })
+            .margin({ left: 4 })
         }
         .filterPillStyle()
         .backgroundColor(this.filter === 'inbox' ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))
@@ -615,14 +609,12 @@ export struct InboxView {
           Text(this.repoFilter !== '' ? this.repoFilter : this.stringOf($r('app.string.inbox_menu_repository')))
             .fontSize($r('app.float.caption_font_size'))
             .fontColor(this.filter === 'repo' ? $r('app.color.link_blue') : $r('app.color.text_primary'))
-          if (this.filter === 'repo') {
-            OctIcon({
-              res: $r('app.media.oct_chevron_down_16'),
-              iconSize: 12,
-              iconColor: $r('app.color.link_blue')
-            })
-              .margin({ left: 4 })
-          }
+          OctIcon({
+            res: $r('app.media.oct_chevron_down_16'),
+            iconSize: 12,
+            iconColor: this.filter === 'repo' ? $r('app.color.link_blue') : $r('app.color.text_secondary')
+          })
+            .margin({ left: 4 })
         }
         .filterPillStyle()
         .backgroundColor(this.filter === 'repo' ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))
@@ -635,16 +627,11 @@ export struct InboxView {
       .padding({ left: 16, right: 16, bottom: 8 })
 
       Scroll() {
-        // 卡片紧贴成整块列表：无间距，卡片间用灰色细线分割（首尾卡保留圆角）
+        // 独立卡片列表：每张通知自带圆角与间距（同 Pull Requests 列表样式）
         Column() {
           if (this.items.length > 0) {
-            ForEach(this.items, (item: NotificationItem, index: number) => {
-              this.notifyCard(item, index === 0, index === this.items.length - 1)
-              if (index !== this.items.length - 1) {
-                Divider()
-                  .color($r('app.color.divider'))
-                  .strokeWidth(1)
-              }
+            ForEach(this.items, (item: NotificationItem) => {
+              this.notifyCard(item)
             }, (item: NotificationItem) => item.threadId)
           } else {
             StateView({

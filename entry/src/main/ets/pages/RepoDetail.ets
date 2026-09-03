@@ -581,7 +581,7 @@ export struct RepoDetailView {
       }
       .width('100%')
       .height(48)
-      .padding({ left: 16, right: 8 })
+      .padding({ left: 0, right: 0 })
 
       Scroll() {
         Column({ space: 10 }) {

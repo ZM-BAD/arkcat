@@ -18,8 +18,10 @@ export const SEARCH_SUGGESTION_TYPES: string[] = [
   'code', 'repositories', 'issues', 'prs', 'people', 'orgs'
 ];
 
-/** qualifier 快捷 chips（官方入口页底部横排；第 5 项截图「sy…」截断按 symbol 推断） */
-export const QUALIFIER_CHIPS: string[] = ['repo', 'user', 'org', 'path', 'symbol'];
+/** qualifier 快捷词汇（官方底部贴键盘行；含语法操作符与正则 token） */
+export const QUALIFIER_CHIPS: string[] = [
+  'repo', 'user', 'org', 'path', 'symbol', 'language', 'content', '/regex/', 'AND', 'OR', 'NOT'
+];
 
 /** 统一搜索结果项（页面据此渲染四类行） */
 export interface SearchResultItem {

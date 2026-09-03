@@ -135,7 +135,7 @@ export struct RepoCommitsView {
       }
       .width('100%')
       .height(48)
-      .padding({ left: 16, right: 12 })
+      .padding({ left: 0, right: 0 })
 
       Scroll() {
         Column() {

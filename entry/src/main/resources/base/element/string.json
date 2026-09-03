@@ -601,6 +601,30 @@
       "value": "Search GitHub"
     },
     {
+      "name": "page_search_issues",
+      "value": "Search Issues"
+    },
+    {
+      "name": "page_search_prs",
+      "value": "Search Pull Requests"
+    },
+    {
+      "name": "page_search_discussions",
+      "value": "Search"
+    },
+    {
+      "name": "page_search_projects",
+      "value": "Search"
+    },
+    {
+      "name": "page_search_starred",
+      "value": "Search Repositories"
+    },
+    {
+      "name": "discussions_create_title",
+      "value": "Create Discussion"
+    },
+    {
       "name": "search_suggestion_code",
       "value": "Code with \"%1$s\""
     },
@@ -675,6 +699,10 @@
     {
       "name": "search_clear_all",
       "value": "CLEAR"
+    },
+    {
+      "name": "search_menu_refresh",
+      "value": "Refresh"
     },
     {
       "name": "search_jump_to",

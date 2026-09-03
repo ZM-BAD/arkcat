@@ -137,7 +137,7 @@ export struct UserListView {
       }
       .width('100%')
       .height(60)
-      .padding({ left: 16, right: 16 })
+      .padding({ left: 0, right: 0 })
 
       if (this.users.length > 0) {
         Scroll() {

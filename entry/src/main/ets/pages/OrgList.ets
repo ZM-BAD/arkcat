@@ -129,7 +129,7 @@ export struct OrgListView {
       }
       .width('100%')
       .height(64)
-      .padding({ left: 16, right: 16 })
+      .padding({ left: 0, right: 0 })
 
       if (this.orgs.length > 0) {
         Scroll() {

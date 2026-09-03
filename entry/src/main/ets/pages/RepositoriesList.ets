@@ -251,7 +251,7 @@ export struct RepositoriesListView {
       }
       .width('100%')
       .height(64)
-      .padding({ left: 16, right: 8 })
+      .padding({ left: 0, right: 0 })
 
       // 筛选条：All / Language / Sort（内联 Text，避免 @Builder 参数不刷新）
       Row() {

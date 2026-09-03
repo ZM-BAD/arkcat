@@ -601,6 +601,30 @@
       "value": "搜索 GitHub"
     },
     {
+      "name": "page_search_issues",
+      "value": "搜索 Issue"
+    },
+    {
+      "name": "page_search_prs",
+      "value": "搜索 Pull Requests"
+    },
+    {
+      "name": "page_search_discussions",
+      "value": "搜索"
+    },
+    {
+      "name": "page_search_projects",
+      "value": "搜索"
+    },
+    {
+      "name": "page_search_starred",
+      "value": "搜索仓库"
+    },
+    {
+      "name": "discussions_create_title",
+      "value": "创建讨论"
+    },
+    {
       "name": "search_suggestion_code",
       "value": "代码中搜索 \"%1$s\""
     },
@@ -675,6 +699,10 @@
     {
       "name": "search_clear_all",
       "value": "清除"
+    },
+    {
+      "name": "search_menu_refresh",
+      "value": "刷新"
     },
     {
       "name": "search_jump_to",

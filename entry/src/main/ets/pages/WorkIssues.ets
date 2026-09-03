@@ -19,6 +19,8 @@ export struct WorkIssuesView {
   @Param pathStack: NavPathStack = new NavPathStack();
   @Local filterState: WorkFilterState = defaultWorkFilter();
   @Local issues: WorkIssueItem[] = [];
+  @Local inSearch: boolean = false;
+  @Local searchQuery: string = '';
   @Local cursor: string = '';
   @Local hasNextPage: boolean = false;
   @Local loading: boolean = true;
@@ -75,6 +77,30 @@ export struct WorkIssuesView {
     return resText(this.getUIContext(), res);
   }
 
+  /** 就地搜索：按标题/仓库全名过滤已加载列表（大小写不敏感） */
+  private shownIssues(): WorkIssueItem[] {
+    const q = this.searchQuery.trim().toLowerCase();
+    if (q === '') {
+      return this.issues;
+    }
+    return this.issues.filter((i: WorkIssueItem) =>
+      i.title.toLowerCase().includes(q) || i.repoFullName.toLowerCase().includes(q));
+  }
+
+  private enterSearch(): void {
+    this.inSearch = true;
+    this.searchQuery = '';
+    // 下一帧获焦，自动弹起软键盘
+    setTimeout((): void => {
+      this.getUIContext().getFocusController().requestFocus('work_issues_search');
+    }, 60);
+  }
+
+  private exitSearch(): void {
+    this.inSearch = false;
+    this.searchQuery = '';
+  }
+
   private stateOptions(): WorkFilterOption[] {
     return [
       { key: 'open', label: this.stringOf($r('app.string.issues_state_open')) },
@@ -126,7 +152,7 @@ export struct WorkIssuesView {
   }
 
   @Builder
-  issueCard(issue: WorkIssueItem, roundTop: boolean, roundBottom: boolean) {
+  issueCard(issue: WorkIssueItem) {
     Column({ space: 6 }) {
       Row() {
         OctIcon({ res: this.issueIcon(issue), iconSize: 18, iconColor: this.issueColor(issue) })
@@ -172,14 +198,10 @@ export struct WorkIssuesView {
       }
     }
     .padding($r('app.float.card_padding'))
-    .borderRadius({
-      topLeft: roundTop ? $r('app.float.card_radius') : 0,
-      topRight: roundTop ? $r('app.float.card_radius') : 0,
-      bottomLeft: roundBottom ? $r('app.float.card_radius') : 0,
-      bottomRight: roundBottom ? $r('app.float.card_radius') : 0
-    })
+    .borderRadius($r('app.float.card_radius'))
     .backgroundColor($r('app.color.card_background'))
     .width('100%')
+    .margin({ bottom: 8 })
   }
 
   build() {
@@ -199,26 +221,53 @@ export struct WorkIssuesView {
         .onClick((): void => {
           this.pathStack.pop();
         })
-        Text($r('app.string.nav_issues_title'))
-          .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.text_primary'))
-          .layoutWeight(1)
-        Stack() {
-          OctIcon({
-            res: $r('app.media.oct_search_24'),
-            iconSize: 20,
-            iconColor: $r('app.color.link_blue')
+        if (this.inSearch) {
+          TextInput({
+            placeholder: this.stringOf($r('app.string.page_search_issues')),
+            text: this.searchQuery
           })
+            .id('work_issues_search')
+            .layoutWeight(1)
+            .height(44)
+            .fontSize($r('app.float.title_font_size'))
+            .fontColor($r('app.color.text_primary'))
+            .caretColor($r('app.color.link_blue'))
+            .backgroundColor(Color.Transparent)
+            .onChange((v: string) => {
+              this.searchQuery = v;
+            })
+        } else {
+          Text($r('app.string.nav_issues_title'))
+            .fontSize($r('app.float.title_font_size'))
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.text_primary'))
+            .layoutWeight(1)
         }
-        .width(44)
-        .height(44)
-        .padding(6)
-        .accessibilityDescription($r('app.string.a11y_search'))
-        .focusable(true)
-        .onClick((): void => {
-          this.pathStack.pushPathByName('search', '');
-        })
+        if (this.inSearch) {
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+          }
+          .width(44)
+          .height(44)
+          .padding(6)
+          .accessibilityDescription($r('app.string.a11y_close'))
+          .focusable(true)
+          .onClick((): void => this.exitSearch())
+        } else {
+          Stack() {
+            OctIcon({
+              res: $r('app.media.oct_search_24'),
+              iconSize: 20,
+              iconColor: $r('app.color.link_blue')
+            })
+          }
+          .width(44)
+          .height(44)
+          .padding(6)
+          .accessibilityDescription($r('app.string.a11y_search'))
+          .focusable(true)
+          .onClick((): void => this.enterSearch())
+        }
         Stack() {
           OctIcon({
             res: $r('app.media.oct_kebab_horizontal_16'),
@@ -232,13 +281,16 @@ export struct WorkIssuesView {
         .padding(6)
         .accessibilityDescription($r('app.string.a11y_more'))
         .focusable(true)
-        .onClick((): void => {
-          promptAction.showToast({ message: $r('app.string.home_feature_coming') });
-        })
+        .bindMenu([
+          {
+            value: $r('app.string.inbox_menu_refresh'),
+            action: (): void => this.refresh()
+          }
+        ])
       }
       .width('100%')
       .height(48)
-      .padding({ left: 16, right: 12 })
+      .padding({ left: 0, right: 0 })
 
       Scroll() {
         Column() {
@@ -249,14 +301,9 @@ export struct WorkIssuesView {
             onQueryChange: (s: WorkFilterState): void => this.onQueryChange(s)
           })
 
-          if (this.issues.length > 0) {
-            ForEach(this.issues, (issue: WorkIssueItem, index: number) => {
-              this.issueCard(issue, index === 0, index === this.issues.length - 1)
-              if (index !== this.issues.length - 1) {
-                Divider()
-                  .color($r('app.color.divider'))
-                  .strokeWidth(1)
-              }
+          if (this.shownIssues().length > 0) {
+            ForEach(this.shownIssues(), (issue: WorkIssueItem) => {
+              this.issueCard(issue)
             }, (issue: WorkIssueItem) => issue.id)
             if (this.hasNextPage) {
               Text($r('app.string.issues_load_more'))
@@ -275,7 +322,6 @@ export struct WorkIssuesView {
             WorkEmptyView({
               iconText: '🐱',
               title: $r('app.string.work_issues_empty'),
-              subtitle: $r('app.string.work_use_fewer_filters')
             })
           }
         }
