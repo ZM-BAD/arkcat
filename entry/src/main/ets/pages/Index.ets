@@ -3,6 +3,7 @@
  * Inbox/Explore/Copilot 内容由 Spec 002/003/004 分支实现，当前为占位视图。
  */
 import { TokenStore } from '../services/TokenStore';
+import { window } from '@kit.ArkUI';
 import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { applyThemeMode } from '../utils/ThemeMode';
@@ -50,6 +51,8 @@ struct Index {
   @State token: string = '';
   @State checked: boolean = false;
   @State currentTab: number = 0;
+  /** 软键盘弹出时隐藏底栏（搜索输入态；窗口 keyboardHeightChange 监听） */
+  @State keyboardOn: boolean = false;
   @State profileLogin: string = '';
   @State repoOwner: string = '';
   @State repoName: string = '';
@@ -80,6 +83,15 @@ struct Index {
   private pathStack: NavPathStack = new NavPathStack();
 
   aboutToAppear(): void {
+    // 软键盘高度监听：弹起时隐藏底部四 tab（官方 App 键盘态行为）
+    window.getLastWindow(this.getUIContext().getHostContext() as common.Context)
+      .then((w: window.Window) => {
+        w.on('keyboardHeightChange', (height: number) => {
+          this.keyboardOn = height > 0;
+        });
+      })
+      .catch(() => {
+      });
     // 启动恢复主题（Spec 026 三态：system/light/dark）
     preferences.getPreferences(this.getUIContext().getHostContext() as common.UIAbilityContext, 'starraft_settings')
       .then((pref: preferences.Preferences) => {
@@ -756,16 +768,19 @@ struct Index {
           .layoutWeight(1)
 
           // 自绘底栏：白底 + 上投影 + 选中胶囊；选中态图标用官方 fill 变体
-          Row() {
-            this.tabItem($r('app.media.oct_home_16'), $r('app.media.oct_home_fill_16'), $r('app.string.tab_home'), 0)
-            this.tabItem($r('app.media.oct_inbox_16'), $r('app.media.oct_inbox_fill_16'), $r('app.string.tab_inbox'), 1)
-            this.tabItem($r('app.media.oct_telescope_16'), $r('app.media.oct_telescope_fill_16'), $r('app.string.tab_explore'), 2)
-            this.tabItem($r('app.media.oct_copilot_16'), $r('app.media.oct_copilot_16'), $r('app.string.tab_copilot'), 3)
+          // 键盘弹起（搜索输入）时隐藏——键盘上方不显示 tab（用户 09-04 要求）
+          if (!this.keyboardOn) {
+            Row() {
+              this.tabItem($r('app.media.oct_home_16'), $r('app.media.oct_home_fill_16'), $r('app.string.tab_home'), 0)
+              this.tabItem($r('app.media.oct_inbox_16'), $r('app.media.oct_inbox_fill_16'), $r('app.string.tab_inbox'), 1)
+              this.tabItem($r('app.media.oct_telescope_16'), $r('app.media.oct_telescope_fill_16'), $r('app.string.tab_explore'), 2)
+              this.tabItem($r('app.media.oct_copilot_16'), $r('app.media.oct_copilot_16'), $r('app.string.tab_copilot'), 3)
+            }
+            .width('100%')
+            .height(56)
+            .backgroundColor($r('app.color.card_background'))
+            .border({ width: { top: 1 }, color: $r('app.color.divider') })
           }
-          .width('100%')
-          .height(56)
-          .backgroundColor($r('app.color.card_background'))
-          .border({ width: { top: 1 }, color: $r('app.color.divider') })
         }
         .width('100%')
         .height('100%')
