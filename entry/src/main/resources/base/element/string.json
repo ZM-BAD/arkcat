@@ -621,6 +621,26 @@
       "value": "Search Repositories"
     },
     {
+      "name": "starred_suggestions_title",
+      "value": "Suggestions"
+    },
+    {
+      "name": "starred_suggestion_future_ideas",
+      "value": "Future ideas"
+    },
+    {
+      "name": "starred_suggestion_my_stack",
+      "value": "My stack"
+    },
+    {
+      "name": "starred_suggestion_inspiration",
+      "value": "Inspiration"
+    },
+    {
+      "name": "starred_create_list",
+      "value": "Create list"
+    },
+    {
       "name": "discussions_create_title",
       "value": "Create Discussion"
     },

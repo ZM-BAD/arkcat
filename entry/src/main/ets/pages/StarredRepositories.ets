@@ -17,6 +17,9 @@ export struct StarredRepositoriesView {
   @Param pathStack: NavPathStack = new NavPathStack();
   @Local repos: WorkStarredRepoItem[] = [];
   @Local viewerLogin: string = '';
+  @Local listSheetOpen: boolean = false;
+  /** 建议列表单选（Future ideas / My stack / Inspiration；-1=未选） */
+  @Local suggestionSel: number = -1;
   @Local cursor: string = '';
   @Local hasNextPage: boolean = false;
   @Local inSearch: boolean = false;
@@ -91,6 +94,80 @@ export struct StarredRepositoriesView {
     this.searchQuery = '';
   }
 
+  /** 建议列表（官方 Suggestions 三件套 + Create list 入口） */
+  private static readonly LIST_SUGGESTIONS: Resource[] = [
+    $r('app.string.starred_suggestion_future_ideas'),
+    $r('app.string.starred_suggestion_my_stack'),
+    $r('app.string.starred_suggestion_inspiration')
+  ];
+
+  @Builder
+  listSheet() {
+    Column() {
+      Text($r('app.string.starred_suggestions_title'))
+        .fontSize($r('app.float.caption_font_size'))
+        .fontColor($r('app.color.text_secondary'))
+        .width('100%')
+        .padding({ left: 20, top: 16, bottom: 12 })
+
+      ForEach(StarredRepositoriesView.LIST_SUGGESTIONS, (item: Resource, index: number) => {
+        Row({ space: 14 }) {
+          Text(this.suggestionEmoji(index))
+            .fontSize(20)
+          Text(this.stringOf(item))
+            .fontSize($r('app.float.body_font_size'))
+            .fontColor($r('app.color.text_primary'))
+            .layoutWeight(1)
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+          Stack() {
+            Circle()
+              .width(22)
+              .height(22)
+              .fill(this.suggestionSel === index ? $r('app.color.link_blue') : Color.Transparent)
+              // Shape 外轮廓须用 stroke：通用 .border() 在 Shape 上按组件矩形外框绘制
+              .stroke(this.suggestionSel === index ? $r('app.color.link_blue') : $r('app.color.border'))
+              .strokeWidth(1.5)
+            if (this.suggestionSel === index) {
+              OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 12, iconColor: Color.White })
+            }
+          }
+        }
+        .width('100%')
+        .height(52)
+        .padding({ left: 20, right: 20 })
+        .onClick((): void => {
+          this.suggestionSel = this.suggestionSel === index ? -1 : index;
+        })
+      }, (item: Resource, index: number) => `s_${index}`)
+
+      Row({ space: 12 }) {
+        OctIcon({ res: $r('app.media.oct_plus_24'), iconSize: 18, iconColor: $r('app.color.link_blue') })
+        Text($r('app.string.starred_create_list'))
+          .fontSize($r('app.float.body_font_size'))
+          .fontColor($r('app.color.link_blue'))
+      }
+      .width('100%')
+      .height(52)
+      .padding({ left: 20, right: 20 })
+      .onClick((): void => {
+        promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+      })
+    }
+    .width('100%')
+  }
+
+  /** 建议行 emoji（官方三件套） */
+  private suggestionEmoji(index: number): string {
+    if (index === 0) {
+      return '🔮';
+    }
+    if (index === 1) {
+      return '🪄';
+    }
+    return '✨';
+  }
+
   private comingSoon(): void {
     promptAction.showToast({ message: $r('app.string.home_feature_coming') });
   }
@@ -101,9 +178,9 @@ export struct StarredRepositoriesView {
       Row({ space: 8 }) {
         if (repo.ownerAvatar !== '') {
           Image(repo.ownerAvatar)
-            .width(24)
-            .height(24)
-            .borderRadius(12)
+            .width(18)
+            .height(18)
+            .borderRadius(9)
             .backgroundColor($r('app.color.heat_empty'))
         }
         Text(repo.ownerLogin)
@@ -112,20 +189,24 @@ export struct StarredRepositoriesView {
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .layoutWeight(1)
-        Stack() {
-  OctIcon({
-          res: $r('app.media.oct_kebab_horizontal_16'),
-          iconSize: 15,
-          iconColor: $r('app.color.text_secondary')
-  })
-}
-.width(44)
-.height(44)
+        // 图标贴触点框右上、行内容顶对齐：顶部留白与下方 star 行一致（card_padding 12）
+        Stack({ alignContent: Alignment.TopEnd }) {
+          OctIcon({
+            res: $r('app.media.oct_kebab_horizontal_16'),
+            iconSize: 15,
+            iconColor: $r('app.color.text_secondary')
+          })
+        }
+        .width(32)
+        .height(32)
         .accessibilityDescription($r('app.string.a11y_more'))
         .focusable(true)
-.onClick((): void => this.comingSoon())
+        .onClick((): void => {
+          this.listSheetOpen = true;
+        })
       }
       .width('100%')
+      .alignItems(VerticalAlign.Top)
 
       Text(repo.name)
         .fontSize($r('app.float.body_font_size'))
@@ -359,5 +440,12 @@ export struct StarredRepositoriesView {
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
+    // !! 双向绑定：拖拽/遮罩/回退关闭时框架回写 false，否则再点 ⋯ 无法重新打开
+    .bindSheet(this.listSheetOpen!!, this.listSheet(), {
+      height: 300,
+      backgroundColor: $r('app.color.bg_page'),
+      // 关闭钮/标题均自绘；外点自动关闭
+      showClose: false
+    })
   }
 }

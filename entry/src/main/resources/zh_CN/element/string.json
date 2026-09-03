@@ -621,6 +621,26 @@
       "value": "搜索仓库"
     },
     {
+      "name": "starred_suggestions_title",
+      "value": "建议"
+    },
+    {
+      "name": "starred_suggestion_future_ideas",
+      "value": "未来想法"
+    },
+    {
+      "name": "starred_suggestion_my_stack",
+      "value": "我的收藏夹"
+    },
+    {
+      "name": "starred_suggestion_inspiration",
+      "value": "灵感"
+    },
+    {
+      "name": "starred_create_list",
+      "value": "创建列表"
+    },
+    {
       "name": "discussions_create_title",
       "value": "创建讨论"
     },
