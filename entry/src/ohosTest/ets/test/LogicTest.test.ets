@@ -892,16 +892,6 @@ export default function logicTest(testsuiteName: string) {
       expect(MarkdownService.shouldCollapse(5000, 0)).assertFalse();
     });
 
-    it('markdown_parseHtmlBody', 0, () => {
-      // JSON 信封（部分端点文档形态）
-      const envelope: JsonMap = { 'html': '<p>x</p>' };
-      expect(MarkdownService.parseHtmlBody(JSON.stringify(envelope))).assertEqual('<p>x</p>');
-      // 纯 HTML 流（实测 /readme 对 html+json 直接返回 HTML，非 JSON 信封）
-      expect(MarkdownService.parseHtmlBody('<div class="markdown-body">hi</div>')).assertEqual('<div class="markdown-body">hi</div>');
-      // 非 JSON 也无 html 字段的兜底：原样返回
-      expect(MarkdownService.parseHtmlBody('plain')).assertEqual('plain');
-    });
-
     it('markdown_bodyHTML_mapping', 0, () => {
       const author: JsonMap = { 'login': 'zm_bad' };
       // 评论：body/bodyHTML 字段映射（顺带防回归：曾误读 description 导致正文恒空）

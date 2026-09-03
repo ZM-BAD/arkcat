@@ -5,7 +5,7 @@
 import { ApiError, restGet, restPost } from './GitHttpClient';
 import { Json } from '../utils/Json';
 
-const ACCEPT_HTML_JSON = 'application/vnd.github.html+json';
+const ACCEPT_HTML = 'application/vnd.github.html';
 
 /** README/文档 html 拉取结果：notFound=404（无内容），error=网络/其他异常 */
 export interface MarkdownFetchResult {
@@ -38,11 +38,11 @@ export class MarkdownService {
     return MarkdownService.fetchHtmlEnvelope(`/repos/${login}/.github/readme`, token);
   }
 
-  /** 统一信封解析：html 流兼容 JSON 信封/纯 HTML 两种（2026-09-03 实测 /readme 直接返回纯 HTML 流）；404 → notFound */
+  /** README/文档 HTML 拉取：html 媒体类型（2026-09-03 实测 readme/contents 一律返回纯 HTML 流）；404 → notFound */
   private static async fetchHtmlEnvelope(path: string, token: string): Promise<MarkdownFetchResult> {
     try {
-      const resp = await restGet(path, token, ACCEPT_HTML_JSON);
-      const html = MarkdownService.parseHtmlBody(resp.body);
+      const resp = await restGet(path, token, ACCEPT_HTML);
+      const html = resp.body;
       if (html.trim() === '') {
         return { status: 'error', html: '' };
       }
@@ -53,18 +53,6 @@ export class MarkdownService {
       }
       return { status: 'error', html: '' };
     }
-  }
-
-  /** README html 响应解析：JSON 信封（{html}）或纯 HTML 流（实测 /readme 返回纯 HTML 而非 JSON 信封） */
-  static parseHtmlBody(body: string): string {
-    const env = Json.parse(body);
-    if (env !== null) {
-      const wrapped = Json.str(env, 'html');
-      if (wrapped !== '') {
-        return wrapped;
-      }
-    }
-    return body;
   }
 
   /** 任意 Markdown → 官方 GFM HTML（041 评论预览；context 传入仓库名放大满链接） */

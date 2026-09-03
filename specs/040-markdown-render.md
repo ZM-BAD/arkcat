@@ -44,7 +44,7 @@ PrDetail 正文/评论 · Releases 说明 · Discussion 描述 · 041 评论预�
 |---|------|------|------|--------|-------------|------|
 | 1 | 组件 | MarkdownView（html 模式） | 直接渲染官方 HTML（bodyHTML / readme html / /markdown 结果），内嵌 github-markdown-css 简化版样式 | ✅ | 见四 | 核心组件，80% 场景走此模式 |
 | 2 | 组件 | MarkdownView（md 模式，仅预览用） | 本地渲染（ArkWeb 内跑 marked 之类 JS 或先服务端渲染后展示）用于评论发布前预览 | ✅ | `POST /markdown`（REST） | 041 复用；优先服务端渲染保证与官方一致 |
-| 3 | 服务 | fetchReadmeHtml(owner, repo, branch?) | REST 取 README HTML（`Accept: application/vnd.github.html+json`），JSON 包装时取 `html` 字段 | ✅ | REST `GET /repos/{o}/{r}/readme` | 默认 default branch；支持分支切换后的 README |
+| 3 | 服务 | fetchReadmeHtml(owner, repo, branch?) | REST 取 README HTML（`Accept: application/vnd.github.html`，**实测返回纯 HTML 流，直接作为 body 渲染**） | ✅ | REST `GET /repos/{o}/{r}/readme` | 默认 default branch；支持分支切换后的 README |
 | 4 | 服务 | renderMarkdown(md) | 任意 Markdown → 官方 HTML（`POST /markdown`，支持 mode gfm + context 仓库名） | ✅ | REST `POST /markdown` | 用于没有 bodyHTML 字段的场合 |
 | 5 | 服务 | 无 README 处理 | 404/空文件 → 展示「This repository has no README」占位 | ✅ | 无 | 与官方空态一致 |
 | 6 | 交互 | 链接点击 | 站内链接（/owner/repo、/o/r/issues/1 等）→ 路由到对应页面；外链 → 系统浏览器（want 跳转） | ⚠️ | 无 | 路由表见备注；未匹配链接一律外开 |
@@ -77,8 +77,8 @@ query IssueDetail($owner: String!, $name: String!, $number: Int!) {
 }
 
 # 2) README：无 bodyHTML 字段，走 REST（优先）
-# GET /repos/{owner}/{repo}/readme        Accept: application/vnd.github.html+json
-#  → { "html": "<article class=\"markdown-body\">…</article>", "download_url": … }
+# GET /repos/{owner}/{repo}/readme        Accept: application/vnd.github.html
+#  → 纯 HTML 流（无 JSON 信封；内容含 <article class="markdown-body">…）
 # 带分支：/repos/{owner}/{repo}/readme?ref={branch}
 
 # 3) 任意 Markdown 渲染（评论预览等）：
@@ -123,7 +123,7 @@ query IssueDetail($owner: String!, $name: String!, $number: Int!) {
 - **本 Spec 为本批（040-051）第一个开发任务**（2026-09-02 与用户确认）。基线样式约束（颜色/图标/字号 token 强制、页面骨架复用、分域 polish 收口策略）见 handoff「关键约定」；观感标准：README/正文渲染**直接对齐官方 `.markdown-body`**（不适用「先糙后美」，本 Spec 开发时即达标）。
 - **选型依据（2026-09-02 调研）**：官方 App 移动端 = 服务端 GFM→HTML（GraphQL `bodyHTML`）经客户端 Web 呈现；ArkWeb + 官方 HTML = 我们与官方同管线，零解析差异；`github-markdown-css`（8923★/MIT）仅作样式底稿，颜色必须换用我们 `resources/base|dark/color.json` 的 Primer token 覆盖。
 - **选型拍板（2026-09-03）**：用户确认**主方案（ArkWeb + 官方 HTML 管线）**，备选 `@luvi/lv-markdown-in` 不再作为前置决策项，仅当 ArkWeb 真机性能明显不达标时再单独评估（数据色板集中 `utils/MarkdownPalette.ets`，门禁白名单同 CodeTheme/LanguageColors 先例）。
-- **实测发现（2026-09-03 模拟器验证，已固化进实现）**：① `onControllerAttached` 后立即 `loadData` 会被 Web 引擎丢弃（文档不加载/URL 停 about:blank），**延迟 300ms 再加载**；② GitHub `/readme` 端点对 `application/vnd.github.html+json` **直接返回纯 HTML 流而非 JSON 信封**（文档与实现不一致），`MarkdownService.parseHtmlBody` 兼容两种；③ 折叠态需 `body.style.overflow=hidden` 禁 Web 内滚（否则嵌套滚动会把「展开全部」卷走）；④ 复制按钮 = onPageEnd 注入 JS（`__mdReady` 防重）+ `javaScriptProxy` 桥（桥对象仅方法，label 走模块级变量）。
+- **实测发现（2026-09-03 模拟器验证，已固化进实现）**：① `onControllerAttached` 后立即 `loadData` 会被 Web 引擎丢弃（文档不加载/URL 停 about:blank），**延迟 300ms 再加载**；② README/contents 的 HTML 媒体类型（`application/vnd.github.html` / `html+json`）**一律返回纯 HTML 流，不存在 JSON 信封**（对 readme/contents/org profile 三个端点实测），统一 `vnd.github.html` 直取 body、**无分支解析**；③ 折叠态需 `body.style.overflow=hidden` 禁 Web 内滚（否则嵌套滚动会把「展开全部」卷走）；④ 复制按钮 = onPageEnd 注入 JS（`__mdReady` 防重）+ `javaScriptProxy` 桥（桥对象仅方法，label 走模块级变量）。
 - **待实机确认**：Dark 主题 CSS 变量切换（模拟器 token 无 user scope 无法进设置，逻辑=buildSetThemeJs 换 body class）；站内链接路由（routeOf 已单测全覆盖，外开实机验证通过）。
 - **Discussion 描述接入点**：Spec 019 当前仅列表页（无讨论详情/正文渲染），故 040 未接入；MarkdownView 已按通用组件设计，讨论详情实现时直接喂 `bodyHTML` 即可。
 - 备选纯 ArkUI 库 `@luvi/lv-markdown-in`（gitee 88star、60 版本、2026-08-15 还在发版、API 12 起、MIT）——优点无 Web 引擎开销；缺点本地解析与官方管线存在差异（如任务列表/表格细节）、需自调样式。决断点：真机（Pura 90 Pro）上 ArkWeb 首屏延迟 > 300ms 或出现明显滚动掉帧时启用。
