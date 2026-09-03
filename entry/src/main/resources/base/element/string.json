@@ -641,6 +641,74 @@
       "value": "Create list"
     },
     {
+      "name": "list_detail_edit",
+      "value": "Edit"
+    },
+    {
+      "name": "list_detail_delete",
+      "value": "Delete"
+    },
+    {
+      "name": "list_detail_delete_title",
+      "value": "Delete list?"
+    },
+    {
+      "name": "list_detail_delete_message",
+      "value": "The repositories in this list will remain starred."
+    },
+    {
+      "name": "list_detail_ok",
+      "value": "OK"
+    },
+    {
+      "name": "list_detail_cancel",
+      "value": "CANCEL"
+    },
+    {
+      "name": "list_deleted_toast",
+      "value": "List deleted"
+    },
+    {
+      "name": "create_list_edit_title",
+      "value": "Edit list"
+    },
+    {
+      "name": "create_list_save_action",
+      "value": "SAVE"
+    },
+    {
+      "name": "create_list_title",
+      "value": "Create list"
+    },
+    {
+      "name": "create_list_name_label",
+      "value": "Name"
+    },
+    {
+      "name": "create_list_name_placeholder",
+      "value": "Insert list name"
+    },
+    {
+      "name": "create_list_desc_label",
+      "value": "Description"
+    },
+    {
+      "name": "create_list_desc_placeholder",
+      "value": "Insert optional description"
+    },
+    {
+      "name": "create_list_action",
+      "value": "CREATE"
+    },
+    {
+      "name": "create_list_name_required",
+      "value": "Please enter a list name"
+    },
+    {
+      "name": "create_list_success",
+      "value": "List created"
+    },
+    {
       "name": "discussions_create_title",
       "value": "Create Discussion"
     },
@@ -1207,6 +1275,10 @@
     {
       "name": "profile_followers_unit",
       "value": " followers"
+    },
+    {
+      "name": "profile_dev_program_member",
+      "value": "Developer Program Member"
     },
     {
       "name": "profile_following_stat",

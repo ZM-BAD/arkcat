@@ -641,6 +641,74 @@
       "value": "创建列表"
     },
     {
+      "name": "list_detail_edit",
+      "value": "编辑"
+    },
+    {
+      "name": "list_detail_delete",
+      "value": "删除"
+    },
+    {
+      "name": "list_detail_delete_title",
+      "value": "删除列表？"
+    },
+    {
+      "name": "list_detail_delete_message",
+      "value": "此列表中的仓库仍会保持星标状态。"
+    },
+    {
+      "name": "list_detail_ok",
+      "value": "确定"
+    },
+    {
+      "name": "list_detail_cancel",
+      "value": "取消"
+    },
+    {
+      "name": "list_deleted_toast",
+      "value": "列表已删除"
+    },
+    {
+      "name": "create_list_edit_title",
+      "value": "编辑列表"
+    },
+    {
+      "name": "create_list_save_action",
+      "value": "保存"
+    },
+    {
+      "name": "create_list_title",
+      "value": "创建列表"
+    },
+    {
+      "name": "create_list_name_label",
+      "value": "名称"
+    },
+    {
+      "name": "create_list_name_placeholder",
+      "value": "输入列表名称"
+    },
+    {
+      "name": "create_list_desc_label",
+      "value": "描述"
+    },
+    {
+      "name": "create_list_desc_placeholder",
+      "value": "输入描述（可选）"
+    },
+    {
+      "name": "create_list_action",
+      "value": "创建"
+    },
+    {
+      "name": "create_list_name_required",
+      "value": "请输入列表名称"
+    },
+    {
+      "name": "create_list_success",
+      "value": "列表已创建"
+    },
+    {
       "name": "discussions_create_title",
       "value": "创建讨论"
     },
@@ -1175,6 +1243,10 @@
     {
       "name": "profile_followers_unit",
       "value": " 关注者"
+    },
+    {
+      "name": "profile_dev_program_member",
+      "value": "开发者计划成员"
     },
     {
       "name": "profile_following_stat",

@@ -27,6 +27,8 @@ import { ProjectsView } from './Projects';
 import { TopRepositoriesView } from './TopRepositories';
 import { OrganizationsView } from './Organizations';
 import { StarredRepositoriesView } from './StarredRepositories';
+import { CreateListView } from './CreateList';
+import { ListDetailView } from './ListDetail';
 import { RepoPrsView } from './RepoPrs';
 import { RepoCommitsView } from './RepoCommits';
 import { RepoReleasesView } from './RepoReleases';
@@ -58,6 +60,13 @@ struct Index {
   @State reposOwner: string = '';
   @State reposMode: string = 'org';
   @State starredLogin: string = '';
+  /** Starred 页回显信号：子页 pop 回时自增，驱动 Starred 页重取列表 */
+  @State starredListsTick: number = 0;
+  /** 列表详情参数（listId）与回显信号（Edit 页 pop 回时自增） */
+  @State listDetailId: string = '';
+  @State listDetailTick: number = 0;
+  /** Create list 页编辑模式参数（''=新建；否则为被编辑列表 id） */
+  @State createListEditId: string = '';
   /** 文件路由参数（Spec 038/011 共用，格式 owner|name|path） */
   @State fileOwner: string = '';
   @State fileRepo: string = '';
@@ -380,11 +389,51 @@ struct Index {
       StarredRepositoriesView({
         token: this.token,
         login: this.starredLogin,
-        pathStack: this.pathStack
+        pathStack: this.pathStack,
+        listsTick: this.starredListsTick
       })
     }
     .onReady((context: NavDestinationContext) => {
       this.starredLogin = context.pathInfo.param as string;
+    })
+    // 子页（Create list）pop 回时重取 My lists
+    .onShown(() => {
+      this.starredListsTick += 1;
+    })
+    .hideTitleBar(true)
+  }
+
+  @Builder
+  createListDestination() {
+    NavDestination() {
+      CreateListView({
+        token: this.token,
+        pathStack: this.pathStack,
+        editListId: this.createListEditId
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.createListEditId = context.pathInfo.param as string;
+    })
+    .hideTitleBar(true)
+  }
+
+  @Builder
+  listDetailDestination() {
+    NavDestination() {
+      ListDetailView({
+        token: this.token,
+        pathStack: this.pathStack,
+        listId: this.listDetailId,
+        listTick: this.listDetailTick
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.listDetailId = context.pathInfo.param as string;
+    })
+    // Edit 页 pop 回时重取列表详情
+    .onShown(() => {
+      this.listDetailTick += 1;
     })
     .hideTitleBar(true)
   }
@@ -583,6 +632,10 @@ struct Index {
       this.repoFilesDestination()
     } else if (name === 'codeViewer') {
       this.codeViewerDestination()
+    } else if (name === 'createList') {
+      this.createListDestination()
+    } else if (name === 'listDetail') {
+      this.listDetailDestination()
     }
   }
 

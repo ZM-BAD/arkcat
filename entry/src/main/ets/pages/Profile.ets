@@ -74,6 +74,7 @@ export struct ProfileView {
           statusEmoji: profile.statusEmoji,
           statusMessage: profile.statusMessage,
           viewerIsFollowing: following,
+          isDeveloperProgramMember: profile.isDeveloperProgramMember,
           pinned: profile.pinned,
           repositoriesCount: profile.repositoriesCount,
           organizationsCount: profile.organizationsCount,
@@ -148,7 +149,7 @@ export struct ProfileView {
     if (this.achievements.length > 0) {
       Row({ space: 8 }) {
         OctIcon({ res: $r('app.media.oct_trophy_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
-        Row({ space: 6 }) {
+        Row({ space: 0 }) {
           ForEach(this.achievements, (url: string, index: number) => {
             Image(url)
               .width(24)
@@ -218,6 +219,22 @@ export struct ProfileView {
       }
       .width('100%')
       .alignItems(HorizontalAlign.Start)
+
+      // Developer Program Member（用户实际为成员时才显示，官方徽章位序=X 之下、followers 之上）
+      if (this.profile !== null && this.profile.isDeveloperProgramMember) {
+        Row({ space: 8 }) {
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_cpu_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
+          }
+          .width(16)
+          .height(16)
+          Text($r('app.string.profile_dev_program_member'))
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor($r('app.color.text_secondary'))
+            .maxLines(1)
+        }
+        .width('100%')
+      }
 
       // 两段可点计数行（Spec 034）：person 图标 + N followers · M following（数字加粗）
       Row({ space: 8 }) {
