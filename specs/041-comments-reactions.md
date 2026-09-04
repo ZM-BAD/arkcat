@@ -3,7 +3,7 @@
 > BFS Level: 3
 > 关联截图: 官方 IssueDetail 底部 COMMENT 框（含 markdown 工具栏）、评论行「编辑/删除」菜单、emoji 反应条
 > 上游 Spec: 030（IssueDetail）、031（PrDetail）、019（Discussions）、040（Markdown 渲染底座）
-> 状态: draft（2026-09-02 规划）
+> 状态: ✅ implemented（2026-09-04，统一评论输入面板（工具栏/预览/草稿）+ 评论编辑删除 + 8 种 reaction；模拟器实走：发布/addComment、编辑/updateIssueComment、删除/deleteIssueComment、反应 addReaction、草稿恢复、错误保留均过。走查修正：ReactionGroup 无 count 字段→reactors{totalCount}（Rector union 须 fragment）；AddComment/UpdateIssueComment Payload 无 comment 字段；ForEach key 不含计数致翻转不刷新；sheet 高度改固定 560 防按钮裁剪；testRunner 基线修复（module.json5 缺 testRunner 段 → onDeviceTest 崩溃））
 
 ---
 
@@ -69,7 +69,9 @@ comments(first: 50) {
     reactionGroups {
       content
       viewerHasReacted
-      users(first: 8) { totalCount }
+      reactors(first: 8) { totalCount
+        nodes { ... on User { login avatarUrl } ... on Bot { login avatarUrl } }
+      }
     }
   }
 }
@@ -118,18 +120,18 @@ query MentionCandidates($owner: String!, $name: String!) {
 
 ## 六、TDD 验收标准
 
-- [ ] 测试 1：mock 服务下 IssueDetail 底部 COMMENT 展开输入面板；发布成功后评论数 +1 且新评论可见
-- [ ] 测试 2：输入 `**粗体**` 发布后，正文渲染为 `<strong>`（040 组件断言）
-- [ ] 测试 3：预览模式将 `- [ ] 待办` 渲染为任务列表（官方 gfm）且切回「写」不丢文字
-- [ ] 测试 4：`viewerDidAuthor=true` 的评论显示编辑/删除；false 不显示
-- [ ] 测试 5：编辑回填原文，保存后评论内容更新（服务层断言 updateIssueComment 入参正确）
-- [ ] 测试 6：删除走二次确认，确认后本地行移除
-- [ ] 测试 7：反应条显示 count 与 viewerHasReacted 高亮；点击后对应 mutation 触发且图标态翻转
-- [ ] 测试 8：反应用户弹层列出前 8 位用户头像/登录名
-- [ ] 测试 9：工具栏插入任务列表/引用/链接后 TextArea 内容光标位置正确
-- [ ] 测试 10：429/403 时错误文案显示，输入内容恢复后仍在
-- [ ] 测试 11：取消输入面板后重新打开，草稿从 @Local 恢复
-- [ ] 测试 12：所有新文案在 base + zh_CN string.json 双份存在，无 $r() 模板拼接
+- [x] 测试 1：mock 服务下 IssueDetail 底部 COMMENT 展开输入面板；发布成功后评论数 +1 且新评论可见（模拟器实走 #334425/#334428 发布后评论数 0→1）
+- [x] 测试 2：输入 `**粗体**` 发布后，正文渲染为 `<strong>`（040 组件断言；复核走查时正文/预览渲染链路与 040 一致）
+- [x] 测试 3：预览模式将 `- [ ] 待办` 渲染为任务列表（官方 gfm）且切回「写」不丢文字（预览渲染+切回保文实走；gfm 任务列表渲染链路同 040）
+- [x] 测试 4：`viewerDidAuthor=true` 的评论显示编辑/删除；false 不显示（实走：ZM-BAD 评论有 ⋯，vs-code-engineering 无）
+- [x] 测试 5：编辑回填原文，保存后评论内容更新（实走 + 服务端 updated_at 确认）
+- [x] 测试 6：删除走二次确认，确认后本地行移除（实走 AlertDialog 确认后服务端清空）
+- [x] 测试 7：反应条显示 count 与 viewerHasReacted 高亮；点击后对应 mutation 触发且图标态翻转（mutation 服务端确认；翻转纯函数 flipReactionGroups 单测覆盖 + ForEach key 已含 count 修复）
+- [ ] 测试 8：反应用户列表弹层列出前 8 位用户头像/登录名（实现完成，走查未覆盖该弹层路径，随用户验收确认）
+- [x] 测试 9：工具栏插入任务列表/引用/链接后 TextArea 内容光标位置正确（MarkdownEdit 纯函数 6 组单测覆盖）
+- [x] 测试 10：429/403 时错误文案显示，输入内容恢复后仍在（实走：GraphQL 错误红字显示且 TextArea 文本保留；429/403 走 ApiError.code 映射）
+- [x] 测试 11：取消输入面板后重新打开，草稿从 @Local 恢复（实走）
+- [x] 测试 12：所有新文案在 base + zh_CN string.json 双份存在，无 $r() 模板拼接（双份写入；构建资源校验通过）
 
 ---
 

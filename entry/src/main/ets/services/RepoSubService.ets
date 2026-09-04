@@ -105,7 +105,23 @@ query IssueDetail($owner: String!, $name: String!, $number: Int!, $first: Int = 
       comments(first: $first, after: $after) {
         totalCount
         pageInfo { hasNextPage endCursor }
-        nodes { id body bodyHTML createdAt author { login avatarUrl } }
+        nodes {
+          id body bodyHTML createdAt
+          author { login avatarUrl }
+          viewerDidAuthor
+          reactionGroups {
+            content viewerHasReacted
+            reactors(first: 8) {
+              totalCount
+              nodes {
+                ... on User { login avatarUrl }
+                ... on Bot { login avatarUrl }
+                ... on Mannequin { login avatarUrl }
+                ... on Organization { login avatarUrl }
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -134,7 +150,26 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!) {
           }
         }
       }
-      comments(first: 15) { totalCount nodes { id body bodyHTML createdAt author { login avatarUrl } } }
+      comments(first: 15) {
+        totalCount
+        nodes {
+          id body bodyHTML createdAt
+          author { login avatarUrl }
+          viewerDidAuthor
+          reactionGroups {
+            content viewerHasReacted
+            reactors(first: 8) {
+              totalCount
+              nodes {
+                ... on User { login avatarUrl }
+                ... on Bot { login avatarUrl }
+                ... on Mannequin { login avatarUrl }
+                ... on Organization { login avatarUrl }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }`;
@@ -154,11 +189,32 @@ query PullRequestFiles($owner: String!, $name: String!, $number: Int!) {
   }
 }`;
 
-const PR_ADD_COMMENT_MUTATION = `
-mutation AddPrComment($subjectId: ID!, $body: String!) {
+
+const ADD_COMMENT_MUTATION = `
+mutation AddComment($subjectId: ID!, $body: String!) {
   addComment(input: { subjectId: $subjectId, body: $body }) {
-    clientMutationId
+    commentEdge { node { id } }
   }
+}`;
+
+const UPDATE_COMMENT_MUTATION = `
+mutation UpdateComment($id: ID!, $body: String!) {
+  updateIssueComment(input: { id: $id, body: $body }) { clientMutationId }
+}`;
+
+const DELETE_COMMENT_MUTATION = `
+mutation DeleteComment($id: ID!) {
+  deleteIssueComment(input: { id: $id }) { clientMutationId }
+}`;
+
+const ADD_REACTION_MUTATION = `
+mutation AddReaction($subjectId: ID!, $content: ReactionContent!) {
+  addReaction(input: { subjectId: $subjectId, content: $content }) { reaction { id } }
+}`;
+
+const REMOVE_REACTION_MUTATION = `
+mutation RemoveReaction($subjectId: ID!, $content: ReactionContent!) {
+  removeReaction(input: { subjectId: $subjectId, content: $content }) { reaction { id } }
 }`;
 
 /** 仓库内 PR 列表（state: all/open/closed/merged；label 走 GraphQL，author/assignee 客户端过滤） */
@@ -307,9 +363,35 @@ export class RepoSubService {
     return page;
   }
 
-  /** 全局评论提交（GraphQL addComment；041 评论区全链路前的最小实现） */
-  static async addPrComment(token: string, subjectId: string, body: string): Promise<void> {
+  /** 发布评论（subjectId = Issue/PR 节点 id；成功后调用方刷新列表）
+  /** 发布评论（subjectId = Issue/PR 节点 id；成功后调用方刷新列表） */
+  static async addComment(token: string, subjectId: string, body: string): Promise<void> {
     const variables: Record<string, Object> = { 'subjectId': subjectId, 'body': body };
-    await graphql(PR_ADD_COMMENT_MUTATION, variables, token);
+    await graphql(ADD_COMMENT_MUTATION, variables, token);
+  }
+
+  /** 编辑评论（updateIssueComment：Issue/PR 普通评论均为 IssueComment 节点） */
+  static async updateComment(token: string, commentId: string, body: string): Promise<void> {
+    const variables: Record<string, Object> = { 'id': commentId, 'body': body };
+    await graphql(UPDATE_COMMENT_MUTATION, variables, token);
+  }
+
+  /** 删除评论（仅作者；deleteIssueComment） */
+  static async deleteComment(token: string, commentId: string): Promise<void> {
+    const variables: Record<string, Object> = { 'id': commentId };
+    await graphql(DELETE_COMMENT_MUTATION, variables, token);
+  }
+
+  /** 添加 emoji 反应（subjectId = 评论/Issue/PR 节点 id；content 为 ReactionContent 枚举） */
+  static async addReaction(token: string, subjectId: string, content: string): Promise<void> {
+    const variables: Record<string, Object> = { 'subjectId': subjectId, 'content': content };
+    await graphql(ADD_REACTION_MUTATION, variables, token);
+  }
+
+  /** 移除 emoji 反应（toggle 由调用方按 viewerHasReacted 决定） */
+  static async removeReaction(token: string, subjectId: string, content: string): Promise<void> {
+    const variables: Record<string, Object> = { 'subjectId': subjectId, 'content': content };
+    await graphql(REMOVE_REACTION_MUTATION, variables, token);
+
   }
 }

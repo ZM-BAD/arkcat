@@ -36,6 +36,8 @@ import { parseDiffPatch, fileBaseName, DiffLine, DiffHunk } from '../../../main/
 import { mapPrFiles, applyRestPatch, PrFileItem } from '../../../main/ets/models/PrDiffModels';
 import { mapIssue, mapIssuesPage, issueOrderField } from '../../../main/ets/models/IssuesModels';
 import { MarkdownService } from '../../../main/ets/services/MarkdownService';
+import { ReactionGroup, REACTION_META, reactionEmoji, findReactionGroup, flipReactionGroups } from '../../../main/ets/models/RepoSubModels';
+import { MarkdownEdit } from '../../../main/ets/utils/MarkdownEdit';
 
 type JsonMap = Record<string, Object>;
 
@@ -1405,6 +1407,128 @@ export default function logicTest(testsuiteName: string) {
     it('fileBaseName_simple', 0, () => {
       expect(fileBaseName('src/main/ets/Index.ets')).assertEqual('Index.ets');
       expect(fileBaseName('README.md')).assertEqual('README.md');
+    // ─────── Spec 041：Markdown 工具栏插入 / 反应 / 评论映射 ───────
+
+    it('markdownEdit_wrap_selected', 0, () => {
+      const ins = MarkdownEdit.apply('abc', 0, 3, 'bold');
+      expect(ins.text).assertEqual('**abc**');
+      expect(ins.selStart).assertEqual(0);
+      expect(ins.selEnd).assertEqual(7);
+    });
+    it('markdownEdit_wrap_empty', 0, () => {
+      // 未选中：插入对，光标居中
+      const ins = MarkdownEdit.apply('', 0, 0, 'code');
+      expect(ins.text).assertEqual('``');
+      expect(ins.selStart).assertEqual(1);
+      expect(ins.selEnd).assertEqual(1);
+    });
+    it('markdownEdit_quote_lines', 0, () => {
+      const ins = MarkdownEdit.apply('a\nb', 0, 3, 'quote');
+      expect(ins.text).assertEqual('> a\n> b');
+      expect(ins.selStart).assertEqual(0);
+      expect(ins.selEnd).assertEqual(7);
+    });
+    it('markdownEdit_task_empty', 0, () => {
+      const ins = MarkdownEdit.apply('', 0, 0, 'task');
+      expect(ins.text).assertEqual('- [ ] ');
+      expect(ins.selStart).assertEqual(6);
+      expect(ins.selEnd).assertEqual(6);
+    });
+    it('markdownEdit_link_selected', 0, () => {
+      const ins = MarkdownEdit.apply('hello', 0, 5, 'link');
+      expect(ins.text).assertEqual('[hello]()');
+      expect(ins.selStart).assertEqual(8);
+      expect(ins.selEnd).assertEqual(8);
+    });
+    it('markdownEdit_link_empty', 0, () => {
+      const ins = MarkdownEdit.apply('', 0, 0, 'link');
+      expect(ins.text).assertEqual('[]()');
+      expect(ins.selStart).assertEqual(3);
+      expect(ins.selEnd).assertEqual(3);
+    });
+    it('markdownEdit_swap_selection', 0, () => {
+      // 反向选区（start>end）应归一化
+      const ins = MarkdownEdit.apply('abc', 3, 0, 'bold');
+      expect(ins.text).assertEqual('**abc**');
+      expect(ins.selEnd).assertEqual(7);
+    });
+
+    it('reactionMeta_8', 0, () => {
+      expect(REACTION_META.length).assertEqual(8);
+      expect(reactionEmoji('THUMBS_UP')).assertEqual('👍');
+      expect(reactionEmoji('EYES')).assertEqual('👀');
+      expect(reactionEmoji('NOPE')).assertEqual('');
+    });
+    it('flipReactionGroups_toggle', 0, () => {
+      const groups: ReactionGroup[] = [{ content: 'THUMBS_UP', count: 3, viewerHasReacted: false, users: [] }];
+      const added = flipReactionGroups(groups, 'THUMBS_UP', true);
+      expect(added[0].count).assertEqual(4);
+      expect(added[0].viewerHasReacted).assertTrue();
+      const removed = flipReactionGroups(added, 'THUMBS_UP', false);
+      expect(removed[0].count).assertEqual(3);
+      expect(removed[0].viewerHasReacted).assertFalse();
+    });
+    it('flipReactionGroups_addNew', 0, () => {
+      const groups: ReactionGroup[] = [];
+      const added = flipReactionGroups(groups, 'EYES', true);
+      expect(added.length).assertEqual(1);
+      expect(added[0].content).assertEqual('EYES');
+      expect(added[0].count).assertEqual(1);
+      expect(added[0].viewerHasReacted).assertTrue();
+      expect(findReactionGroup(added, 'HOORAY') === null).assertTrue();
+    });
+
+    it('mapIssueDetail_reactions', 0, () => {
+      const authorI: JsonMap = { 'login': 'alice', 'avatarUrl': 'av-a' };
+      const commentAuthor: JsonMap = { 'login': 'bob', 'avatarUrl': 'av-b' };
+      const reactUser: JsonMap = { 'login': 'bob', 'avatarUrl': 'av-b' };
+      const reactUsers: JsonMap = { 'totalCount': 2, 'nodes': [reactUser] };
+      const reactGroup: JsonMap = {
+        'content': 'THUMBS_UP', 'viewerHasReacted': true, 'reactors': reactUsers
+      };
+      const commentNode: JsonMap = {
+        'id': 'c1', 'body': 'hi', 'bodyHTML': '<p>hi</p>', 'createdAt': '2026-09-01T11:00:00Z',
+        'author': commentAuthor, 'viewerDidAuthor': true, 'reactionGroups': [reactGroup]
+      };
+      const labelsWrap: JsonMap = { 'nodes': [] };
+      const pageInfoWrap: JsonMap = { 'hasNextPage': false, 'endCursor': 'x' };
+      const commentsWrap: JsonMap = { 'totalCount': 1, 'pageInfo': pageInfoWrap, 'nodes': [commentNode] };
+      const issueNode: JsonMap = {
+        'id': 'i1', 'number': 3, 'title': 'issue', 'state': 'OPEN', 'stateReason': '',
+        'body': '', 'bodyHTML': '', 'createdAt': '2026-09-01T10:00:00Z',
+        'author': authorI, 'labels': labelsWrap, 'comments': commentsWrap
+      };
+      const repoWrap: JsonMap = { 'issue': issueNode };
+      const data: JsonMap = { 'repository': repoWrap };
+      const page = mapIssueDetail(data);
+      expect(page.subjectId).assertEqual('i1');
+      expect(page.comments.length).assertEqual(1);
+      expect(page.comments[0].viewerDidAuthor).assertTrue();
+      expect(page.comments[0].reactions.length).assertEqual(1);
+      expect(page.comments[0].reactions[0].count).assertEqual(2);
+      expect(page.comments[0].reactions[0].viewerHasReacted).assertTrue();
+      expect(page.comments[0].reactions[0].users[0].login).assertEqual('bob');
+    });
+    it('mapPrDetail_subjectId', 0, () => {
+      const prAuthor: JsonMap = { 'login': 'a', 'avatarUrl': '' };
+      const commentsWrap: JsonMap = { 'totalCount': 0, 'nodes': [] };
+      const filesWrap: JsonMap = { 'totalCount': 0 };
+      const commitsWrap: JsonMap = { 'totalCount': 0 };
+      const reviewsWrap: JsonMap = { 'totalCount': 0 };
+      const node: JsonMap = {
+        'id': 'p1', 'number': 7, 'title': 'pr', 'state': 'OPEN', 'merged': false, 'isDraft': false,
+        'body': '', 'bodyHTML': '', 'createdAt': '2026-09-01T10:00:00Z', 'mergedAt': '',
+        'additions': 0, 'deletions': 0, 'author': prAuthor,
+        'headRefName': '', 'baseRefName': '',
+        'files': filesWrap, 'commits': commitsWrap,
+        'reviews': reviewsWrap,
+        'comments': commentsWrap
+      };
+      const repoWrap: JsonMap = { 'pullRequest': node };
+      const data: JsonMap = { 'repository': repoWrap };
+      const page = mapPrDetail(data);
+      expect(page.subjectId).assertEqual('p1');
+      expect(page.comments.length).assertEqual(0);
     });
   });
 }

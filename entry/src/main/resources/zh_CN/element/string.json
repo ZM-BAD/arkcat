@@ -1233,6 +1233,126 @@
       "value": "评论"
     },
     {
+      "name": "comment_publish",
+      "value": "发布"
+    },
+    {
+      "name": "comment_preview",
+      "value": "预览"
+    },
+    {
+      "name": "comment_write",
+      "value": "写"
+    },
+    {
+      "name": "comment_edit_title",
+      "value": "编辑评论"
+    },
+    {
+      "name": "comment_tool_bold",
+      "value": "粗体"
+    },
+    {
+      "name": "comment_tool_italic",
+      "value": "斜体"
+    },
+    {
+      "name": "comment_tool_quote",
+      "value": "引用"
+    },
+    {
+      "name": "comment_tool_link",
+      "value": "链接"
+    },
+    {
+      "name": "comment_tool_code",
+      "value": "行内代码"
+    },
+    {
+      "name": "comment_tool_strike",
+      "value": "删除线"
+    },
+    {
+      "name": "comment_tool_task",
+      "value": "任务列表"
+    },
+    {
+      "name": "comment_published",
+      "value": "评论已发布"
+    },
+    {
+      "name": "comment_updated",
+      "value": "评论已更新"
+    },
+    {
+      "name": "comment_deleted",
+      "value": "评论已删除"
+    },
+    {
+      "name": "comment_empty_body",
+      "value": "评论不能为空"
+    },
+    {
+      "name": "comment_delete_title",
+      "value": "删除评论"
+    },
+    {
+      "name": "comment_delete_body",
+      "value": "此操作无法撤销。"
+    },
+    {
+      "name": "comment_delete_ok",
+      "value": "删除"
+    },
+    {
+      "name": "comment_delete_cancel",
+      "value": "取消"
+    },
+    {
+      "name": "comment_error_rate_limit",
+      "value": "请求过于频繁，请稍后再试。"
+    },
+    {
+      "name": "comment_error_forbidden",
+      "value": "你没有权限执行此操作。"
+    },
+    {
+      "name": "comment_error_closed_locked",
+      "value": "该 Issue 已关闭，评论已锁定。"
+    },
+    {
+      "name": "comment_error_publish",
+      "value": "评论发布失败"
+    },
+    {
+      "name": "comment_error_update",
+      "value": "评论更新失败"
+    },
+    {
+      "name": "comment_error_delete",
+      "value": "评论删除失败"
+    },
+    {
+      "name": "comment_error_reaction",
+      "value": "反应更新失败"
+    },
+    {
+      "name": "issue_closed_comment_disabled",
+      "value": "已关闭的 Issue 无法评论"
+    },
+    {
+      "name": "reaction_panel_title",
+      "value": "选择反应"
+    },
+    {
+      "name": "reaction_users_title",
+      "value": "已反应"
+    },
+    {
+      "name": "a11y_reaction_add",
+      "value": "添加反应"
+    },
+    {
       "name": "settings_working_hours",
       "value": "工作时间"
     },

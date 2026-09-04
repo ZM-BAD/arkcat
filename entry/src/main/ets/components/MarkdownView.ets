@@ -83,6 +83,14 @@ export struct MarkdownView {
     }
   }
 
+  /** 主题偏好异步读取完成后 → 按最终 dark 重载（否则正文保持初始白底） */
+  @Monitor('dark')
+  onDarkChanged(): void {
+    if (this.attached && this.html !== '') {
+      this.reload();
+    }
+  }
+
   private reload(): void {
     if (!this.attached || this.html === '') {
       this.loading = this.html !== '';
