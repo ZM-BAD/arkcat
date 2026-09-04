@@ -4,6 +4,7 @@
  * （56 圆头像/粗体显示名/灰 login/两行 bio，整行点击进入用户主页）。
  */
 import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { UserSummary } from '../models/GitHubModels';
 import { PeoplePage } from '../models/RepoSocialModels';
 import { RepoService } from '../services/RepoService';
@@ -23,6 +24,8 @@ export struct RepoPeopleView {
   @Local hasNextPage: boolean = false;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
     this.refresh();
@@ -171,6 +174,8 @@ export struct RepoPeopleView {
       .height(60)
       .padding({ left: 0, right: 0 })
 
+      PageShadowBar({ show: this.scrollShadow })
+
       if (this.users.length > 0) {
         Scroll() {
           Column() {
@@ -191,6 +196,7 @@ export struct RepoPeopleView {
         .layoutWeight(1)
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
+        .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
       } else {
         StateView({
           loading: this.loading,

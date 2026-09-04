@@ -8,6 +8,7 @@ import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { OctIcon } from '../components/OctIcon';
 import { StateView } from '../components/StateView';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { PrDiffCard } from '../components/PrDiffCard';
 import { PrFileItem, PrFilesPage } from '../models/PrDiffModels';
 import { RepoSubService } from '../services/RepoSubService';
@@ -31,6 +32,8 @@ export struct PrFilesView {
   @Local expandedPaths: string[] = [];
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
   @Local finderOpen: boolean = false;
   @Local finderQuery: string = '';
   @Local commentText: string = '';
@@ -153,7 +156,7 @@ export struct PrFilesView {
           })
       }
       .width('100%')
-      .padding({ left: 16, right: 8, top: 10, bottom: 6 })
+      .padding({ left: 16, right: 16, top: 10, bottom: 6 })
 
       TextInput({ text: this.finderQuery, placeholder: this.stringOf($r('app.string.search_placeholder')) })
         .fontSize($r('app.float.body_font_size'))
@@ -246,6 +249,8 @@ export struct PrFilesView {
       .height(48)
       .padding({ left: 0, right: 0 })
 
+      PageShadowBar({ show: this.scrollShadow })
+
       if (this.loading || this.errorMsg !== '') {
         StateView({ loading: this.loading, error: this.errorMsg, onRetry: (): void => { this.refresh(); } })
           .layoutWeight(1)
@@ -283,6 +288,9 @@ export struct PrFilesView {
         .layoutWeight(1)
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
+        .onScroll((_x: number, y: number): void => {
+          this.scrollShadow = y > 0.001;
+        })
       }
 
       // 底部 Add a comment（全局评论，写操作最小实现）

@@ -4,6 +4,7 @@
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
 import { MarkdownView } from '../components/MarkdownView';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { ReleaseItem, RepoReleasesPage, monthDayText } from '../models/RepoSubModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { StateView } from '../components/StateView';
@@ -21,6 +22,8 @@ export struct RepoReleasesView {
   @Local hasNextPage: boolean = false;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
     this.refresh();
@@ -123,6 +126,8 @@ export struct RepoReleasesView {
       .height(56)
       .padding({ left: 0, right: 0 })
 
+      PageShadowBar({ show: this.scrollShadow })
+
       Scroll() {
         Column() {
           if (this.releases.length > 0) {
@@ -215,6 +220,7 @@ export struct RepoReleasesView {
       .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
+      .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
     }
     .width('100%')
     .height('100%')

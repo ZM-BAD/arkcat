@@ -922,6 +922,8 @@ struct Index {
     .height('100%')
     .justifyContent(FlexAlign.Center)
     .onClick(() => {
+      // 先立即点亮选中态（currentTab 若等 onChange 会延迟到切换动画结束后）
+      this.currentTab = index;
       // 底栏全局常驻：切 tab 时清空二级页栈回根（官方 App 点 tab 回首个页面）
       this.pathStack.clear();
       this.tabController.changeIndex(index);

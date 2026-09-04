@@ -13,6 +13,7 @@ import {
 } from '../services/NotificationsService';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { timeParts, githubShortTime, notificationTypeKey, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
@@ -60,6 +61,8 @@ export struct InboxView {
   @Local rawItems: NotificationItem[] = [];
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
     this.refresh();
@@ -568,6 +571,8 @@ export struct InboxView {
       .width('100%')
       .padding({ left: 16, right: 16, top: 8 })
 
+      PageShadowBar({ show: this.scrollShadow })
+
       Scroll() {
         // 四个筛选 chip 内联渲染：@Builder 传值/$$ 引用参数均不随状态刷新（V2 坑，见 memory），
         // 文本/激活态直接读 @Local 才能随筛选变化实时更新
@@ -648,6 +653,9 @@ export struct InboxView {
       .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
+      .onScroll((_x: number, y: number): void => {
+        this.scrollShadow = y > 0.001;
+      })
     }
     .width('100%')
     .height('100%')

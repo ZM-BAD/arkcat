@@ -5,6 +5,7 @@
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
 import { MarkdownView } from '../components/MarkdownView';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { OrgProfile } from '../models/ProfileModels';
 import { ProfileListService } from '../services/ProfileListService';
 import { MarkdownService, MarkdownFetchResult } from '../services/MarkdownService';
@@ -23,6 +24,8 @@ export struct OrgProfileView {
   @Local readmeResult: MarkdownFetchResult | null = null;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
     this.refresh();
@@ -296,6 +299,7 @@ export struct OrgProfileView {
     .layoutWeight(1)
     .scrollBar(BarState.Off)
     .align(Alignment.Top)
+    .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
   }
 
   /** FOLLOW 按钮文案资源（未关注 +FOLLOW / 已关注 FOLLOWING） */
@@ -344,6 +348,8 @@ export struct OrgProfileView {
       .width('100%')
       .height(48)
       .padding({ left: 0, right: 0 })
+
+      PageShadowBar({ show: this.scrollShadow })
 
       if (this.org === null) {
         StateView({

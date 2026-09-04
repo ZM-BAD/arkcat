@@ -6,6 +6,7 @@
 import { promptAction } from '@kit.ArkUI';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { DirEntry, DirPage } from '../models/FileModels';
 import { FileService } from '../services/FileService';
 import { StateView } from '../components/StateView';
@@ -27,6 +28,8 @@ export struct FileTreeView {
   @Local filterOn: boolean = false;
   @Local filterText: string = '';
   @Local tooLarge: boolean = false;
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
     this.refresh();
@@ -177,6 +180,8 @@ export struct FileTreeView {
       .height(60)
       .padding({ left: 0, right: 0 })
 
+      PageShadowBar({ show: this.scrollShadow })
+
       // 本地过滤行（find a file）
       if (this.filterOn) {
         TextInput({ placeholder: this.stringOf($r('app.string.file_filter_hint')) })
@@ -207,6 +212,7 @@ export struct FileTreeView {
         .layoutWeight(1)
         .width('100%')
         .contentEndOffset(16)
+        .onScroll((scrollOffset: number, _state: number): void => { this.scrollShadow = scrollOffset > 0.001; })
       }
     }
     .width('100%')

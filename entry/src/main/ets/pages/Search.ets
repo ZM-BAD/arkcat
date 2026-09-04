@@ -8,6 +8,7 @@
 import { common } from '@kit.AbilityKit';
 import { promptAction, KeyboardAvoidMode } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
 import {
   SearchService, QUALIFIER_CHIPS, pushSearchHistory, SearchHistoryStore,
   buildQualifierInsert
@@ -22,6 +23,8 @@ export struct SearchView {
   @Local focused: boolean = false;
   @Local history: string[] = [];
   @Local historyReady: boolean = false;
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
     // 键盘避让改压缩模式：快捷词汇行贴键盘显示（官方行为）；离开恢复默认上抬
@@ -235,6 +238,7 @@ export struct SearchView {
     .layoutWeight(1)
     .scrollBar(BarState.Off)
     .align(Alignment.Top)
+    .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
   }
 
   /** 快捷词汇行（贴键盘底部显示）：行底色浅灰、词汇矩形深灰、可左右滑动 */
@@ -338,6 +342,8 @@ export struct SearchView {
       }
     }
 
+    PageShadowBar({ show: this.scrollShadow })
+
     if (this.keyword.trim() === '') {
         if (this.historyReady && this.history.length > 0) {
           this.historyPanel()
@@ -373,6 +379,7 @@ export struct SearchView {
         .layoutWeight(1)
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
+        .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
       }
 
       // 快捷词汇行：压缩模式下置于页面底部，紧贴键盘上沿

@@ -9,6 +9,7 @@ import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { OctIcon } from '../components/OctIcon';
 import { StateView } from '../components/StateView';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { CodeLine, CodeSpan, CODE_DARK_BG, CODE_LIGHT_BG, codeTextColorOf } from '../utils/CodeTheme';
 import { highlightLine, extOf } from '../utils/Highlight';
 import { FileService } from '../services/FileService';
@@ -42,6 +43,8 @@ export struct CodeViewerView {
   @Local codeText: ResourceColor = $r('app.color.text_primary');
   @Local contentLoaded: boolean = false;
   @Local settingsLoaded: boolean = false;
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
     this.loadSettings();
@@ -235,6 +238,8 @@ export struct CodeViewerView {
       .height(60)
       .padding({ left: 0, right: 0 })
 
+      PageShadowBar({ show: this.scrollShadow })
+
       // 大文件截断提示（GitHub 官方样式黄条）
       if (this.isTruncated) {
         Text($r('app.string.file_truncated_hint'))
@@ -266,6 +271,7 @@ export struct CodeViewerView {
         .layoutWeight(1)
         .width('100%')
         .backgroundColor(this.codeBg)
+        .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
       }
     }
     .width('100%')

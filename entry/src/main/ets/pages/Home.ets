@@ -11,6 +11,12 @@ import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
 import { WorkSection, WorkConfigStore, visibleWorkSections } from '../utils/WorkConfig';
 
+/** 标题栏底部渐变阴影（滚动时显示、回顶部消失） */
+const SHADOW_GRADIENT: Array<[ResourceColor, number]> = [
+  [$r('app.color.shadow_floating'), 0],
+  [Color.Transparent, 1]
+];
+
 /** My Work 条目标识：图标/色/文案/路由（与 Edit My Work 013/016 一致） */
 interface WorkEntryMeta {
   iconRes: Resource;
@@ -57,72 +63,88 @@ export struct HomeView {
     promptAction.showToast({ message: $r('app.string.home_feature_coming') });
   }
 
+  /** 标题栏阴影：滚动中显示、回顶部消失 */
+  @Local headerShadow: boolean = false;
+
   @Builder
   header() {
-    Row() {
-      Text($r('app.string.tab_home'))
-        .fontSize(32)
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.text_primary'))
-      Blank()
-      Stack() {
-  OctIcon({
-        res: $r('app.media.oct_search_24'),
-        iconSize: 20,
-        iconColor: $r('app.color.link_blue')
-  })
-}
+    Column() {
+      Row() {
+        Text($r('app.string.tab_home'))
+          .fontSize(20)
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.text_primary'))
+        Blank()
+        Stack() {
+          OctIcon({
+            res: $r('app.media.oct_search_24'),
+            iconSize: 20,
+            iconColor: $r('app.color.link_blue')
+          })
+        }
 .width(44)
 .height(44)
         .accessibilityDescription($r('app.string.a11y_search'))
         .focusable(true)
-.onClick((): void => {
+        .onClick((): void => {
           this.pathStack.pushPathByName('search', '');
         })
         .padding(6)
-      Stack() {
-  OctIcon({
-        res: $r('app.media.oct_sync_16'),
-        iconSize: 18,
-        iconColor: $r('app.color.link_blue')
-  })
-}
+        Stack() {
+          OctIcon({
+            res: $r('app.media.oct_sync_16'),
+            iconSize: 18,
+            iconColor: $r('app.color.link_blue')
+          })
+        }
 .width(44)
 .height(44)
         .accessibilityDescription($r('app.string.a11y_refresh'))
         .focusable(true)
-.onClick((): void => this.refresh())
+        .onClick((): void => this.refresh())
         .padding(6)
-      Stack() {
-  OctIcon({
-        res: $r('app.media.oct_plus_circle_24'),
-        iconSize: 20,
-        iconColor: $r('app.color.link_blue')
-  })
-}
+        Stack() {
+          OctIcon({
+            res: $r('app.media.oct_plus_circle_24'),
+            iconSize: 20,
+            iconColor: $r('app.color.link_blue')
+          })
+        }
 .width(44)
 .height(44)
         .accessibilityDescription($r('app.string.a11y_new'))
         .focusable(true)
-.onClick((): void => {
+        .onClick((): void => {
           promptAction.showToast({ message: $r('app.string.home_new_coming') });
         })
         .padding(6)
-      if (this.viewer !== null) {
-        Image(this.viewer.avatarUrl)
-          .width(32)
-          .height(32)
-          .borderRadius(16)
-          .backgroundColor($r('app.color.heat_empty'))
-          .margin({ left: 4 })
-          .onClick(() => {
-            this.pathStack.pushPathByName('userProfile', this.viewer?.login ?? '');
+        if (this.viewer !== null) {
+          Image(this.viewer.avatarUrl)
+            .width(20)
+            .height(20)
+            .borderRadius(10)
+            .backgroundColor($r('app.color.heat_empty'))
+            .margin({ left: 4 })
+            .onClick(() => {
+              this.pathStack.pushPathByName('userProfile', this.viewer?.login ?? '');
+            })
+        }
+      }
+      .width('100%')
+      .height(56)
+      .padding({ left: 16, right: 16 })
+      // 底部渐变阴影条：滚动中显示、回顶部消失（if 条件渲染，不依赖 shadow 属性刷新）
+      if (this.headerShadow) {
+        Row()
+          .width('100%')
+          .height(3)
+          .linearGradient({
+            direction: GradientDirection.Bottom,
+            colors: SHADOW_GRADIENT
           })
       }
     }
     .width('100%')
-    .height(56)
-    .padding({ left: 16, right: 8 })
   }
 
   /** My Work 条目标识：id → 图标/色/文案/路由（与 Edit My Work 013/016 一致） */
@@ -173,7 +195,7 @@ export struct HomeView {
   myWorkSection() {
     Row() {
       Text($r('app.string.home_my_work'))
-        .fontSize(20)
+        .fontSize(18)
         .fontWeight(FontWeight.Bold)
         .fontColor($r('app.color.text_primary'))
       Blank()
@@ -218,7 +240,7 @@ export struct HomeView {
   @Builder
   favoritesSection() {
     Text($r('app.string.home_favorites'))
-      .fontSize(20)
+      .fontSize(18)
       .fontWeight(FontWeight.Bold)
       .fontColor($r('app.color.text_primary'))
       .width('100%')
@@ -251,7 +273,7 @@ export struct HomeView {
   @Builder
   shortcutsSection() {
     Text($r('app.string.home_shortcuts'))
-      .fontSize(20)
+      .fontSize(18)
       .fontWeight(FontWeight.Bold)
       .fontColor($r('app.color.text_primary'))
       .width('100%')
@@ -324,6 +346,9 @@ export struct HomeView {
       .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
+      .onScroll((_x: number, y: number): void => {
+        this.headerShadow = y > 0.001;
+      })
     }
     .width('100%')
     .height('100%')

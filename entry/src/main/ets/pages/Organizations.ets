@@ -7,6 +7,7 @@ import { WorkOrgItem, WorkOrgsPage } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -18,6 +19,8 @@ export struct OrganizationsView {
   @Local hasNextPage: boolean = false;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   private scopeName(): string {
     return 'read:org';
@@ -154,6 +157,8 @@ export struct OrganizationsView {
       .height(48)
       .padding({ left: 0, right: 0 })
 
+      PageShadowBar({ show: this.scrollShadow })
+
       if (this.orgs.length > 0) {
         Scroll() {
           Column() {
@@ -174,6 +179,7 @@ export struct OrganizationsView {
         .layoutWeight(1)
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
+        .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
       } else if (this.loading || this.errorMsg !== '') {
         StateView({
           loading: this.loading,

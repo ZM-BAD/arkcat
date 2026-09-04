@@ -5,6 +5,7 @@
 import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { resText } from '../utils/I18n';
 
 const PREFS_NAME = 'starraft_settings';
@@ -26,6 +27,8 @@ export struct NotificationSettingsView {
   @Local rightSwipe: string = SWIPE_UNSUBSCRIBE;
   /** 偏好加载完成门控：Toggle/Slider 的 isOn/value 仅在创建时生效，须等加载后再渲染 */
   @Local loaded: boolean = false;
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
     this.loadSettings();
@@ -287,6 +290,8 @@ export struct NotificationSettingsView {
       .height(48)
       .padding({ left: 0, right: 0 })
 
+      PageShadowBar({ show: this.scrollShadow })
+
       Scroll() {
         if (this.loaded) {
           Column() {
@@ -335,6 +340,7 @@ export struct NotificationSettingsView {
       .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
+      .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
     }
     .width('100%')
     .height('100%')

@@ -9,6 +9,7 @@ import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { TokenStore } from '../services/TokenStore';
 import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { resText } from '../utils/I18n';
 import { applyThemeMode } from '../utils/ThemeMode';
 
@@ -21,6 +22,8 @@ export struct SettingsView {
   @Param pathStack: NavPathStack = new NavPathStack();
   @Local themeMode: string = 'system';
   @Local language: string = 'zh';
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
     this.loadSettings();
@@ -31,13 +34,14 @@ export struct SettingsView {
     if (ctx === undefined) {
       return;
     }
-    preferences.getPreferences(ctx, PREFS_NAME)
-      .then((pref: preferences.Preferences) => {
-        this.themeMode = pref.getSync(KEY_THEME, 'system') as string;
-        this.language = pref.getSync(KEY_LANG, 'zh') as string;
-      })
-      .catch(() => {
-      });
+    try {
+      // 同步读取：避免异步未返回时页面停在初始默认值（语言/主题行显示错误）
+      const pref = preferences.getPreferencesSync(ctx, { name: PREFS_NAME });
+      this.themeMode = pref.getSync(KEY_THEME, 'system') as string;
+      this.language = pref.getSync(KEY_LANG, 'zh') as string;
+    } catch (e) {
+      // 读取失败保持默认
+    }
   }
 
   private saveSetting(key: string, value: string): void {
@@ -110,7 +114,6 @@ export struct SettingsView {
           i18n.System.setAppPreferredLanguage(this.language);
         } catch (e) {
         }
-        promptAction.showToast({ message: $r('app.string.settings_language_restart') });
       });
   }
 
@@ -192,6 +195,52 @@ export struct SettingsView {
     .onClick(onClick)
   }
 
+  /** Theme 行：右侧值直读 this（@Builder 传值参数不随状态刷新，动态值须内联渲染） */
+  @Builder
+  themeRow() {
+    Row() {
+      Text($r('app.string.settings_theme'))
+        .fontSize($r('app.float.body_font_size'))
+        .fontColor($r('app.color.text_primary'))
+      Blank()
+      Text(this.themeLabel())
+        .fontSize($r('app.float.body_font_size'))
+        .fontColor($r('app.color.text_secondary'))
+      OctIcon({ res: $r('app.media.oct_chevron_right_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
+        .margin({ left: 6 })
+    }
+    .width('100%')
+    .height(46)
+    .padding({ left: 16, right: 16 })
+    .backgroundColor($r('app.color.card_background'))
+    .borderRadius(12)
+    .margin({ bottom: 2 })
+    .onClick((): void => this.pickTheme())
+  }
+
+  /** Language 行：右侧值直读 this（同上，切换后行文本即时刷新） */
+  @Builder
+  langRow() {
+    Row() {
+      Text($r('app.string.settings_language'))
+        .fontSize($r('app.float.body_font_size'))
+        .fontColor($r('app.color.text_primary'))
+      Blank()
+      Text(this.language === 'zh' ? this.stringOf($r('app.string.settings_language_zh')) : this.stringOf($r('app.string.settings_language_en')))
+        .fontSize($r('app.float.body_font_size'))
+        .fontColor($r('app.color.text_secondary'))
+      OctIcon({ res: $r('app.media.oct_chevron_right_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
+        .margin({ left: 6 })
+    }
+    .width('100%')
+    .height(46)
+    .padding({ left: 16, right: 16 })
+    .backgroundColor($r('app.color.card_background'))
+    .borderRadius(12)
+    .margin({ bottom: 2 })
+    .onClick((): void => this.pickLanguage())
+  }
+
   build() {
     Column() {
       Row({ space: 8 }) {
@@ -219,19 +268,17 @@ export struct SettingsView {
       .height(48)
       .padding({ left: 0, right: 0 })
 
+      PageShadowBar({ show: this.scrollShadow })
+
       Scroll() {
         Column() {
           this.sectionTitle($r('app.string.settings_notifications'))
           this.row($r('app.string.settings_notification_options'), '', () => this.pathStack.pushPathByName('notificationSettings', ''))
 
           this.sectionTitle($r('app.string.settings_general'))
-          this.row($r('app.string.settings_theme'),
-            this.themeLabel(),
-            () => this.pickTheme())
+          this.themeRow()
           this.row($r('app.string.settings_code_options'), '', () => this.pathStack.pushPathByName('codeOptions', ''))
-          this.row($r('app.string.settings_language'),
-            this.language === 'zh' ? this.stringOf($r('app.string.settings_language_zh')) : this.stringOf($r('app.string.settings_language_en')),
-            () => this.pickLanguage())
+          this.langRow()
           this.row($r('app.string.settings_accounts'), '', () => this.comingSoon())
           this.row($r('app.string.settings_app_lock'), '', () => this.comingSoon())
 
@@ -259,6 +306,9 @@ export struct SettingsView {
       .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
+      .onScroll((_x: number, y: number): void => {
+        this.scrollShadow = y > 0.001;
+      })
     }
     .width('100%')
     .height('100%')

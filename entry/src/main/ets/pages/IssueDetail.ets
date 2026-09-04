@@ -4,6 +4,7 @@
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
 import { MarkdownView } from '../components/MarkdownView';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { RepoComment, IssueDetailPage } from '../models/RepoSubModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { StateView } from '../components/StateView';
@@ -22,6 +23,8 @@ export struct IssueDetailView {
   @Local hasNextPage: boolean = false;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
     this.refresh();
@@ -170,6 +173,8 @@ export struct IssueDetailView {
       .height(48)
       .padding({ left: 0, right: 0 })
 
+      PageShadowBar({ show: this.scrollShadow })
+
       Scroll() {
         Column() {
           if (this.detail !== null) {
@@ -233,6 +238,7 @@ export struct IssueDetailView {
       .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
+      .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
 
       // 底部操作栏（COMMENT + 表情，写操作后续 Spec）
       Row({ space: 10 }) {

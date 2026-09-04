@@ -3,6 +3,7 @@
  * 头部为灰 login 上 + 粗体标题下的样式；行点击进入组织主页。
  */
 import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { OrgListPage, OrgSummary } from '../models/ProfileModels';
 import { ProfileListService } from '../services/ProfileListService';
 import { StateView } from '../components/StateView';
@@ -17,6 +18,8 @@ export struct OrgListView {
   @Local hasNextPage: boolean = false;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
     this.refresh();
@@ -131,6 +134,8 @@ export struct OrgListView {
       .height(64)
       .padding({ left: 0, right: 0 })
 
+      PageShadowBar({ show: this.scrollShadow })
+
       if (this.orgs.length > 0) {
         Scroll() {
           Column() {
@@ -151,6 +156,7 @@ export struct OrgListView {
         .layoutWeight(1)
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
+        .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
       } else {
         StateView({
           loading: this.loading,

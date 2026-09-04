@@ -6,6 +6,7 @@
  * - 行版式与聚合页共用：SearchRows.ets / CodeSearchCard.ets
  */
 import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { StateView } from '../components/StateView';
 import { CodeSearchCard } from '../components/CodeSearchCard';
 import { RepoSearchRow, IssuePrSearchRow, PersonSearchRow, OrgSearchRow } from '../components/SearchRows';
@@ -36,6 +37,8 @@ export struct SearchResultsView {
   @Local cursor: string = '';
   @Local codePage: number = 1;
   @Local loaded: boolean = false;
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
     this.query = this.keyword;
@@ -283,6 +286,8 @@ export struct SearchResultsView {
 
       Divider().strokeWidth(1).color($r('app.color.divider'))
 
+      PageShadowBar({ show: this.scrollShadow })
+
       Scroll() {
         Column() {
           if (!this.loaded) {
@@ -341,6 +346,7 @@ export struct SearchResultsView {
       .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
+      .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
     }
     .width('100%')
     .height('100%')

@@ -10,6 +10,7 @@ import { RepoService } from '../services/RepoService';
 import { MarkdownService, MarkdownFetchResult } from '../services/MarkdownService';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { MarkdownView } from '../components/MarkdownView';
 import { resText } from '../utils/I18n';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
@@ -23,6 +24,8 @@ export struct RepoDetailView {
   @Local detail: RepoDetail | null = null;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
   @Local busy: boolean = false;
   @Local moreExpanded: boolean = false;
   /** README 官方 HTML（REST /readme html+json；null=未加载） */
@@ -593,6 +596,8 @@ export struct RepoDetailView {
       .height(48)
       .padding({ left: 0, right: 0 })
 
+      PageShadowBar({ show: this.scrollShadow })
+
       Scroll() {
         Column({ space: 10 }) {
           if (this.detail !== null) {
@@ -633,6 +638,9 @@ export struct RepoDetailView {
       .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
+      .onScroll((_x: number, y: number): void => {
+        this.scrollShadow = y > 0.001;
+      })
     }
     .width('100%')
     .height('100%')

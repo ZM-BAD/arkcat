@@ -5,6 +5,7 @@
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
 import { FilterDropdownChip, FilterDropdownOption } from '../components/FilterDropdownChip';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { WorkProjectItem, WorkProjectsPage, filterWorkProjects, sortWorkProjects } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
@@ -31,6 +32,8 @@ export struct ProjectsView {
   @Local searchQuery: string = '';
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
     this.refresh();
@@ -317,6 +320,8 @@ export struct ProjectsView {
       .height(48)
       .padding({ left: 0, right: 0 })
 
+      PageShadowBar({ show: this.scrollShadow })
+
       Scroll() {
         Column() {
           Scroll() {
@@ -390,6 +395,7 @@ export struct ProjectsView {
       .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
+      .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
     }
     .width('100%')
     .height('100%')

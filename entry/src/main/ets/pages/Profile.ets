@@ -11,6 +11,7 @@ import { AchievementsService } from '../services/AchievementsService';
 import { RepoCard } from '../components/RepoCard';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { RepoSummary } from '../models/GitHubModels';
 import { resText } from '../utils/I18n';
 
@@ -22,6 +23,8 @@ export struct ProfileView {
   @Local profile: UserProfile | null = null;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
   /** 勋章图片 URL 列表（官方 CDN，AchievementsService 抓取） */
   @Local achievements: string[] = [];
 
@@ -347,33 +350,48 @@ export struct ProfileView {
             this.pathStack.pop();
           })
         Blank()
-        // 🔗 分享：系统分享能力后续 Spec（Spec 005 边界）
-        OctIcon({ res: $r('app.media.oct_share_android_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
-          .padding(6)
-          .onClick(() => {
-            promptAction.showToast({ message: $r('app.string.home_feature_coming') });
-          })
+        // 🔗 分享：系统分享能力后续 Spec（Spec 005 边界；右侧组统一 44 触点与左侧返回对称）
+        Stack() {
+          OctIcon({ res: $r('app.media.oct_share_android_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
+        }
+        .width(44)
+        .height(44)
+        .padding(6)
+        .onClick(() => {
+          promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+        })
         // ⚙ 设置：进入 Settings 页（Spec 014）
-        OctIcon({ res: $r('app.media.oct_gear_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
-          .padding(6)
-          .onClick(() => {
-            this.pathStack.pushPathByName('settings', this.login);
-          })
+        Stack() {
+          OctIcon({ res: $r('app.media.oct_gear_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
+        }
+        .width(44)
+        .height(44)
+        .padding(6)
+        .onClick(() => {
+          this.pathStack.pushPathByName('settings', this.login);
+        })
         // ··· 菜单：Follow/Unfollow（自关注时隐藏，见 Spec 边界）
         if (this.profile !== null && !isSelfProfile(this.profile.viewerLogin, this.profile.user.login)) {
-          OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 20, iconColor: $r('app.color.text_primary') })
-            .bindMenu([
-              {
-                value: this.profile.viewerIsFollowing
-                  ? $r('app.string.profile_unfollow') : $r('app.string.profile_follow'),
-                action: (): void => this.toggleFollow()
-              }
-            ])
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 20, iconColor: $r('app.color.text_primary') })
+          }
+          .width(44)
+          .height(44)
+          .padding(6)
+          .bindMenu([
+            {
+              value: this.profile.viewerIsFollowing
+                ? $r('app.string.profile_unfollow') : $r('app.string.profile_follow'),
+              action: (): void => this.toggleFollow()
+            }
+          ])
         }
       }
       .width('100%')
       .height(48)
       .padding({ left: 0, right: 0 })
+
+      PageShadowBar({ show: this.scrollShadow })
 
       Scroll() {
         Column({ space: 12 }) {
@@ -424,6 +442,9 @@ export struct ProfileView {
       .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
+      .onScroll((_x: number, y: number): void => {
+        this.scrollShadow = y > 0.001;
+      })
     }
     .width('100%')
     .height('100%')

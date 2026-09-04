@@ -4,6 +4,7 @@
  * AppBar = 仓库名（粗体）+ Stargazers（灰副标题）；整行点击进入用户主页。
  */
 import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { UserSummary } from '../models/GitHubModels';
 import { StargazerPage } from '../models/RepoSocialModels';
 import { RepoService } from '../services/RepoService';
@@ -21,6 +22,8 @@ export struct StargazersView {
   @Local hasNextPage: boolean = false;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
     this.refresh();
@@ -142,6 +145,8 @@ export struct StargazersView {
       .height(60)
       .padding({ left: 0, right: 0 })
 
+      PageShadowBar({ show: this.scrollShadow })
+
       if (this.users.length > 0) {
         Scroll() {
           Column() {
@@ -162,6 +167,7 @@ export struct StargazersView {
         .layoutWeight(1)
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
+        .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
       } else {
         StateView({
           loading: this.loading,

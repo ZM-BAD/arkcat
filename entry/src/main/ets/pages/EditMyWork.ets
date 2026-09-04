@@ -4,6 +4,7 @@
  */
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { WorkSection, WorkConfigStore, defaultWorkSections } from '../utils/WorkConfig';
 import { resText } from '../utils/I18n';
 
@@ -21,6 +22,8 @@ export struct EditMyWorkView {
   /** 编辑快照：返回不保存；SAVE 时写回 store */
   @Local snapshot: WorkSection[] = defaultWorkSections();
   private dragFrom: number = -1;
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
     WorkConfigStore.load(this.getUIContext().getHostContext())
@@ -176,6 +179,8 @@ export struct EditMyWorkView {
       .height(48)
       .padding({ left: 0, right: 0 })
 
+      PageShadowBar({ show: this.scrollShadow })
+
       List() {
         ForEach(this.snapshot, (item: WorkSection, index: number) => {
           ListItem() {
@@ -198,6 +203,7 @@ export struct EditMyWorkView {
         this.move(this.dragFrom, targetIndex);
         this.dragFrom = -1;
       })
+      .onScroll((scrollOffset: number, _state: number): void => { this.scrollShadow = scrollOffset > 0.001; })
     }
     .width('100%')
     .height('100%')

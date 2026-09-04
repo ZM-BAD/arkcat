@@ -3,6 +3,7 @@
  * 三个筛选下拉（All/Language/Sort）均为真实筛选；行点击进仓库详情。
  */
 import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { RepoListPage } from '../models/ProfileModels';
 import { RepoSummary } from '../models/GitHubModels';
 import { ProfileListService, RepoOrder } from '../services/ProfileListService';
@@ -24,6 +25,8 @@ export struct RepositoriesListView {
   @Local hasNextPage: boolean = false;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
   @Local typeFilter: string = 'all';
   @Local langFilter: string = '';
   @Local sortField: string = 'PUSHED_AT';
@@ -253,6 +256,8 @@ export struct RepositoriesListView {
       .height(64)
       .padding({ left: 0, right: 0 })
 
+      PageShadowBar({ show: this.scrollShadow })
+
       // 筛选条：All / Language / Sort（内联 Text，避免 @Builder 参数不刷新）
       Row() {
         Text(this.typeLabel())
@@ -303,6 +308,7 @@ export struct RepositoriesListView {
         .layoutWeight(1)
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
+        .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
       } else {
         StateView({
           loading: this.loading,

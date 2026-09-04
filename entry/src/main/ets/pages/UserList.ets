@@ -3,6 +3,7 @@
  * 行：圆头像 + 显示名（粗体）/用户名（灰）/可选简介；整行点击进入用户主页。
  */
 import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { UserListPage } from '../models/ProfileModels';
 import { UserSummary } from '../models/GitHubModels';
 import { ProfileListService } from '../services/ProfileListService';
@@ -20,6 +21,8 @@ export struct UserListView {
   @Local hasNextPage: boolean = false;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
     this.refresh();
@@ -139,6 +142,8 @@ export struct UserListView {
       .height(60)
       .padding({ left: 0, right: 0 })
 
+      PageShadowBar({ show: this.scrollShadow })
+
       if (this.users.length > 0) {
         Scroll() {
           Column() {
@@ -159,6 +164,7 @@ export struct UserListView {
         .layoutWeight(1)
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
+        .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
       } else {
         StateView({
           loading: this.loading,

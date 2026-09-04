@@ -4,6 +4,7 @@
  */
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { WorkListDetail, WorkStarredRepoItem } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
@@ -20,6 +21,8 @@ export struct ListDetailView {
   @Local detail: WorkListDetail | null = null;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   @Monitor('listTick')
   onTickChanged(): void {
@@ -192,6 +195,8 @@ export struct ListDetailView {
       .height(56)
       .padding({ left: 0, right: 0 })
 
+      PageShadowBar({ show: this.scrollShadow })
+
       Scroll() {
         Column({ space: 8 }) {
           if (this.detail !== null) {
@@ -250,6 +255,7 @@ export struct ListDetailView {
       .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
+      .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
     }
     .width('100%')
     .height('100%')

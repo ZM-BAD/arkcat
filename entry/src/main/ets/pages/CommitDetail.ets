@@ -8,6 +8,7 @@ import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { CommitDiffBlock } from '../components/CommitDiffBlock';
 import { StateView } from '../components/StateView';
 import { CommitDetailPage, CommitPullItem, CommitFileItem } from '../models/PrDiffModels';
@@ -32,6 +33,8 @@ export struct CommitDetailView {
   @Local tab: number = 0;
   /** Code Options「展示行号」开关 */
   @Local showLineNumbers: boolean = true;
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
     this.loadLineSetting();
@@ -289,6 +292,8 @@ export struct CommitDetailView {
       .width('100%')
       .border({ width: { bottom: 1 }, color: $r('app.color.border') })
 
+      PageShadowBar({ show: this.scrollShadow })
+
       if (this.loading || this.errorMsg !== '') {
         StateView({ loading: this.loading, error: this.errorMsg, onRetry: (): void => this.refresh() })
           .layoutWeight(1)
@@ -330,6 +335,9 @@ export struct CommitDetailView {
         .layoutWeight(1)
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
+        .onScroll((_x: number, y: number): void => {
+          this.scrollShadow = y > 0.001;
+        })
       } else if (this.detail !== null && this.tab === 1) {
         Scroll() {
           Column() {
@@ -395,6 +403,9 @@ export struct CommitDetailView {
         .layoutWeight(1)
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
+        .onScroll((_x: number, y: number): void => {
+          this.scrollShadow = y > 0.001;
+        })
       }
     }
     .width('100%')

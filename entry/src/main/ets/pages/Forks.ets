@@ -5,6 +5,7 @@
  */
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { ForkEntry, ForkPage } from '../models/RepoSocialModels';
 import { RepoService } from '../services/RepoService';
 import { StateView } from '../components/StateView';
@@ -24,6 +25,8 @@ export struct ForksView {
   @Local errorMsg: string = '';
   @Local inSearch: boolean = false;
   @Local searchQuery: string = '';
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
     this.refresh();
@@ -241,6 +244,8 @@ export struct ForksView {
       .padding({ left: 0, right: 0 })
       Divider().strokeWidth(1).color($r('app.color.divider'))
 
+      PageShadowBar({ show: this.scrollShadow })
+
       if (this.shownForks().length > 0) {
         Scroll() {
           Column() {
@@ -264,6 +269,7 @@ export struct ForksView {
         .layoutWeight(1)
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
+        .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
       } else if (this.inSearch || this.errorMsg !== '' || this.loading) {
         Column() {
           if (this.inSearch) {

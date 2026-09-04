@@ -6,6 +6,7 @@ import { promptAction } from '@kit.ArkUI';
 import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
 import {
   CODE_LIGHT_BG, CODE_LIGHT_TEXT, CODE_LIGHT_KEYWORD, CODE_LIGHT_FUNC, CODE_LIGHT_COMMENT,
   CODE_DARK_BG, CODE_DARK_TEXT, CODE_DARK_KEYWORD, CODE_DARK_FUNC, CODE_DARK_COMMENT,
@@ -29,6 +30,8 @@ export struct CodeOptionsView {
   @Local wrapLines: boolean = true;
   /** 偏好加载完成门控：Toggle/Slider 的 isOn/value 仅在创建时生效，须等加载后再渲染 */
   @Local loaded: boolean = false;
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
     this.loadSettings();
@@ -219,6 +222,8 @@ export struct CodeOptionsView {
       .height(48)
       .padding({ left: 0, right: 0 })
 
+      PageShadowBar({ show: this.scrollShadow })
+
       Scroll() {
         if (this.loaded) {
           Column() {
@@ -288,7 +293,7 @@ export struct CodeOptionsView {
               })
             }
             .width('100%')
-            .padding({ left: 12, right: 8, top: 8, bottom: 8 })
+            .padding({ left: 12, right: 12, top: 8, bottom: 8 })
 
             Divider()
               .color($r('app.color.divider'))
@@ -316,6 +321,7 @@ export struct CodeOptionsView {
       .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
+      .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
     }
     .width('100%')
     .height('100%')

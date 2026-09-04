@@ -3,6 +3,7 @@
  * 正文 = licenseInfo.body 全文（首行许可证名已剥离）；无许可证 → 空态。
  */
 import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
 import { LicenseInfo, stripLicenseTitle } from '../models/RepoLicenseModels';
 import { RepoService } from '../services/RepoService';
 import { StateView } from '../components/StateView';
@@ -17,6 +18,8 @@ export struct RepoLicenseView {
   @Local license: LicenseInfo | null = null;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
     this.refresh();
@@ -76,6 +79,8 @@ export struct RepoLicenseView {
       .height(60)
       .padding({ left: 0, right: 0 })
 
+      PageShadowBar({ show: this.scrollShadow })
+
       if (this.license !== null) {
         Scroll() {
           Text(stripLicenseTitle(this.license.name, this.license.body))
@@ -88,6 +93,7 @@ export struct RepoLicenseView {
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
         .padding({ left: 16, right: 16 })
+        .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
       } else {
         StateView({
           loading: this.loading,

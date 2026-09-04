@@ -10,6 +10,7 @@ import { RepoCard } from '../components/RepoCard';
 import { StateView } from '../components/StateView';
 import { resText } from '../utils/I18n';
 import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
 
 @ComponentV2
 export struct ExploreView {
@@ -19,6 +20,8 @@ export struct ExploreView {
   @Local result: TopicSearchResult | null = null;
   @Local recommended: RepoSummary[] = [];
   @Local loading: boolean = false;
+  /** 滚动顶部阴影（滚动中显示、回顶消失） */
+  @Local scrollShadow: boolean = false;
   @Local errorMsg: string = '';
 
   aboutToAppear(): void {
@@ -155,6 +158,8 @@ export struct ExploreView {
         .width('100%')
         .padding($r('app.float.page_padding'))
 
+      PageShadowBar({ show: this.scrollShadow })
+
       Scroll() {
         Column() {
           // Discover 区（Spec 003）
@@ -229,6 +234,9 @@ export struct ExploreView {
       .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
+      .onScroll((_x: number, y: number): void => {
+        this.scrollShadow = y > 0.001;
+      })
     }
     .width('100%')
     .height('100%')
