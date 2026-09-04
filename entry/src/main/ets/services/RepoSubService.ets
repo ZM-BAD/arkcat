@@ -6,7 +6,8 @@ import { graphql, restGet } from './GitHttpClient';
 import { Json, JsonMap } from '../utils/Json';
 import {
   RepoPrsPage, RepoCommitsPage, RepoReleasesPage, IssueDetailPage, PrDetailPage,
-  mapRepoPrsPage, mapRepoCommitsPage, mapRepoReleasesPage, mapIssueDetail, mapPrDetail, mapPrCommits
+  mapRepoPrsPage, mapRepoCommitsPage, mapRepoReleasesPage, mapIssueDetail, mapPrDetail, mapPrCommits,
+  ReleaseDetailPage, mapReleaseDetail
 } from '../models/RepoSubModels';
 import { PrFilesPage, PrFileItem, mapPrFiles, applyRestPatch, mapFilesCursor, mapFileNode } from '../models/PrDiffModels';
 import { CommitDetailPage, mapCommitDetail } from '../models/PrDiffModels';
@@ -90,7 +91,21 @@ query RepoReleases($owner: String!, $name: String!, $first: Int = 30, $after: St
     releases(first: $first, after: $after, orderBy: { field: CREATED_AT, direction: DESC }) {
       totalCount
       pageInfo { hasNextPage endCursor }
-      nodes { id tagName isLatest createdAt description body bodyHTML author { login avatarUrl } }
+      nodes { id name tagName isLatest createdAt description author { login avatarUrl } }
+    }
+  }
+}`;
+
+const RELEASE_DETAIL_QUERY = `
+query ReleaseDetail($owner: String!, $name: String!, $tag: String!) {
+  repository(owner: $owner, name: $name) {
+    release(tagName: $tag) {
+      id tagName name isDraft isPrerelease publishedAt createdAt url
+      author { login avatarUrl }
+      description
+      releaseAssets(first: 50) {
+        nodes { id name size downloadCount contentType url }
+      }
     }
   }
 }`;
@@ -330,6 +345,14 @@ export class RepoSubService {
     }
     const data = await graphql(REPO_RELEASES_QUERY, variables, token);
     return mapRepoReleasesPage(data);
+  }
+
+  /** Release 详情（tagName 定位；release 不存在返回 null） */
+  static async fetchReleaseDetail(token: string, owner: string, name: string,
+    tag: string): Promise<ReleaseDetailPage | null> {
+    const variables: Record<string, Object> = { 'owner': owner, 'name': name, 'tag': tag };
+    const data = await graphql(RELEASE_DETAIL_QUERY, variables, token);
+    return mapReleaseDetail(data);
   }
 
   static async fetchIssueDetail(token: string, owner: string, name: string, number: number,

@@ -1185,6 +1185,70 @@
       "value": "View release details"
     },
     {
+      "name": "release_draft_badge",
+      "value": "Draft"
+    },
+    {
+      "name": "release_prerelease_badge",
+      "value": "Prerelease"
+    },
+    {
+      "name": "release_assets_title",
+      "value": "Assets"
+    },
+    {
+      "name": "release_assets_empty",
+      "value": "This release has no assets."
+    },
+    {
+      "name": "release_asset_downloads",
+      "value": "%1$d downloads"
+    },
+    {
+      "name": "release_download_cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "release_download_done",
+      "value": "Downloaded"
+    },
+    {
+      "name": "release_download_failed",
+      "value": "Download failed"
+    },
+    {
+      "name": "release_save",
+      "value": "Save to device"
+    },
+    {
+      "name": "release_share",
+      "value": "Share"
+    },
+    {
+      "name": "release_copy_link",
+      "value": "Copy link"
+    },
+    {
+      "name": "release_copy_done",
+      "value": "Link copied"
+    },
+    {
+      "name": "release_saved",
+      "value": "Saved"
+    },
+    {
+      "name": "release_large_file",
+      "value": "File is large; open it in a browser instead."
+    },
+    {
+      "name": "release_404_gone",
+      "value": "Asset has been deleted."
+    },
+    {
+      "name": "release_show_browser",
+      "value": "Open in browser"
+    },
+    {
       "name": "releases_empty",
       "value": "No releases"
     },

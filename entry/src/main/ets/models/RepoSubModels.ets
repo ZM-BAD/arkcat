@@ -54,6 +54,8 @@ export interface RepoCommitsPage {
 /** Release 行 */
 export interface ReleaseItem {
   id: string;
+  /** release 标题（GitHub name，如 1.3.2；tagName 为 v1.3.2） */
+  name: string;
   tagName: string;
   isLatest: boolean;
   createdAt: string;
@@ -83,6 +85,57 @@ export interface ReactionGroup {
   count: number;
   viewerHasReacted: boolean;
   users: ReactionUser[];
+}
+
+/** Release 资产（Spec 047）：二进制下载段 */
+export interface ReleaseAsset {
+  id: string;
+  name: string;
+  size: number;
+  downloadCount: number;
+  contentType: string;
+  /** API 下载端点（带 token GET） */
+  url: string;
+}
+
+export interface ReleaseDetailPage {
+  id: string;
+  tagName: string;
+  /** 发布页 HTML 直链（分享/复制用） */
+  releaseUrl: string;
+  name: string;
+  isDraft: boolean;
+  isPrerelease: boolean;
+  publishedAt: string;
+  createdAt: string;
+  body: string;
+  bodyHTML: string;
+  authorLogin: string;
+  authorAvatar: string;
+  assets: ReleaseAsset[];
+}
+
+/** 字节数 → 人类可读（B/KB/MB/GB，保留 1 位小数；未知回退 0 B） */
+export function formatBytes(size: number): string {
+  if (size <= 0) {
+    return '0 B';
+  }
+  const units: string[] = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let value = size;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value = value / 1024;
+    unit++;
+  }
+  const text = unit === 0 ? `${value}` : value.toFixed(1);
+  return `${text} ${units[unit]}`;
+}
+
+/** 资产浏览器下载直链：github.com/{o}/{r}/releases/download/{tag}/{name}（GraphQL ReleaseAsset 无此字段，REST 特有） */
+export function releaseAssetBrowserUrl(owner: string, repo: string, tag: string, name: string): string {
+  const safeTag = encodeURIComponent(tag);
+  const safeName = encodeURIComponent(name);
+  return `https://github.com/${owner}/${repo}/releases/download/${safeTag}/${safeName}`;
 }
 
 /** 评论（Issue/PR 通用，ArkTS 名义类型：单一 interface 复用） */
@@ -403,12 +456,14 @@ export function mapRelease(raw: JsonMap): ReleaseItem {
   const author = Json.obj(raw, 'author');
   return {
     id: Json.str(raw, 'id'),
+    name: Json.str(raw, 'name'),
     tagName: Json.str(raw, 'tagName'),
     isLatest: Json.bool(raw, 'isLatest'),
     createdAt: Json.str(raw, 'createdAt'),
     description: Json.str(raw, 'description'),
-    body: Json.str(raw, 'body'),
-    bodyHTML: Json.str(raw, 'bodyHTML'),
+    // Release 无 body 字段（实测）：description 即正文原文；HTML 由页面 renderMarkdown 生成
+    body: Json.str(raw, 'description'),
+    bodyHTML: '',
     authorLogin: author !== null ? Json.str(author, 'login') : '',
     authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : ''
   };
@@ -447,6 +502,48 @@ function mapReactionGroup(raw: JsonMap): ReactionGroup {
     users: nodes
   };
 }
+
+function mapReleaseAsset(raw: JsonMap): ReleaseAsset {
+  return {
+    id: Json.str(raw, 'id'),
+    name: Json.str(raw, 'name'),
+    size: Json.num(raw, 'size'),
+    downloadCount: Json.num(raw, 'downloadCount'),
+    contentType: Json.str(raw, 'contentType'),
+    url: Json.str(raw, 'url')
+  };
+}
+
+export function mapReleaseDetail(data: JsonMap): ReleaseDetailPage | null {
+  const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
+  const release = Json.obj(repo, 'release');
+  if (release === null) {
+    return null;
+  }
+  const author = Json.obj(release, 'author');
+  const assetsWrap = Json.obj(release, 'releaseAssets') ?? ({} as JsonMap);
+  const assets: ReleaseAsset[] = [];
+  for (const nodeItem of Json.arr(assetsWrap, 'nodes')) {
+    assets.push(mapReleaseAsset(nodeItem as JsonMap));
+  }
+  return {
+    id: Json.str(release, 'id'),
+    tagName: Json.str(release, 'tagName'),
+    releaseUrl: Json.str(release, 'url'),
+    name: Json.str(release, 'name'),
+    isDraft: Json.bool(release, 'isDraft'),
+    isPrerelease: Json.bool(release, 'isPrerelease'),
+    publishedAt: Json.str(release, 'publishedAt'),
+    createdAt: Json.str(release, 'createdAt'),
+    // Release 无 body/bodyHTML（实测）：description=正文原文；HTML 由页面 renderMarkdown 生成
+    body: Json.str(release, 'description'),
+    bodyHTML: '',
+    authorLogin: author !== null ? Json.str(author, 'login') : '',
+    authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : '',
+    assets: assets
+  };
+}
+
 
 function mapComment(raw: JsonMap): RepoComment {
   const author = Json.obj(raw, 'author');
