@@ -1,0 +1,280 @@
+/**
+ * PR 文件变更页（Spec 010）：Files Changed 视图。
+ * GraphQL 列表/计数 + REST patch 兜底；文件卡折叠/展开、Find file 过滤、底部 Add a comment（GraphQL addComment）。
+ * 入口：PrDetail Changes 卡「N files changed」行；行内评论/图片 diff 属 042/后续批。
+ */
+import { promptAction } from '@kit.ArkUI';
+import { OctIcon } from '../components/OctIcon';
+import { StateView } from '../components/StateView';
+import { PrDiffCard } from '../components/PrDiffCard';
+import { PrFileItem, PrFilesPage } from '../models/PrDiffModels';
+import { RepoSubService } from '../services/RepoSubService';
+import { resText } from '../utils/I18n';
+
+@ComponentV2
+export struct PrFilesView {
+  @Param owner: string = '';
+  @Param name: string = '';
+  @Param number: number = 0;
+  @Param token: string = '';
+  @Param pathStack: NavPathStack = new NavPathStack();
+  @Local page: PrFilesPage | null = null;
+  @Local files: PrFileItem[] = [];
+  @Local loading: boolean = true;
+  @Local errorMsg: string = '';
+  @Local finderOpen: boolean = false;
+  @Local finderQuery: string = '';
+  @Local commentText: string = '';
+  @Local sending: boolean = false;
+
+  aboutToAppear(): void {
+    this.refresh();
+  }
+
+  private stringOf(res: Resource): string {
+    return resText(this.getUIContext(), res);
+  }
+
+  private refresh(): void {
+    this.loading = true;
+    this.errorMsg = '';
+    RepoSubService.fetchPrFiles(this.token, this.owner, this.name, this.number)
+      .then((page: PrFilesPage) => {
+        this.page = page;
+        this.files = page.files;
+        this.loading = false;
+      })
+      .catch((e: Error) => {
+        this.errorMsg = e.message;
+        this.loading = false;
+      });
+  }
+
+  /** 展开/收起：重建数组触发 @Local 刷新（V2 数组元素属性变更不响应；ArkTS 禁对象 spread，显式拷贝） */
+  private togglePath(path: string): void {
+    this.files = this.files.map((f: PrFileItem): PrFileItem => {
+      if (f.path === path) {
+        return {
+          path: f.path,
+          additions: f.additions,
+          deletions: f.deletions,
+          status: f.status,
+          patch: f.patch,
+          hunks: f.hunks,
+          diffTooLarge: f.diffTooLarge,
+          expanded: !f.expanded
+        };
+      }
+      return f;
+    });
+  }
+
+  /** Find file 过滤（大小写不敏感子串） */
+  private filteredFiles(): PrFileItem[] {
+    if (this.finderQuery === '') {
+      return this.files;
+    }
+    const q = this.finderQuery.toUpperCase();
+    return this.files.filter((f: PrFileItem): boolean => f.path.toUpperCase().indexOf(q) >= 0);
+  }
+
+  /** 👁 查看完整文件：复用 038 代码查看器（owner|name|path 路由参数） */
+  private openFile(item: PrFileItem): void {
+    this.pathStack.pushPathByName('codeViewer', `${this.owner}|${this.name}|${item.path}`);
+  }
+
+  /** 底部 Add a comment：GraphQL addComment（041 统一输入面板前的最小实现） */
+  private sendComment(): void {
+    const body = this.commentText.trim();
+    if (body === '' || this.sending || this.page === null || this.page.pullRequestId === '') {
+      return;
+    }
+    this.sending = true;
+    RepoSubService.addPrComment(this.token, this.page.pullRequestId, body)
+      .then(() => {
+        this.commentText = '';
+        this.sending = false;
+        promptAction.showToast({ message: $r('app.string.pr_comment_sent') });
+      })
+      .catch(() => {
+        this.sending = false;
+        promptAction.showToast({ message: $r('app.string.pr_comment_failed') });
+      });
+  }
+
+  /** Find file 弹层：搜索框 + 匹配文件列表（点击=展开该文件并关闭） */
+  @Builder
+  finderSheet() {
+    Column() {
+      Row({ space: 8 }) {
+        Text(this.stringOf($r('app.string.pr_find_file')))
+          .fontSize(16)
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.text_primary'))
+          .layoutWeight(1)
+        Text('✕')
+          .fontSize(18)
+          .fontColor($r('app.color.text_secondary'))
+          .padding(8)
+          .accessibilityDescription($r('app.string.a11y_close'))
+          .focusable(true)
+          .onClick(() => {
+            this.finderOpen = false;
+          })
+      }
+      .width('100%')
+      .padding({ left: 16, right: 8, top: 10, bottom: 6 })
+
+      TextInput({ text: this.finderQuery, placeholder: this.stringOf($r('app.string.search_placeholder')) })
+        .fontSize($r('app.float.body_font_size'))
+        .height(40)
+        .borderRadius(6)
+        .backgroundColor($r('app.color.input_bg'))
+        .margin({ left: 16, right: 16, bottom: 6 })
+        .onChange((v: string) => {
+          this.finderQuery = v;
+        })
+
+      List() {
+        ForEach(this.filteredFiles(), (item: PrFileItem) => {
+          ListItem() {
+            Row({ space: 8 }) {
+              OctIcon({ res: $r('app.media.oct_file_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
+              Text(item.path)
+                .fontFamily('monospace')
+                .fontSize(12)
+                .fontColor($r('app.color.text_primary'))
+                .maxLines(1)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
+                .layoutWeight(1)
+            }
+            .width('100%')
+            .padding({ left: 16, right: 16, top: 10, bottom: 10 })
+            .onClick(() => {
+              this.finderOpen = false;
+              this.togglePath(item.path);
+            })
+          }
+        }, (item: PrFileItem) => item.path)
+      }
+      .layoutWeight(1)
+      .width('100%')
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor($r('app.color.bg_page'))
+  }
+
+  build() {
+    Column() {
+      // 自绘头部：← 标题 + ···（Find file）
+      Row({ space: 8 }) {
+        Stack() {
+          OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
+        }
+        .width(44)
+        .height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
+        .onClick(() => {
+          this.pathStack.pop();
+        })
+        Text(this.page !== null
+          ? resText(this.getUIContext(), $r('app.string.pr_files_appbar'), this.page.totalCount)
+          : this.stringOf($r('app.string.pr_changes_title')))
+          .fontSize($r('app.float.title_font_size'))
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.text_primary'))
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .layoutWeight(1)
+        Stack() {
+          OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+        }
+        .width(44)
+        .height(44)
+        .padding(6)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
+        .bindMenu([{
+          value: this.stringOf($r('app.string.pr_find_file')),
+          action: (): void => {
+            this.finderOpen = true;
+          }
+        }])
+      }
+      .width('100%')
+      .height(48)
+      .padding({ left: 0, right: 0 })
+
+      if (this.loading || this.errorMsg !== '') {
+        StateView({ loading: this.loading, error: this.errorMsg, onRetry: (): void => { this.refresh(); } })
+          .layoutWeight(1)
+      } else {
+        Scroll() {
+          Column() {
+            if (this.files.length === 0) {
+              Text($r('app.string.pr_files_empty'))
+                .fontSize($r('app.float.body_font_size'))
+                .fontColor($r('app.color.text_secondary'))
+                .width('100%')
+                .padding({ top: 48 })
+                .textAlign(TextAlign.Center)
+            } else {
+              Text($r('app.string.pr_changes_from_all_commits'))
+                .fontSize($r('app.float.caption_font_size'))
+                .fontColor($r('app.color.text_secondary'))
+                .width('100%')
+                .padding({ left: 16, top: 10, bottom: 8 })
+              ForEach(this.files, (item: PrFileItem) => {
+                PrDiffCard({
+                  item: item,
+                  onToggle: (): void => this.togglePath(item.path),
+                  onOpenFile: (): void => this.openFile(item)
+                })
+              }, (item: PrFileItem) => item.path)
+            }
+          }
+          .width('100%')
+          .padding({ left: 16, right: 16, bottom: 16 })
+        }
+        .layoutWeight(1)
+        .scrollBar(BarState.Off)
+        .align(Alignment.Top)
+      }
+
+      // 底部 Add a comment（全局评论，写操作最小实现）
+      Row({ space: 10 }) {
+        TextInput({ text: this.commentText, placeholder: this.stringOf($r('app.string.pr_comment_hint')) })
+          .fontSize($r('app.float.body_font_size'))
+          .height(40)
+          .borderRadius(6)
+          .backgroundColor($r('app.color.input_bg'))
+          .layoutWeight(1)
+          .onChange((v: string) => {
+            this.commentText = v;
+          })
+          .onSubmit(() => {
+            this.sendComment();
+          })
+        Stack() {
+          OctIcon({ res: $r('app.media.oct_paper_airplane_16'), iconSize: 18,
+            iconColor: $r('app.color.link_blue') })
+        }
+        .width(40)
+        .height(40)
+        .accessibilityDescription($r('app.string.a11y_send'))
+        .focusable(true)
+        .onClick(() => {
+          this.sendComment();
+        })
+      }
+      .width('100%')
+      .padding({ left: 16, right: 16, top: 8, bottom: 12 })
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor($r('app.color.bg_page'))
+    .bindSheet(this.finderOpen, this.finderSheet(), { showClose: false })
+  }
+}

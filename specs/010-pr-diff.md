@@ -3,7 +3,7 @@
 > BFS Level: 3
 > 关联截图: PR Detail → Files changed Tab
 > 上游 Spec: 009
-> 状态: ✅ approved
+> 状态: ✅ implemented（2026-09-04，Spec 010 PR Diff 实现：GraphQL files 列表 + REST patch 兜底）
 
 ---
 
@@ -133,10 +133,10 @@ mutation MarkFileAsViewed($pullRequestId: ID!, $path: String!) {
 
 ## 六、TDD 验收标准
 
-- [ ] 文件变更列表能展示
-- [ ] Diff 内容能渲染（绿/红/白三色）
-- [ ] 折叠/展开文件 Diff 正常
-- [ ] 全局评论提交正常
+- [x] 文件变更列表能展示
+- [x] Diff 内容能渲染（绿/红/白三色）
+- [x] 折叠/展开文件 Diff 正常
+- [x] 全局评论提交正常
 
 ---
 

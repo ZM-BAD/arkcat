@@ -224,8 +224,12 @@ export struct PrDetailView {
                 Text(`-${this.detail.deletions}`)
                   .fontSize($r('app.float.caption_font_size'))
                   .fontColor($r('app.color.danger_text'))
+                OctIcon({ res: $r('app.media.oct_chevron_right_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
               }
               .width('100%')
+              .onClick(() => {
+                this.pathStack.pushPathByName('prFiles', `${this.owner}/${this.name}/${this.number}`);
+              })
               Row({ space: 8 }) {
                 OctIcon({ res: $r('app.media.oct_git_commit_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
                 Text(resText(this.getUIContext(), $r('app.string.pr_commits_count'), this.detail.commitsCount))

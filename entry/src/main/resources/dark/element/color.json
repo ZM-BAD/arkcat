@@ -215,6 +215,30 @@
     {
       "name": "achievement_close_bg",
       "value": "#2B2F5C"
+    },
+    {
+      "name": "diff_add_bg",
+      "value": "#222EA043"
+    },
+    {
+      "name": "diff_add_fg",
+      "value": "#3FB950"
+    },
+    {
+      "name": "diff_del_bg",
+      "value": "#22F85149"
+    },
+    {
+      "name": "diff_del_fg",
+      "value": "#F85149"
+    },
+    {
+      "name": "diff_hunk_bg",
+      "value": "#21262D"
+    },
+    {
+      "name": "input_bg",
+      "value": "#21262D"
     }
   ]
 }

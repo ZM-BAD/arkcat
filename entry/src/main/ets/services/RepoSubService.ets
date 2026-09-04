@@ -2,11 +2,13 @@
  * 仓库二级页面服务（Spec 027-031）：
  * 仓库内 PR 列表 / Commits / Releases / Issue 详情 / PR 详情。
  */
-import { graphql } from './GitHttpClient';
+import { graphql, restGet } from './GitHttpClient';
+import { Json, JsonMap } from '../utils/Json';
 import {
   RepoPrsPage, RepoCommitsPage, RepoReleasesPage, IssueDetailPage, PrDetailPage,
   mapRepoPrsPage, mapRepoCommitsPage, mapRepoReleasesPage, mapIssueDetail, mapPrDetail
 } from '../models/RepoSubModels';
+import { PrFilesPage, PrFileItem, mapPrFiles, applyRestPatch } from '../models/PrDiffModels';
 
 const REPO_PRS_QUERY = `
 query RepoPullRequests($owner: String!, $name: String!, $states: [PullRequestState!], $labels: [String!], $first: Int = 50, $after: String) {
@@ -94,6 +96,26 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!) {
   }
 }`;
 
+const PR_FILES_QUERY = `
+query PullRequestFiles($owner: String!, $name: String!, $number: Int!) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      id
+      files(first: 100) {
+        totalCount
+        nodes { path additions deletions status }
+      }
+    }
+  }
+}`;
+
+const PR_ADD_COMMENT_MUTATION = `
+mutation AddPrComment($subjectId: ID!, $body: String!) {
+  addComment(input: { subjectId: $subjectId, body: $body }) {
+    clientMutationId
+  }
+}`;
+
 /** 仓库内 PR 列表（state: all/open/closed/merged；label 走 GraphQL，author/assignee 客户端过滤） */
 export function repoPrsStates(states: string[] | null): string[] | null {
   return states;
@@ -152,5 +174,41 @@ export class RepoSubService {
     const variables: Record<string, Object> = { 'owner': owner, 'name': name, 'number': number };
     const data = await graphql(PR_DETAIL_QUERY, variables, token);
     return mapPrDetail(data);
+  }
+
+  /**
+   * PR 文件变更（Spec 010）：GraphQL 拿列表/计数（files(first:100)），
+   * REST /pulls/{n}/files?per_page=100 按 filename 回填 patch（GraphQL 无 diff 字段）；
+   * REST 失败时静默降级为纯列表（hunks 为空即不可预览）。
+   */
+  static async fetchPrFiles(token: string, owner: string, name: string, number: number): Promise<PrFilesPage> {
+    const variables: Record<string, Object> = { 'owner': owner, 'name': name, 'number': number };
+    const data = await graphql(PR_FILES_QUERY, variables, token);
+    const page = mapPrFiles(data);
+    try {
+      const resp = await restGet(`/repos/${owner}/${name}/pulls/${number}/files?per_page=100`, token);
+      const parsed: Object | null = JSON.parse(resp.body);
+      const restItems = parsed as Object[];
+      const itemByPath = new Map<string, JsonMap>();
+      for (const node of restItems) {
+        const item = node as JsonMap;
+        itemByPath.set(Json.str(item, 'filename'), item);
+      }
+      const merged: PrFileItem[] = [];
+      for (const f of page.files) {
+        const rest = itemByPath.get(f.path);
+        merged.push(rest !== undefined ? applyRestPatch(f, rest) : f);
+      }
+      page.files = merged;
+    } catch (e) {
+      // patch 拉取失败不阻断列表（行内评论等写操作与列表无关）
+    }
+    return page;
+  }
+
+  /** 全局评论提交（GraphQL addComment；041 评论区全链路前的最小实现） */
+  static async addPrComment(token: string, subjectId: string, body: string): Promise<void> {
+    const variables: Record<string, Object> = { 'subjectId': subjectId, 'body': body };
+    await graphql(PR_ADD_COMMENT_MUTATION, variables, token);
   }
 }

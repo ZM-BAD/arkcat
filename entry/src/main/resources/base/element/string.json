@@ -1213,6 +1213,54 @@
       "value": "Merged"
     },
     {
+      "name": "pr_files_appbar",
+      "value": "Files changed (%1$d)"
+    },
+    {
+      "name": "pr_changes_from_all_commits",
+      "value": "changes from all commits"
+    },
+    {
+      "name": "pr_diff_too_large",
+      "value": "Diff too large"
+    },
+    {
+      "name": "pr_files_empty",
+      "value": "No files changed"
+    },
+    {
+      "name": "pr_find_file",
+      "value": "Find file"
+    },
+    {
+      "name": "pr_comment_hint",
+      "value": "Add a comment..."
+    },
+    {
+      "name": "pr_comment_sent",
+      "value": "Comment posted"
+    },
+    {
+      "name": "pr_comment_failed",
+      "value": "Failed to post comment"
+    },
+    {
+      "name": "a11y_expand",
+      "value": "Expand"
+    },
+    {
+      "name": "a11y_collapse",
+      "value": "Collapse"
+    },
+    {
+      "name": "a11y_view_file",
+      "value": "View file"
+    },
+    {
+      "name": "a11y_send",
+      "value": "Send"
+    },
+    {
       "name": "comment_button",
       "value": "COMMENT"
     },

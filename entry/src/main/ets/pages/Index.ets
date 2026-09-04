@@ -36,6 +36,7 @@ import { RepoCommitsView } from './RepoCommits';
 import { RepoReleasesView } from './RepoReleases';
 import { IssueDetailView } from './IssueDetail';
 import { PrDetailView } from './PrDetail';
+import { PrFilesView } from './PrFiles';
 import { NotificationSettingsView } from './NotificationSettings';
 import { CodeOptionsView } from './CodeOptions';
 import { UserListView } from './UserList';
@@ -728,6 +729,24 @@ struct Index {
     .hideTitleBar(true)
   }
 
+  /** Spec 010：PR 文件变更页（路由参数：owner/name/number） */
+  @Builder
+  prFilesDestination() {
+    NavDestination() {
+      PrFilesView({
+        owner: this.repoOwner,
+        name: this.repoName,
+        number: this.detailNumber,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseRouteParam(context.pathInfo.param as string);
+    })
+    .hideTitleBar(true)
+  }
+
   @Builder
   destinationMap(name: string) {
     if (name === 'userProfile') {
@@ -802,6 +821,8 @@ struct Index {
       this.licenseDestination()
     } else if (name === 'achievementDetail') {
       this.achievementDetailDestination()
+    } else if (name === 'prFiles') {
+      this.prFilesDestination()
     }
   }
 
