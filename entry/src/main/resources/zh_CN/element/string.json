@@ -1513,6 +1513,10 @@
       "value": "许可"
     },
     {
+      "name": "repo_license_none",
+      "value": "该仓库没有许可证。"
+    },
+    {
       "name": "repo_code",
       "value": "代码"
     },
@@ -1727,6 +1731,14 @@
     {
       "name": "social_stargazers",
       "value": "星标者"
+    },
+    {
+      "name": "social_contributors_empty",
+      "value": "还没有贡献者。"
+    },
+    {
+      "name": "social_watchers_empty",
+      "value": "还没有关注者。"
     },
     {
       "name": "social_forks",

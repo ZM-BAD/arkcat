@@ -1545,6 +1545,10 @@
       "value": "License"
     },
     {
+      "name": "repo_license_none",
+      "value": "This repository does not have a license."
+    },
+    {
       "name": "repo_code",
       "value": "Code"
     },
@@ -1727,6 +1731,14 @@
     {
       "name": "social_stargazers",
       "value": "Stargazers"
+    },
+    {
+      "name": "social_contributors_empty",
+      "value": "No contributors yet."
+    },
+    {
+      "name": "social_watchers_empty",
+      "value": "No watchers yet."
     },
     {
       "name": "social_forks",

@@ -91,3 +91,61 @@ export function mapForkPage(data: JsonMap): ForkPage {
     endCursor: Json.str(pageInfo, 'endCursor')
   };
 }
+
+/** 仓库用户列表一页（Spec 054：Contributors/Watchers 统一分页结构） */
+export interface PeoplePage {
+  users: UserSummary[];
+  hasNextPage: boolean;
+  /** 下一页游标（watchers=GraphQL endCursor；contributors=页码字符串） */
+  endCursor: string;
+}
+
+/** GraphQL repository.watchers → PeoplePage（结构与 stargazers 连接一致） */
+export function mapWatcherPage(data: JsonMap): PeoplePage {
+  const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
+  const conn = Json.obj(repo, 'watchers') ?? ({} as JsonMap);
+  const pageInfo = Json.obj(conn, 'pageInfo') ?? ({} as JsonMap);
+  const users: UserSummary[] = [];
+  for (const node of Json.arr(conn, 'nodes')) {
+    users.push(mapUser(node as JsonMap));
+  }
+  return {
+    users: users,
+    hasNextPage: Json.bool(pageInfo, 'hasNextPage'),
+    endCursor: Json.str(pageInfo, 'endCursor')
+  };
+}
+
+/** REST /contributors 原始项（仅 login/avatar_url；补全见 mapContributorPage 的 meta 参数） */
+export interface RawContributor {
+  login: string;
+  avatarUrl: string;
+}
+
+export function mapRawContributor(raw: JsonMap): RawContributor {
+  // REST /contributors 为 snake_case：avatar_url（GraphQL user(login) 才是 avatarUrl）
+  return { login: Json.str(raw, 'login'), avatarUrl: Json.str(raw, 'avatar_url') };
+}
+
+/**
+ * 合并 REST 贡献者数组与 GraphQL 元信息（key=login 的 user(login) 补全）→ PeoplePage。
+ * 顺序保留 REST 原序（贡献数降序）；GraphQL 缺失的用户降级为 REST 字段（name/bio 空）。
+ */
+export function mapContributorPage(restNodes: JsonMap[], meta: Map<string, JsonMap>, page: number): PeoplePage {
+  const users: UserSummary[] = [];
+  for (const raw of restNodes) {
+    const rc = mapRawContributor(raw);
+    const gql = meta.get(rc.login);
+    if (gql !== undefined && (gql['login'] !== undefined && gql['login'] !== null)) {
+      users.push(mapUser(gql));
+    } else {
+      users.push({ login: rc.login, name: '', avatarUrl: rc.avatarUrl, bio: '', followers: 0, following: 0 });
+    }
+  }
+  return {
+    users: users,
+    // REST 无 Link 头透出：长度=per_page(50) 视为可能还有下一页
+    hasNextPage: restNodes.length >= 50,
+    endCursor: `${page + 1}`
+  };
+}

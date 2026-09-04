@@ -389,7 +389,7 @@ export struct RepoDetailView {
         .width('100%')
         .height(48)
         .padding({ left: 16, right: 16 })
-        .onClick(() => this.comingSoon())
+        .onClick(() => this.navigateLink('contributors', `${this.owner}/${this.name}`))
 
         Row({ space: 12 }) {
           Stack() {
@@ -406,7 +406,7 @@ export struct RepoDetailView {
         .width('100%')
         .height(48)
         .padding({ left: 16, right: 16 })
-        .onClick(() => this.comingSoon())
+        .onClick(() => this.navigateLink('watchers', `${this.owner}/${this.name}`))
 
         Row({ space: 12 }) {
           Stack() {
@@ -423,7 +423,7 @@ export struct RepoDetailView {
         .width('100%')
         .height(48)
         .padding({ left: 16, right: 16 })
-        .onClick(() => this.comingSoon())
+        .onClick(() => this.navigateLink('license', `${this.owner}/${this.name}`))
       }
     }
     .width('100%')
