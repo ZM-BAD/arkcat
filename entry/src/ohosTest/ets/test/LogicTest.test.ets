@@ -30,7 +30,8 @@ import { mapSearchResult } from '../../../main/ets/models/ExploreModels';
 import { mapUserProfile, isSelfProfile } from '../../../main/ets/models/ProfileModels';
 import { mapRepoDetail, nextStarAction } from '../../../main/ets/models/RepoDetailModels';
 import { parseAchievementDetail, extractAchievementSlugs } from '../../../main/ets/models/AchievementModels';
-import { mapFork, mapStargazerPage } from '../../../main/ets/models/RepoSocialModels';
+import { mapFork, mapStargazerPage, mapWatcherPage, mapContributorPage } from '../../../main/ets/models/RepoSocialModels';
+import { mapLicenseInfo, stripLicenseTitle } from '../../../main/ets/models/RepoLicenseModels';
 import { mapIssue, mapIssuesPage, issueOrderField } from '../../../main/ets/models/IssuesModels';
 import { MarkdownService } from '../../../main/ets/services/MarkdownService';
 
@@ -1225,6 +1226,81 @@ export default function logicTest(testsuiteName: string) {
       expect(page.users[0].bio).assertEqual('b');
       expect(page.hasNextPage).assertTrue();
       expect(page.endCursor).assertEqual('CURSOR');
+    });
+
+    it('mapWatcherPage_conn', 0, () => {
+      const watcherNode: JsonMap = { 'login': 'w', 'name': 'W', 'bio': 'b', 'avatarUrl': 'u' };
+      const pageInfo: JsonMap = { 'hasNextPage': false, 'endCursor': '' };
+      const watchers: JsonMap = { 'pageInfo': pageInfo, 'nodes': [watcherNode] };
+      const repoNode: JsonMap = { 'watchers': watchers };
+      const data: JsonMap = { 'repository': repoNode };
+      const page = mapWatcherPage(data);
+      expect(page.users.length).assertEqual(1);
+      expect(page.users[0].login).assertEqual('w');
+      expect(page.users[0].name).assertEqual('W');
+      expect(page.hasNextPage).assertFalse();
+    });
+
+    it('mapContributorPage_merge', 0, () => {
+      // REST 原序 + GraphQL 补全（key=login）：name/bio 覆盖，顺序保持
+      const restA: JsonMap = { 'login': 'a', 'avatar_url': 'av-a' };
+      const restB: JsonMap = { 'login': 'b', 'avatar_url': 'av-b' };
+      const gqlA: JsonMap = { 'login': 'a', 'name': 'User A', 'bio': 'bio about A', 'avatarUrl': 'av-a' };
+      const meta = new Map<string, JsonMap>();
+      meta.set('a', gqlA);
+      const restArr: JsonMap[] = [restA, restB];
+      const page = mapContributorPage(restArr, meta, 1);
+      expect(page.users.length).assertEqual(2);
+      expect(page.users[0].login).assertEqual('a');
+      expect(page.users[0].name).assertEqual('User A');
+      expect(page.users[0].bio).assertEqual('bio about A');
+      expect(page.users[1].login).assertEqual('b');
+      expect(page.users[1].name).assertEqual('');
+      expect(page.users[1].avatarUrl).assertEqual('av-b');
+      expect(page.hasNextPage).assertFalse();
+      expect(page.endCursor).assertEqual('2');
+    });
+
+    it('mapContributorPage_fullPage', 0, () => {
+      // 长度=per_page(50) → 认为可能还有下一页（REST 无 Link 头透出的近似判断）
+      const restNodes: JsonMap[] = [];
+      for (let i = 0; i < 50; i++) {
+        const n: JsonMap = { 'login': `u${i}`, 'avatar_url': '' };
+        restNodes.push(n);
+      }
+      const page = mapContributorPage(restNodes, new Map<string, JsonMap>(), 2);
+      expect(page.users.length).assertEqual(50);
+      expect(page.hasNextPage).assertTrue();
+      expect(page.endCursor).assertEqual('3');
+    });
+
+    it('mapLicenseInfo_full', 0, () => {
+      const info: JsonMap = { 'name': 'MIT License', 'spdxId': 'MIT', 'body': 'MIT License\n\nCopyright (c) 2026 A\n' };
+      const repoNode: JsonMap = { 'licenseInfo': info };
+      const data: JsonMap = { 'repository': repoNode };
+      const license = mapLicenseInfo(data);
+      expect(license !== null).assertTrue();
+      if (license !== null) {
+        expect(license.name).assertEqual('MIT License');
+        expect(license.spdxId).assertEqual('MIT');
+        expect(license.body.length > 0).assertTrue();
+      }
+    });
+
+    it('mapLicenseInfo_null', 0, () => {
+      const repoNode: JsonMap = {};
+      const data: JsonMap = { 'repository': repoNode };
+      const license = mapLicenseInfo(data);
+      expect(license === null).assertTrue();
+    });
+
+    it('stripLicenseTitle_mit', 0, () => {
+      const body = 'MIT License\n\nCopyright (c) 2026 A\n\nPermission is hereby granted';
+      const stripped = stripLicenseTitle('MIT License', body);
+      expect(stripped.startsWith('Copyright')).assertTrue();
+      expect(stripped.indexOf('MIT License')).assertEqual(-1);
+      // name 为空 → 原样返回
+      expect(stripLicenseTitle('', body)).assertEqual(body);
     });
   });
 }

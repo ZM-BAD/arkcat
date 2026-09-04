@@ -1,9 +1,12 @@
 /**
- * 仓库详情服务（Spec 006）：详情查询 + Star/Fork mutation + Spec 053 社交列表（stargazers/forks）。
+ * 仓库详情服务（Spec 006）：详情查询 + Star/Fork mutation + Spec 053 社交列表（stargazers/forks）
+ * + Spec 054 社区列表（contributors/watchers）+ Spec 055 许可证。
  */
-import { graphql } from './GitHttpClient';
+import { graphql, restGet, ApiError } from './GitHttpClient';
+import { Json, JsonMap } from '../utils/Json';
 import { RepoDetail, mapRepoDetail } from '../models/RepoDetailModels';
-import { StargazerPage, ForkPage, mapStargazerPage, mapForkPage } from '../models/RepoSocialModels';
+import { StargazerPage, ForkPage, PeoplePage, mapStargazerPage, mapForkPage, mapWatcherPage, mapContributorPage } from '../models/RepoSocialModels';
+import { LicenseInfo, mapLicenseInfo } from '../models/RepoLicenseModels';
 
 const REPO_QUERY = `
 query RepositoryDetail($owner: String!, $name: String!) {
@@ -80,6 +83,26 @@ query RepoForks($owner: String!, $name: String!, $first: Int = 50, $after: Strin
   }
 }`;
 
+const WATCHERS_QUERY = `
+query RepoWatchers($owner: String!, $name: String!, $first: Int = 50, $after: String) {
+  repository(owner: $owner, name: $name) {
+    watchers(first: $first, after: $after) {
+      pageInfo { hasNextPage endCursor }
+      nodes { login name bio avatarUrl }
+    }
+  }
+}`;
+
+const LICENSE_QUERY = `
+query RepoLicense($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    licenseInfo { name spdxId body }
+  }
+}`;
+
+/** REST 贡献者一页大小；响应长度达此值视为可能还有下一页 */
+const CONTRIBUTORS_PER_PAGE = 50;
+
 export class RepoService {
   /** 拉取仓库详情聚合 */
   static async fetchRepoDetail(token: string, owner: string, name: string): Promise<RepoDetail> {
@@ -120,5 +143,84 @@ export class RepoService {
     }
     const data = await graphql(FORKS_QUERY, variables, token);
     return mapForkPage(data);
+  }
+
+  /** Watchers 一页（Spec 054） */
+  static async fetchWatchers(token: string, owner: string, name: string, cursor: string): Promise<PeoplePage> {
+    const variables: Record<string, Object> = { 'owner': owner, 'name': name, 'first': 50 };
+    if (cursor !== '') {
+      variables['after'] = cursor;
+    }
+    const data = await graphql(WATCHERS_QUERY, variables, token);
+    return mapWatcherPage(data);
+  }
+
+  /**
+   * Contributors 一页（Spec 054）：REST /contributors 取贡献数降序的 login 列表，
+   * 再 GraphQL 单请求多 alias 批量补全 name/bio/avatarUrl；404（无贡献者）视为空态。
+   */
+  static async fetchContributors(token: string, owner: string, name: string, page: string): Promise<PeoplePage> {
+    const pageNum = Number(page) || 1;
+    const path = `/repos/${owner}/${name}/contributors?per_page=${CONTRIBUTORS_PER_PAGE}&page=${pageNum}&anon=0`;
+    let restNodes: JsonMap[] = [];
+    try {
+      const resp = await restGet(path, token);
+      const parsed: Object | null = JSON.parse(resp.body);
+      if (Array.isArray(parsed)) {
+        for (const node of parsed as Object[]) {
+          restNodes.push(node as JsonMap);
+        }
+      }
+    } catch (e) {
+      if (e instanceof ApiError) {
+        if (e.code === 404) {
+          return { users: [], hasNextPage: false, endCursor: '' };
+        }
+        throw e;
+      }
+      throw new Error(`Failed to fetch contributors: ${e}`);
+    }
+    const meta = await fetchContributorMeta(token, restNodes);
+    return mapContributorPage(restNodes, meta, pageNum);
+  }
+
+  /** License 信息（Spec 055）；仓库未声明许可证返回 null */
+  static async fetchLicense(token: string, owner: string, name: string): Promise<LicenseInfo | null> {
+    const variables: Record<string, Object> = { 'owner': owner, 'name': name };
+    const data = await graphql(LICENSE_QUERY, variables, token);
+    return mapLicenseInfo(data);
+  }
+}
+
+/** 单请求多 alias 批量查询 user(login)（login 由 GitHub API 提供，仅含安全字符） */
+async function fetchContributorMeta(token: string, restNodes: JsonMap[]): Promise<Map<string, JsonMap>> {
+  const logins: string[] = [];
+  for (const raw of restNodes) {
+    const login = Json.str(raw, 'login');
+    if (login !== '') {
+      logins.push(login);
+    }
+  }
+  if (logins.length === 0) {
+    return new Map<string, JsonMap>();
+  }
+  let query = 'query ContributorsMeta {\n';
+  for (let i = 0; i < logins.length; i++) {
+    query += `u${i}: user(login: "${logins[i]}") { login name bio avatarUrl }\n`;
+  }
+  query += '}';
+  try {
+    const data = await graphql(query, null, token);
+    const meta = new Map<string, JsonMap>();
+    for (let i = 0; i < logins.length; i++) {
+      const item: Object | undefined = data[`u${i}`];
+      if (item !== undefined && item !== null) {
+        meta.set(logins[i], item as JsonMap);
+      }
+    }
+    return meta;
+  } catch (e) {
+    // 元信息补全失败：降级 REST-only（login+头像），不阻断列表
+    return new Map<string, JsonMap>();
   }
 }

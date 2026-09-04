@@ -42,6 +42,8 @@ import { UserListView } from './UserList';
 import { StargazersView } from './Stargazers';
 import { ForksView } from './Forks';
 import { AchievementDetailView } from './AchievementDetail';
+import { RepoPeopleView } from './RepoPeopleView';
+import { RepoLicenseView } from './RepoLicenseView';
 import { OrgListView } from './OrgList';
 import { OrgProfileView } from './OrgProfile';
 import { RepositoriesListView } from './RepositoriesList';
@@ -264,6 +266,59 @@ struct Index {
   forksDestination() {
     NavDestination() {
       ForksView({
+        owner: this.repoOwner,
+        name: this.repoName,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseRouteParam(context.pathInfo.param as string);
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 054：Contributors 列表页（路由参数：owner/name；kind 在页内固定） */
+  @Builder
+  contributorsDestination() {
+    NavDestination() {
+      RepoPeopleView({
+        owner: this.repoOwner,
+        name: this.repoName,
+        kind: 'contributors',
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseRouteParam(context.pathInfo.param as string);
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 054：Watchers 列表页（路由参数：owner/name） */
+  @Builder
+  watchersDestination() {
+    NavDestination() {
+      RepoPeopleView({
+        owner: this.repoOwner,
+        name: this.repoName,
+        kind: 'watchers',
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseRouteParam(context.pathInfo.param as string);
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 055：License 正文页（路由参数：owner/name） */
+  @Builder
+  licenseDestination() {
+    NavDestination() {
+      RepoLicenseView({
         owner: this.repoOwner,
         name: this.repoName,
         token: this.token,
@@ -739,6 +794,12 @@ struct Index {
       this.stargazersDestination()
     } else if (name === 'forks') {
       this.forksDestination()
+    } else if (name === 'contributors') {
+      this.contributorsDestination()
+    } else if (name === 'watchers') {
+      this.watchersDestination()
+    } else if (name === 'license') {
+      this.licenseDestination()
     } else if (name === 'achievementDetail') {
       this.achievementDetailDestination()
     }
