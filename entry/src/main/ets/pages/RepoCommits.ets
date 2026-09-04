@@ -1,6 +1,7 @@
 /**
  * 仓库 Commits 列表页（Spec 028）：Repo Detail → Commits。
  * 行：提交标题 + 绿✓ + 相对时间 + 作者（头像/登录名/authored）。
+ * prNumber > 0 时切换为 PR 的 commits（pullRequest.commits）。
  */
 import { OctIcon } from '../components/OctIcon';
 import { RepoCommitItem, RepoCommitsPage } from '../models/RepoSubModels';
@@ -15,6 +16,8 @@ export struct RepoCommitsView {
   @Param name: string = '';
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
+  /** >0 时展示 PR 的 commits（从 PR 详情「N commits」进入） */
+  @Param prNumber: number = 0;
   @Local commits: RepoCommitItem[] = [];
   @Local cursor: string = '';
   @Local hasNextPage: boolean = false;
@@ -28,13 +31,15 @@ export struct RepoCommitsView {
   private refresh(): void {
     this.loading = true;
     this.errorMsg = '';
-    RepoSubService.fetchCommits(this.token, this.owner, this.name, '')
-      .then((page: RepoCommitsPage) => {
-        this.commits = page.commits;
-        this.cursor = page.endCursor;
-        this.hasNextPage = page.hasNextPage;
-        this.loading = false;
-      })
+    const p = this.prNumber > 0
+      ? RepoSubService.fetchPrCommits(this.token, this.owner, this.name, this.prNumber, '')
+      : RepoSubService.fetchCommits(this.token, this.owner, this.name, '');
+    p.then((page: RepoCommitsPage) => {
+      this.commits = page.commits;
+      this.cursor = page.endCursor;
+      this.hasNextPage = page.hasNextPage;
+      this.loading = false;
+    })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
@@ -46,13 +51,15 @@ export struct RepoCommitsView {
       return;
     }
     this.loading = true;
-    RepoSubService.fetchCommits(this.token, this.owner, this.name, this.cursor)
-      .then((page: RepoCommitsPage) => {
-        this.commits = this.commits.concat(page.commits);
-        this.cursor = page.endCursor;
-        this.hasNextPage = page.hasNextPage;
-        this.loading = false;
-      })
+    const p = this.prNumber > 0
+      ? RepoSubService.fetchPrCommits(this.token, this.owner, this.name, this.prNumber, this.cursor)
+      : RepoSubService.fetchCommits(this.token, this.owner, this.name, this.cursor);
+    p.then((page: RepoCommitsPage) => {
+      this.commits = this.commits.concat(page.commits);
+      this.cursor = page.endCursor;
+      this.hasNextPage = page.hasNextPage;
+      this.loading = false;
+    })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
@@ -74,8 +81,15 @@ export struct RepoCommitsView {
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .layoutWeight(1)
+        // 校验结果（标题与时间之间）：成功绿勾 / 失败红叉 / 进行中黄点
         if (item.checksState === 'SUCCESS') {
           OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 14, iconColor: $r('app.color.success_text') })
+            .margin({ left: 8 })
+        } else if (item.checksState === 'FAILURE' || item.checksState === 'ERROR') {
+          OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 14, iconColor: $r('app.color.danger_text') })
+            .margin({ left: 8 })
+        } else if (item.checksState === 'PENDING') {
+          OctIcon({ res: $r('app.media.oct_dot_fill_16'), iconSize: 14, iconColor: $r('app.color.warning_text') })
             .margin({ left: 8 })
         }
         Text(this.timeText(timeParts(item.committedDate, Date.now())))
@@ -112,6 +126,9 @@ export struct RepoCommitsView {
     .backgroundColor($r('app.color.card_background'))
     .width('100%')
     .margin({ bottom: 8 })
+    .onClick(() => {
+      this.pathStack.pushPathByName('commitDetail', `${this.owner}/${this.name}/${item.oid}`);
+    })
   }
 
   build() {

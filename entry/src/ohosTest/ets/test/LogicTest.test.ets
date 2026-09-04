@@ -32,6 +32,8 @@ import { mapRepoDetail, nextStarAction } from '../../../main/ets/models/RepoDeta
 import { parseAchievementDetail, extractAchievementSlugs } from '../../../main/ets/models/AchievementModels';
 import { mapFork, mapStargazerPage, mapWatcherPage, mapContributorPage } from '../../../main/ets/models/RepoSocialModels';
 import { mapLicenseInfo, stripLicenseTitle } from '../../../main/ets/models/RepoLicenseModels';
+import { parseDiffPatch, fileBaseName, DiffLine, DiffHunk } from '../../../main/ets/utils/Diff';
+import { mapPrFiles, applyRestPatch, PrFileItem } from '../../../main/ets/models/PrDiffModels';
 import { mapIssue, mapIssuesPage, issueOrderField } from '../../../main/ets/models/IssuesModels';
 import { MarkdownService } from '../../../main/ets/services/MarkdownService';
 
@@ -1301,6 +1303,108 @@ export default function logicTest(testsuiteName: string) {
       expect(stripped.indexOf('MIT License')).assertEqual(-1);
       // name 为空 → 原样返回
       expect(stripLicenseTitle('', body)).assertEqual(body);
+    });
+
+    it('parseDiffPatch_basic', 0, () => {
+      const patch = 'diff --git a/README.md b/README.md\n' +
+        'index 123..456 100644\n' +
+        '--- a/README.md\n' +
+        '+++ b/README.md\n' +
+        '@@ -1,3 +1,4 @@\n' +
+        ' # starraft\n' +
+        '-old line\n' +
+        '+new line\n' +
+        ' context\n' +
+        '+extra\n';
+      const hunks = parseDiffPatch(patch);
+      expect(hunks.length).assertEqual(1);
+      const hunk = hunks[0] as DiffHunk;
+      expect(hunk.oldStart).assertEqual(1);
+      expect(hunk.newStart).assertEqual(1);
+      expect(hunk.lines.length).assertEqual(5);
+      const lines = hunk.lines;
+      expect((lines[0] as DiffLine).kind).assertEqual('ctx');
+      expect((lines[1] as DiffLine).kind).assertEqual('del');
+      expect((lines[1] as DiffLine).oldLine).assertEqual(2);
+      expect((lines[2] as DiffLine).kind).assertEqual('add');
+      expect((lines[2] as DiffLine).newLine).assertEqual(2);
+      expect((lines[3] as DiffLine).newLine).assertEqual(3);
+      expect((lines[0] as DiffLine).text).assertEqual('# starraft');
+    });
+
+    it('parseDiffPatch_addOnly', 0, () => {
+      const patch = '@@ -0,0 +1,2 @@\n+Good good study\r\n+Up up day\n';
+      const hunks = parseDiffPatch(patch);
+      expect(hunks.length).assertEqual(1);
+      const lines = (hunks[0] as DiffHunk).lines;
+      expect(lines.length).assertEqual(2);
+      expect((lines[0] as DiffLine).kind).assertEqual('add');
+      expect((lines[0] as DiffLine).oldLine).assertEqual(0);
+      expect((lines[0] as DiffLine).newLine).assertEqual(1);
+      // CRLF 行尾剔除
+      expect((lines[0] as DiffLine).text).assertEqual('Good good study');
+    });
+
+    it('parseDiffPatch_multiHunk', 0, () => {
+      const patch = '@@ -1,2 +1,2 @@\n a\n b\n@@ -5,1 +5,2 @@\n c\n+d\n';
+      const hunks = parseDiffPatch(patch);
+      expect(hunks.length).assertEqual(2);
+      expect((hunks[1] as DiffHunk).newStart).assertEqual(5);
+      const lines = (hunks[1] as DiffHunk).lines;
+      expect((lines[1] as DiffLine).kind).assertEqual('add');
+      // 第二个 hunk 行号从自身 start 重新计
+      expect((lines[1] as DiffLine).newLine).assertEqual(6);
+    });
+
+    it('parseDiffPatch_noCountHeaderAndNoNewline', 0, () => {
+      const patch = '@@ -1 +1 @@\n-x\n\\ No newline at end of file\n+y\n\\ No newline at end of file\n';
+      const hunks = parseDiffPatch(patch);
+      expect(hunks.length).assertEqual(1);
+      const lines = (hunks[0] as DiffHunk).lines;
+      expect(lines.length).assertEqual(2);
+      expect((lines[0] as DiffLine).kind).assertEqual('del');
+      expect((lines[1] as DiffLine).kind).assertEqual('add');
+    });
+
+    it('parseDiffPatch_emptyOrHeaderOnly', 0, () => {
+      expect(parseDiffPatch('').length).assertEqual(0);
+      // 无 @@ 的纯文件头（非 diff 文本）→ 无 hunk
+      const hunks = parseDiffPatch('diff --git a/README.md b/README.md\n--- a/README.md\n+++ b/README.md\n');
+      expect(hunks.length).assertEqual(0);
+    });
+
+    it('mapPrFiles_basic', 0, () => {
+      const nodeA: JsonMap = { 'path': 'README.md', 'additions': 3, 'deletions': 1, 'status': 'modified' };
+      const nodeB: JsonMap = { 'path': 'src/main.ets', 'additions': 10, 'deletions': 0, 'status': 'added' };
+      const files: JsonMap = { 'totalCount': 2, 'nodes': [nodeA, nodeB] };
+      const pr: JsonMap = { 'id': 'PR_1', 'files': files };
+      const repo: JsonMap = { 'pullRequest': pr };
+      const data: JsonMap = { 'repository': repo };
+      const page = mapPrFiles(data);
+      expect(page.totalCount).assertEqual(2);
+      expect(page.pullRequestId).assertEqual('PR_1');
+      expect(page.files.length).assertEqual(2);
+      expect(page.files[0].path).assertEqual('README.md');
+      expect(page.files[0].additions).assertEqual(3);
+      expect(page.files[0].hunks.length).assertEqual(0);
+    });
+
+    it('applyRestPatch_withAndWithoutPatch', 0, () => {
+      const item: PrFileItem = { path: 'README.md', additions: 3, deletions: 1, status: 'modified', patch: '', hunks: [], diffTooLarge: false, expanded: false };
+      const patchRest: JsonMap = { 'patch': '@@ -1,2 +1,2 @@\n a\n+b\n' };
+      const withPatch = applyRestPatch(item, patchRest);
+      expect(withPatch.hunks.length).assertEqual(1);
+      expect(withPatch.diffTooLarge).assertFalse();
+      // REST 无 patch（大 diff）→ tooLarge，且 additions/deletions 以 REST 为准
+      const noPatchRest: JsonMap = { 'filename': 'README.md', 'additions': 99, 'deletions': 5 };
+      const without = applyRestPatch(item, noPatchRest);
+      expect(without.diffTooLarge).assertTrue();
+      expect(without.additions).assertEqual(99);
+    });
+
+    it('fileBaseName_simple', 0, () => {
+      expect(fileBaseName('src/main/ets/Index.ets')).assertEqual('Index.ets');
+      expect(fileBaseName('README.md')).assertEqual('README.md');
     });
   });
 }

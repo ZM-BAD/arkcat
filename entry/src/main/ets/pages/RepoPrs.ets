@@ -120,7 +120,7 @@ export struct RepoPrsView {
   private prIcon(item: RepoPrItem): Resource {
     const key = repoPrIconKey(item.state, item.merged);
     if (key === 'merged') {
-      return $r('app.media.oct_check_circle_fill_16');
+      return $r('app.media.oct_git_merge_16');
     }
     return key === 'open' ? $r('app.media.oct_git_pull_request_16') : $r('app.media.oct_x_circle_16');
   }
@@ -179,64 +179,68 @@ export struct RepoPrsView {
 
   @Builder
   prRow(item: RepoPrItem) {
-    Column({ space: 6 }) {
-      Row() {
-        OctIcon({ res: this.prIcon(item), iconSize: 18, iconColor: this.prColor(item) })
-        Text(item.title)
-          .fontSize($r('app.float.body_font_size'))
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.text_primary'))
-          .margin({ left: 12 })
-          .maxLines(2)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .layoutWeight(1)
-        Text(`#${item.number}`)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .margin({ left: 6 })
-      }
-      .width('100%')
+    Row({ space: 12 }) {
+      OctIcon({ res: this.prIcon(item), iconSize: 18, iconColor: this.prColor(item) })
+      Column({ space: 6 }) {
+        Row() {
+          Text(item.title)
+            .fontSize($r('app.float.body_font_size'))
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('app.color.text_primary'))
+            .maxLines(2)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .layoutWeight(1)
+          Text(`#${item.number}`)
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor($r('app.color.text_secondary'))
+            .margin({ left: 6 })
+        }
+        .width('100%')
 
-      Row({ space: 8 }) {
-        ForEach(item.labels, (label: WorkLabel) => {
-          this.labelChip(label)
-        }, (label: WorkLabel) => label.name)
-        if (item.checksState === 'SUCCESS') {
-          Row({ space: 4 }) {
-            OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 12, iconColor: $r('app.color.success_text') })
-            Text(this.stringOf($r('app.string.work_pr_checks')))
-              .fontSize($r('app.float.caption_font_size'))
-              .fontColor($r('app.color.success_text'))
+        Row({ space: 8 }) {
+          ForEach(item.labels, (label: WorkLabel) => {
+            this.labelChip(label)
+          }, (label: WorkLabel) => label.name)
+          if (item.checksState === 'SUCCESS') {
+            Row({ space: 4 }) {
+              OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 12, iconColor: $r('app.color.success_text') })
+              Text(this.stringOf($r('app.string.work_pr_checks')))
+                .fontSize($r('app.float.caption_font_size'))
+                .fontColor($r('app.color.text_primary'))
+            }
+            .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+            .borderRadius(12)
+            .border({ width: 1, color: $r('app.color.divider') })
+            .backgroundColor(Color.Transparent)
           }
-          .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-          .borderRadius(12)
-          .backgroundColor($r('app.color.checks_success_bg'))
-        }
-        if (item.commentCount > 0) {
-          Row({ space: 4 }) {
-            OctIcon({ res: $r('app.media.oct_comment_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
-            Text(`${item.commentCount}`)
-              .fontSize($r('app.float.caption_font_size'))
-              .fontColor($r('app.color.text_secondary'))
+          if (item.commentCount > 0) {
+            Row({ space: 4 }) {
+              OctIcon({ res: $r('app.media.oct_comment_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
+              Text(`${item.commentCount}`)
+                .fontSize($r('app.float.caption_font_size'))
+                .fontColor($r('app.color.text_secondary'))
+            }
+            .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+            .borderRadius(12)
+            .backgroundColor($r('app.color.chip_bg'))
           }
-          .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-          .borderRadius(12)
-          .backgroundColor($r('app.color.chip_bg'))
+          if (item.authorAvatar !== '') {
+            Image(item.authorAvatar)
+              .width(20)
+              .height(20)
+              .borderRadius(10)
+              .backgroundColor($r('app.color.heat_empty'))
+          }
+          Blank()
+          Text(this.timeText(timeParts(item.createdAt, Date.now())))
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor($r('app.color.text_secondary'))
         }
-        if (item.authorAvatar !== '') {
-          Image(item.authorAvatar)
-            .width(20)
-            .height(20)
-            .borderRadius(10)
-            .backgroundColor($r('app.color.heat_empty'))
-        }
-        Blank()
-        Text(this.timeText(timeParts(item.createdAt, Date.now())))
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
+        .width('100%')
       }
-      .width('100%')
+      .layoutWeight(1)
     }
+    .alignItems(VerticalAlign.Top)
     .padding($r('app.float.card_padding'))
     .borderRadius($r('app.float.card_radius'))
     .backgroundColor($r('app.color.card_background'))

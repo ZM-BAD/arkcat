@@ -1213,6 +1213,54 @@
       "value": "Merged"
     },
     {
+      "name": "pr_files_appbar",
+      "value": "Files changed"
+    },
+    {
+      "name": "pr_changes_from_all_commits",
+      "value": "changes from all commits"
+    },
+    {
+      "name": "pr_diff_too_large",
+      "value": "Diff too large"
+    },
+    {
+      "name": "pr_files_empty",
+      "value": "No files changed"
+    },
+    {
+      "name": "pr_find_file",
+      "value": "Find file"
+    },
+    {
+      "name": "pr_comment_hint",
+      "value": "Add a comment..."
+    },
+    {
+      "name": "pr_comment_sent",
+      "value": "Comment posted"
+    },
+    {
+      "name": "pr_comment_failed",
+      "value": "Failed to post comment"
+    },
+    {
+      "name": "a11y_expand",
+      "value": "Expand"
+    },
+    {
+      "name": "a11y_collapse",
+      "value": "Collapse"
+    },
+    {
+      "name": "a11y_view_file",
+      "value": "View file"
+    },
+    {
+      "name": "a11y_send",
+      "value": "Send"
+    },
+    {
       "name": "comment_button",
       "value": "COMMENT"
     },
@@ -1713,8 +1761,8 @@
       "value": "Template"
     },
     {
-      "name": "md_expand_all",
-      "value": "Expand all"
+      "name": "md_read_more",
+      "value": "Read more"
     },
     {
       "name": "md_copy",
@@ -1783,6 +1831,94 @@
     {
       "name": "achievement_load_failed",
       "value": "Failed to load achievements"
+    },
+    {
+      "name": "pr_delete_branch_confirm",
+      "value": "Are you sure you want to delete this?"
+    },
+    {
+      "name": "pr_delete_branch_cancel",
+      "value": "CANCEL"
+    },
+    {
+      "name": "pr_delete_branch_confirm_delete",
+      "value": "DELETE"
+    },
+    {
+      "name": "pr_merged_commit_word",
+      "value": "merged commit"
+    },
+    {
+      "name": "pr_into_word",
+      "value": "into"
+    },
+    {
+      "name": "pr_time_ago",
+      "value": "ago"
+    },
+    {
+      "name": "pr_file_view_menu",
+      "value": "View file"
+    },
+    {
+      "name": "pr_marked_reviewed",
+      "value": "Marked file as reviewed"
+    },
+    {
+      "name": "pr_copy_path",
+      "value": "Copy file path"
+    },
+    {
+      "name": "pr_edit_file",
+      "value": "Edit file"
+    },
+    {
+      "name": "pr_delete_file",
+      "value": "Delete file"
+    },
+    {
+      "name": "pr_add_file_comment",
+      "value": "Add File Comment"
+    },
+    {
+      "name": "commit_appbar",
+      "value": "Commit"
+    },
+    {
+      "name": "commit_tab_changes",
+      "value": "CHANGES"
+    },
+    {
+      "name": "commit_tab_details",
+      "value": "DETAILS"
+    },
+    {
+      "name": "commit_copy",
+      "value": "COPY"
+    },
+    {
+      "name": "commit_section_commit",
+      "value": "Commit"
+    },
+    {
+      "name": "commit_section_contributors",
+      "value": "Contributors"
+    },
+    {
+      "name": "commit_section_prs",
+      "value": "Associated Pull Requests"
+    },
+    {
+      "name": "commit_section_parents",
+      "value": "Parents"
+    },
+    {
+      "name": "commit_additions",
+      "value": "%1$d additions"
+    },
+    {
+      "name": "commit_deletions",
+      "value": "%1$d deletions"
     }
   ]
 }
