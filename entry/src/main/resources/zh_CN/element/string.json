@@ -1182,7 +1182,7 @@
     },
     {
       "name": "pr_files_appbar",
-      "value": "文件变更（%1$d）"
+      "value": "文件变更"
     },
     {
       "name": "pr_changes_from_all_commits",
@@ -1761,8 +1761,8 @@
       "value": "模板"
     },
     {
-      "name": "md_expand_all",
-      "value": "展开全部"
+      "name": "md_read_more",
+      "value": "阅读更多"
     },
     {
       "name": "md_copy",
@@ -1831,6 +1831,94 @@
     {
       "name": "achievement_load_failed",
       "value": "成就数据加载失败"
+    },
+    {
+      "name": "pr_delete_branch_confirm",
+      "value": "确定要删除吗？"
+    },
+    {
+      "name": "pr_delete_branch_cancel",
+      "value": "取消"
+    },
+    {
+      "name": "pr_delete_branch_confirm_delete",
+      "value": "删除"
+    },
+    {
+      "name": "pr_merged_commit_word",
+      "value": "合并提交"
+    },
+    {
+      "name": "pr_into_word",
+      "value": "到"
+    },
+    {
+      "name": "pr_time_ago",
+      "value": "前"
+    },
+    {
+      "name": "pr_file_view_menu",
+      "value": "查看文件"
+    },
+    {
+      "name": "pr_marked_reviewed",
+      "value": "已标记为已查看"
+    },
+    {
+      "name": "pr_copy_path",
+      "value": "复制文件路径"
+    },
+    {
+      "name": "pr_edit_file",
+      "value": "编辑文件"
+    },
+    {
+      "name": "pr_delete_file",
+      "value": "删除文件"
+    },
+    {
+      "name": "pr_add_file_comment",
+      "value": "添加文件评论"
+    },
+    {
+      "name": "commit_appbar",
+      "value": "提交"
+    },
+    {
+      "name": "commit_tab_changes",
+      "value": "变更"
+    },
+    {
+      "name": "commit_tab_details",
+      "value": "详情"
+    },
+    {
+      "name": "commit_copy",
+      "value": "复制"
+    },
+    {
+      "name": "commit_section_commit",
+      "value": "提交"
+    },
+    {
+      "name": "commit_section_contributors",
+      "value": "贡献者"
+    },
+    {
+      "name": "commit_section_prs",
+      "value": "关联的拉取请求"
+    },
+    {
+      "name": "commit_section_parents",
+      "value": "父提交"
+    },
+    {
+      "name": "commit_additions",
+      "value": "新增 %1$d 行"
+    },
+    {
+      "name": "commit_deletions",
+      "value": "删除 %1$d 行"
     }
   ]
 }

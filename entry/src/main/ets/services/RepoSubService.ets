@@ -6,9 +6,11 @@ import { graphql, restGet } from './GitHttpClient';
 import { Json, JsonMap } from '../utils/Json';
 import {
   RepoPrsPage, RepoCommitsPage, RepoReleasesPage, IssueDetailPage, PrDetailPage,
-  mapRepoPrsPage, mapRepoCommitsPage, mapRepoReleasesPage, mapIssueDetail, mapPrDetail
+  mapRepoPrsPage, mapRepoCommitsPage, mapRepoReleasesPage, mapIssueDetail, mapPrDetail, mapPrCommits
 } from '../models/RepoSubModels';
 import { PrFilesPage, PrFileItem, mapPrFiles, applyRestPatch } from '../models/PrDiffModels';
+import { CommitDetailPage, mapCommitDetail } from '../models/PrDiffModels';
+import { parseDiffPatch } from '../utils/Diff';
 
 const REPO_PRS_QUERY = `
 query RepoPullRequests($owner: String!, $name: String!, $states: [PullRequestState!], $labels: [String!], $first: Int = 50, $after: String) {
@@ -41,11 +43,42 @@ query RepoCommits($owner: String!, $name: String!, $first: Int = 40, $after: Str
             pageInfo { hasNextPage endCursor }
             nodes {
               oid messageHeadline committedDate
-              author { login avatarUrl }
+              author { name avatarUrl user { login } }
               statusCheckRollup { state }
             }
           }
         }
+      }
+    }
+  }
+}`;
+
+const PR_COMMITS_QUERY = `
+query PrCommits($owner: String!, $name: String!, $number: Int!, $first: Int = 40, $after: String) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      commits(first: $first, after: $after) {
+        pageInfo { hasNextPage endCursor }
+        nodes {
+          commit {
+            oid messageHeadline committedDate
+            author { name avatarUrl user { login } }
+            statusCheckRollup { state }
+          }
+        }
+      }
+    }
+  }
+}`;
+
+const COMMIT_DETAIL_QUERY = `
+query CommitDetail($owner: String!, $name: String!, $oid: String!) {
+  repository(owner: $owner, name: $name) {
+    object(expression: $oid) {
+      ... on Commit {
+        oid messageHeadline messageBodyHTML committedDate
+        author { name avatarUrl user { login } }
+        statusCheckRollup { state }
       }
     }
   }
@@ -86,11 +119,21 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!) {
       additions deletions
       author { login avatarUrl }
       headRefName baseRefName
+      mergedBy { login }
       mergeCommit { abbreviatedOid }
       files { totalCount }
       commits { totalCount }
       reviews { totalCount }
-      statusCheckRollup { state }
+      statusCheckRollup {
+        state
+        contexts(first: 20) {
+          totalCount
+          nodes {
+            ... on CheckRun { name status conclusion }
+            ... on StatusContext { context state }
+          }
+        }
+      }
       comments(first: 15) { totalCount nodes { id body bodyHTML createdAt author { login avatarUrl } } }
     }
   }
@@ -101,6 +144,8 @@ query PullRequestFiles($owner: String!, $name: String!, $number: Int!) {
   repository(owner: $owner, name: $name) {
     pullRequest(number: $number) {
       id
+      additions
+      deletions
       files(first: 100) {
         totalCount
         nodes { path additions deletions }
@@ -149,6 +194,62 @@ export class RepoSubService {
     }
     const data = await graphql(REPO_COMMITS_QUERY, variables, token);
     return mapRepoCommitsPage(data);
+  }
+
+  /** PR 的 commits 列表（pullRequest.commits，节点包一层 commit） */
+  static async fetchPrCommits(token: string, owner: string, name: string, number: number,
+    cursor: string): Promise<RepoCommitsPage> {
+    const variables: Record<string, Object> = { 'owner': owner, 'name': name, 'number': number, 'first': 40 };
+    if (cursor !== '') {
+      variables['after'] = cursor;
+    }
+    const data = await graphql(PR_COMMITS_QUERY, variables, token);
+    return mapPrCommits(data);
+  }
+
+  /**
+   * Commit 详情（官方 Commit 页）：GraphQL 取信息（oid/标题/正文 HTML/作者/checks）；
+   * REST /commits/{sha} 回填 parents + files（含 patch），REST /commits/{sha}/pulls 回填关联 PR。
+   */
+  static async fetchCommitDetail(token: string, owner: string, name: string, oid: string): Promise<CommitDetailPage> {
+    const data = await graphql(COMMIT_DETAIL_QUERY, { 'owner': owner, 'name': name, 'oid': oid }, token);
+    const page = mapCommitDetail(data);
+    try {
+      const resp = await restGet(`/repos/${owner}/${name}/commits/${oid}`, token);
+      const item = JSON.parse(resp.body) as JsonMap;
+      const commit = Json.obj(item, 'commit') ?? ({} as JsonMap);
+      page.message = Json.str(commit, 'message');
+      page.parents = [];
+      for (const p of Json.arr(item, 'parents')) {
+        page.parents.push(Json.str(p as JsonMap, 'sha'));
+      }
+      page.files = [];
+      for (const f of Json.arr(item, 'files')) {
+        const fj = f as JsonMap;
+        const patch = Json.str(fj, 'patch');
+        page.files.push({
+          path: Json.str(fj, 'filename'),
+          status: Json.str(fj, 'status'),
+          additions: Json.num(fj, 'additions'),
+          deletions: Json.num(fj, 'deletions'),
+          hunks: patch !== '' ? parseDiffPatch(patch) : []
+        });
+      }
+    } catch (e) {
+      // files/parents 保持空（降级为信息页）
+    }
+    try {
+      const resp = await restGet(`/repos/${owner}/${name}/commits/${oid}/pulls`, token);
+      const arr = JSON.parse(resp.body) as Object[];
+      page.pullRequests = [];
+      for (const node of arr) {
+        const p = node as JsonMap;
+        page.pullRequests.push({ number: Json.num(p, 'number'), title: Json.str(p, 'title') });
+      }
+    } catch (e) {
+      // 关联 PR 保持空
+    }
+    return page;
   }
 
   static async fetchReleases(token: string, owner: string, name: string, cursor: string): Promise<RepoReleasesPage> {

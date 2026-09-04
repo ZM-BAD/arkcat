@@ -237,6 +237,14 @@
       "value": "#21262D"
     },
     {
+      "name": "diff_hunk_head_bg",
+      "value": "#26388BFD"
+    },
+    {
+      "name": "diff_hunk_head_fg",
+      "value": "#4493F8"
+    },
+    {
       "name": "input_bg",
       "value": "#21262D"
     }

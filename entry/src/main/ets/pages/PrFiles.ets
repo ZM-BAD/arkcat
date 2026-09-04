@@ -4,12 +4,17 @@
  * 入口：PrDetail Changes 卡「N files changed」行；行内评论/图片 diff 属 042/后续批。
  */
 import { promptAction } from '@kit.ArkUI';
+import { preferences } from '@kit.ArkData';
+import { common } from '@kit.AbilityKit';
 import { OctIcon } from '../components/OctIcon';
 import { StateView } from '../components/StateView';
 import { PrDiffCard } from '../components/PrDiffCard';
 import { PrFileItem, PrFilesPage } from '../models/PrDiffModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { resText } from '../utils/I18n';
+
+const PREFS_NAME = 'starraft_settings';
+const KEY_LINE_NUMBERS = 'code_line_numbers';
 
 @ComponentV2
 export struct PrFilesView {
@@ -18,6 +23,8 @@ export struct PrFilesView {
   @Param number: number = 0;
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
+  /** 路由 onShown 递增：从 Code Options 返回时重读设置 */
+  @Param refreshTick: number = 0;
   @Local page: PrFilesPage | null = null;
   @Local files: PrFileItem[] = [];
   /** 展开文件路径集合（独立于数据，父状态变化 → 子组件 @Param 重新求值） */
@@ -28,9 +35,31 @@ export struct PrFilesView {
   @Local finderQuery: string = '';
   @Local commentText: string = '';
   @Local sending: boolean = false;
+  /** Code Options「展示行号」开关 */
+  @Local showLineNumbers: boolean = true;
 
   aboutToAppear(): void {
+    this.loadLineSetting();
     this.refresh();
+  }
+
+  /** 设置页返回（onShown tick）→ 重读本页设置 */
+  @Monitor('refreshTick')
+  onTick(): void {
+    this.loadLineSetting();
+  }
+
+  private loadLineSetting(): void {
+    const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext | undefined;
+    if (ctx === undefined) {
+      return;
+    }
+    preferences.getPreferences(ctx, PREFS_NAME)
+      .then((pref: preferences.Preferences) => {
+        this.showLineNumbers = pref.getSync(KEY_LINE_NUMBERS, true) as boolean;
+      })
+      .catch(() => {
+      });
   }
 
   private stringOf(res: Resource): string {
@@ -58,6 +87,16 @@ export struct PrFilesView {
     this.expandedPaths = idx >= 0
       ? this.expandedPaths.filter((p: string): boolean => p !== path)
       : this.expandedPaths.concat(path);
+  }
+
+  /** 强制设置文件展开/收起（勾选框 reviewed 切换用） */
+  private setExpanded(path: string, expanded: boolean): void {
+    const idx = this.expandedPaths.indexOf(path);
+    if (expanded && idx < 0) {
+      this.expandedPaths = this.expandedPaths.concat(path);
+    } else if (!expanded && idx >= 0) {
+      this.expandedPaths = this.expandedPaths.filter((p: string): boolean => p !== path);
+    }
   }
 
   /** Find file 过滤（大小写不敏感子串） */
@@ -170,29 +209,38 @@ export struct PrFilesView {
         .onClick(() => {
           this.pathStack.pop();
         })
-        Text(this.page !== null
-          ? resText(this.getUIContext(), $r('app.string.pr_files_appbar'), this.page.totalCount)
-          : this.stringOf($r('app.string.pr_changes_title')))
-          .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.text_primary'))
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .layoutWeight(1)
+        Column({ space: 0 }) {
+          Text(this.page !== null
+            ? this.stringOf($r('app.string.pr_files_appbar'))
+            : this.stringOf($r('app.string.pr_changes_title')))
+            .fontSize($r('app.float.title_font_size'))
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.text_primary'))
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+          if (this.page !== null) {
+            Text() {
+              Span(`+${this.page.additions}`)
+                .fontColor($r('app.color.success_text'))
+              Span(` -${this.page.deletions}`)
+                .fontColor($r('app.color.danger_text'))
+            }
+            .fontSize($r('app.float.caption_font_size'))
+          }
+        }
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
         Stack() {
-          OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+          OctIcon({ res: $r('app.media.oct_gear_16'), iconSize: 18, iconColor: $r('app.color.link_blue') })
         }
         .width(44)
         .height(44)
         .padding(6)
-        .accessibilityDescription($r('app.string.a11y_more'))
+        .accessibilityDescription($r('app.string.a11y_settings'))
         .focusable(true)
-        .bindMenu([{
-          value: this.stringOf($r('app.string.pr_find_file')),
-          action: (): void => {
-            this.finderOpen = true;
-          }
-        }])
+        .onClick(() => {
+          this.pathStack.pushPathByName('codeOptions', '');
+        })
       }
       .width('100%')
       .height(48)
@@ -221,7 +269,9 @@ export struct PrFilesView {
                 PrDiffCard({
                   item: item,
                   expanded: this.expandedPaths.indexOf(item.path) >= 0,
+                  showLineNumbers: this.showLineNumbers,
                   onToggle: (): void => this.togglePath(item.path),
+                  onSetExpanded: (expanded: boolean): void => this.setExpanded(item.path, expanded),
                   onOpenFile: (): void => this.openFile(item)
                 })
               }, (item: PrFileItem) => item.path)

@@ -5,16 +5,18 @@
  */
 import { webview } from '@kit.ArkWeb';
 import { common } from '@kit.AbilityKit';
-import { mediaquery, promptAction, display } from '@kit.ArkUI';
+import { mediaquery, promptAction } from '@kit.ArkUI';
 import { preferences } from '@kit.ArkData';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { resText } from '../utils/I18n';
 import { MarkdownRoute, MarkdownService } from '../services/MarkdownService';
 import { buildCopyJs, buildFixRelativeJs, buildMarkdownDoc, buildMeasureJs, buildSetOverflowJs, buildSetThemeJs } from '../utils/MarkdownHtml';
+import { OctIcon } from './OctIcon';
 
 const PREFS_NAME = 'starraft_settings';
 const KEY_THEME = 'theme_mode';
-const COLLAPSE_HEIGHT = 640;
+/** 折叠时正文可视高度（vp）；内容超出此高度才显示 Read more */
+const COLLAPSE_HEIGHT = 240;
 
 /** 复制 toast 文案（模块级：javaScriptProxy 对象只允许方法，不允许字段） */
 let copyToastLabel = 'Copied';
@@ -35,7 +37,7 @@ export struct MarkdownView {
   /** 降级纯文本（bodyText / readme 原文），html 为空时展示 */
   @Param fallbackText: string = '';
   /** 超长折叠阈值（字符数；>0 生效） */
-  @Param foldThreshold: number = 4000;
+  @Param foldThreshold: number = 500;
   /** 是否启用长文折叠（false=全量一次性加载，无「展开全部」按钮） */
   @Param collapse: boolean = true;
   /** 降级态是否显示重试（调用方数据拉取失败时置 true，配 onRetry 重新拉取） */
@@ -119,24 +121,14 @@ export struct MarkdownView {
         if (vp <= COLLAPSE_HEIGHT) {
           this.collapsed = false;
         }
-        // 全量模式：高度钳到窗口高，超出部分交给 Web 内滚（超大高度渲染上限会白屏）
-        const maxFull = this.windowHeightVp();
-        this.webHeight = this.collapsed ? COLLAPSE_HEIGHT : Math.min(vp, maxFull);
+        // 展开模式：高度=内容全高，交给外层页面 Scroll 滚动，Web 内不再出现滚动条
+        this.webHeight = this.collapsed ? COLLAPSE_HEIGHT : vp;
         this.controller.runJavaScript(buildSetOverflowJs(this.collapsed))
           .catch(() => {
           });
       })
       .catch(() => {
       });
-  }
-
-  /** 窗口高度（vp）；获取失败时兜底为大值（退化为旧的全高行为） */
-  private windowHeightVp(): number {
-    try {
-      return Math.max(this.getUIContext().px2vp(display.getDefaultDisplaySync().height), COLLAPSE_HEIGHT);
-    } catch (e) {
-      return COLLAPSE_HEIGHT * 3;
-    }
   }
 
   /** 链接导航拦截：站内 → 路由；外链 http(s) → 系统浏览器；其余放行 */
@@ -229,8 +221,9 @@ export struct MarkdownView {
   expandOverlay() {
     Column({ space: 8 }) {
       Blank()
-      Row() {
-        Text(resText(this.getUIContext(), $r('app.string.md_expand_all')))
+      Row({ space: 4 }) {
+        OctIcon({ res: $r('app.media.oct_chevron_down_16'), iconSize: 14, iconColor: $r('app.color.text_primary') })
+        Text(resText(this.getUIContext(), $r('app.string.md_read_more')))
           .fontSize($r('app.float.body_font_size'))
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.text_primary'))

@@ -4,7 +4,7 @@
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
 import { MarkdownView } from '../components/MarkdownView';
-import { RepoComment, PrDetailPage } from '../models/RepoSubModels';
+import { RepoComment, PrDetailPage, StatusCheckItem } from '../models/RepoSubModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { StateView } from '../components/StateView';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
@@ -20,6 +20,8 @@ export struct PrDetailView {
   @Local detail: PrDetailPage | null = null;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  /** Status 卡片 checks 列表展开态 */
+  @Local checksOpen: boolean = false;
 
   aboutToAppear(): void {
     this.refresh();
@@ -45,6 +47,27 @@ export struct PrDetailView {
 
   private timeText(parts: TimeParts | null): string {
     return parts !== null ? githubShortTime(parts) : '';
+  }
+
+  /** 展开态每个 check 行的图标：SUCCESS 绿勾 / FAILURE 红叉 / 其余黄点 */
+  private checkItemIcon(state: string): Resource {
+    if (state === 'SUCCESS') {
+      return $r('app.media.oct_check_16');
+    }
+    if (state === 'FAILURE') {
+      return $r('app.media.oct_x_16');
+    }
+    return $r('app.media.oct_dot_fill_16');
+  }
+
+  private checkColor(state: string): ResourceColor {
+    if (state === 'SUCCESS') {
+      return $r('app.color.success_text');
+    }
+    if (state === 'FAILURE') {
+      return $r('app.color.danger_text');
+    }
+    return $r('app.color.warning_text');
   }
 
   @Builder
@@ -119,7 +142,7 @@ export struct PrDetailView {
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .layoutWeight(1)
         Stack() {
-          OctIcon({ res: $r('app.media.oct_share_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+          OctIcon({ res: $r('app.media.oct_share_android_16'), iconSize: 18, iconColor: $r('app.color.link_blue') })
         }
 .width(44)
 .height(44)
@@ -130,7 +153,8 @@ export struct PrDetailView {
           promptAction.showToast({ message: $r('app.string.home_feature_coming') });
         })
         Stack() {
-          OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+          OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 18, iconColor: $r('app.color.link_blue') })
+            .rotate({ angle: 90 })
         }
 .width(44)
 .height(44)
@@ -157,25 +181,45 @@ export struct PrDetailView {
                 .width('100%')
                 .lineHeight(28)
 
-              Row({ space: 8 }) {
-                if (this.detail.merged) {
-                  Text($r('app.string.pr_merged_badge'))
-                    .fontSize(12)
-                    .fontColor(Color.White)
-                    .padding({ left: 8, right: 8, top: 3, bottom: 3 })
-                    .borderRadius(12)
-                    .backgroundColor($r('app.color.merged_badge_bg'))
+              if (this.detail.merged || this.detail.headRefName !== '') {
+                Scroll() {
+                  Row({ space: 8 }) {
+                    if (this.detail.merged) {
+                      Row({ space: 4 }) {
+                        OctIcon({ res: $r('app.media.oct_git_merge_16'), iconSize: 12, iconColor: Color.White })
+                        Text($r('app.string.pr_merged_badge'))
+                          .fontSize(12)
+                          .fontColor(Color.White)
+                      }
+                      .padding({ left: 8, right: 8, top: 3, bottom: 3 })
+                      .borderRadius(12)
+                      .backgroundColor($r('app.color.merged_badge_bg'))
+                    }
+                    if (this.detail.headRefName !== '') {
+                      Text(this.detail.headRefName)
+                        .fontSize(12)
+                        .fontColor($r('app.color.shortcut_blue_fg'))
+                        .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                        .borderRadius(2)
+                        .backgroundColor($r('app.color.shortcut_blue_bg'))
+                      if (this.detail.baseRefName !== '') {
+                        Text('→')
+                          .fontSize(12)
+                          .fontColor($r('app.color.text_primary'))
+                        Text(this.detail.baseRefName)
+                          .fontSize(12)
+                          .fontColor($r('app.color.shortcut_blue_fg'))
+                          .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                          .borderRadius(2)
+                          .backgroundColor($r('app.color.shortcut_blue_bg'))
+                      }
+                    }
+                  }
                 }
-                if (this.detail.headRefName !== '') {
-                  Text(this.detail.headRefName)
-                    .fontSize(12)
-                    .fontColor(Color.White)
-                    .padding({ left: 8, right: 8, top: 3, bottom: 3 })
-                    .borderRadius(12)
-                    .backgroundColor($r('app.color.primary'))
-                }
+                .scrollable(ScrollDirection.Horizontal)
+                .scrollBar(BarState.Off)
+                .width('100%')
               }
-              .width('100%')
 
               Row({ space: 8 }) {
                 if (this.detail.authorAvatar !== '') {
@@ -213,7 +257,7 @@ export struct PrDetailView {
             Column({ space: 8 }) {
               this.sectionTitle(this.stringOf($r('app.string.pr_changes_title')))
               Row({ space: 8 }) {
-                OctIcon({ res: $r('app.media.oct_file_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
+                OctIcon({ res: $r('app.media.oct_file_diff_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
                 Text(resText(this.getUIContext(), $r('app.string.pr_files_changed'), this.detail.filesCount))
                   .fontSize($r('app.float.body_font_size'))
                   .fontColor($r('app.color.text_primary'))
@@ -224,7 +268,6 @@ export struct PrDetailView {
                 Text(`-${this.detail.deletions}`)
                   .fontSize($r('app.float.caption_font_size'))
                   .fontColor($r('app.color.danger_text'))
-                OctIcon({ res: $r('app.media.oct_chevron_right_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
               }
               .width('100%')
               .onClick(() => {
@@ -233,14 +276,17 @@ export struct PrDetailView {
               Row({ space: 8 }) {
                 OctIcon({ res: $r('app.media.oct_git_commit_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
                 Text(resText(this.getUIContext(), $r('app.string.pr_commits_count'), this.detail.commitsCount))
-                  .fontSize($r('app.float.caption_font_size'))
-                  .fontColor($r('app.color.text_secondary'))
+                  .fontSize($r('app.float.body_font_size'))
+                  .fontColor($r('app.color.text_primary'))
                 Blank()
-                Text(this.timeText(timeParts(this.detail.createdAt, Date.now())))
+                Text(`${this.timeText(timeParts(this.detail.createdAt, Date.now()))} ${this.stringOf($r('app.string.pr_time_ago'))}`)
                   .fontSize($r('app.float.caption_font_size'))
                   .fontColor($r('app.color.text_secondary'))
               }
               .width('100%')
+              .onClick(() => {
+                this.pathStack.pushPathByName('repoCommits', `${this.owner}/${this.name}/${this.number}`);
+              })
             }
             .padding($r('app.float.card_padding'))
             .borderRadius($r('app.float.card_radius'))
@@ -251,38 +297,91 @@ export struct PrDetailView {
             // Status 卡片
             Column({ space: 8 }) {
               this.sectionTitle(this.stringOf($r('app.string.pr_status_title')))
-              Row({ space: 8 }) {
+              // Reviews（黑）· None requested（灰）
+              Row({ space: 6 }) {
                 OctIcon({ res: $r('app.media.oct_person_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
                 Text(this.stringOf($r('app.string.pr_reviews')))
                   .fontSize($r('app.float.caption_font_size'))
-                  .fontColor($r('app.color.text_secondary'))
+                  .fontColor($r('app.color.text_primary'))
+                Text('·')
+                  .fontSize($r('app.float.caption_font_size'))
+                  .fontColor($r('app.color.text_tertiary'))
                 Text(this.detail.reviewsTotal > 0 ? `${this.detail.reviewsTotal}` : this.stringOf($r('app.string.pr_reviews_none')))
                   .fontSize($r('app.float.caption_font_size'))
-                  .fontColor($r('app.color.text_primary'))
+                  .fontColor(this.detail.reviewsTotal > 0 ? $r('app.color.text_primary') : $r('app.color.text_secondary'))
               }
               .width('100%')
+              // Checks 摘要行：状态色圆圈 + 文案 + chevron；点击展开全部 checks
               Row({ space: 8 }) {
-                OctIcon({ res: $r('app.media.oct_check_circle_fill_16'), iconSize: 14, iconColor: $r('app.color.success_text') })
+                OctIcon({
+                  res: $r('app.media.oct_circle_16'),
+                  iconSize: 14,
+                  iconColor: this.checkColor(this.detail.checksState)
+                })
                 Text(this.detail.checksState === 'SUCCESS' ? this.stringOf($r('app.string.pr_all_checks_passed'))
                   : this.stringOf($r('app.string.work_pr_checks_failed')))
                   .fontSize($r('app.float.caption_font_size'))
-                  .fontColor($r('app.color.text_secondary'))
+                  .fontColor($r('app.color.text_primary'))
+                Blank()
+                OctIcon({
+                  res: $r('app.media.oct_chevron_down_16'),
+                  iconSize: 14,
+                  iconColor: $r('app.color.text_secondary')
+                })
+                .rotate(this.checksOpen ? { angle: 180 } : { angle: 0 })
               }
               .width('100%')
+              .onClick(() => {
+                this.checksOpen = !this.checksOpen;
+              })
+              if (this.checksOpen) {
+                ForEach(this.detail.checks, (c: StatusCheckItem) => {
+                  Row({ space: 8 }) {
+                    OctIcon({ res: this.checkItemIcon(c.state), iconSize: 12, iconColor: this.checkColor(c.state) })
+                    Text(c.name)
+                      .fontSize($r('app.float.caption_font_size'))
+                      .fontColor($r('app.color.text_primary'))
+                      .maxLines(1)
+                      .textOverflow({ overflow: TextOverflow.Ellipsis })
+                      .layoutWeight(1)
+                  }
+                  .width('100%')
+                  .padding({ left: 22 })
+                }, (c: StatusCheckItem) => c.name)
+              }
               if (this.detail.merged) {
+                // Branch merged 行（紫色 merge icon）
                 Row({ space: 8 }) {
-                  OctIcon({ res: $r('app.media.oct_git_merge_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
+                  OctIcon({
+                    res: $r('app.media.oct_git_merge_16'),
+                    iconSize: 14,
+                    iconColor: $r('app.color.shortcut_purple_fg')
+                  })
                   Text(this.stringOf($r('app.string.pr_branch_merged')))
                     .fontSize($r('app.float.caption_font_size'))
-                    .fontColor($r('app.color.text_secondary'))
-                  if (this.detail.mergeOid !== '') {
-                    Text(resText(this.getUIContext(), $r('app.string.pr_merged_commit'), this.detail.mergeOid, this.detail.baseRefName))
-                      .fontSize($r('app.float.caption_font_size'))
-                      .fontColor($r('app.color.text_tertiary'))
-                      .maxLines(1)
-                  }
+                    .fontColor($r('app.color.text_primary'))
                 }
                 .width('100%')
+                // 动作人行：ZM-BAD merged commit a1edbd2 into main 13d ago
+                if (this.detail.mergeOid !== '' && this.detail.mergedByLogin !== '') {
+                  Text() {
+                    Span(this.detail.mergedByLogin)
+                      .fontColor($r('app.color.text_primary'))
+                    Span(` ${this.stringOf($r('app.string.pr_merged_commit_word'))} `)
+                      .fontColor($r('app.color.text_secondary'))
+                    Span(this.detail.mergeOid)
+                      .fontColor($r('app.color.text_primary'))
+                    Span(` ${this.stringOf($r('app.string.pr_into_word'))} `)
+                      .fontColor($r('app.color.text_secondary'))
+                    Span(this.detail.baseRefName)
+                      .fontColor($r('app.color.text_secondary'))
+                    Span(` ${this.timeText(timeParts(this.detail.mergedAt, Date.now()))} ${this.stringOf($r('app.string.pr_time_ago'))}`)
+                      .fontColor($r('app.color.text_secondary'))
+                  }
+                  .fontSize($r('app.float.caption_font_size'))
+                  .width('100%')
+                  .padding({ left: 22 })
+                }
               }
             }
             .padding($r('app.float.card_padding'))
@@ -313,7 +412,30 @@ export struct PrDetailView {
                   .borderRadius(6)
                   .border({ width: 1, color: $r('app.color.border') })
                   .onClick(() => {
-                    promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+                    const ui = this.getUIContext();
+                    ui.getPromptAction().showDialog(
+                      {
+                        message: this.stringOf($r('app.string.pr_delete_branch_confirm')),
+                        buttons: [
+                          {
+                            text: this.stringOf($r('app.string.pr_delete_branch_cancel')),
+                            color: $r('app.color.link_blue')
+                          },
+                          {
+                            text: this.stringOf($r('app.string.pr_delete_branch_confirm_delete')),
+                            color: $r('app.color.badge_red')
+                          }
+                        ]
+                      },
+                      (err, data) => {
+                        if (err) {
+                          return;
+                        }
+                        if (data.index === 1) {
+                          promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+                        }
+                      }
+                    );
                   })
               }
             }

@@ -37,7 +37,7 @@ import { RepoReleasesView } from './RepoReleases';
 import { IssueDetailView } from './IssueDetail';
 import { PrDetailView } from './PrDetail';
 import { PrFilesView } from './PrFiles';
-import { NotificationSettingsView } from './NotificationSettings';
+import { CommitDetailView } from './CommitDetail';import { NotificationSettingsView } from './NotificationSettings';
 import { CodeOptionsView } from './CodeOptions';
 import { UserListView } from './UserList';
 import { StargazersView } from './Stargazers';
@@ -90,6 +90,10 @@ struct Index {
   @State searchKeyword: string = '';
   /** My Work 配置变更计数器：Edit My Work SAVE 后递增，泵到 HomeView 触发重渲染 */
   @State homeWorkVersion: number = 0;
+  /** PrFiles 回页刷新计数器：Code Options 返回后递增，重读行号等设置 */
+  @State prFilesTick: number = 0;
+  /** Commit 详情路由参数（owner/name/oid 第三段） */
+  @State commitOid: string = '';
   private tabController: TabsController = new TabsController();
   private pathStack: NavPathStack = new NavPathStack();
 
@@ -598,9 +602,8 @@ struct Index {
       this.repoOwner = parts[0];
       this.repoName = parts[1];
     }
-    if (parts.length >= 3) {
-      this.detailNumber = Number(parts[2]);
-    }
+    // 不足 3 段时显式重置，避免残留上一次路由的 detailNumber（如 2 段路由走了 PR 分支）
+    this.detailNumber = parts.length >= 3 ? Number(parts[2]) : 0;
   }
 
   @Builder
@@ -625,6 +628,7 @@ struct Index {
       RepoCommitsView({
         owner: this.repoOwner,
         name: this.repoName,
+        prNumber: this.detailNumber,
         token: this.token,
         pathStack: this.pathStack
       })
@@ -738,11 +742,36 @@ struct Index {
         name: this.repoName,
         number: this.detailNumber,
         token: this.token,
-        pathStack: this.pathStack
+        pathStack: this.pathStack,
+        refreshTick: this.prFilesTick
       })
     }
     .onReady((context: NavDestinationContext) => {
       this.parseRouteParam(context.pathInfo.param as string);
+    })
+    .onShown(() => {
+      this.prFilesTick += 1;
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Commit 详情页（路由参数：owner/name/oid） */
+  @Builder
+  commitDetailDestination() {
+    NavDestination() {
+      CommitDetailView({
+        owner: this.repoOwner,
+        name: this.repoName,
+        oid: this.commitOid,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      const parts = (context.pathInfo.param as string).split('/');
+      this.repoOwner = parts[0];
+      this.repoName = parts[1];
+      this.commitOid = parts.length >= 3 ? parts[2] : '';
     })
     .hideTitleBar(true)
   }
@@ -823,6 +852,8 @@ struct Index {
       this.achievementDetailDestination()
     } else if (name === 'prFiles') {
       this.prFilesDestination()
+    } else if (name === 'commitDetail') {
+      this.commitDetailDestination()
     }
   }
 

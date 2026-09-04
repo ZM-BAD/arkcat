@@ -99,6 +99,12 @@ export interface IssueDetailPage {
   endCursor: string;
 }
 
+/** Checks 列表行（statusCheckRollup.contexts：CheckRun/StatusContext 归一化） */
+export interface StatusCheckItem {
+  name: string;
+  state: string;
+}
+
 export interface PrDetailPage {
   number: number;
   title: string;
@@ -117,10 +123,12 @@ export interface PrDetailPage {
   headRefName: string;
   baseRefName: string;
   mergeOid: string;
+  mergedByLogin: string;
   filesCount: number;
   commitsCount: number;
   reviewsTotal: number;
   checksState: string;
+  checks: StatusCheckItem[];
   comments: RepoComment[];
 }
 
@@ -248,12 +256,16 @@ export function mapRepoPrsPage(data: JsonMap): RepoPrsPage {
 
 export function mapRepoCommit(raw: JsonMap): RepoCommitItem {
   const author = Json.obj(raw, 'author');
+  const authorUser = author !== null ? Json.obj(author, 'user') : null;
+  const authorLogin = authorUser !== null && Json.str(authorUser, 'login') !== ''
+    ? Json.str(authorUser, 'login')
+    : (author !== null ? Json.str(author, 'name') : '');
   const checks = Json.obj(raw, 'statusCheckRollup');
   return {
     oid: Json.str(raw, 'oid'),
     headline: Json.str(raw, 'messageHeadline'),
     committedDate: Json.str(raw, 'committedDate'),
-    authorLogin: author !== null ? Json.str(author, 'login') : '',
+    authorLogin: authorLogin,
     authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : '',
     checksState: checks !== null ? Json.str(checks, 'state') : ''
   };
@@ -268,6 +280,26 @@ export function mapRepoCommitsPage(data: JsonMap): RepoCommitsPage {
   const commits: RepoCommitItem[] = [];
   for (const nodeItem of Json.arr(history, 'nodes')) {
     commits.push(mapRepoCommit(nodeItem as JsonMap));
+  }
+  return {
+    hasNextPage: pageInfo !== null ? Json.bool(pageInfo, 'hasNextPage') : false,
+    endCursor: pageInfo !== null ? Json.str(pageInfo, 'endCursor') : '',
+    commits: commits
+  };
+}
+
+/** PR commits 分页映射（pullRequest.commits 节点嵌套 commit 层） */
+export function mapPrCommits(data: JsonMap): RepoCommitsPage {
+  const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
+  const pr = Json.obj(repo, 'pullRequest') ?? ({} as JsonMap);
+  const commitsConn = Json.obj(pr, 'commits') ?? ({} as JsonMap);
+  const pageInfo = Json.obj(commitsConn, 'pageInfo');
+  const commits: RepoCommitItem[] = [];
+  for (const nodeItem of Json.arr(commitsConn, 'nodes')) {
+    const commit = Json.obj(nodeItem as JsonMap, 'commit');
+    if (commit !== null) {
+      commits.push(mapRepoCommit(commit));
+    }
   }
   return {
     hasNextPage: pageInfo !== null ? Json.bool(pageInfo, 'hasNextPage') : false,
@@ -357,6 +389,7 @@ export function mapPrDetail(data: JsonMap): PrDetailPage {
   const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
   const pr = Json.obj(repo, 'pullRequest') ?? ({} as JsonMap);
   const author = Json.obj(pr, 'author');
+  const mergedBy = Json.obj(pr, 'mergedBy');
   const mergeCommit = Json.obj(pr, 'mergeCommit');
   const files = Json.obj(pr, 'files');
   const commitsSum = Json.obj(pr, 'commits');
@@ -384,10 +417,34 @@ export function mapPrDetail(data: JsonMap): PrDetailPage {
     headRefName: Json.str(pr, 'headRefName'),
     baseRefName: Json.str(pr, 'baseRefName'),
     mergeOid: mergeCommit !== null ? Json.str(mergeCommit, 'abbreviatedOid') : '',
+    mergedByLogin: mergedBy !== null ? Json.str(mergedBy, 'login') : '',
     filesCount: files !== null ? Json.num(files, 'totalCount') : 0,
     commitsCount: commitsSum !== null ? Json.num(commitsSum, 'totalCount') : 0,
     reviewsTotal: reviews !== null ? Json.num(reviews, 'totalCount') : 0,
     checksState: checks !== null ? Json.str(checks, 'state') : '',
+    checks: mapStatusChecks(checks),
     comments: comments
   };
+}
+
+/** statusCheckRollup.contexts → 归一化行（CheckRun 用 conclusion，StatusContext 用 state） */
+function mapStatusChecks(checks: JsonMap | null): StatusCheckItem[] {
+  const items: StatusCheckItem[] = [];
+  if (checks === null) {
+    return items;
+  }
+  const conn = Json.obj(checks, 'contexts');
+  if (conn === null) {
+    return items;
+  }
+  for (const nodeItem of Json.arr(conn, 'nodes')) {
+    const node = nodeItem as JsonMap;
+    const name = Json.str(node, 'name') !== '' ? Json.str(node, 'name') : Json.str(node, 'context');
+    const conclusion = Json.str(node, 'conclusion');
+    const state = conclusion !== '' ? conclusion : Json.str(node, 'state');
+    if (name !== '') {
+      items.push({ name: name, state: state });
+    }
+  }
+  return items;
 }
