@@ -103,7 +103,7 @@ query PullRequestFiles($owner: String!, $name: String!, $number: Int!) {
       id
       files(first: 100) {
         totalCount
-        nodes { path additions deletions status }
+        nodes { path additions deletions }
       }
     }
   }

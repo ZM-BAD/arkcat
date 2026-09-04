@@ -20,6 +20,8 @@ export struct PrFilesView {
   @Param pathStack: NavPathStack = new NavPathStack();
   @Local page: PrFilesPage | null = null;
   @Local files: PrFileItem[] = [];
+  /** 展开文件路径集合（独立于数据，父状态变化 → 子组件 @Param 重新求值） */
+  @Local expandedPaths: string[] = [];
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
   @Local finderOpen: boolean = false;
@@ -50,23 +52,12 @@ export struct PrFilesView {
       });
   }
 
-  /** 展开/收起：重建数组触发 @Local 刷新（V2 数组元素属性变更不响应；ArkTS 禁对象 spread，显式拷贝） */
+  /** 展开/收起：维护路径集合（数组重建触发 @Local 刷新；真实展开态由子卡 @Param 计算） */
   private togglePath(path: string): void {
-    this.files = this.files.map((f: PrFileItem): PrFileItem => {
-      if (f.path === path) {
-        return {
-          path: f.path,
-          additions: f.additions,
-          deletions: f.deletions,
-          status: f.status,
-          patch: f.patch,
-          hunks: f.hunks,
-          diffTooLarge: f.diffTooLarge,
-          expanded: !f.expanded
-        };
-      }
-      return f;
-    });
+    const idx = this.expandedPaths.indexOf(path);
+    this.expandedPaths = idx >= 0
+      ? this.expandedPaths.filter((p: string): boolean => p !== path)
+      : this.expandedPaths.concat(path);
   }
 
   /** Find file 过滤（大小写不敏感子串） */
@@ -229,6 +220,7 @@ export struct PrFilesView {
               ForEach(this.files, (item: PrFileItem) => {
                 PrDiffCard({
                   item: item,
+                  expanded: this.expandedPaths.indexOf(item.path) >= 0,
                   onToggle: (): void => this.togglePath(item.path),
                   onOpenFile: (): void => this.openFile(item)
                 })

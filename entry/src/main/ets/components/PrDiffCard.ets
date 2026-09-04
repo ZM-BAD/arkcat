@@ -11,6 +11,7 @@ import { resText } from '../utils/I18n';
 @ComponentV2
 export struct PrDiffCard {
   @Param item: PrFileItem | null = null;
+  @Param expanded: boolean = false;
   @Event onToggle: () => void = (): void => { };
   @Event onOpenFile: () => void = (): void => { };
 
@@ -85,12 +86,12 @@ export struct PrDiffCard {
           Stack() {
             OctIcon({ res: $r('app.media.oct_chevron_down_16'), iconSize: 16,
               iconColor: $r('app.color.text_secondary') })
-              .rotate({ angle: this.item.expanded ? 180 : 0 })
+              .rotate({ angle: this.expanded ? 180 : 0 })
           }
           .width(36)
           .height(36)
           .padding(10)
-          .accessibilityDescription(this.item.expanded ? $r('app.string.a11y_collapse') : $r('app.string.a11y_expand'))
+          .accessibilityDescription(this.expanded ? $r('app.string.a11y_collapse') : $r('app.string.a11y_expand'))
           .focusable(true)
           .onClick(() => {
             this.onToggle();
@@ -114,7 +115,7 @@ export struct PrDiffCard {
           this.onToggle();
         })
 
-        if (this.item.expanded) {
+        if (this.expanded) {
           if (this.item.hunks.length === 0) {
             Text(this.item.diffTooLarge ? this.stringOf($r('app.string.pr_diff_too_large'))
               : this.stringOf($r('app.string.pr_files_empty')))
