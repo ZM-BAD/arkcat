@@ -141,19 +141,24 @@ export struct ReactionBar {
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.text_primary'))
           .width('100%')
-        Row({ space: 8 }) {
-          ForEach(REACTION_META, (m: ReactionMeta) => {
-            Text(m.emoji)
-              .fontSize(24)
-              .width(44)
-              .height(44)
-              .textAlign(TextAlign.Center)
-              .borderRadius(8)
-              .backgroundColor(findReactionGroup(this.mirror, m.content) !== null
-                ? $r('app.color.chip_bg') : Color.Transparent)
-              .onClick(() => this.pick(m.content))
-          }, (m: ReactionMeta) => m.content)
+        // 8 个 44vp emoji 超出窄屏宽度：包横向 Scroll，内层行 minWidth 撑满、超宽可滑
+        Scroll() {
+          Row({ space: 8 }) {
+            ForEach(REACTION_META, (m: ReactionMeta) => {
+              Text(m.emoji)
+                .fontSize(24)
+                .width(44)
+                .height(44)
+                .textAlign(TextAlign.Center)
+                .borderRadius(8)
+                .backgroundColor(findReactionGroup(this.mirror, m.content) !== null
+                  ? $r('app.color.chip_bg') : Color.Transparent)
+                .onClick(() => this.pick(m.content))
+            }, (m: ReactionMeta) => m.content)
+          }
+          .constraintSize({ minWidth: '100%' })
         }
+        .scrollBar(BarState.Off)
         .width('100%')
       }
     }
@@ -163,38 +168,43 @@ export struct ReactionBar {
   }
 
   build() {
-    Row({ space: 6 }) {
-      ForEach(this.mirror, (g: ReactionGroup) => {
-        Row({ space: 2 }) {
-          Text(reactionEmoji(g.content))
-            .fontSize(15)
-            .padding({ left: 6, top: 4, bottom: 4 })
-            .onClick(() => this.toggle(g.content))
-          Text(`${g.count}`)
-            .fontSize($r('app.float.caption_font_size'))
-            .fontWeight(g.viewerHasReacted ? FontWeight.Medium : FontWeight.Regular)
-            .fontColor(g.viewerHasReacted ? $r('app.color.link_blue') : $r('app.color.text_secondary'))
-            .padding({ left: 2, right: 6, top: 5, bottom: 5 })
-            .onClick(() => this.openUsers(g))
-        }
-        .borderRadius(14)
-        .backgroundColor(g.viewerHasReacted ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
-        .border({ width: g.viewerHasReacted ? 1 : 0, color: $r('app.color.link_blue') })
-        .margin({ right: 2 })
-      }, (g: ReactionGroup) => g.content + '_' + g.count + (g.viewerHasReacted ? '_r' : ''))
-      if (this.mirror.length < REACTION_META.length) {
-        Text('+')
-          .fontSize(16)
-          .fontColor($r('app.color.text_secondary'))
-          .width(28)
-          .height(28)
-          .textAlign(TextAlign.Center)
+    // 芯片行可横向滚动：外层 Scroll 限宽防溢出容器，内层行 minWidth 撑满、超宽时可滑（不能 width('100%')，否则永不溢出）
+    Scroll() {
+      Row({ space: 6 }) {
+        ForEach(this.mirror, (g: ReactionGroup) => {
+          Row({ space: 2 }) {
+            Text(reactionEmoji(g.content))
+              .fontSize(15)
+              .padding({ left: 6, top: 4, bottom: 4 })
+              .onClick(() => this.toggle(g.content))
+            Text(`${g.count}`)
+              .fontSize($r('app.float.caption_font_size'))
+              .fontWeight(g.viewerHasReacted ? FontWeight.Medium : FontWeight.Regular)
+              .fontColor(g.viewerHasReacted ? $r('app.color.link_blue') : $r('app.color.text_secondary'))
+              .padding({ left: 2, right: 6, top: 5, bottom: 5 })
+              .onClick(() => this.openUsers(g))
+          }
           .borderRadius(14)
-          .backgroundColor($r('app.color.chip_bg'))
-          .accessibilityDescription($r('app.string.a11y_reaction_add'))
-          .onClick(() => this.openAll())
+          .backgroundColor(g.viewerHasReacted ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
+          .border({ width: g.viewerHasReacted ? 1 : 0, color: $r('app.color.link_blue') })
+          .margin({ right: 2 })
+        }, (g: ReactionGroup) => g.content + '_' + g.count + (g.viewerHasReacted ? '_r' : ''))
+        if (this.mirror.length < REACTION_META.length) {
+          Text('+')
+            .fontSize(16)
+            .fontColor($r('app.color.text_secondary'))
+            .width(28)
+            .height(28)
+            .textAlign(TextAlign.Center)
+            .borderRadius(14)
+            .backgroundColor($r('app.color.chip_bg'))
+            .accessibilityDescription($r('app.string.a11y_reaction_add'))
+            .onClick(() => this.openAll())
+        }
       }
+      .constraintSize({ minWidth: '100%' })
     }
+    .scrollBar(BarState.Off)
     .width('100%')
     .bindSheet($$this.sheetOpen, this.sheetPanel(), {
       height: 300,
