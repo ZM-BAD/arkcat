@@ -44,9 +44,9 @@ export function buildPullStatesQuery(refs: PrRef[]): string {
 export function mapPullMerged(data: JsonMap, count: number): boolean[] {
   const merged: boolean[] = [];
   for (let i = 0; i < count; i++) {
+    // alias 即 repository 节点（查询形如 t{i}: repository(...){...}），直接取内层 issueOrPullRequest
     const alias = Json.obj(data, `t${i}`);
-    const repo = alias !== null ? Json.obj(alias, 'repository') : null;
-    const node = repo !== null ? Json.obj(repo, 'issueOrPullRequest') : null;
+    const node = alias !== null ? Json.obj(alias, 'issueOrPullRequest') : null;
     merged.push(node !== null ? Json.bool(node, 'merged') : false);
   }
   return merged;

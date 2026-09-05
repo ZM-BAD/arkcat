@@ -17,6 +17,8 @@ export struct StargazersView {
   @Param name: string = '';
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
+  /** 头部快照：Index 共享 @State 会被同名目的地复用改写，进入时快照防串数据（review D4） */
+  @Local headerName: string = '';
   @Local users: UserSummary[] = [];
   @Local cursor: string = '';
   @Local hasNextPage: boolean = false;
@@ -26,6 +28,7 @@ export struct StargazersView {
   @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
+    this.headerName = this.name;
     this.refresh();
   }
 
@@ -127,7 +130,7 @@ export struct StargazersView {
           this.pathStack.pop();
         })
         Column({ space: 2 }) {
-          Text(this.name)
+          Text(this.headerName)
             .fontSize($r('app.float.title_font_size'))
             .fontWeight(FontWeight.Bold)
             .fontColor($r('app.color.text_primary'))

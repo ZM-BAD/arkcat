@@ -110,7 +110,8 @@ export struct OrganizationsView {
     .height(64)
     .padding({ left: 12, right: 12 })
     .onClick(() => {
-      this.pathStack.pushPathByName('userProfile', org.login);
+      // 组织是 Organization 节点，GraphQL user(login:) 解析不了 → 走组织主页（review D2）
+      this.pathStack.pushPathByName('orgProfile', org.login);
     })
   }
 

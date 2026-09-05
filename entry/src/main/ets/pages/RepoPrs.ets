@@ -176,7 +176,7 @@ export struct RepoPrsView {
       .fontColor(Color.White)
       .padding({ left: 8, right: 8, top: 2, bottom: 2 })
       .borderRadius(6)
-      .backgroundColor(label.color !== '' ? label.color : $r('app.color.text_secondary'))
+      .backgroundColor(label.color !== '' ? `#${label.color}` : $r('app.color.text_secondary'))
       .margin({ right: 6 })
   }
 

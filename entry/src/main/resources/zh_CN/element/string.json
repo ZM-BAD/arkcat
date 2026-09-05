@@ -1497,6 +1497,10 @@
       "value": "关注中"
     },
     {
+      "name": "org_follow_unsupported",
+      "value": "组织暂不支持关注"
+    },
+    {
       "name": "org_read_more",
       "value": "展开更多"
     },

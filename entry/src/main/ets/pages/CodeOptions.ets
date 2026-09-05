@@ -301,7 +301,7 @@ export struct CodeOptionsView {
             Column({ space: 2 }) {
               ForEach(this.sampleLines(), (line: CodeLine, idx: number) => {
                 this.codeLine(idx, line)
-              }, (line: CodeLine, idx: number) => idx + line.spans.length + '')
+              }, (line: CodeLine, idx: number) => `${this.darkTheme ? 'd' : 'l'}-${idx}-${line.spans.length}`)
             }
             .width('100%')
             .padding({ left: 12, right: 12, top: 10, bottom: 10 })

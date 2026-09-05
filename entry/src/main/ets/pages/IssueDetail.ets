@@ -60,6 +60,11 @@ export struct IssueDetailView {
     this.loading = true;
     RepoSubService.fetchIssueDetail(this.token, this.owner, this.name, this.number, this.cursor)
       .then((page: IssueDetailPage) => {
+        // 翻页只追加评论批次，整页替换会把前 20 条评论顶掉（review B4）
+        const prev = this.detail;
+        if (prev !== null) {
+          page.comments = prev.comments.concat(page.comments);
+        }
         this.detail = page;
         this.cursor = page.endCursor;
         this.hasNextPage = page.hasNextPage;

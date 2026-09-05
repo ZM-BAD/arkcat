@@ -98,13 +98,13 @@ export struct IssuePrSearchRow {
     return this.item?.kind === 'pr';
   }
 
-  /** label 胶囊：GraphQL color 为底、白/黑文字（浅色 label 黑色文字） */
+  /** label 胶囊：GraphQL color 为底、白/黑文字（浅色 label 恒用固定深色字，不随主题——review F3） */
   @Builder
   labelPill(label: SearchLabel) {
     Text(label.name)
       .fontSize(12)
       .fontWeight(FontWeight.Medium)
-      .fontColor(isLightHexColor(label.color) ? $r('app.color.text_primary') : Color.White)
+      .fontColor(isLightHexColor(label.color) ? $r('app.color.label_light_fg') : Color.White)
       .padding({ left: 10, right: 10, top: 4, bottom: 4 })
       .borderRadius(12)
       .backgroundColor(`#${label.color}`)

@@ -12,15 +12,14 @@ const KEY_LANG = 'app_language';
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     hilog.info(DOMAIN, TAG, 'onCreate');
-    // 恢复 App 内语言选择（Settings 切换后重启生效；无恢复逻辑会回落到系统默认）
+    // 恢复 App 内语言选择（Spec 012：仅当用户在 Settings 显式设置过才应用，
+    // 未设置跟随系统语言非中文回退 base；同步读取避免晚于 loadContent 首帧闪切）
     try {
-      preferences.getPreferences(this.context, PREFS_NAME)
-        .then((pref: preferences.Preferences) => {
-          const lang = pref.getSync(KEY_LANG, 'zh') as string;
-          i18n.System.setAppPreferredLanguage(lang);
-        })
-        .catch(() => {
-        });
+      const pref = preferences.getPreferencesSync(this.context, { name: PREFS_NAME });
+      const lang = pref.getSync(KEY_LANG, '') as string;
+      if (lang !== '') {
+        i18n.System.setAppPreferredLanguage(lang);
+      }
     } catch (e) {
       // 读取失败按系统默认
     }

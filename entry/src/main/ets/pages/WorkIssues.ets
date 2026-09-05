@@ -150,7 +150,7 @@ export struct WorkIssuesView {
       .fontColor(Color.White)
       .padding({ left: 8, right: 8, top: 2, bottom: 2 })
       .borderRadius(6)
-      .backgroundColor(label.color !== '' ? label.color : $r('app.color.text_secondary'))
+      .backgroundColor(label.color !== '' ? `#${label.color}` : $r('app.color.text_secondary'))
       .margin({ right: 6 })
   }
 
@@ -210,6 +210,10 @@ export struct WorkIssuesView {
     .backgroundColor($r('app.color.card_background'))
     .width('100%')
     .margin({ bottom: 8 })
+    .onClick(() => {
+      // 与 WorkPrs 同款跳转（review B1：列表项此前漏 onClick 无法进详情）
+      this.pathStack.pushPathByName('issueDetail', `${issue.repoFullName}/${issue.number}`);
+    })
   }
 
   build() {

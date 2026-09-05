@@ -1529,6 +1529,10 @@
       "value": "FOLLOWING"
     },
     {
+      "name": "org_follow_unsupported",
+      "value": "Organizations can't be followed yet"
+    },
+    {
       "name": "org_read_more",
       "value": "Read more"
     },

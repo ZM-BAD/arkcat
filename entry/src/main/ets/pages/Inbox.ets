@@ -186,6 +186,8 @@ export struct InboxView {
           return copy;
         });
         promptAction.showToast({ message: $r('app.string.inbox_marked_read') });
+        // 通知 Index 重算未读蓝点（review A4）
+        AppStorage.setOrCreate('inboxUnreadTick', Date.now());
       })
       .catch((e: Error) => {
         promptAction.showToast({ message: this.fmt($r('app.string.inbox_mark_failed'), e.message) });
@@ -625,7 +627,6 @@ export struct InboxView {
         .backgroundColor(this.filter === 'repo' ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))
         .onClick((): void => { this.sheetKind = 'repo'; })
       }
-      .width('100%')
       }
       .scrollable(ScrollDirection.Horizontal)
       .scrollBar(BarState.Off)

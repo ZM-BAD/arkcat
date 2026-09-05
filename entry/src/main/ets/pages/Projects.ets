@@ -359,7 +359,6 @@ export struct ProjectsView {
               }
             })
           }
-          .width('100%')
           }
           .scrollable(ScrollDirection.Horizontal)
           .scrollBar(BarState.Off)

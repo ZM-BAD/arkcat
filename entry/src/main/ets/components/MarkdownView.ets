@@ -126,7 +126,8 @@ export struct MarkdownView {
         }
         const vp = Math.max(this.getUIContext().px2vp(px), 1);
         this.contentHeight = vp;
-        if (vp <= COLLAPSE_HEIGHT) {
+        // about:blank 首测 scrollHeight=0：无内容不做折叠决策，防误清折叠态（review F2）
+        if (px > 0 && vp <= COLLAPSE_HEIGHT) {
           this.collapsed = false;
         }
         // 展开模式：高度=内容全高，交给外层页面 Scroll 滚动，Web 内不再出现滚动条

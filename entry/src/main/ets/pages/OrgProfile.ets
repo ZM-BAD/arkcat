@@ -66,42 +66,6 @@ export struct OrgProfileView {
   }
 
   /** FOLLOW 真实切换：REST put/delete；失败（如无 user:follow scope）toast */
-  private toggleFollow(): void {
-    const org = this.org;
-    if (org === null) {
-      return;
-    }
-    const next = !org.viewerIsFollowing;
-    ProfileListService.setOrgFollowing(this.token, org.login, next)
-      .then((following: boolean) => {
-        const updated: OrgProfile = {
-          login: org.login,
-          name: org.name,
-          avatarUrl: org.avatarUrl,
-          description: org.description,
-          websiteUrl: org.websiteUrl,
-          twitterUsername: org.twitterUsername,
-          email: org.email,
-          pinned: org.pinned,
-          repositoriesCount: org.repositoriesCount,
-          readmeText: org.readmeText,
-          viewerIsFollowing: following
-        };
-        this.org = updated;
-        const ui = this.getUIContext();
-        promptAction.showToast({
-          message: following
-            ? resText(ui, $r('app.string.profile_followed_toast'))
-            : resText(ui, $r('app.string.profile_unfollowed_toast'))
-        });
-      })
-      .catch((e: Error) => {
-        promptAction.showToast({
-          message: resText(this.getUIContext(), $r('app.string.profile_action_failed'), e.message)
-        });
-      });
-  }
-
   private stringOf(res: Resource): string {
     return resText(this.getUIContext(), res);
   }
@@ -175,7 +139,7 @@ export struct OrgProfileView {
         .width('100%')
         .alignItems(HorizontalAlign.Start)
 
-        // [+ FOLLOW] 通栏描边按钮（真实关注切换）
+        // [+ FOLLOW] 通栏描边按钮（GitHub 无组织关注 API，review D1：保留入口占位，点击提示）
         Row() {
           Text(this.stringOf(this.followLabel(org)))
             .fontSize($r('app.float.body_font_size'))
@@ -190,7 +154,7 @@ export struct OrgProfileView {
         .borderColor($r('app.color.divider'))
         .margin({ top: 14 })
         .onClick(() => {
-          this.toggleFollow();
+          promptAction.showToast({ message: this.stringOf($r('app.string.org_follow_unsupported')) });
         })
 
         // README 区块

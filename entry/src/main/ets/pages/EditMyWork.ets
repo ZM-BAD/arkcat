@@ -21,6 +21,8 @@ export struct EditMyWorkView {
   @Param onSaved: () => void = () => {};
   /** 编辑快照：返回不保存；SAVE 时写回 store */
   @Local snapshot: WorkSection[] = defaultWorkSections();
+  /** 持久化配置加载完成前不渲染列表（review D5：Checkbox select 仅创建时生效，早渲染会显示错误的默认勾选态） */
+  @Local configLoaded: boolean = false;
   private dragFrom: number = -1;
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
@@ -29,6 +31,11 @@ export struct EditMyWorkView {
     WorkConfigStore.load(this.getUIContext().getHostContext())
       .then(() => {
         this.snapshot = WorkConfigStore.instance.sections.slice();
+        this.configLoaded = true;
+      })
+      .catch(() => {
+        // 读取失败按默认配置渲染，避免页面空白
+        this.configLoaded = true;
       });
   }
 
@@ -181,29 +188,32 @@ export struct EditMyWorkView {
 
       PageShadowBar({ show: this.scrollShadow })
 
-      List() {
-        ForEach(this.snapshot, (item: WorkSection, index: number) => {
-          ListItem() {
-            this.workRow(item)
-          }
-          .borderRadius(6)
-          .backgroundColor($r('app.color.card_background'))
-          .margin({ bottom: 4 })
-        }, (item: WorkSection) => item.id)
+      // 配置加载完成前不渲染（review D5），防止勾选框以默认态创建
+      if (this.configLoaded) {
+        List() {
+          ForEach(this.snapshot, (item: WorkSection, index: number) => {
+            ListItem() {
+              this.workRow(item)
+            }
+            .borderRadius(6)
+            .backgroundColor($r('app.color.card_background'))
+            .margin({ bottom: 4 })
+          }, (item: WorkSection) => `${item.id}-${item.visible ? 1 : 0}`)
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .padding({ left: 16, right: 16, top: 8 })
+        .scrollBar(BarState.Off)
+        .onItemDragStart((event: ItemDragInfo, itemIndex: number) => {
+          this.dragFrom = itemIndex;
+          return this.dragRow(itemIndex);
+        })
+        .onItemDrop((event: ItemDragInfo, targetIndex: number) => {
+          this.move(this.dragFrom, targetIndex);
+          this.dragFrom = -1;
+        })
+        .onScroll((scrollOffset: number, _state: number): void => { this.scrollShadow = scrollOffset > 0.001; })
       }
-      .width('100%')
-      .layoutWeight(1)
-      .padding({ left: 16, right: 16, top: 8 })
-      .scrollBar(BarState.Off)
-      .onItemDragStart((event: ItemDragInfo, itemIndex: number) => {
-        this.dragFrom = itemIndex;
-        return this.dragRow(itemIndex);
-      })
-      .onItemDrop((event: ItemDragInfo, targetIndex: number) => {
-        this.move(this.dragFrom, targetIndex);
-        this.dragFrom = -1;
-      })
-      .onScroll((scrollOffset: number, _state: number): void => { this.scrollShadow = scrollOffset > 0.001; })
     }
     .width('100%')
     .height('100%')

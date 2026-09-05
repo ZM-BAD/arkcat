@@ -288,10 +288,12 @@ export struct SearchOverviewView {
                 RepoSearchRow({ item: item, onOpen: (): void => this.openRepo(item) })
                   .padding({ left: 16, right: 16 })
               }, (item: SearchResultItem) => item.title)
-              this.moreLink(
-                this.stringOf($r('app.string.search_see_more_repositories'),
-                  formatBigCount(this.data.repoCount - this.data.repoItems.length)),
-                (): void => this.openKind('repositories'))
+              if (this.data.repoCount > this.data.repoItems.length) {
+                this.moreLink(
+                  this.stringOf($r('app.string.search_see_more_repositories'),
+                    formatBigCount(this.data.repoCount - this.data.repoItems.length)),
+                  (): void => this.openKind('repositories'))
+              }
             }
             // 区块三：Issues
             if (this.data.issueItems.length > 0) {
@@ -301,10 +303,12 @@ export struct SearchOverviewView {
                 IssuePrSearchRow({ item: item, onOpen: (): void => this.openIssue(item) })
                   .padding({ left: 16, right: 16 })
               }, (item: SearchResultItem) => `${item.repoFullName}-${item.number}`)
-              this.moreLink(
-                this.stringOf($r('app.string.search_see_more_issues'),
-                  formatBigCount(this.data.issueCount - this.data.issueItems.length)),
-                (): void => this.openKind('issues'))
+              if (this.data.issueCount > this.data.issueItems.length) {
+                this.moreLink(
+                  this.stringOf($r('app.string.search_see_more_issues'),
+                    formatBigCount(this.data.issueCount - this.data.issueItems.length)),
+                  (): void => this.openKind('issues'))
+              }
             }
             // 区块四：Pull Requests
             if (this.data.prItems.length > 0) {
@@ -314,10 +318,12 @@ export struct SearchOverviewView {
                 IssuePrSearchRow({ item: item, onOpen: (): void => this.openPr(item) })
                   .padding({ left: 16, right: 16 })
               }, (item: SearchResultItem) => `${item.repoFullName}-${item.number}`)
-              this.moreLink(
-                this.stringOf($r('app.string.search_see_more_prs'),
-                  formatBigCount(this.data.prCount - this.data.prItems.length)),
-                (): void => this.openKind('prs'))
+              if (this.data.prCount > this.data.prItems.length) {
+                this.moreLink(
+                  this.stringOf($r('app.string.search_see_more_prs'),
+                    formatBigCount(this.data.prCount - this.data.prItems.length)),
+                  (): void => this.openKind('prs'))
+              }
             }
             // 区块五：People
             if (this.data.userItems.length > 0) {
@@ -327,10 +333,12 @@ export struct SearchOverviewView {
                 PersonSearchRow({ item: item, onOpen: (): void => this.openUser(item) })
                   .padding({ left: 16, right: 16 })
               }, (item: SearchResultItem) => item.title)
-              this.moreLink(
-                this.stringOf($r('app.string.search_see_more_people'),
-                  formatBigCount(this.data.userCount - this.data.userItems.length)),
-                (): void => this.openKind('people'))
+              if (this.data.userCount > this.data.userItems.length) {
+                this.moreLink(
+                  this.stringOf($r('app.string.search_see_more_people'),
+                    formatBigCount(this.data.userCount - this.data.userItems.length)),
+                  (): void => this.openKind('people'))
+              }
             }
             // 区块六：Organizations
             if (this.data.orgItems.length > 0) {
@@ -340,10 +348,12 @@ export struct SearchOverviewView {
                 OrgSearchRow({ item: item, onOpen: (): void => this.openOrg(item) })
                   .padding({ left: 16, right: 16 })
               }, (item: SearchResultItem) => item.title)
-              this.moreLink(
-                this.stringOf($r('app.string.search_see_more_orgs'),
-                  formatBigCount(this.data.orgCount - this.data.orgItems.length)),
-                (): void => this.openKind('orgs'))
+              if (this.data.orgCount > this.data.orgItems.length) {
+                this.moreLink(
+                  this.stringOf($r('app.string.search_see_more_orgs'),
+                    formatBigCount(this.data.orgCount - this.data.orgItems.length)),
+                  (): void => this.openKind('orgs'))
+              }
             }
           }
         }

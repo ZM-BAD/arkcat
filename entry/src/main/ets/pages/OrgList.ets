@@ -13,6 +13,8 @@ export struct OrgListView {
   @Param login: string = '';
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
+  /** 头部快照：Index 共享 @State 会被同名目的地复用改写，进入时快照防串数据（review D4） */
+  @Local headerLogin: string = '';
   @Local orgs: OrgSummary[] = [];
   @Local cursor: string = '';
   @Local hasNextPage: boolean = false;
@@ -22,6 +24,7 @@ export struct OrgListView {
   @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
+    this.headerLogin = this.login;
     this.refresh();
   }
 
@@ -119,7 +122,7 @@ export struct OrgListView {
           this.pathStack.pop();
         })
         Column({ space: 2 }) {
-          Text(this.login)
+          Text(this.headerLogin)
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))
           Text($r('app.string.org_list_title'))

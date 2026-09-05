@@ -66,6 +66,8 @@ struct Index {
   @State repoName: string = '';
   @State detailNumber: number = 0;
   @State inboxHasUnread: boolean = false;
+  /** Inbox 标记已读后经 AppStorage 通知重算未读角标（review A4） */
+  @StorageProp('inboxUnreadTick') @Watch('onInboxUnreadTick') inboxUnreadTick: number = 0;
   @State listLogin: string = '';
   @State listKind: string = 'followers';
   /** Spec 052：成就详情参数（login|startIndex） */
@@ -92,6 +94,8 @@ struct Index {
   @State homeWorkVersion: number = 0;
   /** PrFiles 回页刷新计数器：Code Options 返回后递增，重读行号等设置 */
   @State prFilesTick: number = 0;
+  /** Code Options 返回 tick：CodeViewer/CommitDetail 重读设置（review C3，同 prFilesTick 模式） */
+  @State codeOptionsTick: number = 0;
   /** Commit 详情路由参数（owner/name/oid 第三段） */
   @State commitOid: string = '';
   private tabController: TabsController = new TabsController();
@@ -134,6 +138,13 @@ struct Index {
       .catch(() => {
         this.inboxHasUnread = false;
       });
+  }
+
+  /** Inbox 页标记已读/首次配 token 后触发角标重算（review A4：原先仅冷启动算一次） */
+  private onInboxUnreadTick(): void {
+    if (this.token !== '') {
+      this.refreshInboxUnread(this.token);
+    }
   }
 
   @Builder
@@ -690,11 +701,15 @@ struct Index {
         name: this.fileRepo,
         filePath: this.filePath,
         token: this.token,
-        pathStack: this.pathStack
+        pathStack: this.pathStack,
+        codeOptionsTick: this.codeOptionsTick
       })
     }
     .onReady((context: NavDestinationContext) => {
       this.parseFileParam(context.pathInfo.param as string);
+    })
+    .onShown(() => {
+      this.codeOptionsTick += 1;
     })
     .hideTitleBar(true)
   }
@@ -764,7 +779,8 @@ struct Index {
         name: this.repoName,
         oid: this.commitOid,
         token: this.token,
-        pathStack: this.pathStack
+        pathStack: this.pathStack,
+        codeOptionsTick: this.codeOptionsTick
       })
     }
     .onReady((context: NavDestinationContext) => {
@@ -772,6 +788,9 @@ struct Index {
       this.repoOwner = parts[0];
       this.repoName = parts[1];
       this.commitOid = parts.length >= 3 ? parts[2] : '';
+    })
+    .onShown(() => {
+      this.codeOptionsTick += 1;
     })
     .hideTitleBar(true)
   }
@@ -942,6 +961,8 @@ struct Index {
         TokenSetup({
           onSaved: (token: string): void => {
             this.token = token;
+            // 首次配置 token 后立即拉取未读角标，不等重启（review A4）
+            this.refreshInboxUnread(token);
           }
         })
       } else {

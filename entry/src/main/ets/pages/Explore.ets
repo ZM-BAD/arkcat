@@ -43,6 +43,8 @@ export struct ExploreView {
     this.selectedTopic = topic;
     this.loading = true;
     this.errorMsg = '';
+    // 清掉上一个 topic 的结果，防止请求失败时新名配旧计数（review A9）
+    this.result = null;
     ExploreService.fetchTopicRepositories(this.token, topic)
       .then((result: TopicSearchResult) => {
         this.result = result;

@@ -33,12 +33,20 @@ export struct CommitDetailView {
   @Local tab: number = 0;
   /** Code Options「展示行号」开关 */
   @Local showLineNumbers: boolean = true;
+  /** Code Options 返回 tick → 重读设置（review C3） */
+  @Param codeOptionsTick: number = 0;
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
     this.loadLineSetting();
     this.refresh();
+  }
+
+  /** Code Options 返回（onShown tick）→ 重读本页设置（review C3） */
+  @Monitor('codeOptionsTick')
+  onOptionsTick(): void {
+    this.loadLineSetting();
   }
 
   private loadLineSetting(): void {
@@ -76,13 +84,14 @@ export struct CommitDetailView {
     return oid.length > 7 ? oid.substring(0, 7) : oid;
   }
 
-  /** 标题文本：完整 message（REST），空则兜底短 oid */
+  /** 标题文本：REST message 首行（headline），空则兜底短 oid（review C1：勿用全文防与正文重复） */
   private headlineText(): string {
-    if (this.detail !== null && this.detail.message !== '') {
-      return this.detail.message;
-    }
     if (this.detail !== null && this.detail.headline !== '') {
       return this.detail.headline;
+    }
+    if (this.detail !== null && this.detail.message !== '') {
+      const first = this.detail.message.split('\n')[0];
+      return first !== '' ? first : this.shortOid(this.oid);
     }
     return this.shortOid(this.oid);
   }

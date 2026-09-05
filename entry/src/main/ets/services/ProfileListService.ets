@@ -8,7 +8,7 @@
  * 组织仓库列表 = GraphQL 优先（有权 token 享受完整筛选/分页），失败降级 REST 一页 100 +
  * 客户端语言/排序。Pinned（仅 GraphQL 供给）失败时清空隐藏。
  */
-import { graphql, restGet, restPut, restDelete, ApiError } from './GitHttpClient';
+import { graphql, restGet } from './GitHttpClient';
 import { Json, JsonMap } from '../utils/Json';
 import {
   UserListPage, OrgListPage, OrgProfile, OrgSummary, RepoListPage, mapUserListPage
@@ -160,7 +160,8 @@ export class ProfileListService {
     }
     org.pinned = await ProfileListService.fetchOrgPinned(token, login);
     org.readmeText = await ProfileListService.fetchOrgReadme(token, login);
-    org.viewerIsFollowing = await ProfileListService.checkOrgFollowing(token, login);
+    // GitHub 无组织关注 API（review D1）：viewerIsFollowing 恒 false，不再探测避免必 404 的请求
+    org.viewerIsFollowing = false;
     return org;
   }
 
@@ -198,29 +199,6 @@ export class ProfileListService {
     } catch (e) {
       return '';
     }
-  }
-
-  /** 跟随态：GET /user/follows/{login}，204 = 已跟随，404 = 未跟随 */
-  private static async checkOrgFollowing(token: string, login: string): Promise<boolean> {
-    try {
-      await restGet(`/user/follows/${login}`, token);
-      return true;
-    } catch (e) {
-      if (e instanceof ApiError && e.code === 404) {
-        return false;
-      }
-      throw new ApiError(0, 'org following check failed');
-    }
-  }
-
-  /** 关注/取关组织；返回操作后状态 */
-  static async setOrgFollowing(token: string, login: string, follow: boolean): Promise<boolean> {
-    if (follow) {
-      await restPut(`/user/follows/${login}`, token);
-    } else {
-      await restDelete(`/user/follows/${login}`, token);
-    }
-    return follow;
   }
 
   /** 通用仓库列表：GraphQL 优先；组织模式 GraphQL 失败（read:org 缺失）→ REST 一页 100 + 客户端筛选 */

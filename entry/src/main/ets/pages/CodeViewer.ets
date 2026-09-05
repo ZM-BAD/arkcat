@@ -27,6 +27,8 @@ export struct CodeViewerView {
   @Param pathStack: NavPathStack = new NavPathStack();
   /** 文件路径（路由参数 owner|name|path 解析） */
   @Param filePath: string = '';
+  /** Code Options 返回 tick → 重读设置（review C3） */
+  @Param codeOptionsTick: number = 0;
   @Local content: string = '';
   @Local lines: CodeLine[] = [];
   @Local loading: boolean = true;
@@ -49,6 +51,12 @@ export struct CodeViewerView {
   aboutToAppear(): void {
     this.loadSettings();
     this.fetchContent();
+  }
+
+  /** Code Options 返回（onShown tick）→ 重读本页设置（review C3） */
+  @Monitor('codeOptionsTick')
+  onOptionsTick(): void {
+    this.loadSettings();
   }
 
   private loadSettings(): void {

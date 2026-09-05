@@ -16,6 +16,8 @@ export struct UserListView {
   @Param kind: string = 'followers';
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
+  /** 头部快照：Index 共享 @State 会被同名目的地复用改写，进入时快照防串数据（review D4） */
+  @Local headerLogin: string = '';
   @Local users: UserSummary[] = [];
   @Local cursor: string = '';
   @Local hasNextPage: boolean = false;
@@ -25,6 +27,7 @@ export struct UserListView {
   @Local scrollShadow: boolean = false;
 
   aboutToAppear(): void {
+    this.headerLogin = this.login;
     this.refresh();
   }
 
@@ -127,7 +130,7 @@ export struct UserListView {
           this.pathStack.pop();
         })
         Column({ space: 2 }) {
-          Text(`@${this.login}`)
+          Text(`@${this.headerLogin}`)
             .fontSize($r('app.float.title_font_size'))
             .fontWeight(FontWeight.Bold)
             .fontColor($r('app.color.text_primary'))

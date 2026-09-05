@@ -99,7 +99,10 @@ export struct SearchResultsView {
           this.loading = false;
         })
         .catch((e: Error) => {
-          this.errorMsg = e.message;
+          // 翻页失败不打翻整页：仅当尚无任何结果才进错误态（review E3）
+          if (this.items.length === 0 && this.codeFiles.length === 0) {
+            this.errorMsg = e.message;
+          }
           this.loading = false;
         });
       return;
@@ -115,7 +118,10 @@ export struct SearchResultsView {
         this.loading = false;
       })
       .catch((e: Error) => {
-        this.errorMsg = e.message;
+        // 翻页失败不打翻整页（review E3）
+        if (this.items.length === 0 && this.codeFiles.length === 0) {
+          this.errorMsg = e.message;
+        }
         this.loading = false;
       });
   }

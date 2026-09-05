@@ -13,6 +13,10 @@
       "value": "#1F2328"
     },
     {
+      "name": "label_light_fg",
+      "value": "#1F2328"
+    },
+    {
       "name": "text_secondary",
       "value": "#59636E"
     },
