@@ -86,6 +86,8 @@ export struct ProjectsView {
 
   /** 客户端范围+三态过滤（纯函数在 WorkModels，便于单测） */
   private applyFilters(): void {
+    // 过滤意图 = 新的上下文：清掉翻页失败的遗留错误态（review E5）
+    this.errorMsg = '';
     this.filtered = filterWorkProjects(this.allProjects, this.ownedOnly, this.viewerLogin, this.stateFilter);
   }
 
@@ -107,6 +109,8 @@ export struct ProjectsView {
   private enterSearch(): void {
     this.inSearch = true;
     this.searchQuery = '';
+    // 搜索意图 = 新上下文：清遗留错误态（review E5）
+    this.errorMsg = '';
     // 下一帧获焦，自动弹起软键盘
     setTimeout((): void => {
       this.getUIContext().getFocusController().requestFocus('work_projects_search');

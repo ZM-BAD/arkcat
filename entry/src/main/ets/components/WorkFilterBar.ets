@@ -840,7 +840,11 @@ export struct WorkFilterBar {
       height: this.sheetKind === 'sort' ? 620 : 560,
       backgroundColor: $r('app.color.bg_page'),
       // 关闭钮与标题行均自绘，避免默认 ✕ 与放大镜重叠
-      showClose: false
+      showClose: false,
+      // 交互关闭后复位，否则 isShow 表达式恒 true 弹层失效（review B3）
+      onDisappear: (): void => {
+        this.sheetKind = '';
+      }
     })
   }
 }

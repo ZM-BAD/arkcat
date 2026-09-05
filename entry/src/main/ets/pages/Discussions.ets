@@ -36,17 +36,27 @@ export struct DiscussionsView {
     this.refresh();
   }
 
+  /** 竞态序号：快速切换筛选时丢弃过期响应（review E4） */
+  private seq: number = 0;
+
   private refresh(): void {
+    const mySeq = ++this.seq;
     this.loading = true;
     this.errorMsg = '';
     WorkService.fetchDiscussions(this.token, this.state, this.scope, this.unanswered, this.sortKey, '')
       .then((page: WorkDiscussionsPage) => {
+        if (mySeq !== this.seq) {
+          return;
+        }
         this.discussions = page.discussions;
         this.cursor = page.endCursor;
         this.hasNextPage = page.hasNextPage;
         this.loading = false;
       })
       .catch((e: Error) => {
+        if (mySeq !== this.seq) {
+          return;
+        }
         this.errorMsg = e.message;
         this.loading = false;
       });
@@ -56,15 +66,22 @@ export struct DiscussionsView {
     if (!this.hasNextPage || this.loading) {
       return;
     }
+    const mySeq = ++this.seq;
     this.loading = true;
     WorkService.fetchDiscussions(this.token, this.state, this.scope, this.unanswered, this.sortKey, this.cursor)
       .then((page: WorkDiscussionsPage) => {
+        if (mySeq !== this.seq) {
+          return;
+        }
         this.discussions = this.discussions.concat(page.discussions);
         this.cursor = page.endCursor;
         this.hasNextPage = page.hasNextPage;
         this.loading = false;
       })
       .catch((e: Error) => {
+        if (mySeq !== this.seq) {
+          return;
+        }
         this.errorMsg = e.message;
         this.loading = false;
       });
@@ -87,6 +104,8 @@ export struct DiscussionsView {
   private enterSearch(): void {
     this.inSearch = true;
     this.searchQuery = '';
+    // 搜索意图 = 新上下文：清遗留错误态（review E5）
+    this.errorMsg = '';
     // 下一帧获焦，自动弹起软键盘
     setTimeout((): void => {
       this.getUIContext().getFocusController().requestFocus('work_discussions_search');

@@ -8,7 +8,7 @@ import {
   RepoPrsPage, RepoCommitsPage, RepoReleasesPage, IssueDetailPage, PrDetailPage,
   mapRepoPrsPage, mapRepoCommitsPage, mapRepoReleasesPage, mapIssueDetail, mapPrDetail, mapPrCommits
 } from '../models/RepoSubModels';
-import { PrFilesPage, PrFileItem, mapPrFiles, applyRestPatch } from '../models/PrDiffModels';
+import { PrFilesPage, PrFileItem, mapPrFiles, applyRestPatch, mapFilesCursor, mapFileNode } from '../models/PrDiffModels';
 import { CommitDetailPage, mapCommitDetail } from '../models/PrDiffModels';
 import { parseDiffPatch } from '../utils/Diff';
 
@@ -191,6 +191,19 @@ query PullRequestFiles($owner: String!, $name: String!, $number: Int!) {
 }`;
 
 
+const PR_FILES_PAGE_QUERY = `
+query PullRequestFilesPage($owner: String!, $name: String!, $number: Int!, $filesCursor: String!) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      files(first: 100, after: $filesCursor) {
+        totalCount
+        pageInfo { hasNextPage endCursor }
+        nodes { path additions deletions }
+      }
+    }
+  }
+}`;
+
 const ADD_COMMENT_MUTATION = `
 mutation AddComment($subjectId: ID!, $body: String!) {
   addComment(input: { subjectId: $subjectId, body: $body }) {
@@ -347,14 +360,36 @@ export class RepoSubService {
     const variables: Record<string, Object> = { 'owner': owner, 'name': name, 'number': number };
     const data = await graphql(PR_FILES_QUERY, variables, token);
     const page = mapPrFiles(data);
+    // 文件 >100：GraphQL files 游标翻页补全列表（review G4/B16，上限 10 页防极端长 PR 拖死加载）
+    let cursor = mapFilesCursor(data);
+    let guard = 0;
+    while (cursor !== '' && guard < 10) {
+      guard += 1;
+      const nextVars: Record<string, Object> = { 'owner': owner, 'name': name, 'number': number, 'filesCursor': cursor };
+      const nextData = await graphql(PR_FILES_PAGE_QUERY, nextVars, token);
+      const nextFiles = Json.obj(Json.obj(Json.obj(nextData, 'repository') ?? ({} as JsonMap), 'pullRequest')
+        ?? ({} as JsonMap), 'files') ?? ({} as JsonMap);
+      for (const node of Json.arr(nextFiles, 'nodes')) {
+        page.files.push(mapFileNode(node as JsonMap));
+      }
+      cursor = mapFilesCursor(nextData);
+    }
     try {
-      const resp = await restGet(`/repos/${owner}/${name}/pulls/${number}/files?per_page=100`, token);
-      const parsed: Object | null = JSON.parse(resp.body);
-      const restItems = parsed as Object[];
+      // REST patch 回填同样按页翻全（per_page=100）
       const itemByPath = new Map<string, JsonMap>();
-      for (const node of restItems) {
-        const item = node as JsonMap;
-        itemByPath.set(Json.str(item, 'filename'), item);
+      let restPage = 1;
+      while (restPage <= 10) {
+        const resp = await restGet(`/repos/${owner}/${name}/pulls/${number}/files?per_page=100&page=${restPage}`, token);
+        const parsed: Object | null = JSON.parse(resp.body);
+        const restItems = (parsed ?? []) as Object[];
+        for (const node of restItems) {
+          const item = node as JsonMap;
+          itemByPath.set(Json.str(item, 'filename'), item);
+        }
+        if (restItems.length < 100) {
+          break;
+        }
+        restPage += 1;
       }
       const merged: PrFileItem[] = [];
       for (const f of page.files) {

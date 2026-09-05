@@ -48,11 +48,11 @@ export interface PrFilesPage {
   files: PrFileItem[];
 }
 
-function mapFileNode(node: JsonMap): PrFileItem {
+/** GraphQL 单个文件节点 → PrFileItem（fetchPrFiles 翻页复用） */
+export function mapFileNode(node: JsonMap): PrFileItem {
   if (node === null || node === undefined) {
     return { path: '', additions: 0, deletions: 0, status: '', patch: '', hunks: [], diffTooLarge: false, isBinary: false, expanded: false };
-  }
-  return {
+  }  return {
     path: Json.str(node, 'path'),
     additions: Json.num(node, 'additions'),
     deletions: Json.num(node, 'deletions'),
@@ -81,6 +81,14 @@ export function mapPrFiles(data: JsonMap): PrFilesPage {
     deletions: Json.num(pr, 'deletions'),
     files: nodes
   };
+}
+
+/** files 连接页游标（fetchPrFiles >100 文件翻页用，review G4） */
+export function mapFilesCursor(data: JsonMap): string {
+  const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
+  const pr = Json.obj(repo, 'pullRequest') ?? ({} as JsonMap);
+  const files = Json.obj(pr, 'files') ?? ({} as JsonMap);
+  return Json.str(Json.obj(files, 'pageInfo') ?? ({} as JsonMap), 'endCursor');
 }
 
 /** REST item（含 patch）→ PrFileItem（patch 仅当存在且非空） */

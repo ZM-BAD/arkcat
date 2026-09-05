@@ -96,6 +96,18 @@ struct Index {
   @State prFilesTick: number = 0;
   /** Code Options 返回 tick：CodeViewer/CommitDetail 重读设置（review C3，同 prFilesTick 模式） */
   @State codeOptionsTick: number = 0;
+  /** 首显守卫（review A6/D17）：onShown 首次触发时 aboutToAppear 已拉取，不重复请求 */
+  @State starredShownOnce: boolean = false;
+  @State listDetailShownOnce: boolean = false;
+  @State repoPrsShownOnce: boolean = false;
+  @State issuesListShownOnce: boolean = false;
+  @State workPrsShownOnce: boolean = false;
+  @State workIssuesShownOnce: boolean = false;
+  /** 列表页返回刷新 tick（review B13）：详情改动后返回计数/状态不过期 */
+  @State repoPrsTick: number = 0;
+  @State issuesListTick: number = 0;
+  @State workPrsTick: number = 0;
+  @State workIssuesTick: number = 0;
   /** Commit 详情路由参数（owner/name/oid 第三段） */
   @State commitOid: string = '';
   private tabController: TabsController = new TabsController();
@@ -194,7 +206,8 @@ struct Index {
         owner: this.repoOwner,
         name: this.repoName,
         token: this.token,
-        pathStack: this.pathStack
+        pathStack: this.pathStack,
+        returnTick: this.issuesListTick
       })
     }
     .onReady((context: NavDestinationContext) => {
@@ -204,6 +217,13 @@ struct Index {
         this.repoOwner = parts[0];
         this.repoName = parts[1];
       }
+    })
+    // 返回刷新（review B13），首显跳过防双请求
+    .onShown(() => {
+      if (this.issuesListShownOnce) {
+        this.issuesListTick += 1;
+      }
+      this.issuesListShownOnce = true;
     })
     .hideTitleBar(true)
   }
@@ -490,9 +510,17 @@ struct Index {
     NavDestination() {
       WorkIssuesView({
         token: this.token,
-        pathStack: this.pathStack
+        pathStack: this.pathStack,
+        returnTick: this.workIssuesTick
       })
     }
+    // 返回刷新（review B13），首显跳过防双请求
+    .onShown(() => {
+      if (this.workIssuesShownOnce) {
+        this.workIssuesTick += 1;
+      }
+      this.workIssuesShownOnce = true;
+    })
     .hideTitleBar(true)
   }
 
@@ -501,9 +529,17 @@ struct Index {
     NavDestination() {
       WorkPrsView({
         token: this.token,
-        pathStack: this.pathStack
+        pathStack: this.pathStack,
+        returnTick: this.workPrsTick
       })
     }
+    // 返回刷新（review B13），首显跳过防双请求
+    .onShown(() => {
+      if (this.workPrsShownOnce) {
+        this.workPrsTick += 1;
+      }
+      this.workPrsShownOnce = true;
+    })
     .hideTitleBar(true)
   }
 
@@ -564,9 +600,12 @@ struct Index {
     .onReady((context: NavDestinationContext) => {
       this.starredLogin = context.pathInfo.param as string;
     })
-    // 子页（Create list）pop 回时重取 My lists
+    // 子页（Create list）pop 回时重取 My lists；首显跳过（aboutToAppear 已拉取，review A6/D17）
     .onShown(() => {
-      this.starredListsTick += 1;
+      if (this.starredShownOnce) {
+        this.starredListsTick += 1;
+      }
+      this.starredShownOnce = true;
     })
     .hideTitleBar(true)
   }
@@ -599,9 +638,12 @@ struct Index {
     .onReady((context: NavDestinationContext) => {
       this.listDetailId = context.pathInfo.param as string;
     })
-    // Edit 页 pop 回时重取列表详情
+    // Edit 页 pop 回时重取列表详情；首显跳过（listId 变化已触发首载，review A6/D17）
     .onShown(() => {
-      this.listDetailTick += 1;
+      if (this.listDetailShownOnce) {
+        this.listDetailTick += 1;
+      }
+      this.listDetailShownOnce = true;
     })
     .hideTitleBar(true)
   }
@@ -624,11 +666,19 @@ struct Index {
         owner: this.repoOwner,
         name: this.repoName,
         token: this.token,
-        pathStack: this.pathStack
+        pathStack: this.pathStack,
+        returnTick: this.repoPrsTick
       })
     }
     .onReady((context: NavDestinationContext) => {
       this.parseRouteParam(context.pathInfo.param as string);
+    })
+    // 返回刷新（review B13），首显跳过防双请求
+    .onShown(() => {
+      if (this.repoPrsShownOnce) {
+        this.repoPrsTick += 1;
+      }
+      this.repoPrsShownOnce = true;
     })
     .hideTitleBar(true)
   }

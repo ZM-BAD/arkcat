@@ -45,7 +45,11 @@ export struct SearchResultsView {
     this.loadFirst();
   }
 
+  /** 竞态序号：改词/快速翻页丢弃过期响应（review E4） */
+  private seq: number = 0;
+
   private loadFirst(): void {
+    const mySeq = ++this.seq;
     this.loading = true;
     this.errorMsg = '';
     this.items = [];
@@ -58,6 +62,9 @@ export struct SearchResultsView {
     if (this.kind === 'code') {
       SearchService.fetchCodeResults(this.token, this.query, 1)
         .then((page: CodeSearchPage) => {
+          if (mySeq !== this.seq) {
+            return;
+          }
           this.codeFiles = page.files;
           this.codeGroups = this.groupCodes(page.files);
           this.hasNext = page.hasMore;
@@ -65,6 +72,9 @@ export struct SearchResultsView {
           this.loaded = true;
         })
         .catch((e: Error) => {
+          if (mySeq !== this.seq) {
+            return;
+          }
           this.errorMsg = e.message;
           this.loading = false;
           this.loaded = true;
@@ -73,6 +83,9 @@ export struct SearchResultsView {
     }
     SearchService.fetchSearchResults(this.token, this.kind as SearchEntryKind, this.query)
       .then((page: SearchResultPage) => {
+        if (mySeq !== this.seq) {
+          return;
+        }
         this.items = page.items;
         this.hasNext = page.hasNextPage;
         this.cursor = page.endCursor;
@@ -80,6 +93,9 @@ export struct SearchResultsView {
         this.loaded = true;
       })
       .catch((e: Error) => {
+        if (mySeq !== this.seq) {
+          return;
+        }
         this.errorMsg = e.message;
         this.loading = false;
         this.loaded = true;
@@ -87,10 +103,18 @@ export struct SearchResultsView {
   }
 
   private loadMore(): void {
+    // loading 守卫防 Show more 双击并发翻页（review E4）
+    if (this.loading) {
+      return;
+    }
+    const mySeq = ++this.seq;
     this.loading = true;
     if (this.kind === 'code') {
       SearchService.fetchCodeResults(this.token, this.query, this.codePage + 1)
         .then((page: CodeSearchPage) => {
+          if (mySeq !== this.seq) {
+            return;
+          }
           this.codePage += 1;
           const merged = this.codeFiles.concat(page.files);
           this.codeFiles = merged;
@@ -99,6 +123,9 @@ export struct SearchResultsView {
           this.loading = false;
         })
         .catch((e: Error) => {
+          if (mySeq !== this.seq) {
+            return;
+          }
           // 翻页失败不打翻整页：仅当尚无任何结果才进错误态（review E3）
           if (this.items.length === 0 && this.codeFiles.length === 0) {
             this.errorMsg = e.message;
@@ -112,12 +139,18 @@ export struct SearchResultsView {
     }
     SearchService.fetchSearchResults(this.token, this.kind as SearchEntryKind, this.query, this.cursor)
       .then((page: SearchResultPage) => {
+        if (mySeq !== this.seq) {
+          return;
+        }
         this.items = this.items.concat(page.items);
         this.hasNext = page.hasNextPage;
         this.cursor = page.endCursor;
         this.loading = false;
       })
       .catch((e: Error) => {
+        if (mySeq !== this.seq) {
+          return;
+        }
         // 翻页失败不打翻整页（review E3）
         if (this.items.length === 0 && this.codeFiles.length === 0) {
           this.errorMsg = e.message;

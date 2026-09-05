@@ -29,6 +29,12 @@ export struct ListDetailView {
     this.refresh();
   }
 
+  /** listId 晚于 aboutToAppear 到达（onReady）→ 变化即首载（review A6：不再依赖首显 tick） */
+  @Monitor('listId')
+  onListIdChanged(): void {
+    this.refresh();
+  }
+
   aboutToAppear(): void {
     this.refresh();
   }

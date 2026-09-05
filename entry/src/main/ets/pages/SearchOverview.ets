@@ -42,23 +42,33 @@ export struct SearchOverviewView {
     this.load();
   }
 
+  /** 竞态序号：连续搜索丢弃过期响应（review E4） */
+  private seq: number = 0;
+
   private load(): void {
     const q = this.query.trim();
     if (q === '') {
       this.pathStack.pop();
       return;
     }
+    const mySeq = ++this.seq;
     this.loading = true;
     this.errorMsg = '';
     this.loaded = false;
     SearchService.fetchOverview(this.token, q)
       .then((d: SearchOverviewData) => {
+        if (mySeq !== this.seq) {
+          return;
+        }
         this.data = d;
         this.codeGroups = this.groupCodes(d.codeFiles);
         this.loading = false;
         this.loaded = true;
       })
       .catch((e: Error) => {
+        if (mySeq !== this.seq) {
+          return;
+        }
         this.errorMsg = e.message;
         this.loading = false;
         this.loaded = true;

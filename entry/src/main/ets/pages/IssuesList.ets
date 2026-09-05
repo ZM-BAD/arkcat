@@ -19,6 +19,8 @@ export struct IssuesListView {
   @Param name: string = '';
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
+  /** 返回刷新 tick（review B13） */
+  @Param returnTick: number = 0;
   @Local state: string = 'all';
   @Local label: string = '';
   @Local author: string = '';
@@ -32,6 +34,12 @@ export struct IssuesListView {
   @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+
+  /** 返回刷新（review B13） */
+  @Monitor('returnTick')
+  onReturnTick(): void {
+    this.refresh();
+  }
 
   aboutToAppear(): void {
     this.refresh();

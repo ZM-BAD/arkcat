@@ -39,6 +39,19 @@ query ViewerLists($first: Int = 50) {
   }
 }`;
 
+const USER_LIST_ITEMS_QUERY = `
+query UserListItems($id: ID!, $after: String) {
+  node(id: $id) {
+    ... on UserList {
+      items(first: 100, after: $after) {
+        totalCount
+        pageInfo { hasNextPage endCursor }
+        nodes { ... on Repository { id } }
+      }
+    }
+  }
+}`;
+
 const UPDATE_USER_LISTS_FOR_ITEM_MUTATION = `
 mutation UpdateUserListsForItem($itemId: ID!, $listIds: [ID!]!) {
   updateUserListsForItem(input: { itemId: $itemId, listIds: $listIds }) { clientMutationId }
@@ -279,10 +292,37 @@ export class WorkService {
     await graphql(CREATE_LIST_MUTATION, variables, token);
   }
 
-  /** viewer 的星标列表（名称/数量/前 100 个成员仓库 id） */
+  /** viewer 的星标列表（名称/数量/成员仓库 id；>100 成员分页补全，review G5/D16） */
   static async fetchUserLists(token: string): Promise<WorkUserList[]> {
     const data = await graphql(USER_LISTS_QUERY, {}, token);
-    return mapWorkUserLists(data);
+    const lists = mapWorkUserLists(data);
+    for (const list of lists) {
+      // items(first:100) 只取首页：成员不全会导致勾选态错判 + 全量替换 mutation 误删成员
+      let after = '';
+      let guard = 0;
+      while (list.repoIds.length < list.itemCount && guard < 10) {
+        guard += 1;
+        const variables: Record<string, Object> = { 'id': list.id };
+        if (after !== '') {
+          variables['after'] = after;
+        }
+        const pageData = await graphql(USER_LIST_ITEMS_QUERY, variables, token);
+        const node = Json.obj(pageData, 'node') ?? ({} as JsonMap);
+        const itemsWrap = Json.obj(node, 'items') ?? ({} as JsonMap);
+        for (const item of Json.arr(itemsWrap, 'nodes')) {
+          const id = Json.str(item as JsonMap, 'id');
+          if (id !== '' && !list.repoIds.includes(id)) {
+            list.repoIds.push(id);
+          }
+        }
+        const pageInfo = Json.obj(itemsWrap, 'pageInfo') ?? ({} as JsonMap);
+        after = Json.str(pageInfo, 'endCursor');
+        if (!Json.bool(pageInfo, 'hasNextPage')) {
+          break;
+        }
+      }
+    }
+    return lists;
   }
 
   /** 全量设置某仓库所属的列表集合（toggle = 重发完整 listIds） */

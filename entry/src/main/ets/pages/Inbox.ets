@@ -670,7 +670,11 @@ export struct InboxView {
       height: 600,
       backgroundColor: $r('app.color.card_background'),
       // 关闭钮与标题行均自绘，避免默认 ✕ 与自绘按钮重叠
-      showClose: false
+      showClose: false,
+      // 交互关闭（下滑/遮罩）后复位，否则表达式恒 true 再点 chip 拉不起来（review A1）
+      onDisappear: (): void => {
+        this.sheetKind = '';
+      }
     })
   }
 
