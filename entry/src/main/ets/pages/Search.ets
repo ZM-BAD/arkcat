@@ -43,7 +43,9 @@ export struct SearchView {
 
   private loadHistory(): void {
     SearchHistoryStore.load(this.ctx()).then((h: string[]) => {
-      this.history = h;
+      // 会话内新词置顶合并，防 load 晚到覆盖本轮输入（review E12）
+      const fresh = this.history.filter((x: string) => !h.includes(x));
+      this.history = fresh.concat(h);
       this.historyReady = true;
     });
   }

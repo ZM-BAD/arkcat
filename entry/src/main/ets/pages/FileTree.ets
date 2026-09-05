@@ -45,7 +45,8 @@ export struct FileTreeView {
         this.tooLarge = page.entries.length >= DIR_ENTRY_LIMIT;
         this.loading = false;
         if (this.tooLarge) {
-          promptAction.showToast({ message: $r('app.string.file_dir_too_large') });
+          // 事实性提示（review C14：列表并未截断，「目录过大」与行为不符）
+          promptAction.showToast({ message: resText(this.getUIContext(), $r('app.string.file_dir_entry_count'), `${page.entries.length}`) });
         }
       })
       .catch((e: Error) => {

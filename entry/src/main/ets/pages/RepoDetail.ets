@@ -250,14 +250,6 @@ export struct RepoDetailView {
     .width('100%')
   }
 
-  /** ★ stars · ⑂ forks 行 */
-  private starLine(): string {
-    const ui = this.getUIContext();
-    const stars = resText(ui, $r('app.string.repo_stars_fmt'), this.detail?.stargazerCount ?? 0);
-    const forks = resText(ui, $r('app.string.repo_forks_fmt'), this.detail?.forkCount ?? 0);
-    return `${stars}  ${forks}`;
-  }
-
   /** 操作区：STAR 大按钮 + fork/🔔 两个圆钮 */
   @Builder
   actionBar() {
@@ -321,33 +313,6 @@ export struct RepoDetailView {
     .height(48)
     .padding({ left: 16, right: 16 })
     .onClick(onClick)
-  }
-
-  /** Release 最新卡片（tag · 相对时间 · Latest） */
-  @Builder
-  releaseCard() {
-    if (this.detail?.latestRelease !== null && this.detail?.latestRelease !== undefined) {
-      Column({ space: 4 }) {
-        Text(this.detail.latestRelease?.tagName ?? '')
-          .fontSize($r('app.float.body_font_size'))
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.text_primary'))
-        Row({ space: 6 }) {
-          Text(this.releaseAge(this.detail.latestRelease))
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-          Text($r('app.string.repo_latest'))
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.primary'))
-        }
-      }
-      .padding(12)
-      .borderRadius(12)
-      .backgroundColor($r('app.color.card_background'))
-      .width('100%')
-      .margin({ left: 56, bottom: 6 })
-      .onClick(() => this.comingSoon())
-    }
   }
 
   /** More 折叠区：分支/Code/Commits/README·EDIT */

@@ -46,7 +46,7 @@ Search（进入即历史/建议）
 | 6 | 结果 | 组织搜索 | `type: USER` + `in:org` 限定组织（或 search 后过滤） | ✅ | 见四 | 与 5 结果合并展示（organizations tab） |
 | 7 | 结果 | 点击路由 | repo→RepoDetail；issue/PR→详情；user→Profile；org→OrgProfile | ✅ | 无（LinkRouter by url） | 打通 045 的 LinkRouter |
 | 8 | 代码 | 结果增强 | 代码结果点击 → CodeViewer（owner/repo/path/ref + 高亮选定行 hunk） | ✅ | 无 | 现有 CodeViewer 支持 path+ref，行号高亮为本项增量 |
-| 9 | 历史 | 最近搜索历史 | 本地 @StorageLink 列表（最新 10 条）+ 单条删除 + Clear all | ✅ | 无 | 官方「Clear button in recent code searches」（1.273 bugfix 提及） |
+| 9 | 历史 | 最近搜索历史 | 本地 @StorageLink 列表（最新 10 条）+ Clear all（~~单条删除~~ 裁剪：2026-09-05 review 拍板延后，当前无删除交互） | ✅ | 无 | 官方「Clear button in recent code searches」（1.273 bugfix 提及） |
 | 10 | 排序 | 结果排序 | GraphQL search 无 orderBy；只能用 sort: 服务端 qualifier | ⚠️ | search + sort: | UI 提供「Stars/Recently updated」→ 追加 qualifier 重查 |
 | 11 | 过滤 | 高级过滤面板 | 更多 qualifier（label:、author:、org:…）自由输入 | ⚠️ | 同 2-6 | 保留「语法提示」浮层，不做复杂表单 |
 | 12 | 空态 | 无结果/错误 | 空态文案 + 错误重试；搜索无输入防抖 | ✅ | 无 | 首次搜索防抖 400ms |

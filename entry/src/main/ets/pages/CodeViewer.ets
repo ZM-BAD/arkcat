@@ -42,6 +42,8 @@ export struct CodeViewerView {
   /** Code Options（Spec 033）行为配置 */
   @Local lineNumbers: boolean = true;
   @Local wrapLines: boolean = true;
+  /** Code Options「可滚动文件路径」（review C5：此前为死设置，接线到头部路径展示） */
+  @Local scrollablePath: boolean = false;
   @Local darkTheme: boolean = false;
   @Local overrideFont: boolean = true;
   @Local font: number = FONT_DEFAULT;
@@ -77,6 +79,7 @@ export struct CodeViewerView {
         this.overrideFont = pref.getSync('code_override_font', true) as boolean;
         this.font = pref.getSync('code_font_size', FONT_DEFAULT) as number;
         this.wrapLines = pref.getSync('code_wrap_lines', true) as boolean;
+        this.scrollablePath = pref.getSync('code_scrollable_path', false) as boolean;
         this.settingsLoaded = true;
         this.tryRender();
       })
@@ -223,13 +226,26 @@ export struct CodeViewerView {
         .onClick(() => {
           this.pathStack.pop();
         })
-        Text(this.fileName())
-          .fontSize($r('app.float.title_font_size'))
-          .fontWeight(600)
-          .fontColor($r('app.color.text_primary'))
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
+        if (this.scrollablePath) {
+          Scroll() {
+            Text(this.filePath)
+              .fontSize($r('app.float.title_font_size'))
+              .fontWeight(600)
+              .fontColor($r('app.color.text_primary'))
+              .maxLines(1)
+          }
+          .scrollable(ScrollDirection.Horizontal)
+          .scrollBar(BarState.Off)
           .layoutWeight(1)
+        } else {
+          Text(this.fileName())
+            .fontSize($r('app.float.title_font_size'))
+            .fontWeight(600)
+            .fontColor($r('app.color.text_primary'))
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .layoutWeight(1)
+        }
         OctIcon({ res: $r('app.media.oct_share_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
           .margin({ left: 12 })
         .responseRegion({ x: -12, y: -12, width: '220%', height: '220%' })

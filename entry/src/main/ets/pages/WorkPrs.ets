@@ -344,6 +344,12 @@ export struct WorkPrsView {
         .padding(6)
         .accessibilityDescription($r('app.string.a11y_more'))
         .focusable(true)
+        .bindMenu([
+          {
+            value: $r('app.string.inbox_menu_refresh'),
+            action: (): void => this.refresh()
+          }
+        ])
       }
       .width('100%')
       .height(48)

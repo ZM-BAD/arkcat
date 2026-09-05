@@ -114,8 +114,8 @@ export struct OrgListView {
         Stack() {
           OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
-.width(44)
-.height(44)
+        .width(44)
+        .height(44)
         .accessibilityDescription($r('app.string.a11y_back'))
         .focusable(true)
         .onClick(() => {

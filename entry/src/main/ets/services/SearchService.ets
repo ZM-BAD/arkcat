@@ -154,7 +154,6 @@ query SearchOverview($q: String!, $issueQ: String!, $prQ: String!, $userQ: Strin
   }
 }`;
 
-const ORG_SEARCH_REST = '/search/users?type=organization&per_page=20&q=';
 
 /**
  * 构造搜索串（纯函数，便于单测）：关键词不带引号（保证 qualifier 能被解析）。
@@ -423,37 +422,6 @@ export function mapSearchOverview(data: JsonMap): SearchOverviewData {
   };
 }
 
-/** REST org 搜索响应 → SearchResultItem[]（纯函数） */
-export function mapOrgSearchResults(data: JsonMap): SearchResultItem[] {
-  const items: SearchResultItem[] = [];
-  for (const item of Json.arr(data, 'items')) {
-    const node = item as JsonMap;
-    items.push({
-      kind: 'organization',
-      title: Json.str(node, 'login'),
-      subtitle: Json.str(node, 'name'),
-      state: '',
-      avatarUrl: Json.str(node, 'avatar_url'),
-      repoFullName: '',
-      number: 0,
-      stars: 0,
-      forks: 0,
-      language: '',
-      languageColor: '',
-      bio: '',
-      followers: 0,
-      following: 0,
-      createdAt: '',
-      labels: [],
-      commentCount: 0,
-      reactionCount: 0,
-      checkState: '',
-      reviewDecision: ''
-    });
-  }
-  return items;
-}
-
 /**
  * qualifier chip → 插入后的搜索串（纯函数）。
  * 示例：("", "repo") → "repo:"；("foo", "repo") → "foo repo:"；("foo ", "repo") → "foo repo:"
@@ -497,7 +465,14 @@ export class SearchHistoryStore {
       if (typeof value === 'string') {
         const parsed: Object | null = JSON.parse(value);
         if (parsed !== null && Array.isArray(parsed)) {
-          return parsed as string[];
+          // 元素类型校验：prefs 被写坏成非字符串数组时不再渲染异常（review E12）
+          const out: string[] = [];
+          for (const item of parsed as Object[]) {
+            if (typeof item === 'string') {
+              out.push(item as string);
+            }
+          }
+          return out;
         }
       }
       return [];
@@ -655,13 +630,6 @@ export class SearchService {
     const avatarMap = await SearchService.loadCodeAvatars(token, repos);
     const files = await CodeSearchService.buildCodeResults(rawPage.raws, avatarMap, token);
     return { files: files, hasMore: page * 10 < rawPage.totalCount };
-  }
-
-  /** Organizations 搜索（REST 兜底，兼容旧接口） */
-  static async fetchOrgResults(token: string, keyword: string): Promise<SearchResultItem[]> {
-    const resp = await restGet(`${ORG_SEARCH_REST}${encodeURIComponent(keyword)}`, token);
-    const data = Json.parse(resp.body);
-    return data !== null ? mapOrgSearchResults(data) : [];
   }
 
   /** Jump to：首个匹配仓库（Repository 探测）→ nameWithOwner；无匹配抛错误 */

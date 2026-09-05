@@ -61,6 +61,10 @@
       "value": "Token 不能为空"
     },
     {
+      "name": "file_dir_entry_count",
+      "value": "目录共 %1$s 项"
+    },
+    {
       "name": "error_auth",
       "value": "登录已过期或 Token 无效，请到设置检查。"
     },

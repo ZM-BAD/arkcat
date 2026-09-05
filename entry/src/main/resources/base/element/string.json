@@ -61,6 +61,10 @@
       "value": "Token cannot be empty"
     },
     {
+      "name": "file_dir_entry_count",
+      "value": "Directory has %1$s entries"
+    },
+    {
       "name": "error_auth",
       "value": "Session expired or token invalid. Please check Settings."
     },

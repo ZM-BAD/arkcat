@@ -22,7 +22,7 @@ import { mapUser, mapRepo, mapViewerBasic, mapNotifications, issueNumberFromUrl,
 import { buildNotificationsPath, pullRefFromUrl, buildPullStatesQuery, mapPullMerged, PrRef,
   filterByReasons, filterByInboxView, collectRepoFilters, InboxReasonKey, InboxRepoFilterItem
 } from '../../../main/ets/services/NotificationsService';
-import { buildCodeQuery, mapCodeSearch, mapSearchNode, mapSearchResults, mapOrgSearchResults, buildQualifierInsert, pushSearchHistory, buildSearchQuery, mapSearchOverview, formatBigCount, isLightHexColor } from '../../../main/ets/services/SearchService';
+import { buildCodeQuery, mapCodeSearch, mapSearchNode, mapSearchResults, buildQualifierInsert, pushSearchHistory, buildSearchQuery, mapSearchOverview, formatBigCount, isLightHexColor } from '../../../main/ets/services/SearchService';
 import { buildCodeSnippet, splitLines, buildFragmentLines, parseCodeSearchItem, fileBadgeKey } from '../../../main/ets/services/CodeSearchService';
 import { RawMatch } from '../../../main/ets/services/CodeSearchService';
 import { buildTopicQuery } from '../../../main/ets/services/ExploreService';
@@ -367,15 +367,6 @@ export default function logicTest(testsuiteName: string) {
       expect(res.endCursor).assertEqual('abc');
       expect(res.items.length).assertEqual(2);
       expect(res.items[1].kind).assertEqual('issue');
-    });
-
-    it('mapOrgSearchResults', 0, () => {
-      const item1: JsonMap = { 'login': 'org1', 'name': 'Org One', 'avatar_url': 'o.png' };
-      const data: JsonMap = { 'items': [item1] };
-      const items = mapOrgSearchResults(data);
-      expect(items.length).assertEqual(1);
-      expect(items[0].kind).assertEqual('organization');
-      expect(items[0].title).assertEqual('org1');
     });
 
     it('searchQuery_qualifiers', 0, () => {
@@ -842,8 +833,8 @@ export default function logicTest(testsuiteName: string) {
       expect(pr.iconKey).assertEqual('merged');
       expect(pr.checksState).assertEqual('');
       expect(pr.reviewCount).assertEqual(1);
-      expect(workPrIconKey('OPEN', false)).assertEqual('open');
-      expect(workPrIconKey('CLOSED', false)).assertEqual('closed');
+      expect(workPrIconKey('OPEN', false, false)).assertEqual('open');
+      expect(workPrIconKey('CLOSED', false, false)).assertEqual('closed');
     });
 
     it('mapWorkStarred_page', 0, () => {
@@ -932,9 +923,9 @@ export default function logicTest(testsuiteName: string) {
       expect(repoIssueStates('closed')[0]).assertEqual('CLOSED');
       expect(monthDayText('2026-06-30T00:00:00Z')).assertEqual('June 30');
       expect(monthDayText('bad')).assertEqual('');
-      expect(repoPrIconKey('MERGED', true)).assertEqual('merged');
-      expect(repoPrIconKey('OPEN', false)).assertEqual('open');
-      expect(repoPrIconKey('CLOSED', false)).assertEqual('closed');
+      expect(repoPrIconKey('MERGED', true, false)).assertEqual('merged');
+      expect(repoPrIconKey('OPEN', false, false)).assertEqual('open');
+      expect(repoPrIconKey('CLOSED', false, false)).assertEqual('closed');
 
       const author: JsonMap = { 'login': 'zm_bad' };
       const labelNode: JsonMap = { 'name': 'deps', 'color': '#B5B5B5' };

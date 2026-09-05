@@ -123,14 +123,15 @@ struct Index {
       })
       .catch(() => {
       });
-    // 启动恢复主题（Spec 026 三态：system/light/dark）
-    preferences.getPreferences(this.getUIContext().getHostContext() as common.UIAbilityContext, 'starraft_settings')
-      .then((pref: preferences.Preferences) => {
-        const mode = pref.getSync('theme_mode', 'system') as string;
-        applyThemeMode(this.getUIContext().getHostContext() as common.UIAbilityContext | undefined, mode);
-      })
-      .catch(() => {
-      });
+    // 启动恢复主题（Spec 026 三态：system/light/dark）；同步读避免晚于首帧闪切（review A18）
+    try {
+      const pref = preferences.getPreferencesSync(
+        this.getUIContext().getHostContext() as common.UIAbilityContext, { name: 'starraft_settings' });
+      const mode = pref.getSync('theme_mode', 'system') as string;
+      applyThemeMode(this.getUIContext().getHostContext() as common.UIAbilityContext | undefined, mode);
+    } catch (e) {
+      // 读取失败按系统主题
+    }
     TokenStore.load().then((token: string) => {
       this.token = token;
       this.checked = true;
@@ -1047,8 +1048,6 @@ struct Index {
         .height('100%')
       }
     }
-.width(44)
-.height(44)
     .width('100%')
     .height('100%')
   }
