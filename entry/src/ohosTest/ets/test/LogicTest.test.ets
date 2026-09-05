@@ -1407,6 +1407,8 @@ export default function logicTest(testsuiteName: string) {
     it('fileBaseName_simple', 0, () => {
       expect(fileBaseName('src/main/ets/Index.ets')).assertEqual('Index.ets');
       expect(fileBaseName('README.md')).assertEqual('README.md');
+    });
+
     // ─────── Spec 041：Markdown 工具栏插入 / 反应 / 评论映射 ───────
 
     it('markdownEdit_wrap_selected', 0, () => {
