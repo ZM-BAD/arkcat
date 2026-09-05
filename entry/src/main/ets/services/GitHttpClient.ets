@@ -67,7 +67,7 @@ async function request(method: http.RequestMethod, url: string, token: string, b
           detail = ` ${m}`;
         }
       }
-      throw new ApiError(code, `GitHub API ${url} -> HTTP ${code}${detail}`);
+      throw new ApiError(code, `GitHub API ${url} -> HTTP ${code}${detail.substring(0, 200)}`);
     }
     return { code: code, body: text };
   } catch (e) {
@@ -111,7 +111,7 @@ export async function graphql(query: string, variables: Record<string, Object> |
     let semantic = resp.code;
     if (type === 'RATE_LIMITED') {
       semantic = 429;
-    } else if (type === 'FORBIDDEN' || type === 'INSUFFICIENT_SCOPE') {
+    } else if (type === 'FORBIDDEN' || type === 'INSUFFICIENT_SCOPE' || type === 'ACCESS_DENIED') {
       semantic = 403;
     } else if (type === 'NOT_FOUND') {
       semantic = 404;
@@ -144,15 +144,6 @@ export async function restPatch(path: string, token: string): Promise<RawRespons
   return request(http.RequestMethod.PATCH, `${GITHUB_API}${path}`, token);
 }
 
-/** REST PUT（组织关注等无 body 写操作） */
-export async function restPut(path: string, token: string): Promise<RawResponse> {
-  return request(http.RequestMethod.PUT, `${GITHUB_API}${path}`, token);
-}
-
-/** REST DELETE（组织取关等无 body 写操作） */
-export async function restDelete(path: string, token: string): Promise<RawResponse> {
-  return request(http.RequestMethod.DELETE, `${GITHUB_API}${path}`, token);
-}
 
 /** 异常 → 本地化友好文案（review A14/E16：裸异常串不直出给用户） */
 export function friendlyError(uiContext: UIContext, e: Error): string {

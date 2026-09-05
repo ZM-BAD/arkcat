@@ -54,6 +54,7 @@ export struct SearchResultsView {
       this.pathStack.pop();
       return;
     }
+    const q = this.query.trim();
     const mySeq = ++this.seq;
     this.loading = true;
     this.errorMsg = '';
@@ -75,8 +76,8 @@ export struct SearchResultsView {
           this.hasNext = page.hasMore;
           this.loading = false;
           this.loaded = true;
-          // 记入 Recent searches（review E17）
-          SearchHistoryStore.remember(this.getUIContext().getHostContext(), this.query);
+          // 记入 Recent searches（review E17；捕获请求时的词，防在途改词错记）
+          SearchHistoryStore.remember(this.getUIContext().getHostContext(), q);
         })
         .catch((e: Error) => {
           if (mySeq !== this.seq) {
@@ -99,7 +100,7 @@ export struct SearchResultsView {
         this.loading = false;
         this.loaded = true;
         // 记入 Recent searches（review E17）
-        SearchHistoryStore.remember(this.getUIContext().getHostContext(), this.query);
+        SearchHistoryStore.remember(this.getUIContext().getHostContext(), q);
       })
       .catch((e: Error) => {
         if (mySeq !== this.seq) {

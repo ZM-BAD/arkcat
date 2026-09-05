@@ -110,7 +110,7 @@ export struct RepoCard {
           OctIcon({
             res: $r('app.media.oct_dot_fill_16'),
             iconSize: 12,
-            iconColor: this.repo.languageColor !== '' ? this.repo.languageColor : $r('app.color.repo_language_blue')
+            iconColor: this.repo.languageColor !== '' ? this.repo.languageColor : $r('app.color.repo_language_unknown')
           })
           Text(this.repo.primaryLanguage)
             .fontSize($r('app.float.caption_font_size'))

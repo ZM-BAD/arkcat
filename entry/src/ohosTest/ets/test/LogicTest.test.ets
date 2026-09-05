@@ -834,6 +834,7 @@ export default function logicTest(testsuiteName: string) {
       expect(pr.checksState).assertEqual('');
       expect(pr.reviewCount).assertEqual(1);
       expect(workPrIconKey('OPEN', false, false)).assertEqual('open');
+      expect(workPrIconKey('OPEN', false, true)).assertEqual('draft');
       expect(workPrIconKey('CLOSED', false, false)).assertEqual('closed');
     });
 
@@ -925,6 +926,7 @@ export default function logicTest(testsuiteName: string) {
       expect(monthDayText('bad')).assertEqual('');
       expect(repoPrIconKey('MERGED', true, false)).assertEqual('merged');
       expect(repoPrIconKey('OPEN', false, false)).assertEqual('open');
+      expect(repoPrIconKey('OPEN', false, true)).assertEqual('draft');
       expect(repoPrIconKey('CLOSED', false, false)).assertEqual('closed');
 
       const author: JsonMap = { 'login': 'zm_bad' };

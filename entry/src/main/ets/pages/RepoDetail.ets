@@ -5,7 +5,7 @@
  * Packages/Settings 按边界不展示；文件列表/语言占比收进 More（查询保留）。
  */
 import { promptAction } from '@kit.ArkUI';
-import { RepoDetail, FileEntry, LanguageSlice, ReleaseEntry } from '../models/RepoDetailModels';
+import { RepoDetail, FileEntry, LanguageSlice } from '../models/RepoDetailModels';
 import { RepoService } from '../services/RepoService';
 import { MarkdownService, MarkdownFetchResult } from '../services/MarkdownService';
 import { StateView } from '../components/StateView';
@@ -168,15 +168,6 @@ export struct RepoDetailView {
 
   private comingSoon(): void {
     promptAction.showToast({ message: $r('app.string.home_feature_coming') });
-  }
-
-  /** Release 相对时间文案 */
-  private releaseAge(release: ReleaseEntry | null): string {
-    if (release === null) {
-      return '';
-    }
-    const parts = timeParts(release.publishedAt, Date.now());
-    return this.timeText(parts);
   }
 
   /** 相对时间结构化数据 → 当前语言文案（%1$d 位置占位） */

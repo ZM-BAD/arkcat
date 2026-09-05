@@ -221,7 +221,8 @@ export struct MarkdownView {
 
   private static systemDark(): boolean {
     try {
-      const mq = mediaquery.matchMediaSync('(prefers-color-scheme: dark)');
+      // ArkUI 媒体查询不支持 prefers-color-scheme（恒 false），须用 dark-mode（复核修正）
+      const mq = mediaquery.matchMediaSync('(dark-mode: true)');
       return mq.matches;
     } catch (e) {
       return false;

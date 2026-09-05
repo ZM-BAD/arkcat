@@ -218,6 +218,7 @@ struct Index {
         this.repoOwner = parts[0];
         this.repoName = parts[1];
       }
+      this.issuesListShownOnce = false;
     })
     // 返回刷新（review B13），首显跳过防双请求
     .onShown(() => {
@@ -515,6 +516,9 @@ struct Index {
         returnTick: this.workIssuesTick
       })
     }
+    .onReady(() => {
+      this.workIssuesShownOnce = false;
+    })
     // 返回刷新（review B13），首显跳过防双请求
     .onShown(() => {
       if (this.workIssuesShownOnce) {
@@ -534,6 +538,9 @@ struct Index {
         returnTick: this.workPrsTick
       })
     }
+    .onReady(() => {
+      this.workPrsShownOnce = false;
+    })
     // 返回刷新（review B13），首显跳过防双请求
     .onShown(() => {
       if (this.workPrsShownOnce) {
@@ -600,6 +607,7 @@ struct Index {
     }
     .onReady((context: NavDestinationContext) => {
       this.starredLogin = context.pathInfo.param as string;
+      this.starredShownOnce = false;
     })
     // 子页（Create list）pop 回时重取 My lists；首显跳过（aboutToAppear 已拉取，review A6/D17）
     .onShown(() => {
@@ -638,6 +646,7 @@ struct Index {
     }
     .onReady((context: NavDestinationContext) => {
       this.listDetailId = context.pathInfo.param as string;
+      this.listDetailShownOnce = false;
     })
     // Edit 页 pop 回时重取列表详情；首显跳过（listId 变化已触发首载，review A6/D17）
     .onShown(() => {
@@ -673,6 +682,7 @@ struct Index {
     }
     .onReady((context: NavDestinationContext) => {
       this.parseRouteParam(context.pathInfo.param as string);
+      this.repoPrsShownOnce = false;
     })
     // 返回刷新（review B13），首显跳过防双请求
     .onShown(() => {

@@ -52,7 +52,8 @@ export interface PrFilesPage {
 export function mapFileNode(node: JsonMap): PrFileItem {
   if (node === null || node === undefined) {
     return { path: '', additions: 0, deletions: 0, status: '', patch: '', hunks: [], diffTooLarge: false, isBinary: false, expanded: false };
-  }  return {
+  }
+  return {
     path: Json.str(node, 'path'),
     additions: Json.num(node, 'additions'),
     deletions: Json.num(node, 'deletions'),
@@ -92,7 +93,8 @@ export function mapFilesCursor(data: JsonMap): string {
 }
 
 /** REST item（含 patch）→ PrFileItem（patch 仅当存在且非空） */
-export function applyRestPatch(item: PrFileItem, rest: JsonMap): PrFileItem {  const patch = Json.str(rest, 'patch');
+export function applyRestPatch(item: PrFileItem, rest: JsonMap): PrFileItem {
+  const patch = Json.str(rest, 'patch');
   const binary = isBinaryPath(item.path);
   let hunks: DiffHunk[] = [];
   let tooLarge = false;

@@ -184,6 +184,7 @@ query PullRequestFiles($owner: String!, $name: String!, $number: Int!) {
       deletions
       files(first: 100) {
         totalCount
+        pageInfo { hasNextPage endCursor }
         nodes { path additions deletions }
       }
     }
@@ -360,19 +361,30 @@ export class RepoSubService {
     const variables: Record<string, Object> = { 'owner': owner, 'name': name, 'number': number };
     const data = await graphql(PR_FILES_QUERY, variables, token);
     const page = mapPrFiles(data);
-    // 文件 >100：GraphQL files 游标翻页补全列表（review G4/B16，上限 10 页防极端长 PR 拖死加载）
+    // 文件 >100：GraphQL files 游标翻页补全列表（review G4；hasNextPage 驱动——
+    // 实测末页 endCursor 仍非空，用游标判停会多打一次空页；上限 10 页防极端长 PR 拖死加载）
+    const dataFiles = Json.obj(Json.obj(Json.obj(Json.obj(data, 'repository') ?? ({} as JsonMap),
+      'pullRequest') ?? ({} as JsonMap), 'files') ?? ({} as JsonMap), 'pageInfo') ?? ({} as JsonMap);
+    let more = Json.bool(dataFiles, 'hasNextPage');
     let cursor = mapFilesCursor(data);
     let guard = 0;
-    while (cursor !== '' && guard < 10) {
+    while (more && guard < 10) {
       guard += 1;
-      const nextVars: Record<string, Object> = { 'owner': owner, 'name': name, 'number': number, 'filesCursor': cursor };
-      const nextData = await graphql(PR_FILES_PAGE_QUERY, nextVars, token);
-      const nextFiles = Json.obj(Json.obj(Json.obj(nextData, 'repository') ?? ({} as JsonMap), 'pullRequest')
-        ?? ({} as JsonMap), 'files') ?? ({} as JsonMap);
-      for (const node of Json.arr(nextFiles, 'nodes')) {
-        page.files.push(mapFileNode(node as JsonMap));
+      try {
+        const nextVars: Record<string, Object> = { 'owner': owner, 'name': name, 'number': number, 'filesCursor': cursor };
+        const nextData = await graphql(PR_FILES_PAGE_QUERY, nextVars, token);
+        const nextPr = Json.obj(Json.obj(nextData, 'repository') ?? ({} as JsonMap), 'pullRequest') ?? ({} as JsonMap);
+        const nextFiles = Json.obj(nextPr, 'files') ?? ({} as JsonMap);
+        for (const node of Json.arr(nextFiles, 'nodes')) {
+          page.files.push(mapFileNode(node as JsonMap));
+        }
+        const pageInfo = Json.obj(nextFiles, 'pageInfo') ?? ({} as JsonMap);
+        more = Json.bool(pageInfo, 'hasNextPage');
+        cursor = Json.str(pageInfo, 'endCursor');
+      } catch (e) {
+        // 第 2+ 页失败降级为已取得的前 100 文件，不整页报错（复核修正）
+        break;
       }
-      cursor = mapFilesCursor(nextData);
     }
     try {
       // REST patch 回填同样按页翻全（per_page=100）

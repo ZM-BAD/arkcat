@@ -659,8 +659,11 @@ export interface WorkUserList {
   description: string;
   /** 列表内仓库总数（items.totalCount） */
   itemCount: number;
-  /** 列表内前 100 个仓库节点 id（成员判断用） */
+  /** 列表内仓库节点 id（成员判断用；fetchUserLists 分页补全） */
   repoIds: string[];
+  /** 成员分页续游标（review G5：初始查询即带 pageInfo，避免补页时重拉 page1） */
+  repoHasNext: boolean;
+  repoCursor: string;
 }
 
 /** viewer.lists 响应 → WorkUserList[]（成员=列表内仓库节点 id 集合） */
@@ -678,12 +681,15 @@ export function mapWorkUserLists(data: JsonMap): WorkUserList[] {
         repoIds.push(id);
       }
     }
+    const itemsPageInfo = Json.obj(itemsWrap, 'pageInfo') ?? ({} as JsonMap);
     result.push({
       id: Json.str(node, 'id'),
       name: Json.str(node, 'name'),
       description: Json.str(node, 'description'),
       itemCount: Json.num(itemsWrap, 'totalCount'),
-      repoIds: repoIds
+      repoIds: repoIds,
+      repoHasNext: Json.bool(itemsPageInfo, 'hasNextPage'),
+      repoCursor: Json.str(itemsPageInfo, 'endCursor')
     });
   }
   return result;

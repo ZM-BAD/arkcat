@@ -63,7 +63,8 @@ export struct CommentComposer {
       if (e.code === 403) {
         return this.stringOf($r('app.string.comment_error_forbidden'));
       }
-      if (e.message.toLowerCase().indexOf('closed') >= 0) {
+      const lower = e.message.toLowerCase();
+      if (lower.indexOf('closed') >= 0 || lower.indexOf('locked') >= 0) {
         return this.stringOf($r('app.string.comment_error_closed_locked'));
       }
     }
@@ -250,7 +251,7 @@ export struct CommentComposer {
             }
           }
           .width('100%')
-          .height(120)
+          .constraintSize({ minHeight: 120, maxHeight: 320 })
           .justifyContent(FlexAlign.Center)
         }
       }

@@ -124,7 +124,9 @@ export struct StarredRepositoriesView {
         name: l.name,
         description: l.description,
         itemCount: targetMember ? l.itemCount - 1 : l.itemCount + 1,
-        repoIds: ids
+        repoIds: ids,
+        repoHasNext: l.repoHasNext,
+        repoCursor: l.repoCursor
       };
     });
     this.lists = nextLists;

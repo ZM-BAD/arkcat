@@ -4,6 +4,7 @@
  */
 import { TokenStore } from '../services/TokenStore';
 import { HomeService } from '../services/HomeService';
+import { friendlyError } from '../services/GitHttpClient';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -73,7 +74,8 @@ export struct TokenSetup {
       await TokenStore.save(trimmed);
       this.onSaved(trimmed);
     } catch (e) {
-      this.error = this.stringOf($r('app.string.token_error_invalid'));
+      // 401/403 才是 token 无效；网络失败友好区分，不误导用户改 token（复核修正）
+      this.error = friendlyError(this.getUIContext(), e as Error);
     } finally {
       this.saving = false;
     }
