@@ -78,7 +78,7 @@ export struct OrgListView {
         if (org.name !== '') {
           Text(org.name)
             .fontSize($r('app.float.body_font_size'))
-            .fontWeight(FontWeight.Bold)
+            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -127,7 +127,7 @@ export struct OrgListView {
             .fontColor($r('app.color.text_secondary'))
           Text($r('app.string.org_list_title'))
             .fontSize($r('app.float.title_font_size'))
-            .fontWeight(FontWeight.Bold)
+            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
         }
         .alignItems(HorizontalAlign.Start)

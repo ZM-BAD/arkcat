@@ -114,7 +114,7 @@ export struct CreateListView {
           ? $r('app.string.create_list_edit_title')
           : $r('app.string.create_list_title'))
           .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
         Text(this.editListId !== ''
@@ -124,6 +124,7 @@ export struct CreateListView {
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.link_blue'))
           .padding(6)
+          .responseRegion({ x: -6, y: -7, width: '130%', height: '147%' })
           .onClick(() => this.submit())
       }
       .width('100%')

@@ -11,7 +11,7 @@ export struct CopilotView {
         .margin({ top: 24 })
       Text($r('app.string.copilot_title'))
         .fontSize($r('app.float.title_font_size'))
-        .fontWeight(FontWeight.Bold)
+        .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
 
       Column({ space: 8 }) {

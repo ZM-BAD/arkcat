@@ -260,7 +260,7 @@ export struct SettingsView {
           })
         Text($r('app.string.profile_settings'))
           .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
         Blank()
       }

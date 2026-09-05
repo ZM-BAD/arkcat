@@ -113,7 +113,7 @@ export struct ListDetailView {
 
       Text(repo.name)
         .fontSize($r('app.float.body_font_size'))
-        .fontWeight(FontWeight.Bold)
+        .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -222,7 +222,7 @@ export struct ListDetailView {
 
             Text(this.detail.name)
               .fontSize($r('app.float.title_font_size'))
-              .fontWeight(FontWeight.Bold)
+              .fontWeight(600)
               .fontColor($r('app.color.text_primary'))
               .maxLines(1)
               .textOverflow({ overflow: TextOverflow.Ellipsis })

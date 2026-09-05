@@ -121,7 +121,7 @@ export struct OrganizationsView {
       Blank()
       Text($r('app.string.work_orgs_empty'))
         .fontSize(20)
-        .fontWeight(FontWeight.Bold)
+        .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
         .textAlign(TextAlign.Center)
         .width('100%')
@@ -150,7 +150,7 @@ export struct OrganizationsView {
           })
         Text($r('app.string.nav_organizations_title'))
           .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
       }

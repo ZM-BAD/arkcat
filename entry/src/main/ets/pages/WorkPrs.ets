@@ -302,7 +302,7 @@ export struct WorkPrsView {
         } else {
           Text($r('app.string.home_work_pull_requests'))
             .fontSize($r('app.float.title_font_size'))
-            .fontWeight(FontWeight.Bold)
+            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
             .layoutWeight(1)
         }

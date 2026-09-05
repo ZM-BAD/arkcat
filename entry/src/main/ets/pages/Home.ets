@@ -72,7 +72,7 @@ export struct HomeView {
       Row() {
         Text($r('app.string.tab_home'))
           .fontSize(20)
-          .fontWeight(FontWeight.Bold)
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
         Blank()
         Stack() {
@@ -122,7 +122,7 @@ export struct HomeView {
           Image(this.viewer.avatarUrl)
             .width(20)
             .height(20)
-            .borderRadius(10)
+            .borderRadius(12)
             .backgroundColor($r('app.color.heat_empty'))
             .margin({ left: 4 })
             .onClick(() => {
@@ -196,7 +196,7 @@ export struct HomeView {
     Row() {
       Text($r('app.string.home_my_work'))
         .fontSize(18)
-        .fontWeight(FontWeight.Bold)
+        .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
       Blank()
       Stack() {
@@ -232,7 +232,7 @@ export struct HomeView {
       .fontSize($r('app.float.caption_font_size'))
       .fontColor($r('app.color.link_blue'))
       .backgroundColor(Color.Transparent)
-      .borderRadius(0)
+      .borderRadius(6)
       .border({ width: 1, color: $r('app.color.border') })
       .onClick(() => this.comingSoon())
   }
@@ -241,7 +241,7 @@ export struct HomeView {
   favoritesSection() {
     Text($r('app.string.home_favorites'))
       .fontSize(18)
-      .fontWeight(FontWeight.Bold)
+      .fontWeight(600)
       .fontColor($r('app.color.text_primary'))
       .width('100%')
       .padding({ top: 16, bottom: 8 })
@@ -274,7 +274,7 @@ export struct HomeView {
   shortcutsSection() {
     Text($r('app.string.home_shortcuts'))
       .fontSize(18)
-      .fontWeight(FontWeight.Bold)
+      .fontWeight(600)
       .fontColor($r('app.color.text_primary'))
       .width('100%')
       .padding({ top: 16, bottom: 12 })
@@ -295,7 +295,7 @@ export struct HomeView {
 
       Text($r('app.string.home_shortcuts_title'))
         .fontSize($r('app.float.body_font_size'))
-        .fontWeight(FontWeight.Bold)
+        .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
         .textAlign(TextAlign.Center)
         .width('100%')

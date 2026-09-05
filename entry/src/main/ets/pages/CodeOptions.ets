@@ -214,7 +214,7 @@ export struct CodeOptionsView {
         })
         Text($r('app.string.settings_code_options'))
           .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
         Blank()
       }
@@ -275,6 +275,7 @@ export struct CodeOptionsView {
               Row()
                 .width(20)
                 .height(20)
+                .responseRegion({ x: -12, y: -12, width: '220%', height: '220%' })
                 .borderRadius(6)
                 .border({ width: 1.5, color: $r('app.color.link_blue') })
                 .onClick(() => {

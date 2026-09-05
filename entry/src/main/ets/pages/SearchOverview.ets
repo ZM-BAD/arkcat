@@ -137,10 +137,10 @@ export struct SearchOverviewView {
   sectionHeader(res: Resource) {
     Text(resText(this.getUIContext(), res))
       .fontSize(20)
-      .fontWeight(FontWeight.Bold)
+      .fontWeight(600)
       .fontColor($r('app.color.text_primary'))
       .width('100%')
-      .padding({ top: 14, left: 16, right: 16, bottom: 8 })
+      .padding({ top: 16, left: 16, right: 16, bottom: 8 })
   }
 
   /** See X more Y results 链接行 */
@@ -148,8 +148,8 @@ export struct SearchOverviewView {
   moreLink(text: string, onOpen: () => void) {
     Row() {
       Text(text)
-        .fontSize(17)
-        .fontWeight(FontWeight.Bold)
+        .fontSize($r('app.float.menu_font_size'))
+        .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -170,33 +170,33 @@ export struct SearchOverviewView {
         Image(g.avatarUrl)
           .width(28)
           .height(28)
-          .borderRadius(14)
+          .borderRadius(12)
           .backgroundColor($r('app.color.text_tertiary'))
         Text(g.repoFullName)
           .fontSize(16)
-          .fontWeight(FontWeight.Bold)
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .layoutWeight(1)
       }
       .width('100%')
-      .padding({ left: 16, right: 16, top: 6, bottom: 6 })
+      .padding({ left: 16, right: 16, top: 8, bottom: 8 })
       .onClick(() => this.pathStack.pushPathByName('repoDetail', g.repoFullName))
 
       ForEach(g.files, (f: CodeFileResult) => {
         Column() {
           Text(f.name)
             .fontSize(16)
-            .fontWeight(FontWeight.Bold)
+            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .width('100%')
-            .padding({ left: 16, right: 16, top: 2, bottom: 8 })
+            .padding({ left: 16, right: 16, top: 4, bottom: 8 })
           CodeSearchCard({ file: f })
             .padding({ left: 16, right: 16 })
-            .margin({ bottom: 6 })
+            .margin({ bottom: 8 })
         }
         .width('100%')
       }, (f: CodeFileResult) => `${f.repoFullName}|${f.path}`)

@@ -282,7 +282,7 @@ export struct WorkFilterBar {
     .width(210)
     .borderRadius(12)
     .backgroundColor($r('app.color.card_background'))
-    .shadow({ radius: 16, color: $r('app.color.shadow_floating'), offsetY: 4 })
+    .shadow({ radius: 24, color: $r('app.color.shadow_floating'), offsetY: 8 })
   }
 
   @Builder
@@ -299,6 +299,7 @@ export struct WorkFilterBar {
         .margin({ left: 8 })
     }
     .height(38)
+    .responseRegion({ x: 0, y: -3, width: '100%', height: '116%' })
     .padding({ left: 10, right: 12 })
     .borderRadius(19)
     .backgroundColor($$.active ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
@@ -426,18 +427,18 @@ export struct WorkFilterBar {
   sheetHeader(title: Resource, close: () => void, onSearchToggle: () => void) {
     Row() {
       Stack() {
-        OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 18, iconColor: $r('app.color.text_primary') })
+        OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
       }
       .width(44)
       .height(44)
       .onClick(close)
       Text(title)
         .fontSize($r('app.float.title_font_size'))
-        .fontWeight(FontWeight.Bold)
+        .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
         .layoutWeight(1)
       Stack() {
-        OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 18, iconColor: $r('app.color.link_blue') })
+        OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 16, iconColor: $r('app.color.link_blue') })
       }
       .width(44)
       .height(44)
@@ -453,7 +454,7 @@ export struct WorkFilterBar {
       .height(40)
       .fontSize($r('app.float.body_font_size'))
       .margin({ left: 16, right: 16, bottom: 4 })
-      .borderRadius(8)
+      .borderRadius(6)
       .backgroundColor($r('app.color.chip_bg'))
       .onChange(onChange)
   }
@@ -465,7 +466,7 @@ export struct WorkFilterBar {
       Blank()
       Text($r('app.string.work_filter_nothing'))
         .fontSize(20)
-        .fontWeight(FontWeight.Bold)
+        .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
       Blank()
     }
@@ -484,7 +485,7 @@ export struct WorkFilterBar {
           .backgroundColor($r('app.color.chip_bg'))
       } else {
         Text('◯')
-          .fontSize(28)
+          .fontSize($r('app.float.title_font_size'))
           .width(40)
           .height(40)
           .borderRadius(20)
@@ -527,7 +528,7 @@ export struct WorkFilterBar {
           .backgroundColor($r('app.color.chip_bg'))
       } else {
         Text('◯')
-          .fontSize(28)
+          .fontSize($r('app.float.title_font_size'))
           .width(40)
           .height(40)
           .borderRadius(20)
@@ -693,11 +694,11 @@ export struct WorkFilterBar {
           GridItem() {
             Stack() {
               Text(it.emoji)
-                .fontSize(26)
+                .fontSize($r('app.float.title_font_size'))
             }
             .width(64)
             .height(56)
-            .borderRadius(8)
+            .borderRadius(6)
             .border({
               width: 1,
               color: this.sortKey === it.key ? $r('app.color.link_blue') : Color.Transparent
@@ -730,7 +731,7 @@ export struct WorkFilterBar {
     Column() {
       Row() {
         Stack() {
-          OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 18, iconColor: $r('app.color.text_primary') })
+          OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
         }
         .width(44)
         .height(44)
@@ -739,7 +740,7 @@ export struct WorkFilterBar {
         })
         Text($r('app.string.issues_sort_title'))
           .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
       }
@@ -792,6 +793,7 @@ export struct WorkFilterBar {
               .backgroundColor($r('app.color.link_blue'))
             }
             .height(38)
+            .responseRegion({ x: 0, y: -3, width: '100%', height: '116%' })
             .padding({ left: 10, right: 12 })
             .borderRadius(19)
             .backgroundColor($r('app.color.chip_bg'))

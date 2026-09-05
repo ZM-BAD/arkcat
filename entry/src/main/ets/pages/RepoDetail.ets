@@ -191,7 +191,7 @@ export struct RepoDetailView {
         Image(this.detail?.ownerAvatarUrl ?? '')
           .width(20)
           .height(20)
-          .borderRadius(10)
+          .borderRadius(12)
           .backgroundColor($r('app.color.heat_empty'))
         Text(this.detail?.ownerLogin ?? '')
           .fontSize($r('app.float.caption_font_size'))
@@ -200,8 +200,8 @@ export struct RepoDetailView {
       .width('100%')
 
       Text(this.detail?.name ?? '')
-        .fontSize(26)
-        .fontWeight(FontWeight.Bold)
+        .fontSize($r('app.float.title_font_size'))
+        .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
         .width('100%')
 
@@ -222,6 +222,7 @@ export struct RepoDetailView {
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))
         }
+        .responseRegion({ x: 0, y: -12, width: '100%', height: '220%' })
         .onClick(() => {
           this.pathStack.pushPathByName('stargazers', `${this.owner}/${this.name}`);
         })
@@ -238,6 +239,7 @@ export struct RepoDetailView {
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))
         }
+        .responseRegion({ x: 0, y: -12, width: '100%', height: '220%' })
         .onClick(() => {
           this.pathStack.pushPathByName('forks', `${this.owner}/${this.name}`);
         })

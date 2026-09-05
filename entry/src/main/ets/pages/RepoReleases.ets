@@ -77,7 +77,7 @@ export struct RepoReleasesView {
       Row({ space: 8 }) {
         Text(item.tagName)
           .fontSize($r('app.float.body_font_size'))
-          .fontWeight(FontWeight.Bold)
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
         if (item.isLatest) {
           Text($r('app.string.releases_latest'))
@@ -116,7 +116,7 @@ export struct RepoReleasesView {
             .fontColor($r('app.color.text_secondary'))
           Text($r('app.string.repo_releases_title'))
             .fontSize($r('app.float.title_font_size'))
-            .fontWeight(FontWeight.Bold)
+            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
         }
         .layoutWeight(1)
@@ -135,7 +135,7 @@ export struct RepoReleasesView {
             Column({ space: 8 }) {
               Text(this.releases[0].tagName)
                 .fontSize(32)
-                .fontWeight(FontWeight.Bold)
+                .fontWeight(600)
                 .fontColor($r('app.color.text_primary'))
               if (this.releases[0].isLatest) {
                 Text($r('app.string.releases_latest'))
@@ -165,7 +165,7 @@ export struct RepoReleasesView {
               Column({ space: 6 }) {
                 Text('What\'s Changed')
                   .fontSize(20)
-                  .fontWeight(FontWeight.Bold)
+                  .fontWeight(600)
                   .fontColor($r('app.color.text_primary'))
                 MarkdownView({
                   html: this.releases[0].bodyHTML,

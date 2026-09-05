@@ -38,14 +38,14 @@ export struct RepoSearchRow {
         .backgroundColor($r('app.color.text_tertiary'))
       Column({ space: 4 }) {
         Text(splitRepo(this.item?.title ?? '')[0])
-          .fontSize(15)
+          .fontSize($r('app.float.chip_font_size'))
           .fontColor($r('app.color.text_secondary'))
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .width('100%')
         Text(splitRepo(this.item?.title ?? '')[1])
-          .fontSize(17)
-          .fontWeight(FontWeight.Bold)
+          .fontSize($r('app.float.menu_font_size'))
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -62,7 +62,7 @@ export struct RepoSearchRow {
           Row({ space: 4 }) {
             OctIcon({ res: $r('app.media.oct_star_fill_16'), iconSize: 14, iconColor: $r('app.color.star_gold') })
             Text(compactCount(this.item?.stars ?? 0))
-              .fontSize(13)
+              .fontSize($r('app.float.caption_font_size'))
               .fontColor($r('app.color.text_secondary'))
           }
           if (this.item !== null && this.item.language !== '') {
@@ -72,7 +72,7 @@ export struct RepoSearchRow {
                 .height(9)
                 .fill(this.item.languageColor !== '' ? this.item.languageColor : $r('app.color.repo_language_unknown'))
               Text(this.item.language)
-                .fontSize(13)
+                .fontSize($r('app.float.caption_font_size'))
                 .fontColor($r('app.color.text_secondary'))
             }
           }
@@ -113,9 +113,9 @@ export struct IssuePrSearchRow {
   @Builder
   outlinePill(iconRes: Resource, iconColor: ResourceColor, text: string) {
     Row({ space: 5 }) {
-      OctIcon({ res: iconRes, iconSize: 13, iconColor: iconColor })
+      OctIcon({ res: iconRes, iconSize: 16, iconColor: iconColor })
       Text(text)
-        .fontSize(12.5)
+        .fontSize($r('app.float.caption_font_size'))
         .fontColor($r('app.color.text_primary'))
     }
     .padding({ left: 10, right: 10, top: 4, bottom: 4 })
@@ -163,19 +163,19 @@ export struct IssuePrSearchRow {
       Column({ space: 5 }) {
         Row({ space: 8 }) {
           Text(`${this.item?.repoFullName ?? ''} #${this.item?.number ?? 0}`)
-            .fontSize(15)
+            .fontSize($r('app.float.chip_font_size'))
             .fontColor($r('app.color.text_secondary'))
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .layoutWeight(1)
           Text(shortTime(this.item?.createdAt ?? ''))
-            .fontSize(13)
+            .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))
         }
         .width('100%')
         Text(this.item?.title ?? '')
-          .fontSize(17)
-          .fontWeight(FontWeight.Bold)
+          .fontSize($r('app.float.menu_font_size'))
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
           .maxLines(2)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -206,14 +206,14 @@ export struct PersonSearchRow {
         .backgroundColor($r('app.color.text_tertiary'))
       Column({ space: 3 }) {
         Text(this.item?.subtitle !== '' ? (this.item?.subtitle ?? '') : (this.item?.title ?? ''))
-          .fontSize(17)
-          .fontWeight(FontWeight.Bold)
+          .fontSize($r('app.float.menu_font_size'))
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .width('100%')
         Text(this.item?.title ?? '')
-          .fontSize(15)
+          .fontSize($r('app.float.chip_font_size'))
           .fontColor($r('app.color.text_secondary'))
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -249,14 +249,14 @@ export struct OrgSearchRow {
         .backgroundColor($r('app.color.text_tertiary'))
       Column({ space: 3 }) {
         Text(this.item?.subtitle !== '' ? (this.item?.subtitle ?? '') : (this.item?.title ?? ''))
-          .fontSize(17)
-          .fontWeight(FontWeight.Bold)
+          .fontSize($r('app.float.menu_font_size'))
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .width('100%')
         Text(this.item?.title ?? '')
-          .fontSize(15)
+          .fontSize($r('app.float.chip_font_size'))
           .fontColor($r('app.color.text_secondary'))
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })

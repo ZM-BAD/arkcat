@@ -295,7 +295,7 @@ export struct IssuesListView {
             .fontColor($r('app.color.text_secondary'))
           Text($r('app.string.repo_issues_link'))
             .fontSize($r('app.float.title_font_size'))
-            .fontWeight(FontWeight.Bold)
+            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
         }
         .layoutWeight(1)

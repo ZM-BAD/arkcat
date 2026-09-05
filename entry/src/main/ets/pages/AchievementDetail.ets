@@ -105,14 +105,14 @@ export struct AchievementDetailView {
         .backgroundColor($r('app.color.achievement_close_bg'))
         .margin({ top: 20, bottom: 12 })
       Text(item.name)
-        .fontSize(26)
-        .fontWeight(FontWeight.Bold)
+        .fontSize($r('app.float.title_font_size'))
+        .fontWeight(600)
         .fontColor(Color.White)
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
       if (item.description !== '') {
         Text(item.description)
-          .fontSize(15)
+          .fontSize($r('app.float.chip_font_size'))
           .fontColor(Color.White)
           .opacity(0.85)
           .textAlign(TextAlign.Center)
@@ -130,8 +130,8 @@ export struct AchievementDetailView {
           .backgroundColor($r('app.color.achievement_close_bg'))
           Text(resText(this.getUIContext(), $r('app.string.achievement_unlocked_fmt'),
             unlockDateText(item.unlockedAt)))
-            .fontSize(15)
-            .fontWeight(FontWeight.Bold)
+            .fontSize($r('app.float.chip_font_size'))
+            .fontWeight(600)
             .fontColor(Color.White)
             .maxLines(1)
         }
@@ -152,7 +152,7 @@ export struct AchievementDetailView {
                   .opacity(0.7)
                   .margin({ top: 7 })
                 Text(this.eventText(ev))
-                  .fontSize(13)
+                  .fontSize($r('app.float.caption_font_size'))
                   .fontColor(Color.White)
                   .opacity(0.85)
                   .layoutWeight(1)
@@ -222,7 +222,7 @@ export struct AchievementDetailView {
 
         Column() {
           Text(this.stringOf($r('app.string.achievement_share')))
-            .fontSize(17)
+            .fontSize($r('app.float.menu_font_size'))
             .fontWeight(FontWeight.Medium)
             .fontColor(Color.White)
             .textAlign(TextAlign.Center)

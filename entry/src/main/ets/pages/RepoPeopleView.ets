@@ -112,7 +112,7 @@ export struct RepoPeopleView {
         if (user.name !== '') {
           Text(user.name)
             .fontSize($r('app.float.body_font_size'))
-            .fontWeight(FontWeight.Bold)
+            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -158,7 +158,7 @@ export struct RepoPeopleView {
         Column({ space: 2 }) {
           Text(this.name)
             .fontSize($r('app.float.title_font_size'))
-            .fontWeight(FontWeight.Bold)
+            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })

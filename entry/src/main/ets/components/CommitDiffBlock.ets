@@ -99,7 +99,7 @@ export struct CommitDiffBlock {
           OctIcon({ res: $r('app.media.oct_file_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
           Text(this.file.path)
             .fontFamily('monospace')
-            .fontSize(13)
+            .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_primary'))
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })

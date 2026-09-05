@@ -66,7 +66,8 @@ export struct ExploreView {
       .fontSize($r('app.float.caption_font_size'))
       .fontColor(this.selectedTopic === topic ? Color.White : $r('app.color.text_primary'))
       .padding({ left: 14, right: 14, top: 6, bottom: 6 })
-      .borderRadius(14)
+      .responseRegion({ x: 0, y: -7, width: '100%', height: '147%' })
+      .borderRadius(12)
       .backgroundColor(this.selectedTopic === topic ? $r('app.color.link_blue') : $r('app.color.card_background'))
       .margin({ right: 8, bottom: 8 })
       .onClick(() => this.openTopic(topic))
@@ -155,7 +156,7 @@ export struct ExploreView {
     Column() {
       Text($r('app.string.tab_explore'))
         .fontSize($r('app.float.title_font_size'))
-        .fontWeight(FontWeight.Bold)
+        .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
         .width('100%')
         .padding($r('app.float.page_padding'))
@@ -167,7 +168,7 @@ export struct ExploreView {
           // Discover 区（Spec 003）
           Text($r('app.string.explore_discover'))
             .fontSize($r('app.float.title_font_size'))
-            .fontWeight(FontWeight.Bold)
+            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
             .width('100%')
             .margin({ top: 8, bottom: 8 })
@@ -178,7 +179,7 @@ export struct ExploreView {
           // Activity 区（Spec 003 推荐流）
           Text($r('app.string.explore_activity'))
             .fontSize($r('app.float.title_font_size'))
-            .fontWeight(FontWeight.Bold)
+            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
             .width('100%')
             .margin({ top: 16, bottom: 8 })
@@ -192,7 +193,7 @@ export struct ExploreView {
           // Topics 区（原功能保留）
           Text($r('app.string.explore_topics_title'))
             .fontSize($r('app.float.title_font_size'))
-            .fontWeight(FontWeight.Bold)
+            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
             .width('100%')
             .margin({ top: 16, bottom: 8 })

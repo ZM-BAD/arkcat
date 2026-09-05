@@ -135,12 +135,13 @@ export struct CommentComposer {
   @Builder
   toolBtn(label: string, kind: MarkdownToolKind, bold: boolean = false, strike: boolean = false) {
     Text(label)
-      .fontSize(15)
-      .fontWeight(bold ? FontWeight.Bold : FontWeight.Medium)
+      .fontSize($r('app.float.chip_font_size'))
+      .fontWeight(bold ? 600 : FontWeight.Medium)
       .fontColor($r('app.color.text_secondary'))
       .textAlign(TextAlign.Center)
       .width(36)
       .height(32)
+      .responseRegion({ x: -4, y: -6, width: '122%', height: '138%' })
       .borderRadius(6)
       .decoration(strike ? { type: TextDecorationType.LineThrough, color: $r('app.color.text_secondary') }
         : { type: TextDecorationType.None, color: Color.Transparent })

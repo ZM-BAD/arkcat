@@ -277,7 +277,7 @@ export struct ProjectsView {
         } else {
           Text($r('app.string.nav_projects_title'))
             .fontSize($r('app.float.title_font_size'))
-            .fontWeight(FontWeight.Bold)
+            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
             .layoutWeight(1)
         }

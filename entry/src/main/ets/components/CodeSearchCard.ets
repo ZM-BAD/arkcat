@@ -28,7 +28,7 @@ export struct CodeSearchCard {
   lineContent(line: CodeLine) {
     if (line.highlights.length === 0) {
       Text(line.text)
-        .fontSize(12.5)
+        .fontSize($r('app.float.caption_font_size'))
         .fontColor($r('app.color.text_primary'))
         .layoutWeight(1)
         .lineHeight(19)
@@ -42,7 +42,7 @@ export struct CodeSearchCard {
           .textBackgroundStyle({ color: $r('app.color.checks_pending_bg'), radius: 3 })
         Span(line.text.substring(line.highlights[0].end))
       }
-      .fontSize(12.5)
+      .fontSize($r('app.float.caption_font_size'))
       .fontColor($r('app.color.text_primary'))
       .layoutWeight(1)
       .lineHeight(19)
@@ -60,7 +60,7 @@ export struct CodeSearchCard {
           .textBackgroundStyle({ color: $r('app.color.checks_pending_bg'), radius: 3 })
         Span(line.text.substring(line.highlights[1].end))
       }
-      .fontSize(12.5)
+      .fontSize($r('app.float.caption_font_size'))
       .fontColor($r('app.color.text_primary'))
       .layoutWeight(1)
       .lineHeight(19)
@@ -74,7 +74,7 @@ export struct CodeSearchCard {
     Row() {
       if (line.no > 0) {
         Text(`${line.no}`)
-          .fontSize(12.5)
+          .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_tertiary'))
           .textAlign(TextAlign.End)
           .width(44)
@@ -141,7 +141,7 @@ export struct CodeSearchCard {
         })
       }
     }
-    .borderRadius(8)
+    .borderRadius(6)
     .border({ width: 1, color: $r('app.color.divider') })
     .backgroundColor($r('app.color.card_background'))
     .width('100%')

@@ -105,7 +105,7 @@ export struct TopRepositoriesView {
           .backgroundColor($r('app.color.heat_empty'))
       } else {
         Text('◯')
-          .fontSize(28)
+          .fontSize($r('app.float.title_font_size'))
           .width(34)
           .height(34)
           .borderRadius(17)
@@ -118,7 +118,7 @@ export struct TopRepositoriesView {
           .fontColor($r('app.color.text_secondary'))
           .width('100%')
         Text(repo.name)
-          .fontSize(17)
+          .fontSize($r('app.float.menu_font_size'))
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.text_primary'))
           .maxLines(1)
@@ -155,7 +155,7 @@ export struct TopRepositoriesView {
           })
         Text($r('app.string.nav_top_repos_title'))
           .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
         Stack() {

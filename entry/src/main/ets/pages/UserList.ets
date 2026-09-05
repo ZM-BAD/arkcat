@@ -86,7 +86,7 @@ export struct UserListView {
         if (user.name !== '') {
           Text(user.name)
             .fontSize($r('app.float.body_font_size'))
-            .fontWeight(FontWeight.Bold)
+            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -132,7 +132,7 @@ export struct UserListView {
         Column({ space: 2 }) {
           Text(`@${this.headerLogin}`)
             .fontSize($r('app.float.title_font_size'))
-            .fontWeight(FontWeight.Bold)
+            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
           Text(this.kind === 'following' ? $r('app.string.user_list_following') : $r('app.string.user_list_followers'))
             .fontSize($r('app.float.body_font_size'))

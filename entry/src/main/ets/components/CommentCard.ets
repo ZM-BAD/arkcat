@@ -53,6 +53,7 @@ export struct CommentCard {
             .fontColor($r('app.color.text_secondary'))
             .width(28)
             .height(28)
+            .responseRegion({ x: -8, y: -8, width: '160%', height: '160%' })
             .textAlign(TextAlign.Center)
             .accessibilityDescription($r('app.string.a11y_more'))
             .bindMenu([

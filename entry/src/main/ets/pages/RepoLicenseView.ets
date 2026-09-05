@@ -68,7 +68,7 @@ export struct RepoLicenseView {
             .textOverflow({ overflow: TextOverflow.Ellipsis })
           Text(this.stringOf($r('app.string.repo_license')))
             .fontSize($r('app.float.title_font_size'))
-            .fontWeight(FontWeight.Bold)
+            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
         }
         .alignItems(HorizontalAlign.Start)

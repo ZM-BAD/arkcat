@@ -109,10 +109,10 @@ export struct ForksView {
         Image(fork.ownerAvatarUrl)
           .width(20)
           .height(20)
-          .borderRadius(10)
+          .borderRadius(12)
           .backgroundColor($r('app.color.text_tertiary'))
         Text(fork.ownerLogin)
-          .fontSize(15)
+          .fontSize($r('app.float.chip_font_size'))
           .fontColor($r('app.color.text_secondary'))
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -121,8 +121,8 @@ export struct ForksView {
       .width('100%')
 
         Text(fork.name)
-          .fontSize(17)
-          .fontWeight(FontWeight.Bold)
+          .fontSize($r('app.float.menu_font_size'))
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -141,7 +141,7 @@ export struct ForksView {
           Row({ space: 4 }) {
             OctIcon({ res: $r('app.media.oct_repo_forked_16'), iconSize: 12, iconColor: $r('app.color.text_tertiary') })
             Text(resText(this.getUIContext(), $r('app.string.social_fork_from'), fork.parentNameWithOwner))
-              .fontSize(13)
+              .fontSize($r('app.float.caption_font_size'))
               .fontColor($r('app.color.text_secondary'))
               .maxLines(1)
               .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -154,7 +154,7 @@ export struct ForksView {
           Row({ space: 4 }) {
             OctIcon({ res: $r('app.media.oct_star_16'), iconSize: 13, iconColor: $r('app.color.star_gold') })
             Text(compactCount(fork.stargazerCount))
-              .fontSize(13)
+              .fontSize($r('app.float.caption_font_size'))
               .fontColor($r('app.color.text_secondary'))
           }
           if (fork.primaryLanguage !== '') {
@@ -164,7 +164,7 @@ export struct ForksView {
                 .height(9)
                 .fill(fork.languageColor !== '' ? fork.languageColor : $r('app.color.repo_language_unknown'))
               Text(fork.primaryLanguage)
-                .fontSize(13)
+                .fontSize($r('app.float.caption_font_size'))
                 .fontColor($r('app.color.text_secondary'))
             }
           }
@@ -211,7 +211,7 @@ export struct ForksView {
           Column({ space: 2 }) {
             Text(this.name)
               .fontSize($r('app.float.title_font_size'))
-              .fontWeight(FontWeight.Bold)
+              .fontWeight(600)
               .fontColor($r('app.color.text_primary'))
               .maxLines(1)
               .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -227,14 +227,17 @@ export struct ForksView {
             .fontSize($r('app.float.body_font_size'))
             .fontColor($r('app.color.link_blue'))
             .padding(6)
+            .responseRegion({ x: -6, y: -6, width: '140%', height: '140%' })
             .onClick(() => this.exitSearch())
         } else {
           OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 20, iconColor: $r('app.color.link_blue') })
             .padding(6)
+            .responseRegion({ x: -6, y: -6, width: '140%', height: '140%' })
             .accessibilityDescription($r('app.string.social_forks_search'))
             .onClick(() => this.enterSearch())
           OctIcon({ res: $r('app.media.oct_plus_circle_24'), iconSize: 20, iconColor: $r('app.color.link_blue') })
             .padding(6)
+            .responseRegion({ x: -6, y: -6, width: '140%', height: '140%' })
             .accessibilityDescription($r('app.string.a11y_new'))
             .onClick(() => this.comingSoon())
         }

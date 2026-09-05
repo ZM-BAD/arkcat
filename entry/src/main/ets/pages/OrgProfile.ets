@@ -99,7 +99,7 @@ export struct OrgProfileView {
           Column({ space: 3 }) {
             Text(org.name !== '' ? org.name : org.login)
               .fontSize($r('app.float.title_font_size'))
-              .fontWeight(FontWeight.Bold)
+              .fontWeight(600)
               .fontColor($r('app.color.text_primary'))
               .maxLines(1)
               .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -149,7 +149,7 @@ export struct OrgProfileView {
         .width('100%')
         .height(46)
         .justifyContent(FlexAlign.Center)
-        .borderRadius(23)
+        .borderRadius(9999)
         .borderWidth(1)
         .borderColor($r('app.color.divider'))
         .margin({ top: 14 })
@@ -206,7 +206,7 @@ export struct OrgProfileView {
           OctIcon({ res: $r('app.media.oct_pin_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
           Text(this.stringOf($r('app.string.home_pinned_section')))
             .fontSize($r('app.float.title_font_size'))
-            .fontWeight(FontWeight.Bold)
+            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
         }
         .width('100%')

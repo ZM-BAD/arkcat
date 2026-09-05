@@ -178,7 +178,7 @@ export struct NotificationSettingsView {
     .padding({ left: 16, right: 16 })
     .backgroundColor($r('app.color.card_background'))
     .borderRadius(12)
-    .margin({ bottom: 2 })
+    .margin({ bottom: 4 })
   }
 
   /** 滑动动作选择行：标签 + 当前值 + CHANGE */
@@ -197,8 +197,9 @@ export struct NotificationSettingsView {
       Blank()
       Text($r('app.string.settings_change'))
         .fontSize($r('app.float.body_font_size'))
-        .fontWeight(FontWeight.Bold)
+        .fontWeight(600)
         .fontColor($r('app.color.link_blue'))
+        .responseRegion({ x: -6, y: -7, width: '130%', height: '147%' })
         .onClick(() => {
           this.pickSwipeAction(side);
         })
@@ -266,7 +267,7 @@ export struct NotificationSettingsView {
     .padding(12)
     .backgroundColor($r('app.color.card_background'))
     .borderRadius(12)
-    .margin({ bottom: 2 })
+    .margin({ bottom: 4 })
   }
 
   build() {
@@ -284,7 +285,7 @@ export struct NotificationSettingsView {
         })
         Text($r('app.string.settings_notifications'))
           .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
         Blank()
       }
@@ -312,7 +313,7 @@ export struct NotificationSettingsView {
           .padding({ left: 16, right: 16 })
           .backgroundColor($r('app.color.card_background'))
           .borderRadius(12)
-          .margin({ bottom: 2 })
+          .margin({ bottom: 4 })
 
           this.sectionTitle($r('app.string.settings_push_notif_types'))
           this.toggleRow($r('app.string.settings_notif_direct_mentions'), this.directMentions, 'notif_direct_mentions')

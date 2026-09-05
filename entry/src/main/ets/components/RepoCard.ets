@@ -57,7 +57,7 @@ export struct RepoCard {
       Image(this.repo?.ownerAvatarUrl ?? '')
         .width(20)
         .height(20)
-        .borderRadius(10)
+        .borderRadius(12)
         .backgroundColor($r('app.color.heat_empty'))
       Text(this.repo?.ownerLogin ?? '')
         .fontSize($r('app.float.caption_font_size'))
@@ -100,7 +100,7 @@ export struct RepoCard {
   pinnedStatsRow() {
     Row({ space: 12 }) {
       Row({ space: 4 }) {
-        OctIcon({ res: $r('app.media.oct_star_fill_16'), iconSize: 14, iconColor: $r('app.color.star_gold') })
+        OctIcon({ res: $r('app.media.oct_star_fill_16'), iconSize: 16, iconColor: $r('app.color.star_gold') })
         Text(compactCount(this.repo?.stargazerCount ?? 0))
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))

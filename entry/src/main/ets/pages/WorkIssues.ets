@@ -259,7 +259,7 @@ export struct WorkIssuesView {
         } else {
           Text($r('app.string.nav_issues_title'))
             .fontSize($r('app.float.title_font_size'))
-            .fontWeight(FontWeight.Bold)
+            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
             .layoutWeight(1)
         }

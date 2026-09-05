@@ -112,7 +112,7 @@ export struct ReactionBar {
                     Image(u.avatarUrl)
                       .width(28)
                       .height(28)
-                      .borderRadius(14)
+                      .borderRadius(12)
                       .backgroundColor($r('app.color.heat_empty'))
                   } else {
                     Circle().width(28).height(28).fill($r('app.color.heat_empty'))
@@ -147,7 +147,7 @@ export struct ReactionBar {
                 .width(44)
                 .height(44)
                 .textAlign(TextAlign.Center)
-                .borderRadius(8)
+                .borderRadius(6)
                 .backgroundColor(findReactionGroup(this.mirror, m.content)?.viewerHasReacted === true
                   ? $r('app.color.chip_bg') : Color.Transparent)
                 .onClick(() => this.pick(m.content))
@@ -171,8 +171,9 @@ export struct ReactionBar {
         ForEach(this.mirror, (g: ReactionGroup) => {
           Row({ space: 2 }) {
             Text(reactionEmoji(g.content))
-              .fontSize(15)
+              .fontSize($r('app.float.chip_font_size'))
               .padding({ left: 6, top: 4, bottom: 4 })
+              .responseRegion({ x: -4, y: -8, width: '110%', height: '160%' })
               .onClick(() => this.toggle(g.content))
             Text(`${g.count}`)
               .fontSize($r('app.float.caption_font_size'))
@@ -181,7 +182,7 @@ export struct ReactionBar {
               .padding({ left: 2, right: 6, top: 5, bottom: 5 })
               .onClick(() => this.openUsers(g))
           }
-          .borderRadius(14)
+          .borderRadius(12)
           .backgroundColor(g.viewerHasReacted ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
           .border({ width: g.viewerHasReacted ? 1 : 0, color: $r('app.color.link_blue') })
           .margin({ right: 2 })
@@ -192,8 +193,9 @@ export struct ReactionBar {
             .fontColor($r('app.color.text_secondary'))
             .width(28)
             .height(28)
+            .responseRegion({ x: -8, y: -8, width: '160%', height: '160%' })
             .textAlign(TextAlign.Center)
-            .borderRadius(14)
+            .borderRadius(12)
             .backgroundColor($r('app.color.chip_bg'))
             .accessibilityDescription($r('app.string.a11y_reaction_add'))
             .onClick(() => this.openAll())

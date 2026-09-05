@@ -252,7 +252,7 @@ export struct RepoPrsView {
             Image(item.authorAvatar)
               .width(20)
               .height(20)
-              .borderRadius(10)
+              .borderRadius(12)
               .backgroundColor($r('app.color.heat_empty'))
           }
           Text(this.timeText(timeParts(item.createdAt, Date.now())))
@@ -293,7 +293,7 @@ export struct RepoPrsView {
             .fontColor($r('app.color.text_secondary'))
           Text($r('app.string.home_work_pull_requests'))
             .fontSize($r('app.float.title_font_size'))
-            .fontWeight(FontWeight.Bold)
+            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
         }
         .layoutWeight(1)

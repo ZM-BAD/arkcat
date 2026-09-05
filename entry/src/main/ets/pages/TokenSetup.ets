@@ -21,7 +21,7 @@ export struct TokenSetup {
 
       Text($r('app.string.token_setup_title'))
         .fontSize($r('app.float.page_text_font_size'))
-        .fontWeight(FontWeight.Bold)
+        .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
 
       Text($r('app.string.token_setup_desc'))

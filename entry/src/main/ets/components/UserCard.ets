@@ -22,7 +22,7 @@ export struct UserCard {
       Column({ space: 4 }) {
         Text(this.user && this.user.name !== '' ? this.user.name : this.user?.login ?? '')
           .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })

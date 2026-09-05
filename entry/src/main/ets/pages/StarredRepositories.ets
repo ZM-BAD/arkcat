@@ -345,7 +345,7 @@ export struct StarredRepositoriesView {
 
       Text(repo.name)
         .fontSize($r('app.float.body_font_size'))
-        .fontWeight(FontWeight.Bold)
+        .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -429,7 +429,7 @@ export struct StarredRepositoriesView {
               .fontColor($r('app.color.text_secondary'))
             Text($r('app.string.nav_starred_title'))
               .fontSize($r('app.float.title_font_size'))
-              .fontWeight(FontWeight.Bold)
+              .fontWeight(600)
               .fontColor($r('app.color.text_primary'))
               .maxLines(1)
               .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -501,6 +501,7 @@ export struct StarredRepositoriesView {
             Text($r('app.string.work_starred_new'))
               .fontSize($r('app.float.body_font_size'))
               .fontColor($r('app.color.link_blue'))
+              .responseRegion({ x: -6, y: -7, width: '130%', height: '147%' })
               .onClick(() => this.pathStack.pushPathByName('createList', ''))
           }
           .width('100%')
@@ -532,7 +533,7 @@ export struct StarredRepositoriesView {
             Column({ space: 12 }) {
               Text($r('app.string.work_starred_first_list_title'))
                 .fontSize(20)
-                .fontWeight(FontWeight.Bold)
+                .fontWeight(600)
                 .fontColor($r('app.color.text_primary'))
                 .textAlign(TextAlign.Center)
                 .width('100%')

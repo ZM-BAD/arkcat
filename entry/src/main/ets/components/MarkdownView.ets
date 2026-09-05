@@ -266,7 +266,7 @@ export struct MarkdownView {
       .backgroundColor($r('app.color.card_background'))
       .borderWidth(1)
       .borderColor($r('app.color.divider'))
-      .shadow({ radius: 8, color: $r('app.color.shadow_floating'), offsetY: 2 })
+      .shadow({ radius: 24, color: $r('app.color.shadow_floating'), offsetY: 8 })
       .onClick(() => {
         this.collapsed = false;
         this.webHeight = this.contentHeight;

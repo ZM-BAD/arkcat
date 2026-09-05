@@ -225,13 +225,14 @@ export struct CodeViewerView {
         })
         Text(this.fileName())
           .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .layoutWeight(1)
         OctIcon({ res: $r('app.media.oct_share_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
           .margin({ left: 12 })
+        .responseRegion({ x: -12, y: -12, width: '220%', height: '220%' })
         .accessibilityDescription($r('app.string.a11y_share'))
         .focusable(true)
           .onClick(() => {
@@ -239,6 +240,7 @@ export struct CodeViewerView {
           })
         OctIcon({ res: $r('app.media.oct_gear_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
           .margin({ left: 12 })
+        .responseRegion({ x: -12, y: -12, width: '220%', height: '220%' })
         .accessibilityDescription($r('app.string.a11y_settings'))
         .focusable(true)
           .onClick(() => {

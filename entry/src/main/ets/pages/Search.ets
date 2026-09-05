@@ -181,7 +181,7 @@ export struct SearchView {
     Column({ space: 10 }) {
       Text($r('app.string.search_empty_title'))
         .fontSize($r('app.float.title_font_size'))
-        .fontWeight(FontWeight.Bold)
+        .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
       Text($r('app.string.search_empty_text'))
         .fontSize($r('app.float.menu_font_size'))
@@ -204,12 +204,13 @@ export struct SearchView {
         Row() {
           Text($r('app.string.search_recent_searches'))
             .fontSize($r('app.float.menu_font_size'))
-            .fontWeight(FontWeight.Bold)
+            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
           Blank()
           Text($r('app.string.search_clear_all'))
             .fontSize($r('app.float.menu_font_size'))
             .fontColor($r('app.color.link_blue'))
+            .responseRegion({ x: -6, y: -7, width: '130%', height: '147%' })
             .onClick(() => this.clearHistory())
         }
         .width('100%')
@@ -251,6 +252,7 @@ export struct SearchView {
             .fontSize($r('app.float.chip_font_size'))
             .fontColor($r('app.color.text_primary'))
             .height(36)
+            .responseRegion({ x: 0, y: -4, width: '100%', height: '122%' })
             .padding({ left: 12, right: 12 })
             .borderRadius(6)
             .backgroundColor($r('app.color.search_chip_bg'))

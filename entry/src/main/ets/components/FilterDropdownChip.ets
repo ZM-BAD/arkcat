@@ -96,7 +96,7 @@ export struct FilterDropdownChip {
     .width(this.menuWidth())
     .borderRadius(12)
     .backgroundColor($r('app.color.card_background'))
-    .shadow({ radius: 16, color: $r('app.color.shadow_floating'), offsetY: 4 })
+    .shadow({ radius: 24, color: $r('app.color.shadow_floating'), offsetY: 8 })
   }
 
   /** 官方 UIMenu 宽度 = 最长项文本宽 + 左右 padding 14+14 + 蓝勾 16 + 间距 8 */
@@ -140,6 +140,7 @@ export struct FilterDropdownChip {
         .margin({ left: 8 })
     }
     .height(38)
+    .responseRegion({ x: 0, y: -3, width: '100%', height: '116%' })
     .padding({ left: 10, right: 12 })
     .borderRadius(19)
     .backgroundColor(this.active ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))

@@ -60,6 +60,7 @@ export struct PrDiffCard {
     }
     .width('100%')
     .height(40)
+    .responseRegion({ x: 0, y: -2, width: '100%', height: '110%' })
     .padding({ left: 14, right: 14 })
     .onClick((): void => {
       this.menuOpen = false;
@@ -84,9 +85,9 @@ export struct PrDiffCard {
         $r('app.color.text_primary'), (): void => promptAction.showToast({ message: $r('app.string.home_feature_coming') }))
     }
     .width(200)
-    .borderRadius(10)
+    .borderRadius(12)
     .backgroundColor($r('app.color.card_background'))
-    .shadow({ radius: 16, color: $r('app.color.shadow_floating'), offsetY: 6 })
+    .shadow({ radius: 24, color: $r('app.color.shadow_floating'), offsetY: 8 })
     .padding({ top: 6, bottom: 6 })
   }
 
@@ -196,7 +197,8 @@ export struct PrDiffCard {
           }
           .width(18)
           .height(18)
-          .borderRadius(4)
+          .responseRegion({ x: -13, y: -13, width: '244%', height: '244%' })
+          .borderRadius(3)
           .justifyContent(FlexAlign.Center)
           .backgroundColor(this.reviewed ? $r('app.color.link_blue') : Color.Transparent)
           .border({ width: 1, color: $r('app.color.link_blue') })

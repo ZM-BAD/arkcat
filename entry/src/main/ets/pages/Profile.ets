@@ -132,14 +132,14 @@ export struct ProfileView {
     if (text !== '') {
       Row({ space: 8 }) {
         Stack() {
-          OctIcon({ res: iconRes, iconSize: 14, iconColor: $r('app.color.text_secondary') })
+          OctIcon({ res: iconRes, iconSize: 16, iconColor: $r('app.color.text_secondary') })
         }
         .width(16)
         .height(16)
         Text(text)
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
-          .fontWeight(bold ? FontWeight.Bold : FontWeight.Normal)
+          .fontWeight(bold ? 600 : FontWeight.Normal)
           .maxLines(1)
       }
       .width('100%')
@@ -159,6 +159,7 @@ export struct ProfileView {
         if (isSelfProfile(this.profile.viewerLogin, this.profile.user.login)) {
           OctIcon({ res: $r('app.media.oct_pencil_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
             .padding(4)
+            .responseRegion({ x: -10, y: -10, width: '183%', height: '183%' })
             .onClick(() => {
               promptAction.showToast({ message: $r('app.string.home_feature_coming') });
             })
@@ -213,7 +214,7 @@ export struct ProfileView {
         Column({ space: 4 }) {
           Text(this.profile?.user.name ?? '')
             .fontSize($r('app.float.title_font_size'))
-            .fontWeight(FontWeight.Bold)
+            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
           Text(`@${this.profile?.user.login ?? ''}`)
             .fontSize($r('app.float.body_font_size'))
@@ -249,7 +250,7 @@ export struct ProfileView {
             Text(`@${this.profile?.twitterUsername ?? ''}`)
               .fontSize($r('app.float.caption_font_size'))
               .fontColor($r('app.color.text_secondary'))
-              .fontWeight(FontWeight.Bold)
+              .fontWeight(600)
               .maxLines(1)
           }
           .width('100%')
@@ -262,7 +263,7 @@ export struct ProfileView {
       if (this.profile !== null && this.profile.isDeveloperProgramMember) {
         Row({ space: 8 }) {
           Stack() {
-            OctIcon({ res: $r('app.media.oct_cpu_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
+            OctIcon({ res: $r('app.media.oct_cpu_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
           }
           .width(16)
           .height(16)
@@ -277,20 +278,22 @@ export struct ProfileView {
       // 两段可点计数行（Spec 034）：person 图标 + N followers · M following（数字加粗）
       Row({ space: 8 }) {
         Stack() {
-          OctIcon({ res: $r('app.media.oct_person_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
+          OctIcon({ res: $r('app.media.oct_person_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
         }
         .width(16)
         .height(16)
         Text(`${this.profile?.user.followers ?? 0}`)
           .fontSize($r('app.float.caption_font_size'))
-          .fontWeight(FontWeight.Bold)
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
+          .responseRegion({ x: 0, y: -12, width: '100%', height: '220%' })
           .onClick(() => {
             this.pathStack.pushPathByName('userList', `${this.profile?.user.login ?? ''}|followers`);
           })
         Text(resText(this.getUIContext(), $r('app.string.profile_followers_unit')))
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
+          .responseRegion({ x: 0, y: -12, width: '100%', height: '220%' })
           .onClick(() => {
             this.pathStack.pushPathByName('userList', `${this.profile?.user.login ?? ''}|followers`);
           })
@@ -299,14 +302,16 @@ export struct ProfileView {
           .fontColor($r('app.color.text_secondary'))
         Text(`${this.profile?.user.following ?? 0}`)
           .fontSize($r('app.float.caption_font_size'))
-          .fontWeight(FontWeight.Bold)
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
+          .responseRegion({ x: 0, y: -12, width: '100%', height: '220%' })
           .onClick(() => {
             this.pathStack.pushPathByName('userList', `${this.profile?.user.login ?? ''}|following`);
           })
         Text(resText(this.getUIContext(), $r('app.string.profile_following_unit')))
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
+          .responseRegion({ x: 0, y: -12, width: '100%', height: '220%' })
           .onClick(() => {
             this.pathStack.pushPathByName('userList', `${this.profile?.user.login ?? ''}|following`);
           })
@@ -428,7 +433,7 @@ export struct ProfileView {
               OctIcon({ res: $r('app.media.oct_pin_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
               Text($r('app.string.home_pinned_section'))
                 .fontSize($r('app.float.title_font_size'))
-                .fontWeight(FontWeight.Bold)
+                .fontWeight(600)
                 .fontColor($r('app.color.text_primary'))
             }
             .width('100%')

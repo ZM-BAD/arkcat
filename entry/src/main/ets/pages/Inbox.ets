@@ -305,6 +305,7 @@ export struct InboxView {
   @Styles
   filterPillStyle() {
     .height(30)
+    .responseRegion({ x: 0, y: -7, width: '100%', height: '147%' })
     .padding({ left: 12, right: 10 })
     .borderRadius(12)
     .border({ width: 1, color: $r('app.color.border') })
@@ -324,7 +325,7 @@ export struct InboxView {
       })
       Text(title)
         .fontSize($r('app.float.title_font_size'))
-        .fontWeight(FontWeight.Bold)
+        .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
         .layoutWeight(1)
       if (showSearch) {
@@ -348,7 +349,7 @@ export struct InboxView {
     Row() {
       if ($$.emoji !== '') {
         Text($$.emoji)
-          .fontSize(22)
+          .fontSize(24)
           .width(32)
           .textAlign(TextAlign.Center)
           .margin({ right: 8 })
@@ -410,7 +411,7 @@ export struct InboxView {
           .height(40)
           .fontSize($r('app.float.body_font_size'))
           .margin({ left: 16, right: 16, bottom: 4 })
-          .borderRadius(8)
+          .borderRadius(6)
           .backgroundColor($r('app.color.chip_bg'))
           .onChange((v: string): void => {
             this.repoSearch = v;
@@ -438,7 +439,7 @@ export struct InboxView {
       Image(r.avatarUrl)
         .width(40)
         .height(40)
-        .borderRadius(8)
+        .borderRadius(6)
         .backgroundColor($r('app.color.chip_bg'))
       Text(r.fullName)
         .fontSize($r('app.float.body_font_size'))
@@ -510,7 +511,7 @@ export struct InboxView {
 
         Text(item.title)
           .fontSize($r('app.float.body_font_size'))
-          .fontWeight(item.unread ? FontWeight.Bold : FontWeight.Normal)
+          .fontWeight(item.unread ? 600 : FontWeight.Normal)
           .fontColor($r('app.color.text_primary'))
           .maxLines(2)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -521,7 +522,7 @@ export struct InboxView {
           Image(item.ownerAvatarUrl)
             .width(16)
             .height(16)
-            .borderRadius(8)
+            .borderRadius(6)
             .backgroundColor($r('app.color.heat_empty'))
           Text(this.subjectLine(item))
             .fontSize($r('app.float.caption_font_size'))
@@ -552,7 +553,7 @@ export struct InboxView {
       Row() {
         Text($r('app.string.tab_inbox'))
           .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
         Blank()
         Stack() {

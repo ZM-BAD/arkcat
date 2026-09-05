@@ -20,7 +20,7 @@ export struct WorkEmptyView {
       }
       Text(this.title)
         .fontSize(20)
-        .fontWeight(FontWeight.Bold)
+        .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
         .textAlign(TextAlign.Center)
         .width('100%')

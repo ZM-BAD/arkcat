@@ -175,7 +175,7 @@ export struct CommitDetailView {
     Column({ space: 4 }) {
       Text(resText(this.getUIContext(), $r('app.string.pr_files_changed'), this.detail !== null ? this.detail.files.length : 0))
         .fontSize(16)
-        .fontWeight(FontWeight.Bold)
+        .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
       Row({ space: 12 }) {
         Text(resText(this.getUIContext(), $r('app.string.commit_additions'), this.detail !== null ? this.detail.files.reduce((a: number, f) => a + f.additions, 0) : 0))
@@ -190,7 +190,7 @@ export struct CommitDetailView {
     .width('100%')
     .alignItems(HorizontalAlign.Start)
     .padding({ left: 20, right: 20, top: 14, bottom: 14 })
-    .borderRadius(8)
+    .borderRadius(6)
     .backgroundColor($r('app.color.diff_hunk_bg'))
   }
 
@@ -238,7 +238,7 @@ export struct CommitDetailView {
         })
         Text(this.stringOf($r('app.string.commit_appbar')))
           .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
         Stack() {
@@ -275,7 +275,7 @@ export struct CommitDetailView {
         Stack() {
           Text(this.stringOf($r('app.string.commit_tab_changes')))
             .fontSize($r('app.float.body_font_size'))
-            .fontWeight(this.tab === 0 ? FontWeight.Bold : FontWeight.Regular)
+            .fontWeight(this.tab === 0 ? 600 : FontWeight.Regular)
             .fontColor(this.tab === 0 ? $r('app.color.text_primary') : $r('app.color.text_secondary'))
           if (this.tab === 0) {
             // 指示线与底部灰线重合（取一半变蓝）
@@ -290,7 +290,7 @@ export struct CommitDetailView {
         Stack() {
           Text(this.stringOf($r('app.string.commit_tab_details')))
             .fontSize($r('app.float.body_font_size'))
-            .fontWeight(this.tab === 1 ? FontWeight.Bold : FontWeight.Regular)
+            .fontWeight(this.tab === 1 ? 600 : FontWeight.Regular)
             .fontColor(this.tab === 1 ? $r('app.color.text_primary') : $r('app.color.text_secondary'))
           if (this.tab === 1) {
             Row().width('100%').height(2).backgroundColor($r('app.color.link_blue')).position({ x: 0, y: 42 })

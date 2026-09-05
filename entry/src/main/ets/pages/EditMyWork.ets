@@ -157,7 +157,7 @@ export struct EditMyWorkView {
           })
         Text($r('app.string.edit_work_title'))
           .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
         Text($r('app.string.edit_work_save'))
@@ -165,6 +165,7 @@ export struct EditMyWorkView {
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.link_blue'))
           .padding(6)
+          .responseRegion({ x: -6, y: -7, width: '130%', height: '147%' })
           .onClick(() => this.save())
         Stack() {
   OctIcon({

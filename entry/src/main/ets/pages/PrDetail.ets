@@ -114,7 +114,7 @@ export struct PrDetailView {
   sectionTitle(text: string) {
     Text(text)
       .fontSize(16)
-      .fontWeight(FontWeight.Bold)
+      .fontWeight(600)
       .fontColor($r('app.color.text_primary'))
       .width('100%')
   }
@@ -210,7 +210,7 @@ export struct PrDetailView {
         })
         Text(`${this.owner}/${this.name} #${this.number}`)
           .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -252,7 +252,7 @@ export struct PrDetailView {
             Column({ space: 8 }) {
               Text(this.detail.title)
                 .fontSize(20)
-                .fontWeight(FontWeight.Bold)
+                .fontWeight(600)
                 .fontColor($r('app.color.text_primary'))
                 .width('100%')
                 .lineHeight(28)

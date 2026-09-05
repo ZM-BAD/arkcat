@@ -234,7 +234,7 @@ export struct DiscussionsView {
             Text(item.category)
               .fontSize($r('app.float.caption_font_size'))
               .fontColor($r('app.color.shortcut_purple_fg'))
-              .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+              .padding({ left: 8, right: 8, top: 4, bottom: 4 })
               .borderRadius(12)
               .backgroundColor($r('app.color.discussion_badge_bg'))
           }
@@ -245,7 +245,7 @@ export struct DiscussionsView {
                 .fontSize($r('app.float.caption_font_size'))
                 .fontColor($r('app.color.text_secondary'))
             }
-            .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+            .padding({ left: 8, right: 8, top: 4, bottom: 4 })
             .borderRadius(12)
             .backgroundColor($r('app.color.chip_bg'))
           }
@@ -295,7 +295,7 @@ export struct DiscussionsView {
         } else {
           Text($r('app.string.nav_discussions_title'))
             .fontSize($r('app.float.title_font_size'))
-            .fontWeight(FontWeight.Bold)
+            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
             .layoutWeight(1)
         }
@@ -378,7 +378,7 @@ export struct DiscussionsView {
                 .backgroundColor($r('app.color.link_blue'))
               }
               .height(38)
-              .padding({ left: 10, right: 12 })
+              .padding({ left: 8, right: 12 })
               .borderRadius(19)
               .backgroundColor($r('app.color.chip_bg'))
               .border({ width: 1, color: $r('app.color.border') })
