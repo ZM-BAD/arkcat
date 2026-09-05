@@ -70,7 +70,7 @@ export struct RepoSearchRow {
               Circle()
                 .width(9)
                 .height(9)
-                .fill(this.item.languageColor !== '' ? this.item.languageColor : $r('app.color.repo_language_blue'))
+                .fill(this.item.languageColor !== '' ? this.item.languageColor : $r('app.color.repo_language_unknown'))
               Text(this.item.language)
                 .fontSize(13)
                 .fontColor($r('app.color.text_secondary'))

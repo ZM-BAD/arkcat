@@ -129,10 +129,13 @@ export struct WorkPrsView {
     ];
   }
 
-  /** PR 状态图标（Spec 024：merged 紫 / open 绿 / closed 灰） */
+  /** PR 状态图标（Spec 024：merged 紫 / open 绿 / closed 灰 / draft 灰 draft 字形，review B9） */
   private prIcon(item: WorkPrItem): Resource {
     if (item.iconKey === 'merged') {
       return $r('app.media.oct_git_merge_16');
+    }
+    if (item.iconKey === 'draft') {
+      return $r('app.media.oct_git_pull_request_draft_16');
     }
     return item.iconKey === 'open' ? $r('app.media.oct_git_pull_request_16') : $r('app.media.oct_x_circle_16');
   }

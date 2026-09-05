@@ -121,19 +121,24 @@ export struct RepoPrsView {
   }
 
   private prIcon(item: RepoPrItem): Resource {
-    const key = repoPrIconKey(item.state, item.merged);
+    const key = repoPrIconKey(item.state, item.merged, item.isDraft);
     if (key === 'merged') {
       return $r('app.media.oct_git_merge_16');
+    }
+    if (key === 'draft') {
+      return $r('app.media.oct_git_pull_request_draft_16');
     }
     return key === 'open' ? $r('app.media.oct_git_pull_request_16') : $r('app.media.oct_x_circle_16');
   }
 
   private prColor(item: RepoPrItem): ResourceColor {
-    const key = repoPrIconKey(item.state, item.merged);
+    const key = repoPrIconKey(item.state, item.merged, item.isDraft);
     if (key === 'merged') {
       return $r('app.color.shortcut_purple_fg');
     }
-    return key === 'open' ? $r('app.color.success_text') : $r('app.color.text_tertiary');
+    // draft 官方为灰色调（review B9）
+    return key === 'open' ? $r('app.color.success_text')
+      : (key === 'draft' ? $r('app.color.text_secondary') : $r('app.color.text_tertiary'));
   }
 
   private stateFilterOptions(): FilterDropdownOption[] {

@@ -165,6 +165,10 @@ export class RepoService {
     let restNodes: JsonMap[] = [];
     try {
       const resp = await restGet(path, token);
+      // GitHub 对空仓库返回 204/空 body：视为无贡献者空态而非解析错误（review C6）
+      if (resp.code === 204 || resp.body === '') {
+        return { users: [], hasNextPage: false, endCursor: '' };
+      }
       const parsed: Object | null = JSON.parse(resp.body);
       if (Array.isArray(parsed)) {
         for (const node of parsed as Object[]) {

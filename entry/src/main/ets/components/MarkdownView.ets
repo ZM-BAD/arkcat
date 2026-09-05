@@ -58,14 +58,38 @@ export struct MarkdownView {
   private controller: webview.WebviewController = new webview.WebviewController();
   private bridge: MarkdownBridge = new MarkdownBridge();
   private attached: boolean = false;
+  /** 系统深浅色监听（review F7：dark 此前仅 appear 时解析一次，栈内切主题后正文滞留） */
+  private darkListener: mediaquery.MediaQueryListener | null = null;
+  private readonly onDarkMediaChange = (): void => {
+    // 重新解析（pref 固定 dark/light 不受影响；system 档跟随系统翻转）→ @Monitor('dark') 重载
+    this.resolveDark();
+  };
 
   aboutToAppear(): void {
     const ui = this.getUIContext();
     this.resolveDark();
+    this.listenDarkChange();
     copyToastLabel = resText(ui, $r('app.string.md_copied'));
     this.resetCollapse();
     if (this.html === '') {
       this.loading = false;
+    }
+  }
+
+  aboutToDisappear(): void {
+    if (this.darkListener !== null) {
+      this.darkListener.off('change', this.onDarkMediaChange);
+      this.darkListener = null;
+    }
+  }
+
+  /** 注册系统深浅色匹配监听（失败静默：保持静态主题） */
+  private listenDarkChange(): void {
+    try {
+      this.darkListener = mediaquery.matchMediaSync('(dark-mode: true)');
+      this.darkListener.on('change', this.onDarkMediaChange);
+    } catch (e) {
+      this.darkListener = null;
     }
   }
 

@@ -17,8 +17,24 @@ export interface PrFileItem {
   hunks: DiffHunk[];
   /** REST 未返回 patch（大 diff）时置 true */
   diffTooLarge: boolean;
+  /** 二进制文件（REST 不返回 patch 但非大 diff，review H4） */
+  isBinary: boolean;
   /** 页面展开态（父数组重建刷新） */
   expanded: boolean;
+}
+
+/** 官方「Binary file not shown」判定：常见二进制扩展名（REST 无 is_binary 字段，按扩展名近似） */
+const BINARY_EXTS: string[] = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'ico', 'bmp', 'tiff', 'pdf', 'zip', 'gz',
+  'tar', 'rar', '7z', 'dmg', 'exe', 'dll', 'so', 'dylib', 'bin', 'jar', 'class', 'woff', 'woff2', 'ttf', 'eot',
+  'otf', 'mp3', 'mp4', 'mov', 'avi', 'mkv', 'wav', 'flac', 'psd', 'ai', 'sketch', 'db', 'sqlite'];
+
+export function isBinaryPath(path: string): boolean {
+  const name = path.toLowerCase();
+  const dot = name.lastIndexOf('.');
+  if (dot < 0) {
+    return false;
+  }
+  return BINARY_EXTS.includes(name.substring(dot + 1));
 }
 
 export interface PrFilesPage {
@@ -34,7 +50,7 @@ export interface PrFilesPage {
 
 function mapFileNode(node: JsonMap): PrFileItem {
   if (node === null || node === undefined) {
-    return { path: '', additions: 0, deletions: 0, status: '', patch: '', hunks: [], diffTooLarge: false, expanded: false };
+    return { path: '', additions: 0, deletions: 0, status: '', patch: '', hunks: [], diffTooLarge: false, isBinary: false, expanded: false };
   }
   return {
     path: Json.str(node, 'path'),
@@ -44,6 +60,7 @@ function mapFileNode(node: JsonMap): PrFileItem {
     patch: '',
     hunks: [],
     diffTooLarge: false,
+    isBinary: isBinaryPath(Json.str(node, 'path')),
     expanded: false
   };
 }
@@ -68,6 +85,7 @@ export function mapPrFiles(data: JsonMap): PrFilesPage {
 
 /** REST item（含 patch）→ PrFileItem（patch 仅当存在且非空） */
 export function applyRestPatch(item: PrFileItem, rest: JsonMap): PrFileItem {  const patch = Json.str(rest, 'patch');
+  const binary = isBinaryPath(item.path);
   let hunks: DiffHunk[] = [];
   let tooLarge = false;
   if (patch !== '') {
@@ -75,7 +93,8 @@ export function applyRestPatch(item: PrFileItem, rest: JsonMap): PrFileItem {  c
     if (hunks.length === 0) {
       tooLarge = true;
     }
-  } else {
+  } else if (!binary) {
+    // 二进制文件本就无 patch，不算大 diff（review H4）
     tooLarge = true;
   }
   return {
@@ -86,6 +105,7 @@ export function applyRestPatch(item: PrFileItem, rest: JsonMap): PrFileItem {  c
     patch: patch,
     hunks: hunks,
     diffTooLarge: tooLarge,
+    isBinary: binary,
     expanded: false
   };
 }

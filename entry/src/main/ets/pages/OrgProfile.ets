@@ -201,13 +201,16 @@ export struct OrgProfileView {
           .margin({ top: 14 })
         }
 
-        // Pinned 横滑卡片
-        Text(`📌 ${this.stringOf($r('app.string.home_pinned_section'))}`)
-          .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.text_primary'))
-          .width('100%')
-          .margin({ top: 14 })
+        // Pinned 横滑卡片（与 Profile 同区对齐：oct_pin_16 图标，review D13 弃 emoji）
+        Row({ space: 6 }) {
+          OctIcon({ res: $r('app.media.oct_pin_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
+          Text(this.stringOf($r('app.string.home_pinned_section')))
+            .fontSize($r('app.float.title_font_size'))
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.text_primary'))
+        }
+        .width('100%')
+        .margin({ top: 14 })
         Scroll() {
           Row({ space: 8 }) {
             ForEach(org.pinned, (repo: RepoSummary) => {

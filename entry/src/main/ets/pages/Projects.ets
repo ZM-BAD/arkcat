@@ -314,6 +314,13 @@ export struct ProjectsView {
 .height(44)
         .accessibilityDescription($r('app.string.a11y_more'))
         .focusable(true)
+        // 补菜单（review E6：此前死按钮无任何响应），与 Discussions 对齐
+        .bindMenu([
+          {
+            value: $r('app.string.inbox_menu_refresh'),
+            action: (): void => this.refresh()
+          }
+        ])
           .padding(6)
       }
       .width('100%')

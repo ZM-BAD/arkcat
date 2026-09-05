@@ -26,12 +26,10 @@ export struct StarredRepositoriesView {
   @Local repos: WorkStarredRepoItem[] = [];
   @Local viewerLogin: string = '';
   @Local listSheetOpen: boolean = false;
-  /** 建议列表单选（Future ideas / My stack / Inspiration；-1=未选） */
-  @Local suggestionSel: number = -1;
+  @Local searchQuery: string = '';
   @Local cursor: string = '';
   @Local hasNextPage: boolean = false;
   @Local inSearch: boolean = false;
-  @Local searchQuery: string = '';
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
@@ -39,6 +37,8 @@ export struct StarredRepositoriesView {
 
   @Monitor('listsTick')
   onListTickChanged(): void {
+    // 回页同时刷新仓库列表（review D10：详情取消星标后返回仍显示旧数据）
+    this.refresh();
     this.fetchLists();
   }
 
@@ -184,6 +184,8 @@ export struct StarredRepositoriesView {
 
   @Builder
   listSheet() {
+    // 内容包 Scroll：列表行数多时 300 高 sheet 内可滚（review D7）
+    Scroll() {
     Column() {
       if (this.lists.length > 0) {
         // 已建列表：行 = 名称 + 成员圆钮（点击整行切换），官方样式
@@ -238,20 +240,18 @@ export struct StarredRepositoriesView {
               Circle()
                 .width(22)
                 .height(22)
-                .fill(this.suggestionSel === index ? $r('app.color.link_blue') : Color.Transparent)
+                .fill(Color.Transparent)
                 // Shape 外轮廓须用 stroke：通用 .border() 在 Shape 上按组件矩形外框绘制
-                .stroke(this.suggestionSel === index ? $r('app.color.link_blue') : $r('app.color.border'))
+                .stroke($r('app.color.border'))
                 .strokeWidth(1.5)
-              if (this.suggestionSel === index) {
-                OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 12, iconColor: Color.White })
-              }
             }
           }
           .width('100%')
           .height(52)
           .padding({ left: 20, right: 20 })
           .onClick((): void => {
-            this.suggestionSel = this.suggestionSel === index ? -1 : index;
+            // 官方语义：点建议直接创建同名列表（review D8：勾选态此前无消费）
+            this.createListFromSuggestion(index);
           })
         }, (item: Resource, index: number) => `s_${index}`)
       }
@@ -272,6 +272,22 @@ export struct StarredRepositoriesView {
       })
     }
     .width('100%')
+    }
+    .align(Alignment.Top)
+    .scrollBar(BarState.Off)
+    .width('100%')
+  }
+
+  /** 官方语义：点 Suggestions 直接创建同名列表，成功后刷新（review D8） */
+  private createListFromSuggestion(index: number): void {
+    const name = this.stringOf(StarredRepositoriesView.LIST_SUGGESTIONS[index]);
+    WorkService.createList(this.token, name, '')
+      .then((): void => {
+        this.fetchLists();
+      })
+      .catch((e: Error) => {
+        promptAction.showToast({ message: e.message });
+      });
   }
 
   /** 建议行 emoji（官方三件套） */
@@ -571,6 +587,16 @@ export struct StarredRepositoriesView {
               loading: this.loading,
               error: this.errorMsg,
               onRetry: () => this.refresh()
+            })
+          } else {
+            // 空态补齐（review D9）：零星标与搜索无匹配区分文案
+            StateView({
+              loading: false,
+              error: '',
+              empty: true,
+              emptyText: this.searchQuery.trim() === ''
+                ? $r('app.string.starred_empty')
+                : $r('app.string.search_no_results')
             })
           }
         }

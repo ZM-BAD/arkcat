@@ -625,6 +625,10 @@
       "value": "建议"
     },
     {
+      "name": "starred_empty",
+      "value": "暂无星标仓库。"
+    },
+    {
       "name": "starred_suggestion_future_ideas",
       "value": "未来想法"
     },
@@ -1191,6 +1195,10 @@
     {
       "name": "pr_diff_too_large",
       "value": "差异过大，无法预览"
+    },
+    {
+      "name": "diff_binary",
+      "value": "二进制文件未显示"
     },
     {
       "name": "pr_files_empty",

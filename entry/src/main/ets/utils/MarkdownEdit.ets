@@ -38,6 +38,8 @@ export class MarkdownEdit {
       const result = text.substring(0, selStart) + prefix + text.substring(selEnd);
       return { text: result, selStart: selStart + prefix.length, selEnd: selStart + prefix.length };
     }
+    // 选区起点对齐到所在行行首（review H6：行中选中时前缀会插进行中间破坏块语法）
+    selStart = text.lastIndexOf('\n', selStart - 1) + 1;
     const lines = text.substring(selStart, selEnd).split('\n');
     const prefixed = lines.map((l: string) => prefix + l).join('\n');
     const result = text.substring(0, selStart) + prefixed + text.substring(selEnd);

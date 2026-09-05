@@ -196,7 +196,7 @@ export struct RepositoriesListView {
           Circle()
             .width(10)
             .height(10)
-            .fill(repo.languageColor !== '' ? repo.languageColor : $r('app.color.repo_language_blue'))
+            .fill(repo.languageColor !== '' ? repo.languageColor : $r('app.color.repo_language_unknown'))
             .margin({ left: 8 })
           Text(repo.primaryLanguage)
             .fontSize($r('app.float.caption_font_size'))

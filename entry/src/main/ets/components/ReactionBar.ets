@@ -83,13 +83,10 @@ export struct ReactionBar {
     this.sheetOpen = true;
   }
 
-  /** 「+」面板选择：未反应的 reaction 直接添加 */
+  /** 「+」面板选择：直接 toggle（已反应则移除，与官方语义一致；review F4 此前对他人已建组无响应） */
   private pick(content: string): void {
-    const group = findReactionGroup(this.mirror, content);
-    if (group === null) {
-      this.sheetOpen = false;
-      this.toggle(content);
-    }
+    this.sheetOpen = false;
+    this.toggle(content);
   }
 
   /** 当前打开用户列表的反应组（@Builder 内不允许局部 const，用方法返回） */
@@ -151,7 +148,7 @@ export struct ReactionBar {
                 .height(44)
                 .textAlign(TextAlign.Center)
                 .borderRadius(8)
-                .backgroundColor(findReactionGroup(this.mirror, m.content) !== null
+                .backgroundColor(findReactionGroup(this.mirror, m.content)?.viewerHasReacted === true
                   ? $r('app.color.chip_bg') : Color.Transparent)
                 .onClick(() => this.pick(m.content))
             }, (m: ReactionMeta) => m.content)

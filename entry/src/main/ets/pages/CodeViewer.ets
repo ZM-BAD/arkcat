@@ -18,6 +18,8 @@ import { resText } from '../utils/I18n';
 
 const PREFS_NAME = 'starraft_settings';
 const FONT_DEFAULT = 16;
+/** 渐进渲染窗口行数（review C9：首屏与每次扩窗各渲染 800 行） */
+const RENDER_WINDOW = 800;
 
 @ComponentV2
 export struct CodeViewerView {
@@ -31,6 +33,8 @@ export struct CodeViewerView {
   @Param codeOptionsTick: number = 0;
   @Local content: string = '';
   @Local lines: CodeLine[] = [];
+  /** 当前渲染窗口（review C9：滚到底部增量扩窗） */
+  @Local renderedCount: number = RENDER_WINDOW;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
   @Local isBinary: boolean = false;
@@ -116,6 +120,8 @@ export struct CodeViewerView {
       inBlock = r.inBlockComment;
     }
     this.lines = out;
+    // 渲染窗口复位（review C9）
+    this.renderedCount = Math.min(RENDER_WINDOW, out.length);
     this.codeBg = this.darkTheme ? CODE_DARK_BG : CODE_LIGHT_BG;
     this.codeText = codeTextColorOf(this.darkTheme);
   }
@@ -266,7 +272,7 @@ export struct CodeViewerView {
       } else {
         Scroll() {
           Column() {
-            ForEach(this.lines, (line: CodeLine, index: number) => {
+            ForEach(this.lines.slice(0, this.renderedCount), (line: CodeLine, index: number) => {
               this.codeLine(index, line)
             }, (line: CodeLine, index: number) => index + '_' + line.spans.length)
             Row()
@@ -280,6 +286,12 @@ export struct CodeViewerView {
         .width('100%')
         .backgroundColor(this.codeBg)
         .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
+        // 渐进渲染：滚到底部再扩一窗，防大文件一次性全量建组件树（review C9）
+        .onReachEnd((): void => {
+          if (this.renderedCount < this.lines.length) {
+            this.renderedCount = Math.min(this.renderedCount + RENDER_WINDOW, this.lines.length);
+          }
+        })
       }
     }
     .width('100%')

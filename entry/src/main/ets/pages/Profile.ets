@@ -15,12 +15,20 @@ import { PageShadowBar } from '../components/PageShadowBar';
 import { RepoSummary } from '../models/GitHubModels';
 import { resText } from '../utils/I18n';
 
+/** ··· 菜单项（模块级 interface 供 @Local 类型化数组使用） */
+interface FollowMenuEntry {
+  value: ResourceStr;
+  action: () => void;
+}
+
 @ComponentV2
 export struct ProfileView {
   @Param login: string = '';
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
   @Local profile: UserProfile | null = null;
+  /** ··· 菜单项：bindMenu 数组不随状态刷新（V2 坑），viewerIsFollowing 变化后显式重建（review D6） */
+  @Local followMenuItems: FollowMenuEntry[] = [];
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
@@ -41,6 +49,7 @@ export struct ProfileView {
     ProfileService.fetchProfile(this.token, this.login)
       .then((profile: UserProfile) => {
         this.profile = profile;
+        this.rebuildFollowMenu();
         this.loading = false;
       })
       .catch((e: Error) => {
@@ -55,6 +64,21 @@ export struct ProfileView {
       .catch(() => {
         this.achievements = [];
       });
+  }
+
+  /** 依 viewerIsFollowing 重建 ··· 菜单（review D6） */
+  private rebuildFollowMenu(): void {
+    const p = this.profile;
+    if (p === null) {
+      this.followMenuItems = [];
+      return;
+    }
+    const items: FollowMenuEntry[] = [];
+    items.push({
+      value: p.viewerIsFollowing ? $r('app.string.profile_unfollow') : $r('app.string.profile_follow'),
+      action: (): void => this.toggleFollow()
+    });
+    this.followMenuItems = items;
   }
 
   private toggleFollow(): void {
@@ -84,6 +108,7 @@ export struct ProfileView {
           starredCount: profile.starredCount
         };
         this.profile = updated;
+        this.rebuildFollowMenu();
         const ui = this.getUIContext();
         promptAction.showToast({
           message: following
@@ -384,13 +409,7 @@ export struct ProfileView {
           .width(44)
           .height(44)
           .padding(6)
-          .bindMenu([
-            {
-              value: this.profile.viewerIsFollowing
-                ? $r('app.string.profile_unfollow') : $r('app.string.profile_follow'),
-              action: (): void => this.toggleFollow()
-            }
-          ])
+          .bindMenu(this.followMenuItems)
         }
       }
       .width('100%')

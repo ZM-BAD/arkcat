@@ -109,13 +109,13 @@ export struct CodeSearchCard {
       Row() {
         Column() {
           if (this.file !== null) {
-            ForEach(this.file.snippet.window, (line: CodeLine) => {
+            ForEach(this.file.snippet.window, (line: CodeLine, idx: number) => {
               this.codeLine(line)
-            }, (line: CodeLine) => `${line.no}-${line.text}`)
+            }, (line: CodeLine, idx: number) => `${idx}-${line.no}-${line.text}`)
             if (this.expanded) {
-              ForEach(this.file.snippet.more, (line: CodeLine) => {
+              ForEach(this.file.snippet.more, (line: CodeLine, idx: number) => {
                 this.codeLine(line)
-              }, (line: CodeLine) => `${line.no}-${line.text}`)
+              }, (line: CodeLine, idx: number) => `${idx}-${line.no}-${line.text}`)
             }
           }
         }

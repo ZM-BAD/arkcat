@@ -449,9 +449,13 @@ export struct DiscussionsView {
               onRetry: () => this.refresh()
             })
           } else {
+            // 空态带 RESET ALL FILTERS（Spec 019 元素 14，review E8：此前无重置入口）
             WorkEmptyView({
               iconText: '🐱',
               title: $r('app.string.work_discussions_empty'),
+              button: (this.state !== 'open' || this.scope !== 'created' || this.unanswered)
+                ? $r('app.string.work_clear_all_filters') : null,
+              onButton: (): void => this.resetFilters()
             })
           }
         }

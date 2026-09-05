@@ -45,6 +45,10 @@
       "value": "#3178C6"
     },
     {
+      "name": "repo_language_unknown",
+      "value": "#8B949E"
+    },
+    {
       "name": "link_blue",
       "value": "#4493F8"
     },

@@ -19,7 +19,7 @@ query RepoPullRequests($owner: String!, $name: String!, $states: [PullRequestSta
       totalCount
       pageInfo { hasNextPage endCursor }
       nodes {
-        id number title state merged createdAt
+        id number title state merged isDraft createdAt
         labels(first: 8) { nodes { name color } }
         comments { totalCount }
         reviewRequests(first: 10) { totalCount }
@@ -128,7 +128,7 @@ query IssueDetail($owner: String!, $name: String!, $number: Int!, $first: Int = 
 }`;
 
 const PR_DETAIL_QUERY = `
-query PullRequestDetail($owner: String!, $name: String!, $number: Int!) {
+query PullRequestDetail($owner: String!, $name: String!, $number: Int!, $after: String) {
   repository(owner: $owner, name: $name) {
     pullRequest(number: $number) {
       id title state merged isDraft body bodyHTML createdAt mergedAt
@@ -150,8 +150,9 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!) {
           }
         }
       }
-      comments(first: 15) {
+      comments(first: 20, after: $after) {
         totalCount
+        pageInfo { hasNextPage endCursor }
         nodes {
           id body bodyHTML createdAt
           author { login avatarUrl }
@@ -327,8 +328,12 @@ export class RepoSubService {
     return mapIssueDetail(data);
   }
 
-  static async fetchPrDetail(token: string, owner: string, name: string, number: number): Promise<PrDetailPage> {
+  static async fetchPrDetail(token: string, owner: string, name: string, number: number,
+    cursor: string): Promise<PrDetailPage> {
     const variables: Record<string, Object> = { 'owner': owner, 'name': name, 'number': number };
+    if (cursor !== '') {
+      variables['after'] = cursor;
+    }
     const data = await graphql(PR_DETAIL_QUERY, variables, token);
     return mapPrDetail(data);
   }

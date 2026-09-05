@@ -85,7 +85,7 @@ export struct RepoCard {
           Circle()
             .width(10)
             .height(10)
-            .fill(this.repo.languageColor !== '' ? this.repo.languageColor : $r('app.color.repo_language_blue'))
+            .fill(this.repo.languageColor !== '' ? this.repo.languageColor : $r('app.color.repo_language_unknown'))
           Text(this.repo.primaryLanguage)
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))

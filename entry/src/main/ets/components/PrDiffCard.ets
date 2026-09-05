@@ -240,8 +240,9 @@ export struct PrDiffCard {
 
         if (this.expanded) {
           if (this.item.hunks.length === 0) {
-            Text(this.item.diffTooLarge ? this.stringOf($r('app.string.pr_diff_too_large'))
-              : this.stringOf($r('app.string.pr_files_empty')))
+            Text(this.item.isBinary ? this.stringOf($r('app.string.diff_binary'))
+              : (this.item.diffTooLarge ? this.stringOf($r('app.string.pr_diff_too_large'))
+                : this.stringOf($r('app.string.pr_files_empty'))))
               .fontSize($r('app.float.caption_font_size'))
               .fontColor($r('app.color.text_secondary'))
               .width('100%')

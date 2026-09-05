@@ -143,6 +143,10 @@ export struct CommitDetailView {
       if (this.detail !== null && this.detail.checksState === 'FAILURE') {
         OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 14, iconColor: $r('app.color.danger_text') })
       }
+      // ERROR 态与列表页对齐（review C12：详情页此前漏显）
+      if (this.detail !== null && this.detail.checksState === 'ERROR') {
+        OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 14, iconColor: $r('app.color.danger_text') })
+      }
       if (this.detail !== null && this.detail.checksState === 'PENDING') {
         OctIcon({ res: $r('app.media.oct_dot_fill_16'), iconSize: 14, iconColor: $r('app.color.warning_text') })
       }

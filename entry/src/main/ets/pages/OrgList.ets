@@ -153,7 +153,6 @@ export struct OrgListView {
                 .onClick(() => this.loadMore())
             }
           }
-          .padding({ left: 16, right: 16 })
           .width('100%')
         }
         .layoutWeight(1)

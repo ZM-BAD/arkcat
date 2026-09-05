@@ -155,8 +155,8 @@ export class ProfileListService {
         };
       }
     } catch (e) {
-      // 组织不可得时保持空骨架，由页面 StateView 展示错误
-      return org;
+      // 主数据失败直接抛错，由页面 StateView 呈现错误+重试（review D12：空骨架会让错误态不可达）
+      throw e instanceof Error ? e : new Error(`Failed to fetch org profile: ${e}`);
     }
     org.pinned = await ProfileListService.fetchOrgPinned(token, login);
     org.readmeText = await ProfileListService.fetchOrgReadme(token, login);

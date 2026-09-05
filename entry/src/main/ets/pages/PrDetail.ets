@@ -32,6 +32,10 @@ export struct PrDetailView {
   @Local draft: string = '';
   @Local editingId: string = '';
   @Local editingInitial: string = '';
+  /** 评论分页（review B7：>20 条 Load more） */
+  @Local commentsCursor: string = '';
+  @Local commentsHasNext: boolean = false;
+  @Local loadingMore: boolean = false;
 
   aboutToAppear(): void {
     this.refresh();
@@ -40,14 +44,40 @@ export struct PrDetailView {
   private refresh(): void {
     this.loading = true;
     this.errorMsg = '';
-    RepoSubService.fetchPrDetail(this.token, this.owner, this.name, this.number)
+    RepoSubService.fetchPrDetail(this.token, this.owner, this.name, this.number, '')
       .then((page: PrDetailPage) => {
         this.detail = page;
+        this.commentsHasNext = page.commentsHasNext;
+        this.commentsCursor = page.commentsCursor;
         this.loading = false;
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
+      });
+  }
+
+  /** 追加下一批评论（review B7：只拼接不整页替换） */
+  private loadMoreComments(): void {
+    if (!this.commentsHasNext || this.loadingMore || this.detail === null) {
+      return;
+    }
+    this.loadingMore = true;
+    RepoSubService.fetchPrDetail(this.token, this.owner, this.name, this.number, this.commentsCursor)
+      .then((page: PrDetailPage) => {
+        const prev = this.detail;
+        if (prev !== null) {
+          // 合并进新页对象后整体重赋值，触发 UI 刷新（同 B4 模式）
+          page.comments = prev.comments.concat(page.comments);
+          this.detail = page;
+        }
+        this.commentsHasNext = page.commentsHasNext;
+        this.commentsCursor = page.commentsCursor;
+        this.loadingMore = false;
+      })
+      .catch((e: Error) => {
+        this.loadingMore = false;
+        promptAction.showToast({ message: e.message });
       });
   }
 
@@ -457,7 +487,16 @@ export struct PrDetailView {
                   onDelete: (comment: RepoComment) => this.confirmDeleteComment(comment),
                   onReactionChanged: (): void => this.refresh()
                 })
-              }, (item: RepoComment) => item.id)
+              }, (item: RepoComment) => `${item.id}-${item.body.length}`)
+              if (this.commentsHasNext) {
+                Text($r('app.string.issues_load_more'))
+                  .fontSize($r('app.float.body_font_size'))
+                  .fontColor($r('app.color.link_blue'))
+                  .width('100%')
+                  .textAlign(TextAlign.Center)
+                  .padding(12)
+                  .onClick(() => this.loadMoreComments())
+              }
               if (this.detail.merged) {
                 Button($r('app.string.pr_delete_branch'))
                   .buttonStyle(ButtonStyleMode.NORMAL)

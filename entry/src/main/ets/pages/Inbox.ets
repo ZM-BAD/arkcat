@@ -170,21 +170,26 @@ export struct InboxView {
     }
     NotificationsService.markThreadRead(this.token, item.threadId)
       .then(() => {
-        this.items = this.items.map((it: NotificationItem) => {
-          const copy: NotificationItem = {
-            threadId: it.threadId,
-            repoFullName: it.repoFullName,
-            title: it.title,
-            subjectType: it.subjectType,
-            reason: it.reason,
-            unread: it.threadId === item.threadId ? false : it.unread,
-            updatedAt: it.updatedAt,
-            subjectUrl: it.subjectUrl,
-            ownerAvatarUrl: it.ownerAvatarUrl,
-            prMerged: it.prMerged
-          };
-          return copy;
-        });
+        // items 与 rawItems 同步标记，防止切筛选后已读态复活（review A5）
+        const mark = (list: NotificationItem[]): NotificationItem[] => {
+          return list.map((it: NotificationItem) => {
+            const copy: NotificationItem = {
+              threadId: it.threadId,
+              repoFullName: it.repoFullName,
+              title: it.title,
+              subjectType: it.subjectType,
+              reason: it.reason,
+              unread: it.threadId === item.threadId ? false : it.unread,
+              updatedAt: it.updatedAt,
+              subjectUrl: it.subjectUrl,
+              ownerAvatarUrl: it.ownerAvatarUrl,
+              prMerged: it.prMerged
+            };
+            return copy;
+          });
+        };
+        this.rawItems = mark(this.rawItems);
+        this.items = mark(this.items);
         promptAction.showToast({ message: $r('app.string.inbox_marked_read') });
         // 通知 Index 重算未读蓝点（review A4）
         AppStorage.setOrCreate('inboxUnreadTick', Date.now());

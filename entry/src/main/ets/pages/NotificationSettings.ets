@@ -54,6 +54,8 @@ export struct NotificationSettingsView {
         this.loaded = true;
       })
       .catch(() => {
+        // 读取失败按默认值渲染，避免正文永久空白（review E7）
+        this.loaded = true;
       });
   }
 

@@ -13,6 +13,7 @@ export interface RepoPrItem {
   title: string;
   state: string;
   merged: boolean;
+  isDraft: boolean;
   createdAt: string;
   labels: WorkLabel[];
   commentCount: number;
@@ -151,6 +152,9 @@ export interface PrDetailPage {
   checksState: string;
   checks: StatusCheckItem[];
   comments: RepoComment[];
+  /** 评论分页（review B7：与 IssueDetail 对齐，>20 条可 Load more） */
+  commentsHasNext: boolean;
+  commentsCursor: string;
 }
 
 // ─────────────── 纯函数：客户端过滤 ───────────────
@@ -178,9 +182,12 @@ export function filterPrsByAssignee(prs: RepoPrItem[], assignee: string): RepoPr
 }
 
 /** PR 状态图（复用 018 规范）：merged/open/closed */
-export function repoPrIconKey(state: string, merged: boolean): string {
+export function repoPrIconKey(state: string, merged: boolean, isDraft: boolean): string {
   if (merged || state === 'MERGED') {
     return 'merged';
+  }
+  if (state === 'OPEN' && isDraft) {
+    return 'draft';
   }
   return state === 'OPEN' ? 'open' : 'closed';
 }
@@ -289,6 +296,7 @@ export function mapRepoPr(raw: JsonMap): RepoPrItem {
     title: Json.str(raw, 'title'),
     state: state,
     merged: merged,
+    isDraft: Json.bool(raw, 'isDraft'),
     createdAt: Json.str(raw, 'createdAt'),
     labels: labels,
     commentCount: comments !== null ? Json.num(comments, 'totalCount') : 0,
@@ -533,7 +541,9 @@ export function mapPrDetail(data: JsonMap): PrDetailPage {
     reviewsTotal: reviews !== null ? Json.num(reviews, 'totalCount') : 0,
     checksState: checks !== null ? Json.str(checks, 'state') : '',
     checks: mapStatusChecks(checks),
-    comments: comments
+    comments: comments,
+    commentsHasNext: Json.bool(commentsWrap, 'hasNextPage'),
+    commentsCursor: Json.str(Json.obj(commentsWrap, 'pageInfo') ?? ({} as JsonMap), 'endCursor')
   };
 }
 

@@ -43,6 +43,11 @@ export struct CommentComposer {
   @Monitor('initial')
   onInitialChanged(): void {
     this.text = this.initial;
+    // 重开时重置预览/错误态，防残留上一次会话内容（review F5）
+    this.mode = 'write';
+    this.previewHtml = '';
+    this.previewLoading = false;
+    this.errorMsg = '';
   }
 
   private stringOf(res: Resource): string {

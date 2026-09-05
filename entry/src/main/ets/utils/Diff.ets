@@ -52,7 +52,8 @@ export function parseDiffPatch(patch: string): DiffHunk[] {
   let current: DiffHunk | null = null;
   let oldLine = 0;
   let newLine = 0;
-  for (const raw of rawLines) {
+  for (let i = 0; i < rawLines.length; i++) {
+    const raw = rawLines[i];
     const line = raw.endsWith('\r') ? raw.substring(0, raw.length - 1) : raw;
     if (line.startsWith('@@')) {
       current = parseHunkHeader(line);
@@ -72,6 +73,13 @@ export function parseDiffPatch(patch: string): DiffHunk[] {
       continue;
     }
     if (line === '') {
+      // 仅 split 产生的末尾空元素跳过；hunk 内空上下文行按上下文处理防行号错位（review H3）
+      if (i === rawLines.length - 1) {
+        continue;
+      }
+      oldLine += 1;
+      newLine += 1;
+      current.lines.push({ kind: 'ctx', text: '', oldLine: oldLine, newLine: newLine });
       continue;
     }
     if (line.startsWith('\\')) {

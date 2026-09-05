@@ -625,6 +625,10 @@
       "value": "Suggestions"
     },
     {
+      "name": "starred_empty",
+      "value": "No starred repositories yet."
+    },
+    {
       "name": "starred_suggestion_future_ideas",
       "value": "Future ideas"
     },
@@ -1223,6 +1227,10 @@
     {
       "name": "pr_diff_too_large",
       "value": "Diff too large"
+    },
+    {
+      "name": "diff_binary",
+      "value": "Binary file not shown"
     },
     {
       "name": "pr_files_empty",

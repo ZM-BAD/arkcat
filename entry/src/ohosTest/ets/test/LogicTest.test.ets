@@ -1392,7 +1392,7 @@ export default function logicTest(testsuiteName: string) {
     });
 
     it('applyRestPatch_withAndWithoutPatch', 0, () => {
-      const item: PrFileItem = { path: 'README.md', additions: 3, deletions: 1, status: 'modified', patch: '', hunks: [], diffTooLarge: false, expanded: false };
+      const item: PrFileItem = { path: 'README.md', additions: 3, deletions: 1, status: 'modified', patch: '', hunks: [], diffTooLarge: false, isBinary: false, expanded: false };
       const patchRest: JsonMap = { 'patch': '@@ -1,2 +1,2 @@\n a\n+b\n' };
       const withPatch = applyRestPatch(item, patchRest);
       expect(withPatch.hunks.length).assertEqual(1);

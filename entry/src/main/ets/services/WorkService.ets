@@ -94,7 +94,7 @@ query WorkPullRequests($query: String!, $first: Int = 25, $after: String) {
     pageInfo { hasNextPage endCursor }
     nodes {
       ... on PullRequest {
-        id number title state merged createdAt
+        id number title state merged isDraft createdAt
         repository { nameWithOwner }
         comments { totalCount }
         reviewRequests(first: 10) { totalCount }

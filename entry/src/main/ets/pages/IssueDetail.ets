@@ -105,15 +105,12 @@ export struct IssueDetailView {
     return resText(this.getUIContext(), res);
   }
 
-  /** COMMENT 按钮（打开输入面板；已关闭 Issue 官方限制评论） */
+  /** COMMENT 按钮（打开输入面板；锁定/关闭由服务端校验兜底，与官方一致） */
   private openComposer(): void {
     if (this.detail === null) {
       return;
     }
-    if (this.detail.state !== 'OPEN') {
-      promptAction.showToast({ message: $r('app.string.issue_closed_comment_disabled') });
-      return;
-    }
+    // GitHub 仅 locked 限制评论，closed 未锁定仍可评论（review B8：移除客户端拦截）
     this.editingId = '';
     this.editingInitial = '';
     this.composerOpen = true;
@@ -285,7 +282,7 @@ export struct IssueDetailView {
                 onDelete: (comment: RepoComment) => this.confirmDeleteComment(comment),
                 onReactionChanged: (): void => this.refresh()
               })
-            }, (item: RepoComment) => item.id)
+            }, (item: RepoComment) => `${item.id}-${item.body.length}`)
             if (this.hasNextPage) {
               Text($r('app.string.issues_load_more'))
                 .fontSize($r('app.float.body_font_size'))

@@ -162,7 +162,7 @@ export struct ForksView {
               Circle()
                 .width(9)
                 .height(9)
-                .fill(fork.languageColor !== '' ? fork.languageColor : $r('app.color.repo_language_blue'))
+                .fill(fork.languageColor !== '' ? fork.languageColor : $r('app.color.repo_language_unknown'))
               Text(fork.primaryLanguage)
                 .fontSize(13)
                 .fontColor($r('app.color.text_secondary'))

@@ -333,9 +333,12 @@ export function workIssueIconKey(state: string, stateReason: string): string {
 }
 
 /** PR 状态 → 图标键 */
-export function workPrIconKey(state: string, merged: boolean): string {
+export function workPrIconKey(state: string, merged: boolean, isDraft: boolean): string {
   if (merged || state === 'MERGED') {
     return 'merged';
+  }
+  if (state === 'OPEN' && isDraft) {
+    return 'draft';
   }
   if (state === 'OPEN') {
     return 'open';
@@ -394,7 +397,7 @@ export function mapWorkPr(raw: JsonMap): WorkPrItem {
     number: Json.num(raw, 'number'),
     title: Json.str(raw, 'title'),
     state: state,
-    iconKey: workPrIconKey(state, merged),
+    iconKey: workPrIconKey(state, merged, Json.bool(raw, 'isDraft')),
     createdAt: Json.str(raw, 'createdAt'),
     repoFullName: repo !== null ? Json.str(repo, 'nameWithOwner') : '',
     commentCount: comments !== null ? Json.num(comments, 'totalCount') : 0,
