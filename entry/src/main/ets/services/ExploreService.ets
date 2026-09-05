@@ -56,11 +56,11 @@ export function buildAwesomePath(): string {
 export function mapSearchRepos(body: string): RepoSummary[] {
   const repos: RepoSummary[] = [];
   const parsed: Object | null = JSON.parse(body);
-  if (parsed === null || !Array.isArray(parsed)) {
+  // search 响应根为对象 {total_count, items}；数组/空直接返回
+  if (parsed === null || Array.isArray(parsed)) {
     return repos;
   }
-  // Array.isArray 收窄后需经 Object 中转回 JsonMap（ArkTS 禁 any[] 直转）
-  const root = parsed as Object as JsonMap;
+  const root = parsed as JsonMap;
   for (const itemObj of Json.arr(root, 'items')) {
     const item = itemObj as JsonMap;
     const language = Json.str(item, 'language');

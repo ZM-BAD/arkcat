@@ -282,24 +282,20 @@ export default function logicTest(testsuiteName: string) {
     });
 
     it('mapActivityEvents_mergedOnly_dedupe', 0, () => {
+      // 嵌套结构经 JSON.parse 构造（ohosTest 禁无类型嵌套字面量）
       const prEvent = (repoName: string, number: number, action: string): JsonMap => {
-        return {
-          'type': 'PullRequestEvent',
-          'id': `e_${repoName}_${number}`,
-          'created_at': '2026-09-05T18:51:20Z',
-          'actor': { 'login': 'alice', 'avatar_url': 'https://a/1' },
-          'org': { 'avatar_url': 'https://o/1' },
-          'repo': { 'name': repoName },
-          'payload': {
-            'action': action,
-            'number': number,
-            'pull_request': { 'number': number, 'head': { 'ref': 'feature/x' } }
-          }
-        };
+        const raw = `{"type":"PullRequestEvent","id":"e_${repoName}_${number}",` +
+          `"created_at":"2026-09-05T18:51:20Z",` +
+          `"actor":{"login":"alice","avatar_url":"https://a/1"},` +
+          `"org":{"avatar_url":"https://o/1"},"repo":{"name":"${repoName}"},` +
+          `"payload":{"action":"${action}","number":${number},` +
+          `"pull_request":{"number":${number},"head":{"ref":"feature/x"}}}}`;
+        return JSON.parse(raw) as JsonMap;
       };
+      const push = JSON.parse('{"type":"PushEvent"}') as JsonMap;
       const events: Object[] = [
         prEvent('a/b', 1, 'merged'),
-        { 'type': 'PushEvent' },
+        push,
         prEvent('a/b', 2, 'opened'),
         prEvent('a/b', 1, 'merged'),
         prEvent('c/d', 3, 'closed'),
@@ -318,12 +314,9 @@ export default function logicTest(testsuiteName: string) {
     it('mapActivityEvents_cap10', 0, () => {
       const events: Object[] = [];
       for (let i = 1; i <= 15; i++) {
-        events.push({
-          'type': 'PullRequestEvent',
-          'id': `e${i}`,
-          'repo': { 'name': 'a/b' },
-          'payload': { 'action': 'merged', 'number': i, 'pull_request': { 'number': i } }
-        });
+        const raw = `{"type":"PullRequestEvent","id":"e${i}","repo":{"name":"a/b"},` +
+          `"payload":{"action":"merged","number":${i},"pull_request":{"number":${i}}}}`;
+        events.push(JSON.parse(raw) as JsonMap);
       }
       expect(mapActivityEvents(events).length).assertEqual(10);
     });
@@ -350,17 +343,10 @@ export default function logicTest(testsuiteName: string) {
         eventId: 'e1', repoFullName: 'a/b', number: 7, headRef: 'feature/x',
         actorLogin: 'alice', actorAvatar: 'https://a/1', orgAvatar: '', createdAt: '2026-09-05T18:51:20Z'
       }];
-      const data: JsonMap = {
-        'r0': {
-          'pullRequest': {
-            'id': 'PR_1', 'title': 'T', 'body': '- x', 'merged': true,
-            'author': { 'login': 'bob', 'avatarUrl': 'https://b/2' },
-            'reactionGroups': [
-              { 'content': 'THUMBS_UP', 'viewerHasReacted': false, 'reactors': { 'totalCount': 3 } }
-            ]
-          }
-        }
-      };
+      const data = JSON.parse(`{"r0":{"pullRequest":{"id":"PR_1","title":"T","body":"- x","merged":true,` +
+        `"author":{"login":"bob","avatarUrl":"https://b/2"},` +
+        `"reactionGroups":[{"content":"THUMBS_UP","viewerHasReacted":false,` +
+        `"reactors":{"totalCount":3}}]}}}`) as JsonMap;
       const out = mapActivityEventsWithDetails(refs, data);
       expect(out.length).assertEqual(1);
       expect(out[0].key).assertEqual('a/b/7');
@@ -372,14 +358,8 @@ export default function logicTest(testsuiteName: string) {
       // alias 缺失（PR 已删）→ 剔除
       expect(mapActivityEventsWithDetails(refs, { } as JsonMap).length).assertEqual(0);
       // author 空 → 回退事件 actor
-      const noAuthor: JsonMap = {
-        'r0': {
-          'pullRequest': {
-            'id': 'PR_1', 'title': 'T', 'body': '', 'merged': true,
-            'author': null, 'reactionGroups': []
-          }
-        }
-      };
+      const noAuthor = JSON.parse(`{"r0":{"pullRequest":{"id":"PR_1","title":"T","body":"",` +
+        `"merged":true,"author":null,"reactionGroups":[]}}}`) as JsonMap;
       const out2 = mapActivityEventsWithDetails(refs, noAuthor);
       expect(out2.length).assertEqual(1);
       expect(out2[0].authorLogin).assertEqual('alice');
@@ -425,13 +405,9 @@ export default function logicTest(testsuiteName: string) {
     });
 
     it('mapSearchRepos_rest', 0, () => {
-      const body = JSON.stringify({
-        'items': [{
-          'id': '1', 'name': 'b', 'full_name': 'a/b', 'description': 'd',
-          'stargazers_count': 10, 'forks_count': 2, 'language': 'TypeScript',
-          'private': false, 'owner': { 'login': 'a', 'avatar_url': 'https://av' }
-        }]
-      });
+      const body = `{"items":[{"id":"1","name":"b","full_name":"a/b","description":"d",` +
+        `"stargazers_count":10,"forks_count":2,"language":"TypeScript",` +
+        `"private":false,"owner":{"login":"a","avatar_url":"https://av"}}]}`;
       const repos = mapSearchRepos(body);
       expect(repos.length).assertEqual(1);
       expect(repos[0].nameWithOwner).assertEqual('a/b');
@@ -852,10 +828,9 @@ export default function logicTest(testsuiteName: string) {
       // 别名解析：缺失节点兜底 false
       const node1: JsonMap = { 'merged': true };
       const node2: JsonMap = { 'merged': false };
-      const repo1: JsonMap = { 'issueOrPullRequest': node1 };
-      const repo2: JsonMap = { 'issueOrPullRequest': node2 };
-      const alias0: JsonMap = { 'repository': repo1 };
-      const alias1: JsonMap = { 'repository': repo2 };
+      // 04472df 后 alias 即 repository 节点，内层直接是 issueOrPullRequest（旧双重嵌套为过期测试数据）
+      const alias0: JsonMap = { 'issueOrPullRequest': node1 };
+      const alias1: JsonMap = { 'issueOrPullRequest': node2 };
       const alias2: JsonMap = {};
       const data: JsonMap = { 't0': alias0, 't1': alias1, 't2': alias2 };
       const merged = mapPullMerged(data, 3);
