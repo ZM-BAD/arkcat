@@ -6,6 +6,7 @@ import { promptAction } from '@kit.ArkUI';
 import { TopicSearchResult } from '../models/ExploreModels';
 import { RepoSummary } from '../models/GitHubModels';
 import { ExploreService, FEATURED_TOPICS } from '../services/ExploreService';
+import { friendlyError } from '../services/GitHttpClient';
 import { RepoCard } from '../components/RepoCard';
 import { StateView } from '../components/StateView';
 import { resText } from '../utils/I18n';
@@ -51,7 +52,7 @@ export struct ExploreView {
         this.loading = false;
       })
       .catch((e: Error) => {
-        this.errorMsg = e.message;
+        this.errorMsg = friendlyError(this.getUIContext(), e);
         this.loading = false;
       });
   }

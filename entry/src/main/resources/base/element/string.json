@@ -61,6 +61,30 @@
       "value": "Token cannot be empty"
     },
     {
+      "name": "error_auth",
+      "value": "Session expired or token invalid. Please check Settings."
+    },
+    {
+      "name": "error_rate_limited",
+      "value": "Too many requests. Please try again later."
+    },
+    {
+      "name": "error_network",
+      "value": "Network unavailable. Check your connection."
+    },
+    {
+      "name": "error_generic",
+      "value": "Something went wrong. Please try again."
+    },
+    {
+      "name": "token_error_invalid",
+      "value": "Token is invalid or lacks required scopes."
+    },
+    {
+      "name": "releases_whats_changed",
+      "value": "What's Changed"
+    },
+    {
       "name": "token_error_save",
       "value": "Save failed, please try again"
     },
@@ -1150,7 +1174,7 @@
     },
     {
       "name": "releases_released_this",
-      "value": "released this %1$s"
+      "value": "released %1$s"
     },
     {
       "name": "releases_view_details",

@@ -61,6 +61,30 @@
       "value": "Token 不能为空"
     },
     {
+      "name": "error_auth",
+      "value": "登录已过期或 Token 无效，请到设置检查。"
+    },
+    {
+      "name": "error_rate_limited",
+      "value": "请求过于频繁，请稍后再试。"
+    },
+    {
+      "name": "error_network",
+      "value": "网络不可用，请检查连接。"
+    },
+    {
+      "name": "error_generic",
+      "value": "加载失败，请稍后重试。"
+    },
+    {
+      "name": "token_error_invalid",
+      "value": "Token 无效或权限不足，请检查后重试。"
+    },
+    {
+      "name": "releases_whats_changed",
+      "value": "更新内容"
+    },
+    {
       "name": "token_error_save",
       "value": "保存失败，请重试"
     },
@@ -1118,7 +1142,7 @@
     },
     {
       "name": "releases_released_this",
-      "value": "于 %1$s 发布"
+      "value": "%1$s 发布"
     },
     {
       "name": "releases_view_details",

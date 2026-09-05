@@ -11,8 +11,7 @@ import { StateView } from '../components/StateView';
 import { CodeSearchCard } from '../components/CodeSearchCard';
 import { RepoSearchRow, IssuePrSearchRow, PersonSearchRow, OrgSearchRow } from '../components/SearchRows';
 import {
-  SearchService, SearchResultItem, SearchOverviewData, formatBigCount, SearchEntryKind
-} from '../services/SearchService';
+  SearchService, SearchResultItem, SearchOverviewData, formatBigCount, SearchEntryKind, SearchHistoryStore } from '../services/SearchService';
 import { CodeFileResult } from '../services/CodeSearchService';
 import { resText } from '../utils/I18n';
 
@@ -64,6 +63,8 @@ export struct SearchOverviewView {
         this.codeGroups = this.groupCodes(d.codeFiles);
         this.loading = false;
         this.loaded = true;
+        // 记入 Recent searches（review E17）
+        SearchHistoryStore.remember(this.getUIContext().getHostContext(), q);
       })
       .catch((e: Error) => {
         if (mySeq !== this.seq) {

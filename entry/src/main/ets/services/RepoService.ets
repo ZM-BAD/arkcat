@@ -23,6 +23,8 @@ query RepositoryDetail($owner: String!, $name: String!) {
     licenseInfo { name spdxId }
     repositoryTopics(first: 10) { nodes { topic { name } } }
     readme: object(expression: "HEAD:README.md") { ... on Blob { text } }
+    readmeLower: object(expression: "HEAD:readme.md") { ... on Blob { text } }
+    readmeCap: object(expression: "HEAD:Readme.md") { ... on Blob { text } }
     fileTree: object(expression: "HEAD:") {
       ... on Tree { entries { name type } }
     }

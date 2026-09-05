@@ -7,7 +7,7 @@ import { MarkdownView } from './MarkdownView';
 import { RepoSubService } from '../services/RepoSubService';
 import { MarkdownService } from '../services/MarkdownService';
 import { MarkdownEdit, MarkdownToolKind } from '../utils/MarkdownEdit';
-import { ApiError } from '../services/GitHttpClient';
+import { ApiError, friendlyError } from '../services/GitHttpClient';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -97,9 +97,11 @@ export struct CommentComposer {
         this.previewHtml = html;
         this.previewLoading = false;
       })
-      .catch(() => {
+      .catch((e: Error) => {
         this.previewHtml = '';
         this.previewLoading = false;
+        // 失败不再静默（review F14）
+        this.errorMsg = friendlyError(this.getUIContext(), e);
       });
   }
 
@@ -235,9 +237,16 @@ export struct CommentComposer {
             if (this.previewLoading) {
               LoadingProgress().width(28).height(28).color($r('app.color.link_blue'))
             } else {
-              Text(this.text)
-                .fontSize($r('app.float.body_font_size'))
-                .fontColor($r('app.color.text_secondary'))
+              // 降级文本可滚（review F14：固定 120 高会截断长文）
+              Scroll() {
+                Text(this.text)
+                  .fontSize($r('app.float.body_font_size'))
+                  .fontColor($r('app.color.text_secondary'))
+                  .width('100%')
+              }
+              .scrollBar(BarState.Off)
+              .width('100%')
+              .constraintSize({ minHeight: 120, maxHeight: 320 })
             }
           }
           .width('100%')

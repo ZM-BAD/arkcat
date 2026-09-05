@@ -12,6 +12,7 @@ import {
   InboxRepoFilterItem, InboxReasonKey
 } from '../services/NotificationsService';
 import { StateView } from '../components/StateView';
+import { friendlyError } from '../services/GitHttpClient';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { timeParts, githubShortTime, notificationTypeKey, TimeParts } from '../utils/Format';
@@ -80,7 +81,7 @@ export struct InboxView {
         this.loading = false;
       })
       .catch((e: Error) => {
-        this.errorMsg = e.message;
+        this.errorMsg = friendlyError(this.getUIContext(), e);
         this.loading = false;
       });
   }

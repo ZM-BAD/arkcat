@@ -3,6 +3,7 @@
  * Packages Tab 无公开 API 不展示；Projects 按边界跳过。
  */
 import { graphql } from './GitHttpClient';
+import { Json, JsonMap } from '../utils/Json';
 import { UserProfile, mapUserProfile } from '../models/ProfileModels';
 
 const PROFILE_QUERY = `
@@ -33,6 +34,14 @@ query UserProfile($login: String!) {
     }
     repositories { totalCount }
     starredRepositories { totalCount }
+  }
+}`;
+
+// 组织计数独立查询（review G8）：organizations 受 read:org 门控，
+// 混入主查询会让任一用户主页整页报错；失败静默置 0 与 Spec 022 策略一致
+const ORG_COUNT_QUERY = `
+query OrgCount($login: String!) {
+  user(login: $login) {
     organizations { totalCount }
   }
 }`;
@@ -53,6 +62,19 @@ export class ProfileService {
     const variables: Record<string, Object> = { 'login': login };
     const data = await graphql(PROFILE_QUERY, variables, token);
     return mapUserProfile(data);
+  }
+
+  /** 组织计数独立查询（review G8）：失败/缺 scope 置 0，不阻塞主页 */
+  static async fetchOrgCount(token: string, login: string): Promise<number> {
+    try {
+      const variables: Record<string, Object> = { 'login': login };
+      const data = await graphql(ORG_COUNT_QUERY, variables, token);
+      const user = Json.obj(data, 'user') ?? ({} as JsonMap);
+      const orgs = Json.obj(user, 'organizations') ?? ({} as JsonMap);
+      return Json.num(orgs, 'totalCount');
+    } catch (e) {
+      return 0;
+    }
   }
 
   /** Follow/Unfollow；返回操作后的目标关注态 */

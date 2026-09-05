@@ -5,8 +5,11 @@
  */
 import { asset } from '@kit.AssetStoreKit';
 import { util } from '@kit.ArkTS';
+import { hilog } from '@kit.PerformanceAnalysisKit';
 
 const TOKEN_ALIAS = 'starraft.github.pat';
+const TAG = '[StarRaft]';
+const DOMAIN = 0xFF00;
 
 function strToBytes(s: string): Uint8Array {
   return new util.TextEncoder().encode(s);
@@ -42,7 +45,9 @@ export class TokenStore {
       }
       return '';
     } catch (e) {
-      // 未配置 Token 属正常路径，静默回退
+      // 未配置 Token（ItemNotFound）属正常路径；系统级故障记录类型便于与「未登录」区分
+      // （review G12：此前全部吞成空串，用户以未登录态面对全页 401 无从排查；不含敏感内容）
+      hilog.error(DOMAIN, TAG, 'TokenStore load failed: %{public}s', `${e}`);
       return '';
     }
   }

@@ -3,6 +3,7 @@
  * Spec 001 前置条件——应用直连 GitHub API，必须有 PAT 才能拉取数据。
  */
 import { TokenStore } from '../services/TokenStore';
+import { HomeService } from '../services/HomeService';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -67,10 +68,12 @@ export struct TokenSetup {
     }
     this.saving = true;
     try {
+      // 保存前实测 Token（review A13：无效 token 存下后四 Tab 全 401 且无引导）
+      await HomeService.fetchViewerBasic(trimmed);
       await TokenStore.save(trimmed);
       this.onSaved(trimmed);
     } catch (e) {
-      this.error = this.stringOf($r('app.string.token_error_save'));
+      this.error = this.stringOf($r('app.string.token_error_invalid'));
     } finally {
       this.saving = false;
     }

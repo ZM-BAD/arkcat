@@ -519,6 +519,22 @@ export class SearchHistoryStore {
       // 持久化失败不阻断交互
     }
   }
+
+  /** 追加一条历史：去重置顶、上限 10（review E17：结果页重搜/聚合页也记入历史） */
+  static async remember(context: common.Context | undefined, keyword: string): Promise<void> {
+    const kw = keyword.trim();
+    if (context === undefined || kw === '') {
+      return;
+    }
+    const old = await SearchHistoryStore.load(context);
+    const next: string[] = [kw];
+    for (const h of old) {
+      if (h !== kw && next.length < 10) {
+        next.push(h);
+      }
+    }
+    await SearchHistoryStore.save(context, next);
+  }
 }
 
 /** 入口类型 → GraphQL SearchType（PR 无独立枚举，用 ISSUE 后分诊） */
@@ -608,7 +624,17 @@ export class SearchService {
       }
     }
     query += `) {${fields} }`;
-    const data = await graphql(query, variables, token);
+    // 头像补全属装饰性数据：任一仓库已删/改名（索引滞后）返回 200+errors 会整单抛出，
+    // 这里 catch 降级为空头像，不击穿搜索主流程（review G3）
+    let data: JsonMap | null = null;
+    try {
+      data = await graphql(query, variables, token);
+    } catch (e) {
+      return avatarMap;
+    }
+    if (data === null) {
+      return avatarMap;
+    }
     for (let i = 0; i < names.length; i++) {
       const repo = Json.obj(data, `r${i}`);
       if (repo !== null) {

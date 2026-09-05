@@ -335,10 +335,18 @@ export class CodeSearchService {
   /** 原始文件 → 结果卡（内容窗口/高亮；头像由调用方 avatarMap 提供） */
   static async buildCodeResults(raws: RawCodeFile[], avatarMap: Record<string, string>,
     token: string): Promise<CodeFileResult[]> {
+    // 分批并行拉取（review G14：此前逐个 await 串行，10 个文件拖慢整页数秒）
     const out: CodeFileResult[] = [];
-    for (const raw of raws) {
-      const avatar = avatarMap[raw.repoFullName] ?? '';
-      out.push(await buildCodeResult(raw, avatar, token));
+    const BATCH = 5;
+    for (let i = 0; i < raws.length; i += BATCH) {
+      const chunk = raws.slice(i, i + BATCH);
+      const results = await Promise.all(chunk.map((raw: RawCodeFile): Promise<CodeFileResult> => {
+        const avatar = avatarMap[raw.repoFullName] ?? '';
+        return buildCodeResult(raw, avatar, token);
+      }));
+      for (const r of results) {
+        out.push(r);
+      }
     }
     return out;
   }

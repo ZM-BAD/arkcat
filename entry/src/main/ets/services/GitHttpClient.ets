@@ -5,6 +5,7 @@
  */
 import { http } from '@kit.NetworkKit';
 import { Json, JsonMap } from '../utils/Json';
+import { resText } from '../utils/I18n';
 
 const GITHUB_API = 'https://api.github.com';
 const GITHUB_GRAPHQL = 'https://api.github.com/graphql';
@@ -57,7 +58,16 @@ async function request(method: http.RequestMethod, url: string, token: string, b
     const code = typeof resp.responseCode === 'number' ? resp.responseCode : 0;
     const text = typeof resp.result === 'string' ? resp.result : '';
     if (code < 200 || code >= 300) {
-      throw new ApiError(code, `GitHub API ${url} -> HTTP ${code}`);
+      // 拼入响应 body 的 message，便于 422/403 等业务失败排查（review G11）
+      let detail = '';
+      const errBody = Json.parse(text);
+      if (errBody !== null) {
+        const m = Json.str(errBody, 'message');
+        if (m !== '') {
+          detail = ` ${m}`;
+        }
+      }
+      throw new ApiError(code, `GitHub API ${url} -> HTTP ${code}${detail}`);
     }
     return { code: code, body: text };
   } catch (e) {
@@ -95,7 +105,22 @@ export async function graphql(query: string, variables: Record<string, Object> |
   const errors = Json.arr(root, 'errors');
   if (errors.length > 0) {
     const first = errors[0] as JsonMap;
-    throw new ApiError(resp.code, `GraphQL error: ${Json.str(first, 'message')}`);
+    // GraphQL 错误恒为 HTTP 200：按 errors[].type 映射语义状态码，
+    // 否则页面 401/403/429 分支永不命中（review G2，实测 200+errors 并存）
+    const type = Json.str(first, 'type');
+    let semantic = resp.code;
+    if (type === 'RATE_LIMITED') {
+      semantic = 429;
+    } else if (type === 'FORBIDDEN' || type === 'INSUFFICIENT_SCOPE') {
+      semantic = 403;
+    } else if (type === 'NOT_FOUND') {
+      semantic = 404;
+    } else if (type === 'UNPROCESSABLE' || type === 'VALIDATION') {
+      semantic = 422;
+    } else if (type === 'UNAUTHORIZED') {
+      semantic = 401;
+    }
+    throw new ApiError(semantic, `GraphQL error: ${Json.str(first, 'message')}`);
   }
   const data = Json.obj(root, 'data');
   if (data === null) {
@@ -127,4 +152,25 @@ export async function restPut(path: string, token: string): Promise<RawResponse>
 /** REST DELETE（组织取关等无 body 写操作） */
 export async function restDelete(path: string, token: string): Promise<RawResponse> {
   return request(http.RequestMethod.DELETE, `${GITHUB_API}${path}`, token);
+}
+
+/** 异常 → 本地化友好文案（review A14/E16：裸异常串不直出给用户） */
+export function friendlyError(uiContext: UIContext, e: Error): string {
+  let code = 0;
+  if (e instanceof ApiError) {
+    code = e.code;
+  } else {
+    const found = /HTTP (\d{3})/.exec(e.message);
+    code = found !== null && found[1] !== undefined ? Number(found[1]) : 0;
+  }
+  if (code === 401) {
+    return resText(uiContext, $r('app.string.error_auth'));
+  }
+  if (code === 403 || code === 429) {
+    return resText(uiContext, $r('app.string.error_rate_limited'));
+  }
+  if (code === 0) {
+    return resText(uiContext, $r('app.string.error_network'));
+  }
+  return resText(uiContext, $r('app.string.error_generic'));
 }

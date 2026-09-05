@@ -10,7 +10,7 @@ import { PageShadowBar } from '../components/PageShadowBar';
 import { StateView } from '../components/StateView';
 import { CodeSearchCard } from '../components/CodeSearchCard';
 import { RepoSearchRow, IssuePrSearchRow, PersonSearchRow, OrgSearchRow } from '../components/SearchRows';
-import { SearchService, SearchResultItem, SearchResultPage, SearchEntryKind } from '../services/SearchService';
+import { SearchService, SearchResultItem, SearchResultPage, SearchEntryKind, SearchHistoryStore } from '../services/SearchService';
 import { CodeFileResult, CodeSearchPage } from '../services/CodeSearchService';
 import { resText } from '../utils/I18n';
 
@@ -49,6 +49,11 @@ export struct SearchResultsView {
   private seq: number = 0;
 
   private loadFirst(): void {
+    // 空词回车守卫：直接打接口只会得到裸错误（review E15）
+    if (this.query.trim() === '') {
+      this.pathStack.pop();
+      return;
+    }
     const mySeq = ++this.seq;
     this.loading = true;
     this.errorMsg = '';
@@ -70,6 +75,8 @@ export struct SearchResultsView {
           this.hasNext = page.hasMore;
           this.loading = false;
           this.loaded = true;
+          // 记入 Recent searches（review E17）
+          SearchHistoryStore.remember(this.getUIContext().getHostContext(), this.query);
         })
         .catch((e: Error) => {
           if (mySeq !== this.seq) {
@@ -91,6 +98,8 @@ export struct SearchResultsView {
         this.cursor = page.endCursor;
         this.loading = false;
         this.loaded = true;
+        // 记入 Recent searches（review E17）
+        SearchHistoryStore.remember(this.getUIContext().getHostContext(), this.query);
       })
       .catch((e: Error) => {
         if (mySeq !== this.seq) {

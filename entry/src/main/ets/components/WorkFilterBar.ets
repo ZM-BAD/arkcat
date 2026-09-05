@@ -8,6 +8,7 @@ import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
 import { WorkOrgItem, WorkTopRepoItem, WorkTopReposPage } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
+import { friendlyError } from '../services/GitHttpClient';
 import { ProfileListService } from '../services/ProfileListService';
 import { OrgListPage, OrgSummary } from '../models/ProfileModels';
 import { StateView } from './StateView';
@@ -91,6 +92,8 @@ export struct WorkFilterBar {
   @Local repoList: WorkTopRepoItem[] = [];
   @Local viewerLogin: string = '';
   @Local orgListLoading: boolean = false;
+  /** 组织/仓库弹层拉取失败文案（review F15：失败不再伪装成空态） */
+  @Local sheetLoadError: string = '';
   @Local repoListLoading: boolean = false;
   @Local orgSearch: string = '';
   @Local repoSearch: string = '';
@@ -333,6 +336,7 @@ export struct WorkFilterBar {
 
   private openOrgSheet(): void {
     this.sheetKind = 'org';
+    this.sheetLoadError = '';
     if (this.orgList.length === 0 && !this.orgListLoading) {
       this.loadOrgList();
     }
@@ -352,8 +356,9 @@ export struct WorkFilterBar {
           }));
           this.orgListLoading = false;
         })
-        .catch(() => {
+        .catch((e: Error) => {
           this.orgListLoading = false;
+          this.sheetLoadError = friendlyError(this.getUIContext(), e);
         });
     };
     if (this.viewerLogin !== '') {
@@ -365,13 +370,15 @@ export struct WorkFilterBar {
         this.viewerLogin = login;
         load(login);
       })
-      .catch(() => {
+      .catch((e: Error) => {
         this.orgListLoading = false;
+        this.sheetLoadError = friendlyError(this.getUIContext(), e);
       });
   }
 
   private openRepoSheet(): void {
     this.sheetKind = 'repo';
+    this.sheetLoadError = '';
     if (this.repoList.length === 0 && !this.repoListLoading) {
       this.repoListLoading = true;
       WorkService.fetchTopRepositories(this.token, '')
@@ -379,8 +386,9 @@ export struct WorkFilterBar {
           this.repoList = page.repos;
           this.repoListLoading = false;
         })
-        .catch(() => {
+        .catch((e: Error) => {
           this.repoListLoading = false;
+          this.sheetLoadError = friendlyError(this.getUIContext(), e);
         });
     }
   }
@@ -585,6 +593,8 @@ export struct WorkFilterBar {
       }
       if (this.orgListLoading) {
         StateView({ loading: true })
+      } else if (this.sheetLoadError !== '') {
+        StateView({ error: this.sheetLoadError, onRetry: (): void => this.openOrgSheet() })
       } else if (this.filteredOrgs().length === 0) {
         this.sheetEmpty()
       } else {
@@ -616,6 +626,8 @@ export struct WorkFilterBar {
       }
       if (this.repoListLoading) {
         StateView({ loading: true })
+      } else if (this.sheetLoadError !== '') {
+        StateView({ error: this.sheetLoadError, onRetry: (): void => this.openRepoSheet() })
       } else if (this.filteredRepos().length === 0) {
         this.sheetEmpty()
       } else {

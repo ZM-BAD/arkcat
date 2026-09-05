@@ -62,7 +62,10 @@ export function mapRepoDetail(data: JsonMap): RepoDetail {
       }
     }
   }
-  const readmeObj = Json.obj(repo, 'readme');
+  // README 大小写三连探测（review G13：object 表达式大小写敏感，readme.md 仓库取不到）
+  const readmeObj = Json.obj(repo, 'readme')
+    ?? Json.obj(repo, 'readmeLower')
+    ?? Json.obj(repo, 'readmeCap');
   const treeObj = Json.obj(repo, 'fileTree');
   const files: FileEntry[] = [];
   if (treeObj !== null) {

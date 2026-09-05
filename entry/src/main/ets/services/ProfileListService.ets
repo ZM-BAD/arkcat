@@ -244,7 +244,11 @@ export class ProfileListService {
       return ProfileListService.mapRepoListPage(data, 'org');
     } catch (e) {
       // read:org 缺失等场景 → REST 兜底（一页 100 + 客户端排序后客户端过滤）
-      const resp = await restGet(`/orgs/${owner}/repos?per_page=${ORG_REST_PAGE_LIMIT}`, token);
+      // 服务端 sort 映射（review G6：此前未传 sort，pushed/updated 静默失效变默认 created 序）
+      const sortMap: Record<string, string> = { 'PUSHED_AT': 'pushed', 'UPDATED_AT': 'updated', 'NAME': 'full_name' };
+      const sort = sortMap[order.field] ?? 'created';
+      const dir = order.direction === 'ASC' ? 'asc' : 'desc';
+      const resp = await restGet(`/orgs/${owner}/repos?per_page=${ORG_REST_PAGE_LIMIT}&sort=${sort}&direction=${dir}`, token);
       return ProfileListService.mapOrgReposRest(resp.body, order);
     }
   }

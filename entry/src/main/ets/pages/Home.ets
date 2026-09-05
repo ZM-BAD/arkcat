@@ -7,6 +7,7 @@
 import { promptAction } from '@kit.ArkUI';
 import { ViewerBasic } from '../models/GitHubModels';
 import { HomeService } from '../services/HomeService';
+import { friendlyError } from '../services/GitHttpClient';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
 import { WorkSection, WorkConfigStore, visibleWorkSections } from '../utils/WorkConfig';
@@ -54,7 +55,7 @@ export struct HomeView {
         this.loading = false;
       })
       .catch((e: Error) => {
-        this.errorMsg = e.message;
+        this.errorMsg = friendlyError(this.getUIContext(), e);
         this.loading = false;
       });
   }
@@ -318,27 +319,28 @@ export struct HomeView {
 
       Scroll() {
         Column() {
-          if (this.viewer !== null || this.errorMsg === '') {
-            this.myWorkSection()
-
-            Divider()
-              .color($r('app.color.divider'))
-              .margin({ top: 8 })
-
-            this.favoritesSection()
-
-            Divider()
-              .color($r('app.color.divider'))
-              .margin({ top: 8 })
-
-            this.shortcutsSection()
-          } else {
+          // viewer 拉取失败仅降级此提示：My Work/Favorites/Shortcuts 为本地或容错区块照常可用（review A15）
+          if (this.viewer === null && this.errorMsg !== '') {
             StateView({
               loading: this.loading,
               error: this.errorMsg,
               onRetry: () => this.refresh()
             })
           }
+
+          this.myWorkSection()
+
+          Divider()
+            .color($r('app.color.divider'))
+            .margin({ top: 8 })
+
+          this.favoritesSection()
+
+          Divider()
+            .color($r('app.color.divider'))
+            .margin({ top: 8 })
+
+          this.shortcutsSection()
         }
         .padding({ left: 16, right: 16 })
         .width('100%')

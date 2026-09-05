@@ -29,6 +29,8 @@ export struct ProfileView {
   @Local profile: UserProfile | null = null;
   /** ··· 菜单项：bindMenu 数组不随状态刷新（V2 坑），viewerIsFollowing 变化后显式重建（review D6） */
   @Local followMenuItems: FollowMenuEntry[] = [];
+  /** 组织计数独立降级查询结果（review G8），不随主查询失败拖垮 */
+  @Local orgCount: number = 0;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
@@ -51,6 +53,11 @@ export struct ProfileView {
         this.profile = profile;
         this.rebuildFollowMenu();
         this.loading = false;
+        // 组织计数独立拉取（review G8）
+        ProfileService.fetchOrgCount(this.token, this.login)
+          .then((count: number) => {
+            this.orgCount = count;
+          });
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
@@ -357,7 +364,7 @@ export struct ProfileView {
     Column() {
       this.navRow($r('app.media.oct_repo_16'), $r('app.color.text_secondary'), $r('app.string.profile_repositories'), this.profile?.repositoriesCount ?? 0,
         () => this.pathStack.pushPathByName('repositoriesList', `${this.profile?.user.login ?? ''}|user`))
-      this.navRow($r('app.media.oct_organization_16'), $r('app.color.shortcut_orange_fg'), $r('app.string.profile_organizations'), this.profile?.organizationsCount ?? 0,
+      this.navRow($r('app.media.oct_organization_16'), $r('app.color.shortcut_orange_fg'), $r('app.string.profile_organizations'), this.orgCount,
         () => this.pathStack.pushPathByName('orgList', this.profile?.user.login ?? ''))
       this.navRow($r('app.media.oct_star_16'), $r('app.color.star_gold'), $r('app.string.profile_starred'), this.profile?.starredCount ?? 0,
         () => this.pathStack.pushPathByName('starred', this.profile?.user.login ?? ''))

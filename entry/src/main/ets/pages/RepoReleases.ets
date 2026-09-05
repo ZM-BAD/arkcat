@@ -154,7 +154,7 @@ export struct RepoReleasesView {
                     .backgroundColor($r('app.color.heat_empty'))
                 }
                 Text(resText(this.getUIContext(), $r('app.string.releases_released_this'),
-                  monthDayText(this.releases[0].createdAt)))
+                  this.timeText(timeParts(this.releases[0].createdAt, Date.now()))))
                   .fontSize($r('app.float.caption_font_size'))
                   .fontColor($r('app.color.text_secondary'))
               }
@@ -163,7 +163,7 @@ export struct RepoReleasesView {
               Divider().color($r('app.color.divider'))
 
               Column({ space: 6 }) {
-                Text('What\'s Changed')
+                Text($r('app.string.releases_whats_changed'))
                   .fontSize(20)
                   .fontWeight(600)
                   .fontColor($r('app.color.text_primary'))
