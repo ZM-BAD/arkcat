@@ -123,7 +123,7 @@ export struct PrFilesView {
       return;
     }
     this.sending = true;
-    RepoSubService.addPrComment(this.token, this.page.pullRequestId, body)
+    RepoSubService.addComment(this.token, this.page.pullRequestId, body)
       .then(() => {
         this.commentText = '';
         this.sending = false;

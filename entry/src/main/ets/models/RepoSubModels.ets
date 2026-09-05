@@ -70,6 +70,20 @@ export interface RepoReleasesPage {
   releases: ReleaseItem[];
 }
 
+/** 反应用户（reactionGroups.users 前 8 位） */
+export interface ReactionUser {
+  login: string;
+  avatarUrl: string;
+}
+
+/** emoji 反应组（Spec 041）：content 为 ReactionContent 枚举（THUMBS_UP 等） */
+export interface ReactionGroup {
+  content: string;
+  count: number;
+  viewerHasReacted: boolean;
+  users: ReactionUser[];
+}
+
 /** 评论（Issue/PR 通用，ArkTS 名义类型：单一 interface 复用） */
 export interface RepoComment {
   id: string;
@@ -79,9 +93,14 @@ export interface RepoComment {
   createdAt: string;
   authorLogin: string;
   authorAvatar: string;
+  /** 仅本人显示编辑/删除（GraphQL viewerDidAuthor） */
+  viewerDidAuthor: boolean;
+  reactions: ReactionGroup[];
 }
 
 export interface IssueDetailPage {
+  /** 评论发布用节点 id（SubjectId） */
+  subjectId: string;
   number: number;
   title: string;
   state: string;
@@ -106,6 +125,8 @@ export interface StatusCheckItem {
 }
 
 export interface PrDetailPage {
+  /** 评论发布用节点 id（SubjectId） */
+  subjectId: string;
   number: number;
   title: string;
   state: string;
@@ -174,6 +195,68 @@ export function monthDayText(iso: string): string {
   }
   const d = new Date(t);
   return `${months[d.getMonth()]} ${d.getDate()}`;
+}
+
+// ─────────────── Reaction 常量（Spec 041）───────────────
+
+export interface ReactionMeta {
+  content: string;
+  emoji: string;
+}
+
+/** 8 种官方 reaction（顺序即面板展示顺序；content 为 GraphQL ReactionContent 枚举） */
+export const REACTION_META: ReactionMeta[] = [
+  { content: 'THUMBS_UP', emoji: '👍' },
+  { content: 'THUMBS_DOWN', emoji: '👎' },
+  { content: 'LAUGH', emoji: '😄' },
+  { content: 'HOORAY', emoji: '🎉' },
+  { content: 'CONFUSED', emoji: '😕' },
+  { content: 'HEART', emoji: '❤️' },
+  { content: 'ROCKET', emoji: '🚀' },
+  { content: 'EYES', emoji: '👀' }
+];
+
+/** 枚举 → emoji；未知回退空串 */
+export function reactionEmoji(content: string): string {
+  for (const meta of REACTION_META) {
+    if (meta.content === content) {
+      return meta.emoji;
+    }
+  }
+  return '';
+}
+
+/** 按 content 查找反应组；未命中返回 null */
+export function findReactionGroup(groups: ReactionGroup[], content: string): ReactionGroup | null {
+  for (const g of groups) {
+    if (g.content === content) {
+      return g;
+    }
+  }
+  return null;
+}
+
+/** 本地翻转反应（mutation 成功后即时 UI 反馈；users 列表由下一次刷新校准） */
+export function flipReactionGroups(groups: ReactionGroup[], content: string, added: boolean): ReactionGroup[] {
+  const out: ReactionGroup[] = [];
+  let touched = false;
+  for (const g of groups) {
+    if (g.content === content) {
+      touched = true;
+      out.push({
+        content: g.content,
+        count: Math.max(0, g.count + (added ? 1 : -1)),
+        viewerHasReacted: added,
+        users: g.users
+      });
+    } else {
+      out.push(g);
+    }
+  }
+  if (!touched) {
+    out.push({ content: content, count: 1, viewerHasReacted: true, users: [] });
+  }
+  return out;
 }
 
 // ─────────────── 响应映射 ───────────────
@@ -338,15 +421,40 @@ export function mapRepoReleasesPage(data: JsonMap): RepoReleasesPage {
   };
 }
 
+function mapReactionGroup(raw: JsonMap): ReactionGroup {
+  // 计数 = reactors.totalCount（ReactionGroup 无 count 字段，2026-09-04 实测）
+  const reactors = Json.obj(raw, 'reactors') ?? ({} as JsonMap);
+  const nodes: ReactionUser[] = [];
+  for (const nodeItem of Json.arr(reactors, 'nodes')) {
+    const node = nodeItem as JsonMap;
+    nodes.push({
+      login: Json.str(node, 'login'),
+      avatarUrl: Json.str(node, 'avatarUrl')
+    });
+  }
+  return {
+    content: Json.str(raw, 'content'),
+    count: Json.num(reactors, 'totalCount'),
+    viewerHasReacted: Json.bool(raw, 'viewerHasReacted'),
+    users: nodes
+  };
+}
+
 function mapComment(raw: JsonMap): RepoComment {
   const author = Json.obj(raw, 'author');
+  const reactions: ReactionGroup[] = [];
+  for (const nodeItem of Json.arr(raw, 'reactionGroups')) {
+    reactions.push(mapReactionGroup(nodeItem as JsonMap));
+  }
   return {
     id: Json.str(raw, 'id'),
     body: Json.str(raw, 'body'),
     bodyHTML: Json.str(raw, 'bodyHTML'),
     createdAt: Json.str(raw, 'createdAt'),
     authorLogin: author !== null ? Json.str(author, 'login') : '',
-    authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : ''
+    authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : '',
+    viewerDidAuthor: Json.bool(raw, 'viewerDidAuthor'),
+    reactions: reactions
   };
 }
 
@@ -368,6 +476,7 @@ export function mapIssueDetail(data: JsonMap): IssueDetailPage {
     comments.push(mapComment(nodeItem as JsonMap));
   }
   return {
+    subjectId: Json.str(issue, 'id'),
     number: Json.num(issue, 'number'),
     title: Json.str(issue, 'title'),
     state: Json.str(issue, 'state'),
@@ -401,6 +510,7 @@ export function mapPrDetail(data: JsonMap): PrDetailPage {
     comments.push(mapComment(nodeItem as JsonMap));
   }
   return {
+    subjectId: Json.str(pr, 'id'),
     number: Json.num(pr, 'number'),
     title: Json.str(pr, 'title'),
     state: Json.str(pr, 'state'),

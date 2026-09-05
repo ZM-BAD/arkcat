@@ -181,22 +181,27 @@ export struct WorkIssuesView {
         .width('100%')
 
       if (issue.labels.length > 0 || issue.commentCount > 0) {
-        Row() {
-          ForEach(issue.labels, (label: WorkLabel) => {
-            this.labelChip(label)
-          }, (label: WorkLabel) => label.name)
-          if (issue.commentCount > 0) {
-            Row({ space: 4 }) {
-              OctIcon({ res: $r('app.media.oct_comment_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
-              Text(`${issue.commentCount}`)
-                .fontSize($r('app.float.caption_font_size'))
-                .fontColor($r('app.color.text_secondary'))
+        // 标签数量不定：包横向 Scroll 防溢出卡片，内层行 minWidth 撑满、超宽可滑
+        Scroll() {
+          Row() {
+            ForEach(issue.labels, (label: WorkLabel) => {
+              this.labelChip(label)
+            }, (label: WorkLabel) => label.name)
+            if (issue.commentCount > 0) {
+              Row({ space: 4 }) {
+                OctIcon({ res: $r('app.media.oct_comment_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
+                Text(`${issue.commentCount}`)
+                  .fontSize($r('app.float.caption_font_size'))
+                  .fontColor($r('app.color.text_secondary'))
+              }
+              .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+              .borderRadius(12)
+              .backgroundColor($r('app.color.chip_bg'))
             }
-            .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-            .borderRadius(12)
-            .backgroundColor($r('app.color.chip_bg'))
           }
+          .constraintSize({ minWidth: '100%' })
         }
+        .scrollBar(BarState.Off)
         .width('100%')
       }
     }

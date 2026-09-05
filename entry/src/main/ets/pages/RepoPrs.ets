@@ -200,33 +200,41 @@ export struct RepoPrsView {
         }
         .width('100%')
 
+        // 标签数量不定：芯片组包横向 Scroll 防溢出卡片，头像/时间锚定右侧不随滚动
         Row({ space: 8 }) {
-          ForEach(item.labels, (label: WorkLabel) => {
-            this.labelChip(label)
-          }, (label: WorkLabel) => label.name)
-          if (item.checksState === 'SUCCESS') {
-            Row({ space: 4 }) {
-              OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 12, iconColor: $r('app.color.success_text') })
-              Text(this.stringOf($r('app.string.work_pr_checks')))
-                .fontSize($r('app.float.caption_font_size'))
-                .fontColor($r('app.color.text_primary'))
+          Scroll() {
+            Row({ space: 8 }) {
+              ForEach(item.labels, (label: WorkLabel) => {
+                this.labelChip(label)
+              }, (label: WorkLabel) => label.name)
+              if (item.checksState === 'SUCCESS') {
+                Row({ space: 4 }) {
+                  OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 12, iconColor: $r('app.color.success_text') })
+                  Text(this.stringOf($r('app.string.work_pr_checks')))
+                    .fontSize($r('app.float.caption_font_size'))
+                    .fontColor($r('app.color.text_primary'))
+                }
+                .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+                .borderRadius(12)
+                .border({ width: 1, color: $r('app.color.divider') })
+                .backgroundColor(Color.Transparent)
+              }
+              if (item.commentCount > 0) {
+                Row({ space: 4 }) {
+                  OctIcon({ res: $r('app.media.oct_comment_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
+                  Text(`${item.commentCount}`)
+                    .fontSize($r('app.float.caption_font_size'))
+                    .fontColor($r('app.color.text_secondary'))
+                }
+                .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+                .borderRadius(12)
+                .backgroundColor($r('app.color.chip_bg'))
+              }
             }
-            .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-            .borderRadius(12)
-            .border({ width: 1, color: $r('app.color.divider') })
-            .backgroundColor(Color.Transparent)
+            .constraintSize({ minWidth: '100%' })
           }
-          if (item.commentCount > 0) {
-            Row({ space: 4 }) {
-              OctIcon({ res: $r('app.media.oct_comment_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
-              Text(`${item.commentCount}`)
-                .fontSize($r('app.float.caption_font_size'))
-                .fontColor($r('app.color.text_secondary'))
-            }
-            .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-            .borderRadius(12)
-            .backgroundColor($r('app.color.chip_bg'))
-          }
+          .scrollBar(BarState.Off)
+          .layoutWeight(1)
           if (item.authorAvatar !== '') {
             Image(item.authorAvatar)
               .width(20)
@@ -234,7 +242,6 @@ export struct RepoPrsView {
               .borderRadius(10)
               .backgroundColor($r('app.color.heat_empty'))
           }
-          Blank()
           Text(this.timeText(timeParts(item.createdAt, Date.now())))
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))

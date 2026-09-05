@@ -1265,6 +1265,126 @@
       "value": "COMMENT"
     },
     {
+      "name": "comment_publish",
+      "value": "Publish"
+    },
+    {
+      "name": "comment_preview",
+      "value": "Preview"
+    },
+    {
+      "name": "comment_write",
+      "value": "Write"
+    },
+    {
+      "name": "comment_edit_title",
+      "value": "Edit comment"
+    },
+    {
+      "name": "comment_tool_bold",
+      "value": "Bold"
+    },
+    {
+      "name": "comment_tool_italic",
+      "value": "Italic"
+    },
+    {
+      "name": "comment_tool_quote",
+      "value": "Quote"
+    },
+    {
+      "name": "comment_tool_link",
+      "value": "Link"
+    },
+    {
+      "name": "comment_tool_code",
+      "value": "Code"
+    },
+    {
+      "name": "comment_tool_strike",
+      "value": "Strikethrough"
+    },
+    {
+      "name": "comment_tool_task",
+      "value": "Task list"
+    },
+    {
+      "name": "comment_published",
+      "value": "Comment published"
+    },
+    {
+      "name": "comment_updated",
+      "value": "Comment updated"
+    },
+    {
+      "name": "comment_deleted",
+      "value": "Comment deleted"
+    },
+    {
+      "name": "comment_empty_body",
+      "value": "Comment can't be empty"
+    },
+    {
+      "name": "comment_delete_title",
+      "value": "Delete comment"
+    },
+    {
+      "name": "comment_delete_body",
+      "value": "This can't be undone."
+    },
+    {
+      "name": "comment_delete_ok",
+      "value": "Delete"
+    },
+    {
+      "name": "comment_delete_cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "comment_error_rate_limit",
+      "value": "Rate limit exceeded. Try again later."
+    },
+    {
+      "name": "comment_error_forbidden",
+      "value": "You don't have permission to do this."
+    },
+    {
+      "name": "comment_error_closed_locked",
+      "value": "This issue is closed; commenting is locked."
+    },
+    {
+      "name": "comment_error_publish",
+      "value": "Publishing comment failed"
+    },
+    {
+      "name": "comment_error_update",
+      "value": "Updating comment failed"
+    },
+    {
+      "name": "comment_error_delete",
+      "value": "Deleting comment failed"
+    },
+    {
+      "name": "comment_error_reaction",
+      "value": "Updating reaction failed"
+    },
+    {
+      "name": "issue_closed_comment_disabled",
+      "value": "Closed issues can't be commented on"
+    },
+    {
+      "name": "reaction_panel_title",
+      "value": "React with"
+    },
+    {
+      "name": "reaction_users_title",
+      "value": "Reacted"
+    },
+    {
+      "name": "a11y_reaction_add",
+      "value": "Add reaction"
+    },
+    {
       "name": "settings_working_hours",
       "value": "Working hours"
     },

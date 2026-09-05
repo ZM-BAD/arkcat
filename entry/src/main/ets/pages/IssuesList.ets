@@ -218,33 +218,40 @@ export struct IssuesListView {
       }
       .width('100%')
 
+      // 标签数量不定：芯片组包横向 Scroll 防溢出卡片，时间锚定右侧不随滚动
       Row({ space: 8 }) {
-        ForEach(issue.labels, (label: string) => {
-          this.labelChip(label)
-        }, (label: string) => label)
-        if (issue.commentCount > 0) {
-          Row({ space: 4 }) {
-            OctIcon({ res: $r('app.media.oct_comment_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
-            Text(`${issue.commentCount}`)
-              .fontSize($r('app.float.caption_font_size'))
-              .fontColor($r('app.color.text_secondary'))
+        Scroll() {
+          Row({ space: 8 }) {
+            ForEach(issue.labels, (label: string) => {
+              this.labelChip(label)
+            }, (label: string) => label)
+            if (issue.commentCount > 0) {
+              Row({ space: 4 }) {
+                OctIcon({ res: $r('app.media.oct_comment_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
+                Text(`${issue.commentCount}`)
+                  .fontSize($r('app.float.caption_font_size'))
+                  .fontColor($r('app.color.text_secondary'))
+              }
+              .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+              .borderRadius(12)
+              .backgroundColor($r('app.color.chip_bg'))
+            }
+            if (issue.linkedPrCount > 0) {
+              Row({ space: 4 }) {
+                OctIcon({ res: $r('app.media.oct_git_pull_request_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
+                Text(`${issue.linkedPrCount}`)
+                  .fontSize($r('app.float.caption_font_size'))
+                  .fontColor($r('app.color.text_secondary'))
+              }
+              .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+              .borderRadius(12)
+              .backgroundColor($r('app.color.chip_bg'))
+            }
           }
-          .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-          .borderRadius(12)
-          .backgroundColor($r('app.color.chip_bg'))
+          .constraintSize({ minWidth: '100%' })
         }
-        if (issue.linkedPrCount > 0) {
-          Row({ space: 4 }) {
-            OctIcon({ res: $r('app.media.oct_git_pull_request_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
-            Text(`${issue.linkedPrCount}`)
-              .fontSize($r('app.float.caption_font_size'))
-              .fontColor($r('app.color.text_secondary'))
-          }
-          .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-          .borderRadius(12)
-          .backgroundColor($r('app.color.chip_bg'))
-        }
-        Blank()
+        .scrollBar(BarState.Off)
+        .layoutWeight(1)
         Text(this.timeText(timeParts(issue.createdAt, Date.now())))
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
