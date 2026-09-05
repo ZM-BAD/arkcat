@@ -1,54 +1,37 @@
 /**
- * Explore Tab（Spec 003）：Discover 区（Trending/Awesome Lists）+ Activity 推荐流 + Topics 网格。
- * Collections 区块按 Spec 边界隐藏（无公开 API）。
+ * Explore Tab（Spec 056 官方化）：Discover 入口（Trending/Awesome Lists）+ Activity 合并 PR 动态流。
+ * 003 的 Topics 网格/高星推荐已随官方版式移除；
+ * 官方个性化 feed 无公开 API，Activity 用 received_events 近似（Spec 056 边界）。
  */
 import { promptAction } from '@kit.ArkUI';
-import { TopicSearchResult } from '../models/ExploreModels';
-import { RepoSummary } from '../models/GitHubModels';
-import { ExploreService, FEATURED_TOPICS } from '../services/ExploreService';
+import { ExploreActivityEvent } from '../models/ExploreModels';
+import { ExploreService } from '../services/ExploreService';
 import { friendlyError } from '../services/GitHttpClient';
-import { RepoCard } from '../components/RepoCard';
 import { StateView } from '../components/StateView';
-import { resText } from '../utils/I18n';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
+import { ExploreActivityCard } from '../components/ExploreActivityCard';
 
 @ComponentV2
 export struct ExploreView {
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
-  @Local selectedTopic: string = '';
-  @Local result: TopicSearchResult | null = null;
-  @Local recommended: RepoSummary[] = [];
-  @Local loading: boolean = false;
+  @Local events: ExploreActivityEvent[] = [];
+  @Local loading: boolean = true;
+  @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
-  @Local errorMsg: string = '';
 
   aboutToAppear(): void {
-    this.loadRecommendations();
+    this.load();
   }
 
-  /** Activity 推荐仓库（高星近似，官方个性化推荐无公开 API） */
-  private loadRecommendations(): void {
-    ExploreService.fetchRecommendedRepos(this.token)
-      .then((repos: RepoSummary[]) => {
-        this.recommended = repos;
-      })
-      .catch((e: Error) => {
-        // 推荐失败不影响 Discover/Topics 使用
-      });
-  }
-
-  private openTopic(topic: string): void {
-    this.selectedTopic = topic;
+  private load(): void {
     this.loading = true;
     this.errorMsg = '';
-    // 清掉上一个 topic 的结果，防止请求失败时新名配旧计数（review A9）
-    this.result = null;
-    ExploreService.fetchTopicRepositories(this.token, topic)
-      .then((result: TopicSearchResult) => {
-        this.result = result;
+    ExploreService.fetchActivity(this.token)
+      .then((events: ExploreActivityEvent[]) => {
+        this.events = events;
         this.loading = false;
       })
       .catch((e: Error) => {
@@ -57,100 +40,34 @@ export struct ExploreView {
       });
   }
 
-  private comingSoon(): void {
+  private openListPage(kind: string): void {
+    this.pathStack.pushPathByName('exploreRepoList', kind);
+  }
+
+  /** Activity 类型筛选：官方面板无参考图，占位待下批（Spec 056 边界） */
+  private filterComing(): void {
     promptAction.showToast({ message: $r('app.string.home_feature_coming') });
   }
 
+  /** Discover 入口行：彩色方标 + 标题（入参均为静态资源，无状态刷新问题） */
   @Builder
-  topicChip(topic: string) {
-    Text(topic)
-      .fontSize($r('app.float.caption_font_size'))
-      .fontColor(this.selectedTopic === topic ? Color.White : $r('app.color.text_primary'))
-      .padding({ left: 14, right: 14, top: 6, bottom: 6 })
-      .responseRegion({ x: 0, y: -7, width: '100%', height: '147%' })
-      .borderRadius(12)
-      .backgroundColor(this.selectedTopic === topic ? $r('app.color.link_blue') : $r('app.color.card_background'))
-      .margin({ right: 8, bottom: 8 })
-      .onClick(() => this.openTopic(topic))
-  }
-
-  /** Discover 入口块：彩色方标 + 标题 */
-  @Builder
-  discoverEntry(iconRes: Resource, color: ResourceColor, labelRes: Resource) {
-    Row({ space: 10 }) {
+  discoverEntry(iconRes: Resource, bg: ResourceColor, labelRes: Resource, kind: string) {
+    Row({ space: 12 }) {
       Stack() {
-        OctIcon({ res: iconRes, iconSize: 16, iconColor: Color.White })
+        OctIcon({ res: iconRes, iconSize: 22, iconColor: Color.White })
       }
       .width(44)
       .height(44)
-      .backgroundColor(color)
-        .borderRadius(6)
+      .borderRadius(12)
+      .backgroundColor(bg)
       Text(labelRes)
-        .fontSize($r('app.float.body_font_size'))
+        .fontSize($r('app.float.sub_text_font_size'))
         .fontWeight(FontWeight.Medium)
         .fontColor($r('app.color.text_primary'))
     }
     .width('100%')
-    .padding(12)
-    .borderRadius(12)
-    .backgroundColor($r('app.color.card_background'))
-    .margin({ bottom: 10 })
-    .onClick(() => this.comingSoon())
-  }
-
-  @Builder
-  recommendedCard(repo: RepoSummary) {
-    Column({ space: 6 }) {
-      Row({ space: 4 }) {
-        Text('●')
-          .fontSize(12)
-          .fontColor($r('app.color.link_blue'))
-        Text(repo.nameWithOwner)
-          .fontSize($r('app.float.body_font_size'))
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.link_blue'))
-          .maxLines(1)
-          .layoutWeight(1)
-        Text(this.starsText(repo))
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-      }
-      .width('100%')
-      .onClick(() => {
-        this.pathStack.pushPathByName('repoDetail', repo.nameWithOwner);
-      })
-
-      if (repo.primaryLanguage !== '') {
-        Text(`${repo.primaryLanguage}`)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .width('100%')
-      }
-
-      Button($r('app.string.explore_star'))
-        .fontSize($r('app.float.caption_font_size'))
-        .fontColor($r('app.color.link_blue'))
-        .backgroundColor(Color.Transparent)
-        .height(36)
-        .borderRadius(6)
-        .border({ width: 1, color: $r('app.color.border') })
-        .onClick(() => this.comingSoon())
-    }
-    .padding($r('app.float.card_padding'))
-    .borderRadius($r('app.float.card_radius'))
-    .backgroundColor($r('app.color.card_background'))
-    .width('100%')
-    .margin({ bottom: 8 })
-  }
-
-  /** topic 仓库计数文案（Spec 012：%1$s/%2$d 位置占位） */
-  private topicCountText(): string {
-    return resText(this.getUIContext(), $r('app.string.explore_topic_count'),
-      this.selectedTopic, this.result?.repositoryCount ?? 0);
-  }
-
-  private starsText(repo: RepoSummary): string {
-    return resText(this.getUIContext(), $r('app.string.repo_stars_fmt'), repo.stargazerCount);
+    .padding({ top: 8, bottom: 8 })
+    .onClick(() => this.openListPage(kind))
   }
 
   build() {
@@ -166,73 +83,80 @@ export struct ExploreView {
 
       Scroll() {
         Column() {
-          // Discover 区（Spec 003）
-          Text($r('app.string.explore_discover'))
-            .fontSize($r('app.float.title_font_size'))
-            .fontWeight(600)
-            .fontColor($r('app.color.text_primary'))
-            .width('100%')
-            .margin({ top: 8, bottom: 8 })
+          // Discover 区（白画布，水平 padding）
+          Column() {
+            Text($r('app.string.explore_discover'))
+              .fontSize($r('app.float.title_font_size'))
+              .fontWeight(600)
+              .fontColor($r('app.color.text_primary'))
+              .width('100%')
+              .margin({ bottom: 4 })
 
-          this.discoverEntry($r('app.media.oct_flame_16'), $r('app.color.flame_fg'), $r('app.string.explore_trending'))
-          this.discoverEntry($r('app.media.oct_sparkle_16'), $r('app.color.shortcut_purple_fg'), $r('app.string.explore_awesome'))
-
-          // Activity 区（Spec 003 推荐流）
-          Text($r('app.string.explore_activity'))
-            .fontSize($r('app.float.title_font_size'))
-            .fontWeight(600)
-            .fontColor($r('app.color.text_primary'))
-            .width('100%')
-            .margin({ top: 16, bottom: 8 })
-
-          if (this.recommended.length > 0) {
-            ForEach(this.recommended, (repo: RepoSummary) => {
-              this.recommendedCard(repo)
-            }, (repo: RepoSummary) => repo.id !== '' ? repo.id : repo.nameWithOwner)
-          }
-
-          // Topics 区（原功能保留）
-          Text($r('app.string.explore_topics_title'))
-            .fontSize($r('app.float.title_font_size'))
-            .fontWeight(600)
-            .fontColor($r('app.color.text_primary'))
-            .width('100%')
-            .margin({ top: 16, bottom: 8 })
-
-          Flex({ wrap: FlexWrap.Wrap }) {
-            ForEach(FEATURED_TOPICS, (topic: string) => {
-              this.topicChip(topic)
-            }, (topic: string) => topic)
+            this.discoverEntry($r('app.media.oct_flame_16'), $r('app.color.flame_fg'),
+              $r('app.string.explore_trending'), 'trending')
+            this.discoverEntry($r('app.media.oct_smiley_16'), $r('app.color.merged_badge_bg'),
+              $r('app.string.explore_awesome'), 'awesome')
           }
           .width('100%')
+          .padding({ left: 16, right: 16 })
 
-          if (this.selectedTopic !== '') {
-            Text(this.topicCountText())
-              .fontSize($r('app.float.caption_font_size'))
-              .fontColor($r('app.color.text_secondary'))
+          // Activity 区（灰带全宽：官方 canvas.inset，页面画布为 canvas.default 白）
+          Column() {
+            Row() {
+              Text($r('app.string.explore_activity'))
+                .fontSize($r('app.float.title_font_size'))
+                .fontWeight(600)
+                .fontColor($r('app.color.text_primary'))
+              Blank()
+              Row() {
+                OctIcon({ res: $r('app.media.oct_filter_16'), iconSize: 18, iconColor: $r('app.color.text_primary') })
+              }
+              .width(36)
+              .height(36)
+              .onClick(() => this.filterComing())
+            }
+            .width('100%')
+
+            if (this.events.length > 0) {
+              Column({ space: 16 }) {
+                ForEach(this.events, (event: ExploreActivityEvent) => {
+                  ExploreActivityCard({
+                    token: this.token,
+                    event: event,
+                    onOpenPr: (): void => {
+                      this.pathStack.pushPathByName('prDetail', `${event.repoFullName}/${event.number}`);
+                    },
+                    onOpenRepo: (): void => {
+                      this.pathStack.pushPathByName('repoDetail', event.repoFullName);
+                    },
+                    onOpenUser: (): void => {
+                      this.pathStack.pushPathByName('userProfile', event.authorLogin);
+                    }
+                  })
+                }, (event: ExploreActivityEvent) => event.key)
+              }
               .width('100%')
-              .margin({ top: 12, bottom: 8 })
-
-            if (this.result !== null && !this.loading && this.errorMsg === '') {
-              ForEach(this.result.repos, (repo: RepoSummary) => {
-                RepoCard({
-                  repo: repo,
-                  onOpen: (): void => {
-                    this.pathStack.pushPathByName('repoDetail', repo.nameWithOwner);
-                  }
-                })
-                  .margin({ bottom: 8 })
-              }, (repo: RepoSummary) => repo.id !== '' ? repo.id : repo.nameWithOwner)
+              .margin({ top: 8 })
+            } else if (!this.loading && this.errorMsg === '') {
+              StateView({
+                loading: false,
+                error: '',
+                empty: true,
+                emptyText: $r('app.string.explore_activity_empty')
+              })
             } else {
               StateView({
                 loading: this.loading,
                 error: this.errorMsg,
-                onRetry: () => this.openTopic(this.selectedTopic)
+                onRetry: (): void => this.load()
               })
             }
           }
+          .width('100%')
+          .padding({ left: 16, right: 16, top: 12, bottom: 24 })
+          .backgroundColor($r('app.color.bg_page'))
+          .margin({ top: 8 })
         }
-        .padding({ left: 16, right: 16, bottom: 16 })
         .width('100%')
       }
       .layoutWeight(1)
@@ -244,6 +168,6 @@ export struct ExploreView {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.bg_page'))
+    .backgroundColor($r('app.color.card_background'))
   }
 }

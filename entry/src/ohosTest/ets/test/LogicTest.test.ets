@@ -25,8 +25,8 @@ import { buildNotificationsPath, pullRefFromUrl, buildPullStatesQuery, mapPullMe
 import { buildCodeQuery, mapCodeSearch, mapSearchNode, mapSearchResults, buildQualifierInsert, pushSearchHistory, buildSearchQuery, mapSearchOverview, formatBigCount, isLightHexColor } from '../../../main/ets/services/SearchService';
 import { buildCodeSnippet, splitLines, buildFragmentLines, parseCodeSearchItem, fileBadgeKey } from '../../../main/ets/services/CodeSearchService';
 import { RawMatch } from '../../../main/ets/services/CodeSearchService';
-import { buildTopicQuery } from '../../../main/ets/services/ExploreService';
-import { mapSearchResult } from '../../../main/ets/models/ExploreModels';
+import { buildTrendingPath, buildAwesomePath, buildPrDetailsQuery, mapSearchRepos } from '../../../main/ets/services/ExploreService';
+import { mapActivityEvents, mapActivityEventsWithDetails, summarizeBody, ActivityPrRef } from '../../../main/ets/models/ExploreModels';
 import { mapUserProfile, isSelfProfile } from '../../../main/ets/models/ProfileModels';
 import { mapRepoDetail, nextStarAction } from '../../../main/ets/models/RepoDetailModels';
 import { parseAchievementDetail, extractAchievementSlugs } from '../../../main/ets/models/AchievementModels';
@@ -281,17 +281,164 @@ export default function logicTest(testsuiteName: string) {
       expect(items[1].isMarkdown).assertFalse();
     });
 
-    it('buildTopicQuery_and_mapSearchResult', 0, () => {
-      expect(buildTopicQuery('harmonyos')).assertEqual('topic:harmonyos');
-      const node1: JsonMap = { 'id': 'R1', 'nameWithOwner': 'a/b', 'stargazerCount': 5 };
-      const node2: JsonMap = { 'id': 'R2', 'nameWithOwner': 'c/d', 'stargazerCount': 1 };
-      const nodes: JsonMap[] = [node1, node2];
-      const searchNode: JsonMap = { 'repositoryCount': 2, 'nodes': nodes };
-      const result = mapSearchResult({ 'search': searchNode }, 'harmonyos');
-      expect(result.topic).assertEqual('harmonyos');
-      expect(result.repositoryCount).assertEqual(2);
-      expect(result.repos.length).assertEqual(2);
-      expect(result.repos[1].nameWithOwner).assertEqual('c/d');
+    it('mapActivityEvents_mergedOnly_dedupe', 0, () => {
+      const prEvent = (repoName: string, number: number, action: string): JsonMap => {
+        return {
+          'type': 'PullRequestEvent',
+          'id': `e_${repoName}_${number}`,
+          'created_at': '2026-09-05T18:51:20Z',
+          'actor': { 'login': 'alice', 'avatar_url': 'https://a/1' },
+          'org': { 'avatar_url': 'https://o/1' },
+          'repo': { 'name': repoName },
+          'payload': {
+            'action': action,
+            'number': number,
+            'pull_request': { 'number': number, 'head': { 'ref': 'feature/x' } }
+          }
+        };
+      };
+      const events: Object[] = [
+        prEvent('a/b', 1, 'merged'),
+        { 'type': 'PushEvent' },
+        prEvent('a/b', 2, 'opened'),
+        prEvent('a/b', 1, 'merged'),
+        prEvent('c/d', 3, 'closed'),
+        prEvent('c/d', 4, 'merged')
+      ];
+      const refs = mapActivityEvents(events);
+      expect(refs.length).assertEqual(2);
+      expect(refs[0].repoFullName).assertEqual('a/b');
+      expect(refs[0].number).assertEqual(1);
+      expect(refs[0].actorLogin).assertEqual('alice');
+      expect(refs[0].orgAvatar).assertEqual('https://o/1');
+      expect(refs[0].headRef).assertEqual('feature/x');
+      expect(refs[1].number).assertEqual(4);
+    });
+
+    it('mapActivityEvents_cap10', 0, () => {
+      const events: Object[] = [];
+      for (let i = 1; i <= 15; i++) {
+        events.push({
+          'type': 'PullRequestEvent',
+          'id': `e${i}`,
+          'repo': { 'name': 'a/b' },
+          'payload': { 'action': 'merged', 'number': i, 'pull_request': { 'number': i } }
+        });
+      }
+      expect(mapActivityEvents(events).length).assertEqual(10);
+    });
+
+    it('buildPrDetailsQuery_alias_escape', 0, () => {
+      const normal: ActivityPrRef = {
+        eventId: 'e1', repoFullName: 'a/b', number: 7, headRef: 'f',
+        actorLogin: '', actorAvatar: '', orgAvatar: '', createdAt: ''
+      };
+      const weird: ActivityPrRef = {
+        eventId: 'e2', repoFullName: 'o/ha"ck', number: 8, headRef: '',
+        actorLogin: '', actorAvatar: '', orgAvatar: '', createdAt: ''
+      };
+      const q = buildPrDetailsQuery([normal, weird]);
+      expect(q.startsWith('query ExploreActivity {')).assertTrue();
+      expect(q.includes('r0: repository(owner: "a", name: "b")')).assertTrue();
+      expect(q.includes('pullRequest(number: 7)')).assertTrue();
+      expect(q.includes('pullRequest(number: 8)')).assertTrue();
+      expect(q.includes('name: "ha\\"ck"')).assertTrue();
+    });
+
+    it('mapActivityEventsWithDetails_merge_fallback', 0, () => {
+      const refs: ActivityPrRef[] = [{
+        eventId: 'e1', repoFullName: 'a/b', number: 7, headRef: 'feature/x',
+        actorLogin: 'alice', actorAvatar: 'https://a/1', orgAvatar: '', createdAt: '2026-09-05T18:51:20Z'
+      }];
+      const data: JsonMap = {
+        'r0': {
+          'pullRequest': {
+            'id': 'PR_1', 'title': 'T', 'body': '- x', 'merged': true,
+            'author': { 'login': 'bob', 'avatarUrl': 'https://b/2' },
+            'reactionGroups': [
+              { 'content': 'THUMBS_UP', 'viewerHasReacted': false, 'reactors': { 'totalCount': 3 } }
+            ]
+          }
+        }
+      };
+      const out = mapActivityEventsWithDetails(refs, data);
+      expect(out.length).assertEqual(1);
+      expect(out[0].key).assertEqual('a/b/7');
+      expect(out[0].title).assertEqual('T');
+      expect(out[0].authorLogin).assertEqual('bob');
+      expect(out[0].subjectId).assertEqual('PR_1');
+      expect(out[0].reactions.length).assertEqual(1);
+      expect(out[0].reactions[0].count).assertEqual(3);
+      // alias 缺失（PR 已删）→ 剔除
+      expect(mapActivityEventsWithDetails(refs, { } as JsonMap).length).assertEqual(0);
+      // author 空 → 回退事件 actor
+      const noAuthor: JsonMap = {
+        'r0': {
+          'pullRequest': {
+            'id': 'PR_1', 'title': 'T', 'body': '', 'merged': true,
+            'author': null, 'reactionGroups': []
+          }
+        }
+      };
+      const out2 = mapActivityEventsWithDetails(refs, noAuthor);
+      expect(out2.length).assertEqual(1);
+      expect(out2[0].authorLogin).assertEqual('alice');
+      expect(out2[0].authorAvatar).assertEqual('https://a/1');
+    });
+
+    it('summarizeBody_parse', 0, () => {
+      const body = [
+        '## Summary',
+        '',
+        '- replace `linkit@0.1.19` as owner',
+        '- see [docs](https://example.com) for more',
+        '![img](https://x/y.png)',
+        '```rust',
+        'let x = 1;',
+        '```',
+        '> quote',
+        'plain line'
+      ].join('\n');
+      const lines = summarizeBody(body);
+      // 标题/空行/图片行/围栏标记/引用行剥除，剩 bullet×2 + 围栏内容 + 普通行
+      expect(lines.length).assertEqual(4);
+      expect(lines[0].bullet).assertTrue();
+      expect(lines[0].segments.length).assertEqual(3);
+      expect(lines[0].segments[0].text).assertEqual('replace ');
+      expect(lines[0].segments[1].isCode).assertTrue();
+      expect(lines[0].segments[1].text).assertEqual('linkit@0.1.19');
+      expect(lines[0].segments[2].text).assertEqual(' as owner');
+      expect(lines[1].segments[0].text).assertEqual('see docs for more');
+      expect(lines[2].segments[0].isCode).assertTrue();
+      expect(lines[2].segments[0].text).assertEqual('let x = 1;');
+      expect(lines[3].bullet).assertFalse();
+      expect(lines[3].segments[0].text).assertEqual('plain line');
+    });
+
+    it('buildTrendingPath_and_awesomePath', 0, () => {
+      const now = Date.parse('2026-09-06T12:00:00Z');
+      const path = buildTrendingPath(now, 7);
+      expect(path.startsWith('/search/repositories?q=')).assertTrue();
+      expect(path.includes('created%3A%3E2026-08-30')).assertTrue();
+      expect(path.includes('sort=stars&order=desc')).assertTrue();
+      expect(buildAwesomePath().includes('topic%3Aawesome-list')).assertTrue();
+    });
+
+    it('mapSearchRepos_rest', 0, () => {
+      const body = JSON.stringify({
+        'items': [{
+          'id': '1', 'name': 'b', 'full_name': 'a/b', 'description': 'd',
+          'stargazers_count': 10, 'forks_count': 2, 'language': 'TypeScript',
+          'private': false, 'owner': { 'login': 'a', 'avatar_url': 'https://av' }
+        }]
+      });
+      const repos = mapSearchRepos(body);
+      expect(repos.length).assertEqual(1);
+      expect(repos[0].nameWithOwner).assertEqual('a/b');
+      expect(repos[0].stargazerCount).assertEqual(10);
+      expect(repos[0].forkCount).assertEqual(2);
+      expect(repos[0].primaryLanguage).assertEqual('TypeScript');
+      expect(repos[0].ownerLogin).assertEqual('a');
     });
 
     it('buildQualifierInsert', 0, () => {

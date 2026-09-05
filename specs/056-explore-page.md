@@ -3,7 +3,7 @@
 > BFS Level: 2
 > 关联截图: 官方 App Explore Tab（微信图片_20260906025804，Explore 大标题 + Discover 两入口 + Activity 合并 PR 卡片流）
 > 上游 Spec: 003
-> 状态: draft
+> 状态: implemented
 
 ---
 
@@ -47,7 +47,7 @@ Explore 底栏 Tab 页，按官方 App 2026 版式重做：上部 Discover 区�
 > 可行性：15 项中 11/15 可行
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
-|---|------|------|------|--------|-------------|------|
+| --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | 顶部 | Explore 大标题 | 静态 | ✅ | - | 20fp，同 Home 头部约定 |
 | 2 | Discover | 节标题 | 静态 | ✅ | - | |
 | 3 | Discover | Trending Repositories 入口 | 跳转列表页 | ✅ | - | 红方块（flame_fg）+ oct_flame_16 白 icon |
@@ -100,7 +100,7 @@ REST GET /search/repositories?q=topic%3Aawesome-list&sort=stars&order=desc&per_p
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | 官方个性化 Activity feed | 无公开 API | REST received_events（关注者+watch 仓库事件）近似，仅取 merged PR 事件，repo+number 去重、上限 10 条 |
 | 官方 Trending 算法 | 无公开 API | REST search 近似（7 天新建按星排序） |
 | 官方 Awesome Lists 精选 | 编辑内容无 API | REST search topic:awesome-list 按星近似 |

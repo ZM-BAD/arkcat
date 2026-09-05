@@ -20,6 +20,8 @@ export struct ReactionBar {
   @Param reactions: ReactionGroup[] = [];
   /** 官方 release 变体：笑脸圆钮 + 六宫格弹层替代「+」chip（走查修正九轮） */
   @Param smileyTrigger: boolean = false;
+  /** 笑脸精简态（Explore 信息流卡，Spec 056）：仅笑脸按钮，点击直达选择面板 */
+  @Param smileyOnly: boolean = false;
   /** mutation 成功回调（父级远期刷新；即时翻转由组件本地完成） */
   @Event onChanged: () => void = (): void => { };
   /** release 变体长按芯片：跳 Reactees 整页（评论变体保持底部 sheet） */
@@ -211,7 +213,26 @@ export struct ReactionBar {
     .height(152)
   }
 
+  /** 观察者是否已有任一反应（笑脸高亮，Spec 056） */
+  private viewerReacted(): boolean {
+    return this.mirror.some((g: ReactionGroup): boolean => g.viewerHasReacted);
+  }
+
   build() {
+    if (this.smileyOnly) {
+      // 精简态（Spec 056 信息流卡）：笑脸按钮，点击直达 8 reaction 选择面板
+      Row() {
+        OctIcon({
+          res: $r('app.media.oct_smiley_16'),
+          iconSize: 22,
+          iconColor: this.viewerReacted() ? $r('app.color.link_blue') : $r('app.color.text_secondary')
+        })
+      }
+      .width(36)
+      .height(36)
+      .borderRadius(18)
+      .onClick(() => this.openAll())
+    } else {
     // 芯片行可横向滚动：外层 Scroll 限宽防溢出容器，内层行 minWidth 撑满、超宽时可滑（不能 width('100%')，否则永不溢出）
     Scroll() {
       Row({ space: 6 }) {
@@ -284,5 +305,6 @@ export struct ReactionBar {
         this.sheetKind = '';
       }
     })
+    }
   }
 }
