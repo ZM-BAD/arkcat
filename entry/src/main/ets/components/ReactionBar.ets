@@ -202,8 +202,7 @@ export struct ReactionBar {
     Scroll() {
       Row({ space: 6 }) {
         // 官方 release 触发钮：圆轮廓笑脸，点击弹居中六宫格（bindPopup $$ 双向，点外部自关）
-        if (this.smileyTrigger) {
-          Stack() {
+        if (this.smileyTrigger) {          Stack() {
             OctIcon({ res: $r('app.media.oct_smiley_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
           }
           .width(36)
@@ -222,7 +221,8 @@ export struct ReactionBar {
             this.pickerOpen = !this.pickerOpen;
           })
         }
-        ForEach(this.mirror, (g: ReactionGroup) => {
+        // 只渲染计数 > 0 的组（官方语义：0 反应不显示；mirror 保留全量供选择器/翻转用）
+        ForEach(this.mirror.filter((g: ReactionGroup) => g.count > 0), (g: ReactionGroup) => {
           Row({ space: 2 }) {
             Text(reactionEmoji(g.content))
               .fontSize($r('app.float.chip_font_size'))
@@ -257,6 +257,7 @@ export struct ReactionBar {
       }
       .constraintSize({ minWidth: '100%' })
     }
+    .scrollable(ScrollDirection.Horizontal)
     .scrollBar(BarState.Off)
     .width('100%')
     .bindSheet($$this.sheetOpen, this.sheetPanel(), {
