@@ -223,23 +223,24 @@ export struct ReactionBar {
         }
         // 只渲染计数 > 0 的组（官方语义：0 反应不显示；mirror 保留全量供选择器/翻转用）
         ForEach(this.mirror.filter((g: ReactionGroup) => g.count > 0), (g: ReactionGroup) => {
+          // 官方语义：整个芯片可点=add/remove（自己已反应则 -1）；长按展开反应用户列表
           Row({ space: 2 }) {
             Text(reactionEmoji(g.content))
               .fontSize($r('app.float.chip_font_size'))
               .padding({ left: 6, top: 4, bottom: 4 })
-              .responseRegion({ x: -4, y: -8, width: '110%', height: '160%' })
-              .onClick(() => this.toggle(g.content))
             Text(`${g.count}`)
               .fontSize($r('app.float.caption_font_size'))
               .fontWeight(g.viewerHasReacted ? FontWeight.Medium : FontWeight.Regular)
               .fontColor(g.viewerHasReacted ? $r('app.color.link_blue') : $r('app.color.text_secondary'))
               .padding({ left: 2, right: 6, top: 5, bottom: 5 })
-              .onClick(() => this.openUsers(g))
           }
           .borderRadius(12)
           .backgroundColor(g.viewerHasReacted ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
           .border({ width: g.viewerHasReacted ? 1 : 0, color: $r('app.color.link_blue') })
           .margin({ right: 2 })
+          .onClick(() => this.toggle(g.content))
+          .gesture(LongPressGesture({ repeat: false })
+            .onAction(() => this.openUsers(g)))
         }, (g: ReactionGroup) => g.content + '_' + g.count + (g.viewerHasReacted ? '_r' : ''))
         if (!this.smileyTrigger && this.mirror.length < REACTION_META.length) {
           Text('+')
