@@ -45,7 +45,7 @@ PR 的文件变更 Diff 视图，展示变更文件列表、每个文件的 diff
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | 接口 | 备注 |
-|---|------|------|------|--------|------|------|
+| --- | ------ | ------ | ------ | -------- | ------ | ------ |
 | 1 | App Bar 左 | ← 返回 | 回退 | ✅ 纯 UI | — | — |
 | 2 | App Bar 中 | 「Files changed (N)」 | 展示 | ✅ | GraphQL `files.totalCount` | — |
 | 3 | App Bar 右 | ··· 更多菜单 | 文件查找 | ✅ 客户端 | — | — |
@@ -122,7 +122,7 @@ mutation MarkFileAsViewed($pullRequestId: ID!, $path: String!) {
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | Diff 内容 | GraphQL 无直接 Diff 字段 | REST `pulls/{n}/files` 兜底 |
 | 行内评论 | 需 REST API | 实现 REST 调用 |
 | 附件上传 | 需 REST Asset Upload | 暂不实现 |

@@ -12,7 +12,7 @@
 ## 0. 三层令牌模型（与 Primer 一致）
 
 | 层 | 含义 | StarRaft 落地 |
-|---|---|---|
+| --- | --- | --- |
 | Base（原始值） | `base-color-blue-5` 等原始色板/尺寸 | `primer/primitives` 归档 + `PrimerTokens.ets` |
 | Functional（语义角色） | `fgColor-accent` / `bgColor-default` | resources base 与 dark 两套 `element/color.json`（双主题） |
 | Component（组件级） | 按钮/卡片覆写 | ArkUI 组件内按规范引用上述令牌 |
@@ -41,7 +41,7 @@
 ## 3. 排版（Typography）
 
 | 级别 | 字号/行高 | 字重 | 用途 |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | title-large | 32 / 48 | 600 | 页面标题 |
 | title-medium | 20 / 32 | 600 | 区块标题（Home/Files 等） |
 | body-large | 16 / 24 | 400 | 正文（强调处 500） |
@@ -55,7 +55,7 @@
 ## 4. 圆角（Border Radius）
 
 | Token | 值 | 用途 |
-|---|---|---|
+| --- | --- | --- |
 | `RADIUS_SMALL` | 3 | 输入框、小标签、chip |
 | `RADIUS_MEDIUM` | 6 | 按钮、卡片（配合 border 时） |
 | `RADIUS_LARGE` | 12 | 大卡片、模态框、列表容器 |
@@ -70,7 +70,7 @@
 ## 6. 阴影（Elevation）
 
 | Token | 值 | 用途 |
-|---|---|---|
+| --- | --- | --- |
 | `SHADOW_RESTING` | `0 1px 0 rgba(31,35,40,0.04)` | 静置卡片、底栏 |
 | `SHADOW_FLOATING` | `0 8px 24px rgba(140,149,159,0.2)` | 浮层、下拉、对话框（dark 下减弱至 50% 不透明度） |
 
@@ -98,7 +98,7 @@
 ## 10. 参考映射（Primer Web → ArkUI）
 
 | Primer React | ArkUI 实现 | 备注 |
-|---|---|---|
+| --- | --- | --- |
 | Button (variant) | `Button` 或自定义组件 | 参照官方 variant 语义 |
 | ActionList | `List` + `ListItem` | 注意 44px 行高、leading 图标 |
 | Dialog | `CustomDialog` | 浮层阴影 + 焦点管理 |

@@ -35,7 +35,7 @@ Home My Work「Top Repositories」入口进入的仓库列表页，展示 viewer
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
-|---|------|------|------|--------|-------------|------|
+| --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar 左 | ← 返回 | 回退 | ✅ | —（纯 UI） | — |
 | 2 | App Bar 中 | 「Top Repositories」标题 | 页面标题 | ✅ | —（纯 UI） | — |
 | 3 | 筛选行 | All 下拉（All/Public/Private） | 可见性筛选 | ✅ | `repositories(privacy:)` | 默认 All |
@@ -72,7 +72,7 @@ query WorkTopRepositories($privacy: RepositoryPrivacy, $first: Int = 50, $after:
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | 官方「Top Repositories」排序算法 | 官方为活跃度加权排序，无公开字段 | 用 PUSHED_AT 降序近似（备注说明） |
 | 仓库行描述/星数 | 官方该列表行无描述（仅头像+两行文字） | 不做额外信息，与截图对齐 |
 

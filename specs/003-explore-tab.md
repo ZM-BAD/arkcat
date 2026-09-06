@@ -52,7 +52,7 @@
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | 接口 | 备注 |
-|---|------|------|------|--------|------|------|
+| --- | ------ | ------ | ------ | -------- | ------ | ------ |
 | 1 | 标题 | Explore | 纯展示 | ✅ 纯 UI | — | — |
 | 2 | Discover 区 | 🔥 Trending Repositories 入口块 | 跳转趋势仓库 | ⚠️ | REST `search/repositories?q=stars:>1000&sort=stars` | 无官方 trending 接口，用高星 search 近似 |
 | 3 | Discover 区 | ✦ Awesome Lists 入口块 | 跳转精选列表 | ✅ | GraphQL `search topic:awesome` | — |
@@ -91,7 +91,7 @@ query StarredSearch($query: String!, $first: Int = 20) {
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | 官方个性化 Activity 流 | 官方 App 独立 API，无公开接口 | 用高星推荐仓库卡近似 |
 | Collections 精选集合 | 官方运营内容无公开 API | 隐藏（原边界） |
 | Trending 官方数据源 | 无公开 trending 接口 | `stars:>1000` 按星标 search 近似 |

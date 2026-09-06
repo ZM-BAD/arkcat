@@ -45,7 +45,7 @@ RepoReleases（列表，已有）→ 点击进：
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL/REST 接口 | 备注 |
-|---|------|------|------|--------|-------------------|------|
+| --- | ------ | ------ | ------ | -------- | ------------------- | ------ |
 | 1 | 列表 | 详情入口 | Release 卡片点击进入详情（替换占位 toast）；2026 后发布/最新卡同样可点 | ✅ | 已有查询（补 tagName/publishedAt） | React 现有卡片 onClick 缺失项 |
 | 2 | 详情 | 版本头卡 | name/tagName/author/publishedAt + Draft/Prerelease 徽章 | ✅ | repository.releases.nodes{…} 补字段 | —— |
 | 3 | 详情 | body 渲染 | release bodyHTML → MarkdownView（若 API 无 bodyHTML 则 raw markdown + renderMarkdown） | ✅ | 见四 | 040 组件直接复用 |
@@ -95,7 +95,7 @@ GET /repos/{owner}/{repo}/releases/download/{tag}/{asset_name}
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | 私有仓库资产直接用浏览器直链 | browserDownloadUrl 对私有 404 | 用授权 HTTP 请求下载（token）后本地保存 |
 | 大文件下载 | 移动端网络/内存限制 | >200MB 只提供「在浏览器打开」+ 复制链接 |
 | 下载续传/断点 | 端侧无需要 | 不做；失败重试，取消即弃 |

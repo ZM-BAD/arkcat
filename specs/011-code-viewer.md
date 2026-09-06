@@ -34,7 +34,7 @@
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
-|---|------|------|------|--------|-------------|------|
+| --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar 左 | ← 返回 | 回退 | ✅ 纯 UI | — | 回 Files 列表 |
 | 2 | App Bar 中 | 文件名 | 展示（basename，超长省略） | ✅ 纯 UI | — | — |
 | 3 | App Bar 右 | ⭮ 分享 | 复制内容 | ⚠️ 客户端部分 | — | MVP 剪贴板复制全文 + toast |
@@ -75,7 +75,7 @@ query FileContent($owner: String!, $name: String!, $expression: String!) {
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | 语法高亮 | ArkUI 无原生代码着色 | MVP 本地 tokenizer：注释 > 字符串 > 关键字 > 函数调用样式；按扩展名选用关键字集（js/ts/et/py/java/cs/go/rs/…） |
 | Markdown 渲染 | ArkUI 无原生 MD 渲染组件 | 显示原始文本；点击复制/代码查看不受影响（后续评估三方组件或自研简化渲染） |
 | 二进制/大文件 | `isBinary=true` / `isTruncated=true` | 二进制显示「Binary file not supported」占位；截断提示「File is too large」 |

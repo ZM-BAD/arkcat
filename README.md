@@ -8,7 +8,7 @@
 ## 📋 Project Overview
 
 | Item | Description |
-|------|-------------|
+| ------ | ------------- |
 | **App Name** | StarRaft |
 | **Bundle ID** | `me.zmbad.starraft` |
 | **Target Platform** | HarmonyOS 7.0 (API 26.0.0) |
@@ -69,7 +69,7 @@
 ### Spec Progress
 
 | Page | Spec File | Status |
-|------|----------|--------|
+| ------ | ---------- | -------- |
 | Home Tab | `specs/001-home-tab.md` | ✅ Done |
 | Inbox Tab | `specs/002-inbox-tab.md` | ✅ Done |
 | Explore Tab | `specs/003-explore-tab.md` | ✅ Done |

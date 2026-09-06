@@ -8,7 +8,7 @@
 ## 📋 项目概述
 
 | 项目 | 说明 |
-|------|------|
+| ------ | ------ |
 | **应用名称** | StarRaft |
 | **包名** | `me.zmbad.starraft` |
 | **目标平台** | HarmonyOS 7.0（API 26.0.0） |
@@ -69,7 +69,7 @@
 ### Spec 进度
 
 | 页面 | Spec 文件 | 状态 |
-|------|----------|------|
+| ------ | ---------- | ------ |
 | Home Tab | `specs/001-home-tab.md` | ✅ 完成 |
 | Inbox Tab | `specs/002-inbox-tab.md` | ✅ 完成 |
 | Explore Tab | `specs/003-explore-tab.md` | ✅ 完成 |

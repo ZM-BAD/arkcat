@@ -12,7 +12,7 @@
 ## 已验证 URL 映射（默认色，仅此一档）
 
 | 成就显示名 | slug | 文件名 | 完整 URL |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Quick Draw | `quickdraw` | `quickdraw-default.png` | <https://github.githubassets.com/images/modules/profile/achievements/quickdraw-default.png> |
 | Starstruck | `starstruck` | `starstruck-default.png` | <https://github.githubassets.com/images/modules/profile/achievements/starstruck-default.png> |
 | Pair Extraordinaire | `pair-extraordinaire` | `pair-extraordinaire-default.png` | <https://github.githubassets.com/images/modules/profile/achievements/pair-extraordinaire-default.png> |
@@ -27,7 +27,7 @@
 ## 已证伪（勿采信）
 
 | 猜测 | 结果 |
-|---|---|
+| --- | --- |
 | `quick-draw-default.png`（带连字符 slug） | HTTP 404 |
 | `star-struck-default.png` | HTTP 404 |
 | `*-rainbow.png`（彩虹/经典变体） | 全部 404，仅有一档 default |

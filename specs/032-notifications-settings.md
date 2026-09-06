@@ -44,7 +44,7 @@ Settings 页「Notification Options」行点击进入的通知设置二级页。
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
-|---|------|------|------|--------|-------------|------|
+| --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar | ← 返回 + Notifications 标题 | 导航 | ✅ | —（纯 UI） | 自绘头部，hideTitleBar |
 | 2 | General | Working hours 行 + Off | 展示 | ✅ | — | 静态值，点击不响应 |
 | 3 | General | System Options（齿轮 + Android 提示） | — | ✅ | — | **用户指令整行略过**，不渲染 |
@@ -80,7 +80,7 @@ notif_left_swipe / notif_right_swipe（'done' | 'unsubscribe'，默认 'done' / 
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | System Options（Android 阻塞提示 + 齿轮） | 用户指令：Android 专属文案不抄 | 整行略过，不渲染 |
 | Live notifications 的「require Android 16 or later」说明 | 用户指令：Android 专属文案不抄 | 说明行略过，保留开关行 |
 | Working hours 点击编辑 | 参考截图未提供交互 | 静态展示 Off |

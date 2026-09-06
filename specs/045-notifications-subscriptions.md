@@ -33,7 +33,7 @@ RepoDetail
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL/REST 接口 | 备注 |
-|---|------|------|------|--------|-------------------|------|
+| --- | ------ | ------ | ------ | -------- | ------------------- | ------ |
 | 1 | Inbox | 类型分栏 | 通知按 subject.type 本地过滤（Issue/PR/Release/Discussion/Mention/CI） | ✅ | 现有 REST `GET /notifications?participating=true` 返回类型字段 | 客户端过滤不增加请求 |
 | 2 | Inbox | 全部已读 | 批量标记（首页 badge 同步刷新） | ✅ | REST `PUT /notifications` | 确认弹窗后执行 |
 | 3 | Inbox | 清空已读 | 已读线程不再展示（本地隐藏 + 服务端可选 REST `DELETE`） | ✅ | REST `DELETE /notifications` | 与官方「清空」行为一致（默认只隐藏） |
@@ -80,7 +80,7 @@ DELETE /notifications
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | 通知偏好云端设置 | 只有网页端 UI（watch 选项等） | 界面只读说明「请到 github.com 设置」，不模拟 |
 | PROTECTED 订阅（机构强制） | API 禁止解除 | Bell 显示锁图标灰态 + toast 说明 |
 | 通知实时推送（服务端 → 设备） | 纯端侧项目无法介入推送管线 | 不做；保持 007/002 的「打开刷新」模型；全局轮询仅在前台，不做后台 |

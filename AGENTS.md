@@ -10,7 +10,7 @@
 **StarRaft** 是基于 HarmonyOS NEXT（纯血鸿蒙）开发的 GitHub 第三方客户端应用。
 
 | 关键信息 | 值 |
-|---------|-----|
+| --------- | ----- |
 | 包名 / 平台 | `me.zmbad.starraft`；目标 HarmonyOS 7.0（API 26），最低兼容 5.0（API 12） |
 | 语言 / 构建 | ArkTS / ArkUI；hvigor（DevEco Studio 内置，CLI 经 `devecocli` 调用） |
 | 测试框架 | Hypium |
@@ -66,7 +66,7 @@
 ## 五、质量门禁
 
 | 检查项 | 触发位置 | 阻断？ |
-|--------|---------|--------|
+| -------- | --------- | -------- |
 | Spec 合规 | pre-commit + CI | ✅ 是 |
 | Commit 格式 | commit-msg hook + CI | ✅ 是 |
 | 文件结构 / Spec 编号 | CI | ✅ 是 |

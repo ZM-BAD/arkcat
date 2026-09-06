@@ -40,7 +40,7 @@ PR 详情页三区块：**Changes 卡片**（N files changed · +A −D · commi
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
-|---|------|------|------|--------|-------------|------|
+| --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar | ← 返回 + `owner/repo #N` | 导航 | ✅ | —（纯 UI） | — |
 | 2 | 标题 | Merged/Open 徽章 + 标题 + 分支胶囊 | 展示 | ✅ | `state/merged/headRefName` | — |
 | 3 | 作者行 | 头像/登录名/Owner/时间 | 展示 | ✅ | `author/createdAt` | — |
@@ -82,7 +82,7 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!) {
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | Diff 视图（Files Changed 内页） | Spec 010 独立 | 「3 files changed」点击提示后续 |
 | Markdown/富文本 | 渲染器后续 | 纯文本 |
 | 评论回复/表情 | 写操作 | 提示 |

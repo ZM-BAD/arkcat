@@ -36,7 +36,7 @@ PrDetail
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
-|---|------|------|------|--------|-------------|------|
+| --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | DiffView | 行内评论入口 | 点击未变更/变更行 → 弹评论 thread（支持 010 的行定位上下文） | ✅ | `addPullRequestReviewThread` | 需 010 先给出 path+line+side |
 | 2 | Thread | 提交 thread 评论 | 输入 body 创建 thread（未提交 review 时为 pending review 模式） | ✅ | 见四 | 与 041 输入面板组件复用 |
 | 3 | Thread | thread 回复 | 已有 thread 内追加评论 | ✅ | `addPullRequestReviewComment`（pendingReviewId + threadId 或 inReplyTo） | —— |
@@ -115,7 +115,7 @@ mutation Merge($prId: ID!, $method: MergeMethod!) {
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | 他人审阅不可编辑 | API 限制 | 仅展示，编辑入口仅 `viewerDidAuthor` |
 | 合并分支保护 / 检查失败阻塞 | mergeable=CONFLICTING 等 | 展示官方枚举文案并禁用按钮 |
 | 正在排队（merge queue） | 移动端不做入队操作 | 仅展示状态文本（⚠️ 勘探后补字段） |

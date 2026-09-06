@@ -41,7 +41,7 @@ PrDetail 正文/评论 · Releases 说明 · Discussion 描述 · 041 评论预�
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
-|---|------|------|------|--------|-------------|------|
+| --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | 组件 | MarkdownView（html 模式） | 直接渲染官方 HTML（bodyHTML / readme html / /markdown 结果），内嵌 github-markdown-css 简化版样式 | ✅ | 见四 | 核心组件，80% 场景走此模式 |
 | 2 | 组件 | MarkdownView（md 模式，仅预览用） | 本地渲染（ArkWeb 内跑 marked 之类 JS 或先服务端渲染后展示）用于评论发布前预览 | ✅ | `POST /markdown`（REST） | 041 复用；优先服务端渲染保证与官方一致 |
 | 3 | 服务 | fetchReadmeHtml(owner, repo, branch?) | REST 取 README HTML（`Accept: application/vnd.github.html`，**实测返回纯 HTML 流，直接作为 body 渲染**） | ✅ | REST `GET /repos/{o}/{r}/readme` | 默认 default branch；支持分支切换后的 README |
@@ -92,7 +92,7 @@ query IssueDetail($owner: String!, $name: String!, $number: Int!) {
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | 公式 / Mermaid / 自定义注解 | 官方 GFM 渲染管线不输出这类 HTML，官方 App 同样不渲染 | 保持与官方一致，不做扩展渲染 |
 | 站内链接全量路由 | 页面路由表有限（已实现页面为主） | 维护一张正则映射表：`/o/r`、`/o/r/issues\|pulls/{n}`、`/o/r/blob/{path}` 等命中即路由；未命中交系统浏览器 |
 | 长文性能 | 单篇超大正文（>4000 字符）ArkWeb 内存开销 | 评论/Issue 场景默认折叠 + 展开；README 场景全量加载（collapse=false），按内容高度撑开整页 |

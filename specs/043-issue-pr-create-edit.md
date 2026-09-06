@@ -38,7 +38,7 @@
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
-|---|------|------|------|--------|-------------|------|
+| --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | 各列表页 | 「+」新建入口 | 替换现有 coming-soon toast；Issue 入口 on repo；PR 入口 on repo | ✅ | 无 | Home 入口按当前账号仓库列表跳转 |
 | 2 | 表单 | Issue 模板 | 读取 `repository.issueTemplates`（title/body/file），模板选择器 + 预填 | ✅ | 见四 | 无模板则隐藏栏；YAML front matter 由 API 结构字段返回 |
 | 3 | 表单 | 标题/正文输入 | 061 风格的 TextArea + 常用（043 里用 MarkdownView 预览按钮，正文同 041 工具栏） | ✅ | 无 | 草稿 @Local 保存 |
@@ -111,7 +111,7 @@ mutation ToReady { markPullRequestReadyForReview(input: { pullRequestId: $prId }
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | 新建分支（移动端无 commit 推送能力） | API 无“一步创建含 commit 的分支”能力 | head 分支仅在「现有分支列表」中选择；REST `POST /repos/{o}/{r}/git/refs` 建空 ref 作为 ⚠️ 待测项（需要 push 权限） |
 | 无权编辑 | viewerCanUpdate=false / 403 | 隐藏编辑入口，防护后端错误提示 |
 | 草稿/临时内容 | —— | @Local 草稿键 = `draft_new_issue_{repoId}` |

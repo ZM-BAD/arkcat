@@ -37,7 +37,7 @@ Search（进入即历史/建议）
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
-|---|------|------|------|--------|-------------|------|
+| --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | 搜索页 | 类型 chips 切换 | 五类结果类型切换（保留代码） | ✅ | search(type) 参数 | 各类型独立缓存/loading |
 | 2 | 结果 | 仓库搜索 | `type: REPOSITORY` + qualifiers（in:name/description、user/org 域、language、sort:stars 等） | ✅ | 见四 | qualifiers chips 简化为一组常用过滤（language/owner） |
 | 3 | 结果 | Issue 搜索 | `type: ISSUE`（is:issue）+ qualifier（state:open、label、is:public） | ✅ | 见四 | —— |
@@ -94,7 +94,7 @@ query SearchUsers($q: String!) {
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | 搜索排序 | GraphQL search 无 orderBy 参数 | 用服务端 qualifier `sort:stars` / `sort:updated` 重查；UI 标明「服务端排序」 |
 | 代码搜索限流 | CODE 搜索每次请求消耗搜索配额（低配额警告） | 防抖 + 「还有 x 次」提示（配额取自响应 header） |
 | 「在 org 中搜索」复合语法 | 支持有限 | 查询串透传（不做语法解析），用户可自写 qualifier |

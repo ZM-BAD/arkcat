@@ -41,7 +41,7 @@ GitHub 客户端启动后默认展示的首页 Tab，位于底部导航最左侧
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
-|---|------|------|------|--------|-------------|------|
+| --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar 左 | GitHub Logo (Octocat) | 点击回到顶部/刷新 | ✅ 纯 UI | — | — |
 | 2 | App Bar 中右 | 🔍 放大镜图标 | 跳转 Search 页 | ✅ | `search(...)` | — |
 | 3 | App Bar 右 | 🔔 铃铛 + 红色角标 | 未读通知数 → 进入 Inbox | ✅ | REST `GET /notifications?per_page=1` | 通知无公开 GraphQL，REST 兜底 |
@@ -93,7 +93,7 @@ query HomePage {
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | 未读通知角标 | `notificationThreads` 仅 Enterprise Server 提供，公网 GraphQL 无此字段 | 改用 REST `GET /notifications?per_page=1` 取未读数兜底 |
 
 ---

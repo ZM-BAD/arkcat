@@ -40,7 +40,7 @@ License
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | 接口 | 备注 |
-|---|------|------|------|--------|------|------|
+| --- | ------ | ------ | ------ | -------- | ------ | ------ |
 | 1 | AppBar | ← + 仓库名（灰 16fp，上）+ License（黑粗体 20fp，下） | 返回 / 标题 | ✅ | — | 层级与 Stargazers 页相反（对照截图）；标题复用 repo_license；参数 owner/name |
 | 2 | 正文 | licenseInfo.body 全文（body 字号、行高自然段落留白） | 展示 | ✅ | repository.licenseInfo { name spdxId body } | body 首行等于 name（如 "MIT License"）时 strip，正文从 Copyright 起（对照截图） |
 | 3 | 状态 | licenseInfo = null → 空态 | 展示 | ✅ | — | repo_license_none（该仓库无许可证） |
@@ -63,7 +63,7 @@ query RepoLicense($owner: String!, $name: String!) {
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | licenseInfo 为 null | 仓库未声明许可证 | 正文区显示 repo_license_none 空态，头部照常 |
 | body 首行为许可证名（如 "MIT License"） | GitHub body 以许可证全名开头，官方截图无此行 | 首行等于 name 时 strip（name 为空不 strip） |
 | 许可证 SPDX 未识别 | licenseInfo 名称可能为 "Other" | 标题固定显示 License（非 licenseInfo.name），不做额外处理 |

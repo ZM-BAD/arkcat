@@ -33,7 +33,7 @@ PrDetail
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL/REST 接口 | 备注 |
-|---|------|------|------|--------|-------------------|------|
+| --- | ------ | ------ | ------ | -------- | ------------------- | ------ |
 | 1 | Status 卡 | 展开入口 | 「View all / N checks」→ 列表页（弹层优先） | ✅ | 无 | 现有 rollup 的 state 徽章保留 |
 | 2 | 列表 | Check runs | 按传入顺序列出 name/status/conclusion/startedAt/completedAt/时长 | ✅ | checkSuite(id) { checkRuns } 或 PR 侧 checkSuites\|checkRuns(last) | 单页 50 条内 |
 | 3 | 详情 | Check run 概览 | 名称/头图（conclusion 色块 → Primer 语义色）/commit sha 短链/日志步骤数 | ✅ | CheckRun 详情字段 | 步骤缺失（复合）时灰态 |
@@ -84,7 +84,7 @@ POST /repos/{owner}/{repo}/check-runs/{check_run_id}/rerequest
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | 重跑权限（workflow scope） | PAT 默认无 workflow | 检测 403 → 提示「请为 token 开通 workflow 权限，或在浏览器重跑」，按钮保留但二次确认 |
 | 官方在 web 上的「复现失败/打包」 | Actions API 不开放给移动端 | 不做 |
 | check run 日志全文 | GraphQL 无日志字段；官方 web 才有 | 跳浏览器看日志 |

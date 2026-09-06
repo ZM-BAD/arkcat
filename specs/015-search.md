@@ -53,7 +53,7 @@
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
-|---|------|------|------|--------|-------------|------|
+| --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | 导航头 | ← 返回 | 回退 | ✅ 纯 UI | — | — |
 | 2 | 导航头 | 输入框（占位 Search GitHub + 下划线 + × 清除） | 输入/清除关键词 | ✅ 纯 UI | — | × 仅在有关键词时显示 |
 | 3 | 导航头 | ⋯ 竖三点（蓝色） | 菜单入口 | ✅ 纯 UI | — | 菜单项后续 Spec，暂点击提示 |
@@ -103,7 +103,7 @@ query CodeSearch($query: String!, $first: Int = 10) {
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | Organizations 结果（GraphQL） | GraphQL search 无 ORGANIZATION 类型 | 走 REST `/search/users?type=organization` 兜底；结果卡复用 UserCard/OrgSummary |
 | 代码行内容+高亮 | GraphQL CODE 无文本内容；REST code search 需单独 token scope | 降级展示 文件名/路径/仓库；内容高亮随 Spec 011（Code Viewer）对应路线补充 |
 | 底部 Tab 保留 | 官方搜索页保留底部 Tab（Home 激活）；本实现为 Navigation 覆盖式二级页，展示 Tab 需重构导航架构 | 不追此项（平台导航取舍），走查说明 |

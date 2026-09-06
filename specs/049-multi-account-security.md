@@ -39,7 +39,7 @@ Profile 页头：长按头像 → 账号切换弹层（快捷）
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | 接口 | 备注 |
-|---|------|------|------|--------|------|------|
+| --- | ------ | ------ | ------ | -------- | ------ | ------ |
 | 1 | Settings | Accounts 入口 | 替换「coming soon」占位行，进入账号管理页 | ✅ | 无 | —— |
 | 2 | 账号页 | 账号列表 | 多 token（AssetStoreKit 批量加密存储 `accounts` 数组 + activeLogin） | ✅ | 无（本地存储） | 结构：{login, token, name?, addedAt} |
 | 3 | 账号页 | 添加账号 | 复用 TokenSetup 表单；校验=用 token 查询 viewer.login 成功 | ✅ | `query { viewer { login avatarUrl } }` | token 有效才入列 |
@@ -75,7 +75,7 @@ query ViewerCheck {
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | App Lock 生物识别 | HarmonyOS 生物特征认证 API（face/fingerprint）存在性需真机探测（系统权限/机型支持差异大） | 探测任务（Pura 90 Pro 真机）；不支持 → 提供「PIN 锁」开关（本地安全存储比较），再不行则整项关闭并说明 |
 | 多账号并发冲突 | 同时请求（切号中） | 切换期间 pending 请求统一 abort；加载中防误切换 |
 | token 泄漏 | AssetStoreKit 加密存储保持 | 账号移除时立即清缓存不落盘 |

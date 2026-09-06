@@ -40,7 +40,7 @@ Stargazers                          Forks
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
-|---|------|------|------|--------|-------------|------|
+| --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | AppBar | ← + 仓库名（粗体 20fp）+ 副标题（灰 16fp） | 返回 / 标题 | ✅ | — | 参数为 nameWithOwner；副标题=Stargazers/Forks |
 | 2 | Stargazers 行 | 56vp 圆头像 + 显示名（粗体）/login（灰·无@）/bio（灰 2 行省略） | 展示 | ✅ | repository.stargazers(first:50) nodes{login name avatarUrl bio} | bio 为空隐藏；整行点击 → userProfile |
 | 3 | Stargazers | 分页（hasNextPage → 加载更多文字钮） | 翻页 | ✅ | 同上 pageInfo | 沿用 UserList 加载更多模式 |
@@ -86,7 +86,7 @@ query RepoForks($owner: String!, $name: String!, $first: Int = 50, $after: Strin
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | Stargazers/Forks 总数不展示 | 参考截图标题无计数 | 不查询/不展示 |
 | parent 可能为 null | 上游仓库被删除/不可见 | 隐藏「Forked from」行 |
 | forks 无服务端关键词搜索 | 连接不支持 search/filter 参数 | 客户端就地过滤已加载分页 |

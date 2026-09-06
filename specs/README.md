@@ -10,7 +10,7 @@
 ## Spec 索引
 
 | 编号 | 文件 | 描述 | BFS Level | 状态 |
-|------|------|------|-----------|------|
+| ------ | ------ | ------ | ----------- | ------ |
 | 001 | [home-tab.md](001-home-tab.md) | 首页 Tab（已被 013 替换） | Level 1 | deprecated |
 | 002 | [inbox-tab.md](002-inbox-tab.md) | 通知收件箱 Tab | Level 1 | ✅ |
 | 003 | [explore-tab.md](003-explore-tab.md) | 发现探索 Tab | Level 1 | ✅ |
@@ -66,7 +66,7 @@
 ## 覆盖率
 
 | 指标 | 数值 |
-|------|------|
+| ------ | ------ |
 | 已分析 Spec 数 | 11 |
 | 已分析元素总数 | 123+ |
 | 核心场景覆盖率 | ~95%（按使用频率加权） |
@@ -76,7 +76,7 @@
 ## 不可实现功能汇总
 
 | Tab/页面 | 功能 | 原因 | StarRaft 处理 |
-|---------|------|------|--------------|
+| --------- | ------ | ------ | -------------- |
 | Explore | Collections 精选集合 | 无公开 API | MVP 隐藏 |
 | Copilot | 全部 Chat 功能 | Copilot API 不公开 | 展示 Empty State |
 | User Profile | Packages Tab | 无公开用户级 API | 不展示 |

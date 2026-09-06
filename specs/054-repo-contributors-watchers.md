@@ -39,7 +39,7 @@ Contributors / Watchers（两页结构一致，仅副标题与数据源不同）
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | 接口 | 备注 |
-|---|------|------|------|--------|------|------|
+| --- | ------ | ------ | ------ | -------- | ------ | ------ |
 | 1 | AppBar | ← + 仓库名（粗体 20fp）+ 副标题（灰 16fp） | 返回 / 标题 | ✅ | — | 副标题文案复用 repo_contributors/repo_watchers；参数 owner/name |
 | 2 | 行 | 56vp 圆头像 + 显示名（粗体）/login（灰·无@）/bio（灰 2 行省略） | 展示 | ✅ | Watchers: repository.watchers(first:50) nodes{login name bio avatarUrl}；Contributors: REST /contributors 取 login 序 + GraphQL user(login) 批量补 name/bio/avatarUrl | bio 为空隐藏；无显示名时仅灰 login 单行（与 Stargazers 行一致）；行点击 → userProfile |
 | 3 | 行 | 无头像占位：底色 + oct_person_16 灰 icon | 展示（官方灰人形近似） | ✅ | — | 与现有头像底色占位共存：Image 加载中/失败时叠 person 图标 |
@@ -77,7 +77,7 @@ REST：GET /repos/{owner}/{repo}/contributors?per_page=50&page={n}&anon=0
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | GraphQL 无 repository.contributors 字段 | 贡献者列表为 REST 专属端点 | 走 REST /contributors（官方 App 同源路径）+ GraphQL 批量补全 name/bio |
 | 批量 GraphQL 补全失败/超限 | 单请求多 alias 仍受成本限制 | 降级：仅用 REST login+avatarUrl 渲染（name/bio 空），不阻断列表 |
 | 匿名贡献者（anon） | 无 GitHub 账号 | anon=0 排除，仅展示 GitHub 用户（官方 App 同） |

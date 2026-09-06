@@ -36,7 +36,7 @@ IssueDetail / PrDetail
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
-|---|------|------|------|--------|-------------|------|
+| --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | 详情页 | Labels 展示 | 详情查询补 labels 节点，自动换行 chip（官方色 w/ 白字），点击进入编辑器 | ✅ | 见四 | 030 查询已有 labels 但未渲染，本 Spec 补 UI |
 | 2 | 编辑器 | Labels 编辑 | 仓库 labels（前 50）多选 chip；`addLabelsToLabelable` / `removeLabelsFromLabelable` | ✅ | 见四 | 差异推送一次一 mutation |
 | 3 | 编辑器 | 新建 Label | 移动端无官方入口；GraphQL `createLabel` 需要 admin 且桌面专属 | ❌ | createLabel | 不提供；提示「请在 web 端创建」 |
@@ -100,7 +100,7 @@ mutation AddProjectItem($projectId: ID!, $contentId: ID!) {
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | 新建 Label / Milestone | 桌面/web 专属，移动端无入口 | 编辑器内提示「web 端创建」；不做 mutation |
 | Duplicate 关闭 | GraphQL `IssueStateReason` 无 DUPLICATE 枚举（2026-02 官方 1.218 上线，API 探测点：若 v4 已扩枚举则直接支持） | 先探测；不可行则降级为「NOT_PLANNED 关闭 + 正文 @引用原 issue」并在边界表留记录 |
 | Projects 状态位编辑 | UpdateProjectV2ItemFieldValue 需要 field 查询链（Iteration/Status 单选链） | P1：只做「加入项目」；状态编辑待勘探后 P2 |

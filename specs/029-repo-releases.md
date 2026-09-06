@@ -37,7 +37,7 @@
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
-|---|------|------|------|--------|-------------|------|
+| --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar | ← 返回 + 副标题 owner + Releases | 导航 | ✅ | —（纯 UI） | — |
 | 2 | 头卡 | tag + Latest release 徽章 | 展示 | ✅ | `isLatest/tagName` | 仅最近一条 |
 | 3 | 头卡 | 发布者 + 日期「released this M/D」 | 展示 | ✅ | `author/createdAt` | 月名+日格式 |
@@ -69,7 +69,7 @@ query RepoReleases($owner: String!, $name: String!, $first: Int = 30, $after: St
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | 资产下载/查看跨渠道 | 外部链接 | View release details / tag 点击提示后续 |
 | What's Changed 富文本 | Markdown 渲染后续 | 纯文本截断 |
 

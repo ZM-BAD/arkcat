@@ -21,7 +21,7 @@ bash scripts/install-hooks.sh
 **Type 列表**：
 
 | Type | 用途 |
-|------|------|
+| ------ | ------ |
 | `feat` | 新功能 |
 | `fix` | Bug 修复 |
 | `docs` | 文档变更 |
@@ -61,7 +61,7 @@ test(home): add unit tests for user card
 ## 质量门禁
 
 | 检查项 | 工具 | 阻断？ |
-|--------|------|--------|
+| -------- | ------ | -------- |
 | Spec 合规 | `scripts/check-spec.sh` | ✅ 是 |
 | Commit 格式 | pre-commit commitlint / `.githooks/commit-msg` | ✅ 是 |
 | 文件结构 | CI `structure-check` | ✅ 是 |

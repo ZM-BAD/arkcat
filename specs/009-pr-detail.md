@@ -48,7 +48,7 @@ PR 详情页，展示 PR 标题/分支信息/操作按钮（Merge/Review/Update 
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
-|---|------|------|------|--------|-------------|------|
+| --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar 左 | ← 返回 | 回退 | ✅ 纯 UI | — | — |
 | 2 | App Bar 中 | 标题「Pull request #N」 | 展示 | ✅ 纯 UI | — | — |
 | 3 | App Bar 右 | ··· 更多菜单 | Edit/Close/Reopen | ⚠️ | 部分 mutation | — |
@@ -149,7 +149,7 @@ mutation UpdateBranch($pullRequestId: ID!, $expectedHeadOid: GitObjectID!) {
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | Checks Tab | API 复杂 | MVP 只展示状态摘要 |
 | 附件上传 | 需 REST Asset Upload | 暂不实现 |
 | ··· 更多菜单 | 部分操作需特殊权限 | Merge/Close/Reopen 支持 |

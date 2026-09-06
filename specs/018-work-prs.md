@@ -41,7 +41,7 @@ Home My Work「Pull Requests」入口进入的跨仓库 PR 列表页。展示用
 ## 三、元素清单
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
-|---|------|------|------|--------|-------------|------|
+| --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar 左 | ← 返回 | 回退 | ✅ | —（纯 UI） | — |
 | 2 | App Bar 中 | 「Pull Requests」标题 | 页面标题 | ✅ | —（纯 UI） | — |
 | 3 | App Bar 右 | 🔍 搜索 | 跳转全局搜索页 | ✅ | —（纯 UI） | 复用路由 search |
@@ -86,7 +86,7 @@ query WorkPullRequests($query: String!, $first: Int = 25, $after: String) {
 ## 五、边界 / 不可行项
 
 | 项 | 原因 | StarRaft 处理方式 |
-|----|------|-------------------|
+| ---- | ------ | ------------------- |
 | undefined 状态的 Checks（未运行） | search 节点可能无 statusCheckRollup | 不显示胶囊，与官方一致 |
 | 审查者头像行 | 截图第三行可见头像，GraphQL 可取 `reviewers` 头像 | MVP 仅显示 👁 数字，头像行后续 Spec 补充 |
 
