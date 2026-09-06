@@ -101,6 +101,8 @@ query ReleaseDetail($owner: String!, $name: String!, $tag: String!) {
   repository(owner: $owner, name: $name) {
     release(tagName: $tag) {
       id tagName name isDraft isPrerelease publishedAt createdAt url
+      isLatest
+      tagCommit { oid }
       author { login avatarUrl }
       description
       releaseAssets(first: 50) {

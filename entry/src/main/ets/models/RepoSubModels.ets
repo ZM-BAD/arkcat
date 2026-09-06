@@ -106,6 +106,10 @@ export interface ReleaseDetailPage {
   name: string;
   isDraft: boolean;
   isPrerelease: boolean;
+  /** 是否最新发布（绿色 Latest 徽章用；2026-09-06 gh api 实测字段存在） */
+  isLatest: boolean;
+  /** tag 指向 commit 完整 sha（Info 分区截短展示；tagCommit 实测存在） */
+  tagSha: string;
   publishedAt: string;
   createdAt: string;
   body: string;
@@ -521,6 +525,7 @@ export function mapReleaseDetail(data: JsonMap): ReleaseDetailPage | null {
     return null;
   }
   const author = Json.obj(release, 'author');
+  const tagCommit = Json.obj(release, 'tagCommit');
   const assetsWrap = Json.obj(release, 'releaseAssets') ?? ({} as JsonMap);
   const assets: ReleaseAsset[] = [];
   for (const nodeItem of Json.arr(assetsWrap, 'nodes')) {
@@ -533,6 +538,8 @@ export function mapReleaseDetail(data: JsonMap): ReleaseDetailPage | null {
     name: Json.str(release, 'name'),
     isDraft: Json.bool(release, 'isDraft'),
     isPrerelease: Json.bool(release, 'isPrerelease'),
+    isLatest: Json.bool(release, 'isLatest'),
+    tagSha: tagCommit !== null ? Json.str(tagCommit, 'oid') : '',
     publishedAt: Json.str(release, 'publishedAt'),
     createdAt: Json.str(release, 'createdAt'),
     // Release 无 body/bodyHTML（实测）：description=正文原文；HTML 由页面 renderMarkdown 生成

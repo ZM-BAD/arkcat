@@ -1217,6 +1217,14 @@
       "value": "在浏览器中打开"
     },
     {
+      "name": "release_info_title",
+      "value": "信息"
+    },
+    {
+      "name": "release_asset_download",
+      "value": "下载"
+    },
+    {
       "name": "releases_empty",
       "value": "暂无版本"
     },

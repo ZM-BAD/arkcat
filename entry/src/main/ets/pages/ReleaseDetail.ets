@@ -205,6 +205,16 @@ export struct ReleaseDetailView {
   badgeRow() {
     Row({ space: 6 }) {
       if (this.detail !== null) {
+        // Latest 徽章=绿字淡绿底细描边，与 RepoReleases 头卡同款（官方对齐，走查修正八轮）
+        if (this.detail.isLatest) {
+          Text($r('app.string.releases_latest'))
+            .fontSize(12)
+            .fontColor($r('app.color.success_text'))
+            .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+            .borderRadius(6)
+            .outline({ width: 0.5, color: $r('app.color.success_text'), radius: 6, style: OutlineStyle.SOLID })
+            .backgroundColor($r('app.color.success_subtle_bg'))
+        }
         if (this.detail.isDraft) {
           Text(this.stringOf($r('app.string.release_draft_badge')))
             .fontSize(12)
@@ -228,30 +238,62 @@ export struct ReleaseDetailView {
 
   @Builder
   assetRow(asset: ReleaseAsset) {
-    Row({ space: 10 }) {
-      OctIcon({ res: $r('app.media.oct_file_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
-      Column({ space: 2 }) {
-        Text(asset.name)
-          .fontSize($r('app.float.body_font_size'))
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.text_primary'))
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .width('100%')
-        Text(resText(this.getUIContext(), $r('app.string.release_asset_downloads'), asset.downloadCount))
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
+    Row({ space: 4 }) {
+      // 左侧点击区=下载（菜单按钮为兄弟节点防误触，同 PrDiffCard 文件行模式）
+      Row({ space: 12 }) {
+        OctIcon({ res: $r('app.media.oct_file_zip_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+        Column({ space: 4 }) {
+          Text(asset.name)
+            .fontSize($r('app.float.body_font_size'))
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('app.color.text_primary'))
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .width('100%')
+          // 官方尺寸胶囊：zip 图标 + 大小（chip 底+细描边）
+          Row({ space: 4 }) {
+            OctIcon({ res: $r('app.media.oct_file_zip_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
+            Text(formatBytes(asset.size))
+              .fontSize($r('app.float.caption_font_size'))
+              .fontColor($r('app.color.text_secondary'))
+          }
+          .alignItems(VerticalAlign.Center)
+          .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+          .borderRadius(10)
+          .border({ width: 0.5, color: $r('app.color.divider') })
+          .backgroundColor($r('app.color.chip_bg'))
+        }
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
       }
       .layoutWeight(1)
-      .alignItems(HorizontalAlign.Start)
-      Text(formatBytes(asset.size))
-        .fontSize($r('app.float.caption_font_size'))
-        .fontColor($r('app.color.text_secondary'))
+      .alignItems(VerticalAlign.Center)
+      .accessibilityDescription(asset.name)
+      .onClick(() => this.startDownload(asset))
+      // 右侧 … 菜单（Download / Copy link / Open in browser）
+      Stack() {
+        OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+      }
+      .width(44)
+      .height(44)
+      .bindMenu([
+        {
+          value: this.stringOf($r('app.string.release_asset_download')),
+          action: (): void => this.startDownload(asset)
+        },
+        {
+          value: this.stringOf($r('app.string.release_copy_link')),
+          action: (): void => this.copyUrl(releaseAssetBrowserUrl(this.owner, this.name, this.tag, asset.name))
+        },
+        {
+          value: this.stringOf($r('app.string.release_show_browser')),
+          action: (): void => this.openBrowser(releaseAssetBrowserUrl(this.owner, this.name, this.tag, asset.name))
+        }
+      ])
     }
     .width('100%')
-    .padding({ left: 12, right: 12, top: 10, bottom: 10 })
-    .accessibilityDescription(asset.name)
-    .onClick(() => this.startDownload(asset))
+    .padding({ top: 4, bottom: 4 })
+    .alignItems(VerticalAlign.Center)
   }
 
   build() {
@@ -312,12 +354,6 @@ export struct ReleaseDetailView {
                 .fontColor($r('app.color.text_primary'))
                 .width('100%')
               this.badgeRow()
-              if (this.detail.tagName !== '') {
-                Text(this.detail.tagName)
-                  .fontSize($r('app.float.caption_font_size'))
-                  .fontColor($r('app.color.text_secondary'))
-                  .width('100%')
-              }
               Row({ space: 8 }) {
                 if (this.detail.authorAvatar !== '') {
                   Image(this.detail.authorAvatar)
@@ -357,24 +393,46 @@ export struct ReleaseDetailView {
             .width('100%')
             .margin({ bottom: 12 })
 
-            // 资产列表
-            Text(resText(this.getUIContext(), $r('app.string.release_assets_title'),
-              this.detail.assets.length))
-              .fontSize(16)
+            // Info 分区（官方布局：分区灰标题 + 图标行；走查修正八轮）
+            Divider().color($r('app.color.divider'))
+            Text($r('app.string.release_info_title'))
+              .fontSize($r('app.float.caption_font_size'))
               .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.text_primary'))
+              .fontColor($r('app.color.text_secondary'))
               .width('100%')
-              .padding({ bottom: 8 })
+              .padding({ top: 12, bottom: 4 })
+            if (this.detail.tagSha !== '') {
+              Row({ space: 12 }) {
+                OctIcon({ res: $r('app.media.oct_git_commit_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+                Text(this.detail.tagSha.substring(0, 7))
+                  .fontSize($r('app.float.caption_font_size'))
+                  .fontColor($r('app.color.text_secondary'))
+              }
+              .width('100%')
+              .padding({ top: 10, bottom: 10 })
+            }
+            if (this.detail.tagName !== '') {
+              Row({ space: 12 }) {
+                OctIcon({ res: $r('app.media.oct_tag_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+                Text(this.detail.tagName)
+                  .fontSize($r('app.float.caption_font_size'))
+                  .fontColor($r('app.color.text_secondary'))
+              }
+              .width('100%')
+              .padding({ top: 10, bottom: 10 })
+            }
 
+            // Assets 分区（官方布局：平铺行=zip 图标+名称+尺寸胶囊，右 … 菜单；走查修正八轮）
+            Divider().color($r('app.color.divider'))
+            Text($r('app.string.release_assets_title'))
+              .fontSize($r('app.float.caption_font_size'))
+              .fontWeight(FontWeight.Medium)
+              .fontColor($r('app.color.text_secondary'))
+              .width('100%')
+              .padding({ top: 12, bottom: 4 })
             if (this.detail.assets.length > 0) {
               ForEach(this.detail.assets, (asset: ReleaseAsset) => {
-                Column() {
-                  this.assetRow(asset)
-                }
-                .width('100%')
-                .borderRadius($r('app.float.card_radius'))
-                .backgroundColor($r('app.color.card_background'))
-                .margin({ bottom: 8 })
+                this.assetRow(asset)
               }, (asset: ReleaseAsset) => asset.id)
             } else {
               Text($r('app.string.release_assets_empty'))

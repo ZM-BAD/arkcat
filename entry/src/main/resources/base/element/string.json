@@ -1249,6 +1249,14 @@
       "value": "Open in browser"
     },
     {
+      "name": "release_info_title",
+      "value": "Info"
+    },
+    {
+      "name": "release_asset_download",
+      "value": "Download"
+    },
+    {
       "name": "releases_empty",
       "value": "No releases"
     },
