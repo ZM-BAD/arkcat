@@ -34,6 +34,7 @@ import { mapFork, mapStargazerPage, mapWatcherPage, mapContributorPage } from '.
 import { mapLicenseInfo, stripLicenseTitle } from '../../../main/ets/models/RepoLicenseModels';
 import { parseDiffPatch, fileBaseName, DiffLine, DiffHunk } from '../../../main/ets/utils/Diff';
 import { mapPrFiles, applyRestPatch, PrFileItem } from '../../../main/ets/models/PrDiffModels';
+import { mapReleaseDetail, formatBytes, mapReactionUsersPage } from '../../../main/ets/models/RepoSubModels';
 import { mapIssue, mapIssuesPage, issueOrderField } from '../../../main/ets/models/IssuesModels';
 import { MarkdownService } from '../../../main/ets/services/MarkdownService';
 import { ReactionGroup, REACTION_META, reactionEmoji, findReactionGroup, flipReactionGroups } from '../../../main/ets/models/RepoSubModels';
@@ -1082,16 +1083,17 @@ export default function logicTest(testsuiteName: string) {
       const pp = mapPrDetail(prData);
       expect(pp.bodyHTML).assertEqual('<p>pr html</p>');
 
+      // Release 无 body/bodyHTML 字段（2026-09-04 实测）：description=正文原文，HTML 由 renderMarkdown 生成
       const relNode: JsonMap = {
         'id': 'R1', 'tagName': '1.0', 'isLatest': true, 'createdAt': '2026-06-30T00:00:00Z',
-        'description': 'short', 'body': 'long body', 'bodyHTML': '<p>release html</p>', 'author': author
+        'description': 'long body', 'author': author
       };
       const relNodes: JsonMap = { 'nodes': [relNode] };
       const relRepo: JsonMap = { 'releases': relNodes };
       const relData: JsonMap = { 'repository': relRepo };
       const rp = mapRepoReleasesPage(relData);
       expect(rp.releases[0].body).assertEqual('long body');
-      expect(rp.releases[0].bodyHTML).assertEqual('<p>release html</p>');
+      expect(rp.releases[0].bodyHTML).assertEqual('');
     });
 
     it('achievement_parse_full', 0, () => {
@@ -1400,6 +1402,65 @@ export default function logicTest(testsuiteName: string) {
     it('fileBaseName_simple', 0, () => {
       expect(fileBaseName('src/main/ets/Index.ets')).assertEqual('Index.ets');
       expect(fileBaseName('README.md')).assertEqual('README.md');
+    });
+
+    // ─────── Spec 047：Release 详情映射 / 字节格式化 ───────
+
+    it('formatBytes_units', 0, () => {
+      expect(formatBytes(0)).assertEqual('0 B');
+      expect(formatBytes(512)).assertEqual('512 B');
+      expect(formatBytes(1536)).assertEqual('1.5 KB');
+      expect(formatBytes(5 * 1024 * 1024)).assertEqual('5.0 MB');
+      expect(formatBytes(2048 * 1024 * 1024)).assertEqual('2.0 GB');
+    });
+    it('mapReleaseDetail_full', 0, () => {
+      const asset: JsonMap = {
+        'id': 'a1', 'name': 'app.zip', 'size': 1048576, 'downloadCount': 9,
+        'contentType': 'application/zip', 'url': 'https://api.github.com/.../a1',
+        'browserDownloadUrl': 'https://github.com/.../app.zip'
+      };
+      const assetsWrap: JsonMap = { 'nodes': [asset] };
+      const author: JsonMap = { 'login': 'alice', 'avatarUrl': 'av-a' };
+      const releaseNode: JsonMap = {
+        'id': 'r1', 'tagName': 'v1.2.0', 'name': 'v1.2.0', 'isDraft': false,
+        'isPrerelease': true, 'publishedAt': '2026-09-01T10:00:00Z', 'createdAt': '2026-09-01T09:00:00Z',
+        'url': 'https://github.com/o/r/releases/tag/v1.2.0',
+        'author': author, 'body': 'b', 'bodyHTML': '<p>b</p>', 'releaseAssets': assetsWrap
+      };
+      const repoWrap: JsonMap = { 'release': releaseNode };
+      const data: JsonMap = { 'repository': repoWrap };
+      const page = mapReleaseDetail(data);
+      expect(page !== null).assertTrue();
+      if (page !== null) {
+        expect(page.tagName).assertEqual('v1.2.0');
+        expect(page.isPrerelease).assertTrue();
+        expect(page.releaseUrl).assertEqual('https://github.com/o/r/releases/tag/v1.2.0');
+        expect(page.assets.length).assertEqual(1);
+        expect(page.assets[0].name).assertEqual('app.zip');
+        expect(page.assets[0].size).assertEqual(1048576);
+      }
+    });
+    it('mapReleaseDetail_null', 0, () => {
+      const repoWrap: JsonMap = {};
+      const data: JsonMap = { 'repository': repoWrap };
+      const page = mapReleaseDetail(data);
+      expect(page === null).assertTrue();
+    });
+    it('mapReactionUsersPage_picksContent', 0, () => {
+      const reactor: JsonMap = { 'login': 'alice', 'name': 'Alice', 'avatarUrl': 'av-a' };
+      const pageInfo: JsonMap = { 'hasNextPage': true, 'endCursor': 'c1' };
+      const reactors: JsonMap = { 'totalCount': 2, 'pageInfo': pageInfo, 'nodes': [reactor] };
+      const group: JsonMap = { 'content': 'THUMBS_UP', 'reactors': reactors };
+      const node: JsonMap = { 'reactionGroups': [group] };
+      const data: JsonMap = { 'node': node };
+      const page = mapReactionUsersPage(data, 'THUMBS_UP');
+      expect(page.totalCount).assertEqual(2);
+      expect(page.users.length).assertEqual(1);
+      expect(page.users[0].name).assertEqual('Alice');
+      expect(page.hasNextPage).assertTrue();
+      expect(page.endCursor).assertEqual('c1');
+      const miss = mapReactionUsersPage(data, 'HEART');
+      expect(miss.users.length).assertEqual(0);
     });
 
     // ─────── Spec 041：Markdown 工具栏插入 / 反应 / 评论映射 ───────

@@ -54,6 +54,8 @@ export interface RepoCommitsPage {
 /** Release 行 */
 export interface ReleaseItem {
   id: string;
+  /** release 标题（GitHub name，如 1.3.2；tagName 为 v1.3.2） */
+  name: string;
   tagName: string;
   isLatest: boolean;
   createdAt: string;
@@ -74,6 +76,8 @@ export interface RepoReleasesPage {
 /** 反应用户（reactionGroups.users 前 8 位） */
 export interface ReactionUser {
   login: string;
+  /** 显示名（union 片段仅 User/Organization 提供，可空；Reactees 页黑粗行） */
+  name: string;
   avatarUrl: string;
 }
 
@@ -83,6 +87,63 @@ export interface ReactionGroup {
   count: number;
   viewerHasReacted: boolean;
   users: ReactionUser[];
+}
+
+/** Release 资产（Spec 047）：二进制下载段 */
+export interface ReleaseAsset {
+  id: string;
+  name: string;
+  size: number;
+  downloadCount: number;
+  contentType: string;
+  /** API 下载端点（带 token GET） */
+  url: string;
+}
+
+export interface ReleaseDetailPage {
+  id: string;
+  tagName: string;
+  /** 发布页 HTML 直链（分享/复制用） */
+  releaseUrl: string;
+  name: string;
+  isDraft: boolean;
+  isPrerelease: boolean;
+  /** 是否最新发布（绿色 Latest 徽章用；2026-09-06 gh api 实测字段存在） */
+  isLatest: boolean;
+  /** tag 指向 commit 完整 sha（Info 分区截短展示；tagCommit 实测存在） */
+  tagSha: string;
+  publishedAt: string;
+  createdAt: string;
+  body: string;
+  bodyHTML: string;
+  authorLogin: string;
+  authorAvatar: string;
+  assets: ReleaseAsset[];
+  /** release 正文反应组（Release 实现 Reactable，2026-09-06 gh api 实测） */
+  reactions: ReactionGroup[];
+}
+
+/** 字节数 → 人类可读（B/KB/MB/GB，保留 1 位小数；未知回退 0 B） */
+export function formatBytes(size: number): string {
+  if (size <= 0) {
+    return '0 B';
+  }
+  const units: string[] = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let value = size;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value = value / 1024;
+    unit++;
+  }
+  const text = unit === 0 ? `${value}` : value.toFixed(1);
+  return `${text} ${units[unit]}`;
+}
+
+/** 资产浏览器下载直链：github.com/{o}/{r}/releases/download/{tag}/{name}（GraphQL ReleaseAsset 无此字段，REST 特有） */
+export function releaseAssetBrowserUrl(owner: string, repo: string, tag: string, name: string): string {
+  const safeTag = encodeURIComponent(tag);
+  const safeName = encodeURIComponent(name);
+  return `https://github.com/${owner}/${repo}/releases/download/${safeTag}/${safeName}`;
 }
 
 /** 评论（Issue/PR 通用，ArkTS 名义类型：单一 interface 复用） */
@@ -222,6 +283,10 @@ export const REACTION_META: ReactionMeta[] = [
   { content: 'ROCKET', emoji: '🚀' },
   { content: 'EYES', emoji: '👀' }
 ];
+
+/** Release 官方选择器子集：6 种正向反应（官方 release 详情面板无 👎/😕，走查修正九轮） */
+export const RELEASE_REACTION_META: ReactionMeta[] = REACTION_META.filter((m: ReactionMeta) =>
+  m.content !== 'THUMBS_DOWN' && m.content !== 'CONFUSED');
 
 /** 枚举 → emoji；未知回退空串 */
 export function reactionEmoji(content: string): string {
@@ -403,12 +468,14 @@ export function mapRelease(raw: JsonMap): ReleaseItem {
   const author = Json.obj(raw, 'author');
   return {
     id: Json.str(raw, 'id'),
+    name: Json.str(raw, 'name'),
     tagName: Json.str(raw, 'tagName'),
     isLatest: Json.bool(raw, 'isLatest'),
     createdAt: Json.str(raw, 'createdAt'),
     description: Json.str(raw, 'description'),
-    body: Json.str(raw, 'body'),
-    bodyHTML: Json.str(raw, 'bodyHTML'),
+    // Release 无 body 字段（实测）：description 即正文原文；HTML 由页面 renderMarkdown 生成
+    body: Json.str(raw, 'description'),
+    bodyHTML: '',
     authorLogin: author !== null ? Json.str(author, 'login') : '',
     authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : ''
   };
@@ -437,6 +504,7 @@ function mapReactionGroup(raw: JsonMap): ReactionGroup {
     const node = nodeItem as JsonMap;
     nodes.push({
       login: Json.str(node, 'login'),
+      name: Json.str(node, 'name'),
       avatarUrl: Json.str(node, 'avatarUrl')
     });
   }
@@ -447,6 +515,92 @@ function mapReactionGroup(raw: JsonMap): ReactionGroup {
     users: nodes
   };
 }
+
+/** Reactees 整页（release 反应用户，走查九轮）：取指定 content 组的分页 reactors */
+export interface ReactionUsersPage {
+  totalCount: number;
+  users: ReactionUser[];
+  endCursor: string;
+  hasNextPage: boolean;
+}
+
+export function mapReactionUsersPage(data: JsonMap, content: string): ReactionUsersPage {
+  const node = Json.obj(data, 'node') ?? ({} as JsonMap);
+  for (const groupItem of Json.arr(node, 'reactionGroups')) {
+    const group = groupItem as JsonMap;
+    if (Json.str(group, 'content') !== content) {
+      continue;
+    }
+    const reactors = Json.obj(group, 'reactors') ?? ({} as JsonMap);
+    const pageInfo = Json.obj(reactors, 'pageInfo') ?? ({} as JsonMap);
+    const users: ReactionUser[] = [];
+    for (const nodeItem of Json.arr(reactors, 'nodes')) {
+      const raw = nodeItem as JsonMap;
+      users.push({
+        login: Json.str(raw, 'login'),
+        name: Json.str(raw, 'name'),
+        avatarUrl: Json.str(raw, 'avatarUrl')
+      });
+    }
+    return {
+      totalCount: Json.num(reactors, 'totalCount'),
+      users: users,
+      endCursor: Json.str(pageInfo, 'endCursor'),
+      hasNextPage: Json.bool(pageInfo, 'hasNextPage')
+    };
+  }
+  return { totalCount: 0, users: [], endCursor: '', hasNextPage: false };
+}
+
+function mapReleaseAsset(raw: JsonMap): ReleaseAsset {
+  return {
+    id: Json.str(raw, 'id'),
+    name: Json.str(raw, 'name'),
+    size: Json.num(raw, 'size'),
+    downloadCount: Json.num(raw, 'downloadCount'),
+    contentType: Json.str(raw, 'contentType'),
+    url: Json.str(raw, 'url')
+  };
+}
+
+export function mapReleaseDetail(data: JsonMap): ReleaseDetailPage | null {
+  const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
+  const release = Json.obj(repo, 'release');
+  if (release === null) {
+    return null;
+  }
+  const author = Json.obj(release, 'author');
+  const tagCommit = Json.obj(release, 'tagCommit');
+  const assetsWrap = Json.obj(release, 'releaseAssets') ?? ({} as JsonMap);
+  const assets: ReleaseAsset[] = [];
+  for (const nodeItem of Json.arr(assetsWrap, 'nodes')) {
+    assets.push(mapReleaseAsset(nodeItem as JsonMap));
+  }
+  const reactions: ReactionGroup[] = [];
+  for (const groupItem of Json.arr(release, 'reactionGroups')) {
+    reactions.push(mapReactionGroup(groupItem as JsonMap));
+  }
+  return {
+    id: Json.str(release, 'id'),
+    tagName: Json.str(release, 'tagName'),
+    releaseUrl: Json.str(release, 'url'),
+    name: Json.str(release, 'name'),
+    isDraft: Json.bool(release, 'isDraft'),
+    isPrerelease: Json.bool(release, 'isPrerelease'),
+    isLatest: Json.bool(release, 'isLatest'),
+    tagSha: tagCommit !== null ? Json.str(tagCommit, 'oid') : '',
+    publishedAt: Json.str(release, 'publishedAt'),
+    createdAt: Json.str(release, 'createdAt'),
+    // Release 无 body/bodyHTML（实测）：description=正文原文；HTML 由页面 renderMarkdown 生成
+    body: Json.str(release, 'description'),
+    bodyHTML: '',
+    authorLogin: author !== null ? Json.str(author, 'login') : '',
+    authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : '',
+    assets: assets,
+    reactions: reactions
+  };
+}
+
 
 function mapComment(raw: JsonMap): RepoComment {
   const author = Json.obj(raw, 'author');

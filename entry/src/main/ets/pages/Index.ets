@@ -34,6 +34,8 @@ import { ListDetailView } from './ListDetail';
 import { RepoPrsView } from './RepoPrs';
 import { RepoCommitsView } from './RepoCommits';
 import { RepoReleasesView } from './RepoReleases';
+import { ReleaseDetailView } from './ReleaseDetail';
+import { ReactionUsersView } from './ReactionUsers';
 import { IssueDetailView } from './IssueDetail';
 import { PrDetailView } from './PrDetail';
 import { PrFilesView } from './PrFiles';
@@ -65,6 +67,10 @@ struct Index {
   @State repoOwner: string = '';
   @State repoName: string = '';
   @State detailNumber: number = 0;
+  @State releaseTag: string = '';
+  /** Spec 047：Reactees 页参数（encodeURIComponent(subjectId)|content） */
+  @State reactionSubjectId: string = '';
+  @State reactionContent: string = '';
   @State inboxHasUnread: boolean = false;
   /** Inbox 标记已读后经 AppStorage 通知重算未读角标（review A4） */
   @StorageProp('inboxUnreadTick') @Watch('onInboxUnreadTick') inboxUnreadTick: number = 0;
@@ -665,8 +671,16 @@ struct Index {
       this.repoOwner = parts[0];
       this.repoName = parts[1];
     }
-    // 不足 3 段时显式重置，避免残留上一次路由的 detailNumber（如 2 段路由走了 PR 分支）
-    this.detailNumber = parts.length >= 3 ? Number(parts[2]) : 0;
+    if (parts.length >= 3) {
+      // 第 3 段起整体还原（release tag 可能含 /）
+      const rest = parts.slice(2).join('/');
+      this.detailNumber = Number(rest);
+      this.releaseTag = rest;
+    } else {
+      // 不足 3 段时显式重置，避免残留上一次路由的 detailNumber（如 2 段路由走了 PR 分支）
+      this.detailNumber = 0;
+      this.releaseTag = '';
+    }
   }
 
   @Builder
@@ -723,6 +737,48 @@ struct Index {
     }
     .onReady((context: NavDestinationContext) => {
       this.parseRouteParam(context.pathInfo.param as string);
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 047：Release 详情（参数 owner/name/tag，tag 可含 /） */
+  @Builder
+  releaseDetailDestination() {
+    NavDestination() {
+      ReleaseDetailView({
+        owner: this.repoOwner,
+        name: this.repoName,
+        tag: this.releaseTag,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseRouteParam(context.pathInfo.param as string);
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Reactees 页参数：首段=编码后的 subjectId（base64 可能含 /，编码后安全），次段=content */
+  private parseReactionUsersParam(param: string): void {
+    const parts: string[] = param.split('/');
+    this.reactionSubjectId = parts.length > 0 ? decodeURIComponent(parts[0]) : '';
+    this.reactionContent = parts.length > 1 ? parts[1] : '';
+  }
+
+  /** Spec 047：release 反应用户整页（emoji + Reactees 两行头） */
+  @Builder
+  reactionUsersDestination() {
+    NavDestination() {
+      ReactionUsersView({
+        subjectId: this.reactionSubjectId,
+        content: this.reactionContent,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseReactionUsersParam(context.pathInfo.param as string);
     })
     .hideTitleBar(true)
   }
@@ -906,6 +962,10 @@ struct Index {
       this.repoCommitsDestination()
     } else if (name === 'repoReleases') {
       this.repoReleasesDestination()
+    } else if (name === 'releaseDetail') {
+      this.releaseDetailDestination()
+    } else if (name === 'reactionUsers') {
+      this.reactionUsersDestination()
     } else if (name === 'issueDetail') {
       this.issueDetailDestination()
     } else if (name === 'prDetail') {

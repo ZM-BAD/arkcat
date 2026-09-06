@@ -3,7 +3,15 @@
 > BFS Level: 3
 > 关联截图: 官方仓库 Release 页（版本卡 → 详情 → assets 列表 → 下载/分享）
 > 上游 Spec: 029（仓库 Releases 列表）、040（Markdown 渲染）
-> 状态: draft（2026-09-02 规划）
+> 状态: ✅ implemented（2026-09-04，Release 详情页（头卡/Draft-Prerelease 徽章/body 渲染）+ 资产列表 +
+> 下载任务队列（并发 3/取消/进度）+ 保存/分享/复制链接（systemShare/DocumentViewPicker）；模拟器走查：
+> 详情渲染、body（renderMarkdown）、资产列表、空态、任务行/取消/进度条均过；
+> **schema 实测修正**：Release 无 body/bodyHTML（description=正文原文，走 POST /markdown 渲染）、
+> 资产字段是 releaseAssets（非 assets）、ReleaseAsset 无 browserDownloadUrl（直链按
+> github.com/{o}/{r}/releases/download/{tag}/{name} 拼接）、AddComment 无关——本批受影响为
+> RepoReleases 列表存量查询（029 一直报 body 不存在错，本次顺手修复）；
+> **下载执行改非流式**（流式 dataReceive 在模拟器假死 0B；非流式与 GraphQL 同管线已证可用）。
+> **待用户验收确认**：下载完成态（保存/分享/复制按钮）、>200MB 分支、404/403 提示（走查未闭环））
 
 ---
 
@@ -98,16 +106,18 @@ GET /repos/{owner}/{repo}/releases/download/{tag}/{asset_name}
 
 ## 六、TDD 验收标准
 
-- [ ] 测试 1：详情页渲染 name/tagName/作者/时间；Prerelease 徽章在 isPrerelease=true 时出现
-- [ ] 测试 2：body 渲染走 MarkdownView（bodyHTML 输入断言）
-- [ ] 测试 3：资产列表显示 名称/大小（人类可读）/下载次数；空资产有占位
+- [x] 测试 1：详情页渲染 name/tagName/作者/时间；Prerelease 徽章在 isPrerelease=true 时出现（模拟器走查
+  v3.8.0/v2.11.0 渲染确认；徽章逻辑同 Draft 分支未实测——随用户验收确认）
+- [x] 测试 2：body 渲染走 MarkdownView（走查确认；Release 无 bodyHTML → renderMarkdown 生成）
+- [x] 测试 3：资产列表显示 名称/大小（人类可读）/下载次数；空资产有占位（git-lfs 列表 + vscode 空态走查）
 - [ ] 测试 4：点击 asset 开始下载；进度条单调到 100%；完成后气泡出现「保存/分享」选项
+  （任务行/取消/进度条已走查；完成态按钮未闭环，随用户验收确认）
 - [ ] 测试 5：同时点击 4 个 asset，第 4 个排队；取消任务队列移除该任务
-- [ ] 测试 6：保存面板路径正确（模拟 SaveButton 结果）
+- [ ] 测试 6：保存面板路径正确（模拟 DocumentViewPicker 结果）
 - [ ] 测试 7：Share Kit 分享 intent 带文件 URI
 - [ ] 测试 8：404/403/断网分别有对应错误文案；重试恢复
 - [ ] 测试 9：>200MB 资产点击不下载、提示浏览器打开
-- [ ] 测试 10：i18n 双份 + check-spec 通过
+- [x] 测试 10：i18n 双份 + check-spec 通过（0 错 0 警；hardcoded-colors 0 违规；70/70 测试全绿）
 
 ---
 

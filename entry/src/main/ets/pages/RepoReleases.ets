@@ -1,12 +1,12 @@
 /**
  * 仓库 Releases 页（Spec 029）：最新 Release 头卡（Latest release + What's Changed）+ All Releases。
  */
-import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
 import { MarkdownView } from '../components/MarkdownView';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { ReleaseItem, RepoReleasesPage, monthDayText } from '../models/RepoSubModels';
 import { RepoSubService } from '../services/RepoSubService';
+import { MarkdownService } from '../services/MarkdownService';
 import { StateView } from '../components/StateView';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
@@ -24,6 +24,8 @@ export struct RepoReleasesView {
   @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  /** 最新发布正文渲染 HTML（Release 无 bodyHTML，走 /markdown 渲染） */
+  @Local latestBodyHtml: string = '';
 
   aboutToAppear(): void {
     this.refresh();
@@ -38,10 +40,24 @@ export struct RepoReleasesView {
         this.cursor = page.endCursor;
         this.hasNextPage = page.hasNextPage;
         this.loading = false;
+        this.renderLatestBody();
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
+      });
+  }
+
+  /** 最新发布正文渲染（异步；MarkdownView 以 body 原文兜底） */
+  private renderLatestBody(): void {
+    if (this.releases.length === 0) {
+      return;
+    }
+    MarkdownService.renderMarkdown(this.token, this.releases[0].body, `${this.owner}/${this.name}`)
+      .then((html: string) => {
+        this.latestBodyHtml = html;
+      })
+      .catch(() => {
       });
   }
 
@@ -74,27 +90,33 @@ export struct RepoReleasesView {
   @Builder
   releaseRow(item: ReleaseItem) {
     Column({ space: 4 }) {
-      Row({ space: 8 }) {
-        Text(item.tagName)
-          .fontSize($r('app.float.body_font_size'))
-          .fontWeight(600)
-          .fontColor($r('app.color.text_primary'))
+      // 标题=release name（1.3.2），tag 仅作回退（走查修正）
+      Text(item.name !== '' ? item.name : item.tagName)
+        .fontSize($r('app.float.body_font_size'))
+        .fontWeight(600)
+        .fontColor($r('app.color.text_primary'))
+      // 官方布局：时间 · Latest release 纯绿字一排，时间在前（走查修正四/六轮）
+      Row({ space: 6 }) {
+        Text(this.timeText(timeParts(item.createdAt, Date.now())))
+          .fontSize($r('app.float.caption_font_size'))
+          .fontColor($r('app.color.text_secondary'))
         if (item.isLatest) {
+          Text('·')
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor($r('app.color.text_secondary'))
           Text($r('app.string.releases_latest'))
-            .fontSize(12)
+            .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.success_text'))
-            .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-            .borderRadius(6)
-            .backgroundColor($r('app.color.checks_success_bg'))
         }
       }
-      .width('100%')
-      Text(this.timeText(timeParts(item.createdAt, Date.now())))
-        .fontSize($r('app.float.caption_font_size'))
-        .fontColor($r('app.color.text_secondary'))
+      .alignItems(VerticalAlign.Center)
     }
+    .alignItems(HorizontalAlign.Start)
     .width('100%')
-    .padding({ left: 12, right: 12, top: 10, bottom: 12 })
+    .padding({ top: 10, bottom: 12 })
+    .onClick(() => {
+      this.pathStack.pushPathByName('releaseDetail', `${this.owner}/${this.name}/${item.tagName}`);
+    })
   }
 
   build() {
@@ -131,9 +153,9 @@ export struct RepoReleasesView {
       Scroll() {
         Column() {
           if (this.releases.length > 0) {
-            // 最新版本头卡
+            // 最新版本头卡：标题=name（1.3.2），左对齐（走查修正二轮）
             Column({ space: 8 }) {
-              Text(this.releases[0].tagName)
+              Text(this.releases[0].name !== '' ? this.releases[0].name : this.releases[0].tagName)
                 .fontSize(32)
                 .fontWeight(600)
                 .fontColor($r('app.color.text_primary'))
@@ -143,7 +165,8 @@ export struct RepoReleasesView {
                   .fontColor($r('app.color.success_text'))
                   .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                   .borderRadius(6)
-                  .backgroundColor($r('app.color.checks_success_bg'))
+                  .outline({ width: 0.5, color: $r('app.color.success_text'), radius: 6, style: OutlineStyle.SOLID })
+                  .backgroundColor($r('app.color.success_subtle_bg'))
               }
               Row({ space: 8 }) {
                 if (this.releases[0].authorAvatar !== '') {
@@ -153,8 +176,13 @@ export struct RepoReleasesView {
                     .borderRadius(11)
                     .backgroundColor($r('app.color.heat_empty'))
                 }
+                // 官方布局：作者名黑体 + released this + 具体日期（月名+日，走查修正六轮）
+                Text(this.releases[0].authorLogin)
+                  .fontSize($r('app.float.caption_font_size'))
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor($r('app.color.text_primary'))
                 Text(resText(this.getUIContext(), $r('app.string.releases_released_this'),
-                  this.timeText(timeParts(this.releases[0].createdAt, Date.now()))))
+                  monthDayText(this.releases[0].createdAt)))
                   .fontSize($r('app.float.caption_font_size'))
                   .fontColor($r('app.color.text_secondary'))
               }
@@ -163,26 +191,26 @@ export struct RepoReleasesView {
               Divider().color($r('app.color.divider'))
 
               Column({ space: 6 }) {
-                Text($r('app.string.releases_whats_changed'))
-                  .fontSize(20)
-                  .fontWeight(600)
-                  .fontColor($r('app.color.text_primary'))
+                // 官方语义：正文原样渲染（description 自带 What's Changed 标题，自绘会重复——走查修正）
                 MarkdownView({
-                  html: this.releases[0].bodyHTML,
-                  fallbackText: this.releases[0].body !== '' ? this.releases[0].body : this.releases[0].description,
+                  html: this.latestBodyHtml,
+                  fallbackText: this.releases[0].body,
                   onNavigate: (name: string, param: string) => {
                     this.pathStack.pushPathByName(name, param);
                   }
                 })
                 Text($r('app.string.releases_view_details'))
-                  .fontSize($r('app.float.body_font_size'))
+                  .fontSize($r('app.float.sub_text_font_size'))
                   .fontColor($r('app.color.link_blue'))
+                  .padding({ top: 4, bottom: 4 })
                   .onClick(() => {
-                    promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+                    this.pathStack.pushPathByName('releaseDetail',
+                      `${this.owner}/${this.name}/${this.releases[0].tagName}`);
                   })
               }
               .width('100%')
             }
+            .alignItems(HorizontalAlign.Start)
             .padding($r('app.float.card_padding'))
             .borderRadius($r('app.float.card_radius'))
             .backgroundColor($r('app.color.card_background'))
@@ -191,10 +219,11 @@ export struct RepoReleasesView {
 
             Divider().color($r('app.color.divider'))
 
+            // 官方样式：节标题灰色小字（走查修正）
             Text($r('app.string.releases_all'))
-              .fontSize(16)
+              .fontSize($r('app.float.caption_font_size'))
               .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.text_primary'))
+              .fontColor($r('app.color.text_secondary'))
               .width('100%')
               .padding({ top: 12, bottom: 4 })
 

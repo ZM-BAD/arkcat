@@ -6,7 +6,8 @@ import { graphql, restGet } from './GitHttpClient';
 import { Json, JsonMap } from '../utils/Json';
 import {
   RepoPrsPage, RepoCommitsPage, RepoReleasesPage, IssueDetailPage, PrDetailPage,
-  mapRepoPrsPage, mapRepoCommitsPage, mapRepoReleasesPage, mapIssueDetail, mapPrDetail, mapPrCommits
+  mapRepoPrsPage, mapRepoCommitsPage, mapRepoReleasesPage, mapIssueDetail, mapPrDetail, mapPrCommits,
+  ReleaseDetailPage, mapReleaseDetail, ReactionUsersPage, mapReactionUsersPage
 } from '../models/RepoSubModels';
 import { PrFilesPage, PrFileItem, mapPrFiles, applyRestPatch, mapFilesCursor, mapFileNode } from '../models/PrDiffModels';
 import { CommitDetailPage, mapCommitDetail } from '../models/PrDiffModels';
@@ -90,7 +91,56 @@ query RepoReleases($owner: String!, $name: String!, $first: Int = 30, $after: St
     releases(first: $first, after: $after, orderBy: { field: CREATED_AT, direction: DESC }) {
       totalCount
       pageInfo { hasNextPage endCursor }
-      nodes { id tagName isLatest createdAt description body bodyHTML author { login avatarUrl } }
+      nodes { id name tagName isLatest createdAt description author { login avatarUrl } }
+    }
+  }
+}`;
+
+const RELEASE_DETAIL_QUERY = `
+query ReleaseDetail($owner: String!, $name: String!, $tag: String!) {
+  repository(owner: $owner, name: $name) {
+    release(tagName: $tag) {
+      id tagName name isDraft isPrerelease publishedAt createdAt url
+      isLatest
+      tagCommit { oid }
+      reactionGroups {
+        content viewerHasReacted
+        reactors(first: 8) {
+          totalCount
+          nodes {
+            ... on User { login avatarUrl }
+            ... on Bot { login avatarUrl }
+            ... on Mannequin { login avatarUrl }
+            ... on Organization { login avatarUrl }
+          }
+        }
+      }
+      author { login avatarUrl }
+      description
+      releaseAssets(first: 50) {
+        nodes { id name size downloadCount contentType url }
+      }
+    }
+  }
+}`;
+
+const REACTION_USERS_QUERY = `
+query ReactionUsers($id: ID!, $first: Int = 50, $after: String) {
+  node(id: $id) {
+    ... on Release {
+      reactionGroups {
+        content
+        reactors(first: $first, after: $after) {
+          totalCount
+          pageInfo { hasNextPage endCursor }
+          nodes {
+            ... on User { login name avatarUrl }
+            ... on Bot { login avatarUrl }
+            ... on Mannequin { login avatarUrl }
+            ... on Organization { login name avatarUrl }
+          }
+        }
+      }
     }
   }
 }`;
@@ -330,6 +380,25 @@ export class RepoSubService {
     }
     const data = await graphql(REPO_RELEASES_QUERY, variables, token);
     return mapRepoReleasesPage(data);
+  }
+
+  /** Release 详情（tagName 定位；release 不存在返回 null） */
+  static async fetchReleaseDetail(token: string, owner: string, name: string,
+    tag: string): Promise<ReleaseDetailPage | null> {
+    const variables: Record<string, Object> = { 'owner': owner, 'name': name, 'tag': tag };
+    const data = await graphql(RELEASE_DETAIL_QUERY, variables, token);
+    return mapReleaseDetail(data);
+  }
+
+  /** Reactees 整页：node 查 release 指定 content 的分页反应用户（2026-09-06 gh api 实测） */
+  static async fetchReactionUsers(token: string, subjectId: string, content: string,
+    cursor: string): Promise<ReactionUsersPage> {
+    const variables: Record<string, Object> = { 'id': subjectId, 'first': 50 };
+    if (cursor !== '') {
+      variables['after'] = cursor;
+    }
+    const data = await graphql(REACTION_USERS_QUERY, variables, token);
+    return mapReactionUsersPage(data, content);
   }
 
   static async fetchIssueDetail(token: string, owner: string, name: string, number: number,

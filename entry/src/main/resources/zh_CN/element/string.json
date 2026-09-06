@@ -1146,11 +1146,83 @@
     },
     {
       "name": "releases_released_this",
-      "value": "%1$s 发布"
+      "value": "发布于 %1$s"
     },
     {
       "name": "releases_view_details",
       "value": "查看发布详情"
+    },
+    {
+      "name": "release_draft_badge",
+      "value": "草稿"
+    },
+    {
+      "name": "release_prerelease_badge",
+      "value": "预发布"
+    },
+    {
+      "name": "release_assets_title",
+      "value": "资产"
+    },
+    {
+      "name": "release_assets_empty",
+      "value": "此发布没有资产。"
+    },
+    {
+      "name": "release_asset_downloads",
+      "value": "%1$d 次下载"
+    },
+    {
+      "name": "release_download_cancel",
+      "value": "取消"
+    },
+    {
+      "name": "release_download_done",
+      "value": "已下载"
+    },
+    {
+      "name": "release_download_failed",
+      "value": "下载失败"
+    },
+    {
+      "name": "release_save",
+      "value": "保存到设备"
+    },
+    {
+      "name": "release_share",
+      "value": "分享"
+    },
+    {
+      "name": "release_copy_link",
+      "value": "复制链接"
+    },
+    {
+      "name": "release_copy_done",
+      "value": "链接已复制"
+    },
+    {
+      "name": "release_saved",
+      "value": "已保存"
+    },
+    {
+      "name": "release_large_file",
+      "value": "文件较大，请使用浏览器打开。"
+    },
+    {
+      "name": "release_404_gone",
+      "value": "资产已被删除。"
+    },
+    {
+      "name": "release_show_browser",
+      "value": "在浏览器中打开"
+    },
+    {
+      "name": "release_info_title",
+      "value": "信息"
+    },
+    {
+      "name": "release_asset_download",
+      "value": "下载"
     },
     {
       "name": "releases_empty",
@@ -1383,6 +1455,10 @@
     {
       "name": "reaction_users_title",
       "value": "已反应"
+    },
+    {
+      "name": "reaction_reactees_title",
+      "value": "反应用户"
     },
     {
       "name": "a11y_reaction_add",
