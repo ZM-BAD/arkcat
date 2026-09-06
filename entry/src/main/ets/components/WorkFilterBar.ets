@@ -1,7 +1,8 @@
 /**
  * 工作区筛选行（Spec 017/018 共用）：State/Scope/Visibility 自绘下拉（选中蓝勾）+ Organization/Repository
  * 多选 Bottom Sheet（头像+搜索+蓝勾 toggle）+ Sort by 四组单选 Sheet（radio + Most reactions emoji）。
- * 全部筛选进服务端 qualifier（org:/repo: 多值、sort: 键）；任何变化经 onQueryChange 上抛，页面据此重查。
+ * 弹层内容组件化于 WorkFilterSelectSheet（org/repo 共用）/WorkFilterSortSheet，本组件保留
+ * 状态管理与数据加载（emitChange/openOrgSheet 等）；任何变化经 onQueryChange 上抛，页面据此重查。
  * 空列表显示官方「Nothing to see here」（无组织/仓库或搜索无匹配时）。
  */
 import { promptAction } from '@kit.ArkUI';
@@ -11,7 +12,8 @@ import { WorkService } from '../services/WorkService';
 import { friendlyError } from '../services/GitHttpClient';
 import { ProfileListService } from '../services/ProfileListService';
 import { OrgListPage, OrgSummary } from '../models/ProfileModels';
-import { StateView } from './StateView';
+import { WorkFilterSelectSheet, FilterSheetItem } from './WorkFilterSelectSheet';
+import { WorkFilterSortSheet, FILTER_REACTIONS } from './WorkFilterSortSheet';
 import { resText } from '../utils/I18n';
 
 /** 下拉选项（调用方以当前语言文案构建） */
@@ -41,19 +43,6 @@ interface DropdownOption {
   label: string;
 }
 
-/** Sort by 单选选项 */
-interface SortOption {
-  key: string;
-  label: string;
-}
-
-/** Most reactions emoji 槽位（confused 无服务端排序键，保留位） */
-interface ReactionOption {
-  key: string;
-  emoji: string;
-  disabled: boolean;
-}
-
 /** bindPopup 弹出状态事件 */
 interface PopupState {
   isVisible: boolean;
@@ -64,11 +53,6 @@ interface ChipState {
   kind: string;
   label: string;
   active: boolean;
-}
-
-/** Sort 单选圆钮参数（按引用传递） */
-interface SortRadioState {
-  selected: boolean;
 }
 
 @ComponentV2
@@ -99,17 +83,6 @@ export struct WorkFilterBar {
   @Local repoSearch: string = '';
   @Local orgSearchShow: boolean = false;
   @Local repoSearchShow: boolean = false;
-
-  private static readonly REACTIONS: ReactionOption[] = [
-    { key: 'reactions:+1', emoji: '👍', disabled: false },
-    { key: 'reactions:-1', emoji: '👎', disabled: false },
-    { key: 'reactions:laugh', emoji: '😂', disabled: false },
-    { key: 'reactions:hooray', emoji: '🎉', disabled: false },
-    { key: 'reactions:confused', emoji: '😕', disabled: true },
-    { key: 'reactions:heart', emoji: '❤️', disabled: false },
-    { key: 'reactions:rocket', emoji: '🚀', disabled: false },
-    { key: 'reactions:eyes', emoji: '👀', disabled: false }
-  ];
 
   private stringOf(res: Resource): string {
     return resText(this.getUIContext(), res);
@@ -211,7 +184,7 @@ export struct WorkFilterBar {
     }
     if (this.sortKey.startsWith('reactions:')) {
       // 按 emoji 排序时，chip 显示 "Sort: <emoji>"（如 Sort: 👍）
-      for (const r of WorkFilterBar.REACTIONS) {
+      for (const r of FILTER_REACTIONS) {
         if (r.key === this.sortKey) {
           return r.emoji;
         }
@@ -431,355 +404,84 @@ export struct WorkFilterBar {
     this.emitChange();
   }
 
-  @Builder
-  sheetHeader(title: Resource, close: () => void, onSearchToggle: () => void) {
-    Row() {
-      Stack() {
-        OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
-      }
-      .width(44)
-      .height(44)
-      .onClick(close)
-      Text(title)
-        .fontSize($r('app.float.title_font_size'))
-        .fontWeight(600)
-        .fontColor($r('app.color.text_primary'))
-        .layoutWeight(1)
-      Stack() {
-        OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 16, iconColor: $r('app.color.link_blue') })
-      }
-      .width(44)
-      .height(44)
-      .onClick(onSearchToggle)
+  /** 弹层行映射（org/repo 主副文本顺序不同，统一为 FilterSheetItem） */
+  private sheetItems(kind: string): FilterSheetItem[] {
+    if (kind === 'org') {
+      return this.filteredOrgs().map((o: WorkOrgItem): FilterSheetItem => ({
+        key: o.login,
+        avatarUrl: o.avatarUrl,
+        mainText: o.name,
+        subText: o.login,
+        subOnTop: false,
+        selected: this.selectedOrgs.indexOf(o.login) >= 0
+      }));
     }
-    .padding({ left: 8, right: 8 })
-  }
-
-  /** 弹层内联搜索框（点右上放大镜展开） */
-  @Builder
-  sheetSearch(value: string, onChange: (v: string) => void) {
-    TextInput({ placeholder: this.stringOf($r('app.string.search_placeholder')), text: value })
-      .height(40)
-      .fontSize($r('app.float.body_font_size'))
-      .margin({ left: 16, right: 16, bottom: 4 })
-      .borderRadius(6)
-      .backgroundColor($r('app.color.chip_bg'))
-      .onChange(onChange)
-  }
-
-  /** 弹层空态（官方「Nothing to see here」） */
-  @Builder
-  sheetEmpty() {
-    Column() {
-      Blank()
-      Text($r('app.string.work_filter_nothing'))
-        .fontSize(20)
-        .fontWeight(600)
-        .fontColor($r('app.color.text_primary'))
-      Blank()
-    }
-    .layoutWeight(1)
-    .width('100%')
-  }
-
-  @Builder
-  orgSheetRow(org: WorkOrgItem) {
-    Row({ space: 12 }) {
-      if (org.avatarUrl !== '') {
-        Image(org.avatarUrl)
-          .width(40)
-          .height(40)
-          .borderRadius(20)
-          .backgroundColor($r('app.color.chip_bg'))
-      } else {
-        Text('◯')
-          .fontSize($r('app.float.title_font_size'))
-          .width(40)
-          .height(40)
-          .borderRadius(20)
-          .textAlign(TextAlign.Center)
-          .backgroundColor($r('app.color.chip_bg'))
-      }
-      Column({ space: 2 }) {
-        Text(org.name)
-          .fontSize($r('app.float.body_font_size'))
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.text_primary'))
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-        Text(org.login)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-      }
-      .layoutWeight(1)
-      .alignItems(HorizontalAlign.Start)
-      if (this.selectedOrgs.indexOf(org.login) >= 0) {
-        OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
-      }
-    }
-    .width('100%')
-    .height(64)
-    .padding({ left: 16, right: 16 })
-    .onClick((): void => this.toggleOrg(org.login))
-  }
-
-  @Builder
-  repoSheetRow(repo: WorkTopRepoItem) {
-    Row({ space: 12 }) {
-      if (repo.ownerAvatar !== '') {
-        Image(repo.ownerAvatar)
-          .width(40)
-          .height(40)
-          .borderRadius(20)
-          .backgroundColor($r('app.color.chip_bg'))
-      } else {
-        Text('◯')
-          .fontSize($r('app.float.title_font_size'))
-          .width(40)
-          .height(40)
-          .borderRadius(20)
-          .textAlign(TextAlign.Center)
-          .backgroundColor($r('app.color.chip_bg'))
-      }
-      Column({ space: 2 }) {
-        Text(repo.ownerLogin)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-        Text(repo.name)
-          .fontSize($r('app.float.body_font_size'))
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.text_primary'))
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-      }
-      .layoutWeight(1)
-      .alignItems(HorizontalAlign.Start)
-      if (this.selectedRepos.indexOf(`${repo.ownerLogin}/${repo.name}`) >= 0) {
-        OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
-      }
-    }
-    .width('100%')
-    .height(64)
-    .padding({ left: 16, right: 16 })
-    .onClick((): void => this.toggleRepo(`${repo.ownerLogin}/${repo.name}`))
+    return this.filteredRepos().map((r: WorkTopRepoItem): FilterSheetItem => ({
+      key: `${r.ownerLogin}/${r.name}`,
+      avatarUrl: r.ownerAvatar,
+      mainText: r.name,
+      subText: r.ownerLogin,
+      subOnTop: true,
+      selected: this.selectedRepos.indexOf(`${r.ownerLogin}/${r.name}`) >= 0
+    }));
   }
 
   /** 弹层分派（单个 bindSheet 内切换内容，规避同组件多 bindSheet 失效） */
   @Builder
   overlaySheet() {
     if (this.sheetKind === 'org') {
-      this.orgSheet()
-    } else if (this.sheetKind === 'repo') {
-      this.repoSheet()
-    } else {
-      this.sortSheet()
-    }
-  }
-
-  @Builder
-  orgSheet() {
-    Column() {
-      this.sheetHeader($r('app.string.issues_filter_org_title'),
-        (): void => { this.sheetKind = ''; },
-        (): void => { this.orgSearchShow = !this.orgSearchShow; })
-      if (this.orgSearchShow) {
-        this.sheetSearch(this.orgSearch, (v: string): void => {
+      WorkFilterSelectSheet({
+        title: $r('app.string.issues_filter_org_title'),
+        searchShow: this.orgSearchShow,
+        searchText: this.orgSearch,
+        loading: this.orgListLoading,
+        error: this.sheetLoadError,
+        items: this.sheetItems('org'),
+        onPick: (key: string): void => this.toggleOrg(key),
+        onClose: (): void => {
+          this.sheetKind = '';
+        },
+        onRetry: (): void => this.openOrgSheet(),
+        onSearchToggle: (): void => {
+          this.orgSearchShow = !this.orgSearchShow;
+        },
+        onSearchChange: (v: string): void => {
           this.orgSearch = v;
-        })
-      }
-      if (this.orgListLoading) {
-        StateView({ loading: true })
-      } else if (this.sheetLoadError !== '') {
-        StateView({ error: this.sheetLoadError, onRetry: (): void => this.openOrgSheet() })
-      } else if (this.filteredOrgs().length === 0) {
-        this.sheetEmpty()
-      } else {
-        Scroll() {
-          Column() {
-            ForEach(this.filteredOrgs(), (org: WorkOrgItem) => {
-              this.orgSheetRow(org)
-            }, (org: WorkOrgItem) => org.id)
-          }
         }
-        .layoutWeight(1)
-        .scrollBar(BarState.Off)
-      }
-    }
-    .width('100%')
-    .height('100%')
-  }
-
-  @Builder
-  repoSheet() {
-    Column() {
-      this.sheetHeader($r('app.string.issues_filter_repo_title'),
-        (): void => { this.sheetKind = ''; },
-        (): void => { this.repoSearchShow = !this.repoSearchShow; })
-      if (this.repoSearchShow) {
-        this.sheetSearch(this.repoSearch, (v: string): void => {
+      })
+    } else if (this.sheetKind === 'repo') {
+      WorkFilterSelectSheet({
+        title: $r('app.string.issues_filter_repo_title'),
+        searchShow: this.repoSearchShow,
+        searchText: this.repoSearch,
+        loading: this.repoListLoading,
+        error: this.sheetLoadError,
+        items: this.sheetItems('repo'),
+        onPick: (key: string): void => this.toggleRepo(key),
+        onClose: (): void => {
+          this.sheetKind = '';
+        },
+        onRetry: (): void => this.openRepoSheet(),
+        onSearchToggle: (): void => {
+          this.repoSearchShow = !this.repoSearchShow;
+        },
+        onSearchChange: (v: string): void => {
           this.repoSearch = v;
-        })
-      }
-      if (this.repoListLoading) {
-        StateView({ loading: true })
-      } else if (this.sheetLoadError !== '') {
-        StateView({ error: this.sheetLoadError, onRetry: (): void => this.openRepoSheet() })
-      } else if (this.filteredRepos().length === 0) {
-        this.sheetEmpty()
-      } else {
-        Scroll() {
-          Column() {
-            ForEach(this.filteredRepos(), (repo: WorkTopRepoItem) => {
-              this.repoSheetRow(repo)
-            }, (repo: WorkTopRepoItem) => repo.id)
-          }
         }
-        .layoutWeight(1)
-        .scrollBar(BarState.Off)
-      }
-    }
-    .width('100%')
-    .height('100%')
-  }
-
-  // ────────────────────────── Sort by 弹层（四组单选） ──────────────────────────
-
-  /** Sort by 单选圆钮（按引用传递，勾选态随状态刷新） */
-  @Builder
-  radioCircle($$: SortRadioState) {
-    Stack() {
-      Circle()
-        .width(20)
-        .height(20)
-        .fill(Color.Transparent)
-        .stroke($$.selected ? $r('app.color.link_blue') : $r('app.color.text_tertiary'))
-        .strokeWidth(2)
-      if ($$.selected) {
-        Circle()
-          .width(10)
-          .height(10)
-          .fill($r('app.color.link_blue'))
-      }
-    }
-  }
-
-  @Builder
-  sortGroup(opts: SortOption[]) {
-    Column() {
-      ForEach(opts, (opt: SortOption) => {
-        Row() {
-          Text(opt.label)
-            .fontSize($r('app.float.body_font_size'))
-            .fontColor($r('app.color.text_primary'))
-            .layoutWeight(1)
-          this.radioCircle({ selected: this.sortKey === opt.key })
-        }
-        .width('100%')
-        .height(52)
-        .padding({ left: 16, right: 16 })
-        .onClick((): void => {
-          this.sortKey = opt.key;
+      })
+    } else {
+      WorkFilterSortSheet({
+        sortKey: this.sortKey,
+        onPick: (key: string): void => {
+          this.sortKey = key;
           this.emitChange();
           this.sheetKind = '';
-        })
-      }, (opt: SortOption) => opt.key)
-    }
-    .backgroundColor($r('app.color.card_background'))
-    .borderRadius(12)
-    .margin({ left: 12, right: 12, bottom: 12 })
-  }
-
-  @Builder
-  reactionsGroup() {
-    Column() {
-      Text($r('app.string.issues_sort_most_reactions'))
-        .fontSize($r('app.float.caption_font_size'))
-        .fontColor($r('app.color.text_secondary'))
-        .width('100%')
-        .padding({ left: 16, top: 14, bottom: 6 })
-      Grid() {
-        ForEach(WorkFilterBar.REACTIONS, (it: ReactionOption) => {
-          GridItem() {
-            Stack() {
-              Text(it.emoji)
-                .fontSize($r('app.float.title_font_size'))
-            }
-            .width(64)
-            .height(56)
-            .borderRadius(6)
-            .border({
-              width: 1,
-              color: this.sortKey === it.key ? $r('app.color.link_blue') : Color.Transparent
-            })
-            .backgroundColor(this.sortKey === it.key ? $r('app.color.chip_active_bg') : Color.Transparent)
-            .onClick((): void => {
-              if (it.disabled) {
-                return;
-              }
-              this.sortKey = it.key;
-              this.emitChange();
-              this.sheetKind = '';
-            })
-          }
-        }, (it: ReactionOption) => it.key)
-      }
-      .columnsTemplate('1fr 1fr 1fr 1fr')
-      .rowsGap(8)
-      .columnsGap(8)
-      .padding({ left: 12, right: 12, bottom: 20 })
-      .width('100%')
-    }
-    .backgroundColor($r('app.color.card_background'))
-    .borderRadius(12)
-    .margin({ left: 12, right: 12, bottom: 12 })
-  }
-
-  @Builder
-  sortSheet() {
-    Column() {
-      Row() {
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
-        }
-        .width(44)
-        .height(44)
-        .onClick((): void => {
+        },
+        onClose: (): void => {
           this.sheetKind = '';
-        })
-        Text($r('app.string.issues_sort_title'))
-          .fontSize($r('app.float.title_font_size'))
-          .fontWeight(600)
-          .fontColor($r('app.color.text_primary'))
-          .layoutWeight(1)
-      }
-      .padding({ left: 8, right: 8 })
-      Scroll() {
-        Column() {
-          this.sortGroup([
-            { key: 'newest', label: this.stringOf($r('app.string.issues_sort_newest')) },
-            { key: 'oldest', label: this.stringOf($r('app.string.issues_sort_oldest')) }
-          ])
-          this.sortGroup([
-            { key: 'most_commented', label: this.stringOf($r('app.string.issues_sort_most_commented')) },
-            { key: 'least_commented', label: this.stringOf($r('app.string.issues_sort_least_commented')) }
-          ])
-          this.sortGroup([
-            { key: 'recently_updated', label: this.stringOf($r('app.string.issues_sort_recently_updated')) },
-            { key: 'least_recently_updated', label: this.stringOf($r('app.string.issues_sort_least_recently_updated')) }
-          ])
-          this.reactionsGroup()
         }
-        .padding({ top: 8, bottom: 16 })
-      }
-      .layoutWeight(1)
-      .scrollBar(BarState.Off)
+      })
     }
-    .width('100%')
-    .height('100%')
   }
 
   build() {
