@@ -24,22 +24,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Check spec files
         run: bash scripts/check-spec.sh
 
   # ──────────────────────────────────────────
-  # Job 2: Commit message 检查
+  # Job 2: Commit message 检查（与本地 pre-commit commitlint 同版本同规范）
   # ──────────────────────────────────────────
   commit-lint:
     name: Commit Message Lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Install commitlint（与 .pre-commit-config.yaml 同版本）
+        run: npm install --no-save @commitlint/cli@21.2.2 @commitlint/config-conventional@21.2.2
 
       - name: Check commit messages
         run: |
@@ -47,35 +55,20 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             BASE="${{ github.event.pull_request.base.sha }}"
             HEAD="${{ github.event.pull_request.head.sha }}"
-            COMMITS=$(git log --format="%s" "$BASE..$HEAD")
           else
             BASE="${{ github.event.before }}"
             HEAD="${{ github.sha }}"
-            if [ "$BASE" = "0000000000000000000000000000000000000000" ] || [ -z "$BASE" ]; then
-              # 首次推送：before 为全零 SHA，无法确定提交范围，只校验本次 HEAD
-              COMMITS=$(git log --format="%s" -1 "$HEAD")
-            else
-              # 历史重写（force push）后 before 可能不在链上：范围失效则只校验本次 HEAD
-              COMMITS=$(git log --format="%s" "$BASE..$HEAD" 2>/dev/null || git log --format="%s" -1 "$HEAD")
-            fi
           fi
 
-          PATTERN="^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?!?: .+"
-
-          ERRORS=0
-          while IFS= read -r msg; do
-              if ! echo "$msg" | grep -qE "$PATTERN"; then
-                  echo "❌ Invalid: $msg"
-                  ERRORS=$((ERRORS + 1))
-              fi
-          done <<< "$COMMITS"
-
-          if [ $ERRORS -gt 0 ]; then
-              echo ""
-              echo "Found $ERRORS non-conventional commit(s)"
-              exit 1
+          # 首次推送（before 全零）或 force push（before 不在链上）：
+          # 无法确定真实范围，退化为只校验本次 HEAD 提交
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ] \
+             || ! git merge-base --is-ancestor "$BASE" "$HEAD" 2>/dev/null; then
+            git log -1 --format=%B "$HEAD" > /tmp/commit-msg.txt
+            npx commitlint --edit /tmp/commit-msg.txt
+          else
+            npx commitlint --from "$BASE" --to "$HEAD"
           fi
-          echo "✅ All commits follow Conventional Commits"
 
   # ──────────────────────────────────────────
   # Job 3: 文件结构完整性检查
@@ -85,7 +78,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Verify required files exist
         run: |
@@ -140,16 +133,16 @@ jobs:
   # ──────────────────────────────────────────
   harmony-build:
     name: HarmonyOS Build
-    runs-on: macos-14
+    runs-on: macos-15
     if: false  # 需要 DevEco Studio 许可证，暂时禁用；本地构建即可
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: "18"
+          node-version: "22"
 
       - name: Install dependencies
         run: |
@@ -169,7 +162,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Check hardcoded colors
         run: python3 scripts/check-hardcoded-colors.py
@@ -182,11 +175,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Run gitleaks
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
