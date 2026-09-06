@@ -7,7 +7,8 @@ import { MarkdownView } from '../components/MarkdownView';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { CommentCard } from '../components/CommentCard';
 import { CommentComposer } from '../components/CommentComposer';
-import { RepoComment, PrDetailPage, StatusCheckItem } from '../models/RepoSubModels';
+import { PrStatusCard } from '../components/PrStatusCard';
+import { RepoComment, PrDetailPage } from '../models/RepoSubModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { StateView } from '../components/StateView';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
@@ -23,8 +24,6 @@ export struct PrDetailView {
   @Local detail: PrDetailPage | null = null;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
-  /** Status 卡片 checks 列表展开态 */
-  @Local checksOpen: boolean = false;
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
   /** 评论输入面板（Spec 041） */
@@ -87,27 +86,6 @@ export struct PrDetailView {
 
   private timeText(parts: TimeParts | null): string {
     return parts !== null ? githubShortTime(parts) : '';
-  }
-
-  /** 展开态每个 check 行的图标：SUCCESS 绿勾 / FAILURE 红叉 / 其余黄点 */
-  private checkItemIcon(state: string): Resource {
-    if (state === 'SUCCESS') {
-      return $r('app.media.oct_check_16');
-    }
-    if (state === 'FAILURE') {
-      return $r('app.media.oct_x_16');
-    }
-    return $r('app.media.oct_dot_fill_16');
-  }
-
-  private checkColor(state: string): ResourceColor {
-    if (state === 'SUCCESS') {
-      return $r('app.color.success_text');
-    }
-    if (state === 'FAILURE') {
-      return $r('app.color.danger_text');
-    }
-    return $r('app.color.warning_text');
   }
 
   @Builder
@@ -370,101 +348,8 @@ export struct PrDetailView {
             .width('100%')
             .margin({ bottom: 12 })
 
-            // Status 卡片
-            Column({ space: 8 }) {
-              this.sectionTitle(this.stringOf($r('app.string.pr_status_title')))
-              // Reviews（黑）· None requested（灰）
-              Row({ space: 6 }) {
-                OctIcon({ res: $r('app.media.oct_person_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
-                Text(this.stringOf($r('app.string.pr_reviews')))
-                  .fontSize($r('app.float.caption_font_size'))
-                  .fontColor($r('app.color.text_primary'))
-                Text('·')
-                  .fontSize($r('app.float.caption_font_size'))
-                  .fontColor($r('app.color.text_tertiary'))
-                Text(this.detail.reviewsTotal > 0 ? `${this.detail.reviewsTotal}` : this.stringOf($r('app.string.pr_reviews_none')))
-                  .fontSize($r('app.float.caption_font_size'))
-                  .fontColor(this.detail.reviewsTotal > 0 ? $r('app.color.text_primary') : $r('app.color.text_secondary'))
-              }
-              .width('100%')
-              // Checks 摘要行：状态色圆圈 + 文案 + chevron；点击展开全部 checks
-              Row({ space: 8 }) {
-                OctIcon({
-                  res: $r('app.media.oct_circle_16'),
-                  iconSize: 14,
-                  iconColor: this.checkColor(this.detail.checksState)
-                })
-                Text(this.detail.checksState === 'SUCCESS' ? this.stringOf($r('app.string.pr_all_checks_passed'))
-                  : this.stringOf($r('app.string.work_pr_checks_failed')))
-                  .fontSize($r('app.float.caption_font_size'))
-                  .fontColor($r('app.color.text_primary'))
-                Blank()
-                OctIcon({
-                  res: $r('app.media.oct_chevron_down_16'),
-                  iconSize: 14,
-                  iconColor: $r('app.color.text_secondary')
-                })
-                .rotate(this.checksOpen ? { angle: 180 } : { angle: 0 })
-              }
-              .width('100%')
-              .onClick(() => {
-                this.checksOpen = !this.checksOpen;
-              })
-              if (this.checksOpen) {
-                ForEach(this.detail.checks, (c: StatusCheckItem) => {
-                  Row({ space: 8 }) {
-                    OctIcon({ res: this.checkItemIcon(c.state), iconSize: 12, iconColor: this.checkColor(c.state) })
-                    Text(c.name)
-                      .fontSize($r('app.float.caption_font_size'))
-                      .fontColor($r('app.color.text_primary'))
-                      .maxLines(1)
-                      .textOverflow({ overflow: TextOverflow.Ellipsis })
-                      .layoutWeight(1)
-                  }
-                  .width('100%')
-                  .padding({ left: 22 })
-                }, (c: StatusCheckItem) => c.name)
-              }
-              if (this.detail.merged) {
-                // Branch merged 行（紫色 merge icon）
-                Row({ space: 8 }) {
-                  OctIcon({
-                    res: $r('app.media.oct_git_merge_16'),
-                    iconSize: 14,
-                    iconColor: $r('app.color.shortcut_purple_fg')
-                  })
-                  Text(this.stringOf($r('app.string.pr_branch_merged')))
-                    .fontSize($r('app.float.caption_font_size'))
-                    .fontColor($r('app.color.text_primary'))
-                }
-                .width('100%')
-                // 动作人行：ZM-BAD merged commit a1edbd2 into main 13d ago
-                if (this.detail.mergeOid !== '' && this.detail.mergedByLogin !== '') {
-                  Text() {
-                    Span(this.detail.mergedByLogin)
-                      .fontColor($r('app.color.text_primary'))
-                    Span(` ${this.stringOf($r('app.string.pr_merged_commit_word'))} `)
-                      .fontColor($r('app.color.text_secondary'))
-                    Span(this.detail.mergeOid)
-                      .fontColor($r('app.color.text_primary'))
-                    Span(` ${this.stringOf($r('app.string.pr_into_word'))} `)
-                      .fontColor($r('app.color.text_secondary'))
-                    Span(this.detail.baseRefName)
-                      .fontColor($r('app.color.text_secondary'))
-                    Span(` ${this.timeText(timeParts(this.detail.mergedAt, Date.now()))} ${this.stringOf($r('app.string.pr_time_ago'))}`)
-                      .fontColor($r('app.color.text_secondary'))
-                  }
-                  .fontSize($r('app.float.caption_font_size'))
-                  .width('100%')
-                  .padding({ left: 22 })
-                }
-              }
-            }
-            .padding($r('app.float.card_padding'))
-            .borderRadius($r('app.float.card_radius'))
-            .backgroundColor($r('app.color.card_background'))
-            .width('100%')
-            .margin({ bottom: 12 })
+            // Status 卡片（组件化，checks 展开态自持有）
+            PrStatusCard({ detail: this.detail })
 
             // Conversation
             Column({ space: 8 }) {

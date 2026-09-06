@@ -1,6 +1,8 @@
 /**
  * Starred Repositories 页（Spec 023/035）：viewer 星标仓库（默认）；传入 login 展示目标用户星标。
  * My lists 区（+ NEW 预留，v1 恒显空态卡）+ Starred 分组（头像/名称/描述/星数/语言）。
+ * 仓库行组件化于 StarredRepoRow、列表成员 sheet 组件化于 StarredListSheet，
+ * 本页保留拉取/分页/成员切换（乐观更新）逻辑。
  */
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
@@ -8,6 +10,8 @@ import { PageShadowBar } from '../components/PageShadowBar';
 import { WorkStarredPage, WorkStarredRepoItem, WorkUserList } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
+import { StarredRepoRow } from '../components/StarredRepoRow';
+import { StarredListSheet, STARRED_SUGGESTIONS } from '../components/StarredListSheet';
 import { compactCount } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
@@ -94,14 +98,10 @@ export struct StarredRepositoriesView {
       });
   }
 
-  /** 当前 sheet 仓库是否已在列表内 */
-  private repoInList(list: WorkUserList): boolean {
-    return this.sheetRepoId !== '' && list.repoIds.includes(this.sheetRepoId);
-  }
-
   /** 切换仓库与某列表的成员关系：乐观更新（点击即翻转圆钮/计数），失败重取回滚 */
   private toggleListMember(list: WorkUserList): void {
-    const targetMember = this.repoInList(list);
+    // 与原 repoInList 语义一致：sheetRepoId 为空时不视为成员（review R1-1）
+    const targetMember = this.sheetRepoId !== '' && list.repoIds.includes(this.sheetRepoId);
     if (this.sheetRepoId === '' || this.toggling) {
       return;
     }
@@ -177,112 +177,9 @@ export struct StarredRepositoriesView {
     this.searchQuery = '';
   }
 
-  /** 建议列表（官方 Suggestions 三件套 + Create list 入口） */
-  private static readonly LIST_SUGGESTIONS: Resource[] = [
-    $r('app.string.starred_suggestion_future_ideas'),
-    $r('app.string.starred_suggestion_my_stack'),
-    $r('app.string.starred_suggestion_inspiration')
-  ];
-
-  @Builder
-  listSheet() {
-    // 内容包 Scroll：列表行数多时 300 高 sheet 内可滚（review D7）
-    Scroll() {
-    Column() {
-      if (this.lists.length > 0) {
-        // 已建列表：行 = 名称 + 成员圆钮（点击整行切换），官方样式
-        ForEach(this.lists, (list: WorkUserList) => {
-          Row({ space: 14 }) {
-            Text(list.name)
-              .fontSize($r('app.float.body_font_size'))
-              .fontColor($r('app.color.text_primary'))
-              .layoutWeight(1)
-              .maxLines(1)
-              .textOverflow({ overflow: TextOverflow.Ellipsis })
-            Stack() {
-              Circle()
-                .width(22)
-                .height(22)
-                .fill(this.repoInList(list) ? $r('app.color.link_blue') : Color.Transparent)
-                // Shape 外轮廓须用 stroke：通用 .border() 在 Shape 上按组件矩形外框绘制
-                .stroke(this.repoInList(list) ? $r('app.color.link_blue') : $r('app.color.border'))
-                .strokeWidth(1.5)
-              if (this.repoInList(list)) {
-                OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 12, iconColor: Color.White })
-              }
-            }
-          }
-          .width('100%')
-          .height(52)
-          .padding({ left: 20, right: 20 })
-          .onClick((): void => {
-            this.toggleListMember(list);
-          })
-        // key 含 itemCount/成员集合：数据变更强制重建行（同 key 复用 => 闭包陈旧不刷新）
-        }, (list: WorkUserList) => `${list.id}_${list.itemCount}_${list.repoIds.join(',')}`)
-      } else {
-        // 无列表：官方 Suggestions 三件套（已建列表后由列表行替代）
-        Text($r('app.string.starred_suggestions_title'))
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .width('100%')
-          .padding({ left: 20, top: 16, bottom: 12 })
-
-        ForEach(StarredRepositoriesView.LIST_SUGGESTIONS, (item: Resource, index: number) => {
-          Row({ space: 14 }) {
-            Text(this.suggestionEmoji(index))
-              .fontSize(20)
-            Text(this.stringOf(item))
-              .fontSize($r('app.float.body_font_size'))
-              .fontColor($r('app.color.text_primary'))
-              .layoutWeight(1)
-              .maxLines(1)
-              .textOverflow({ overflow: TextOverflow.Ellipsis })
-            Stack() {
-              Circle()
-                .width(22)
-                .height(22)
-                .fill(Color.Transparent)
-                // Shape 外轮廓须用 stroke：通用 .border() 在 Shape 上按组件矩形外框绘制
-                .stroke($r('app.color.border'))
-                .strokeWidth(1.5)
-            }
-          }
-          .width('100%')
-          .height(52)
-          .padding({ left: 20, right: 20 })
-          .onClick((): void => {
-            // 官方语义：点建议直接创建同名列表（review D8：勾选态此前无消费）
-            this.createListFromSuggestion(index);
-          })
-        }, (item: Resource, index: number) => `s_${index}`)
-      }
-
-      Row({ space: 12 }) {
-        OctIcon({ res: $r('app.media.oct_plus_24'), iconSize: 18, iconColor: $r('app.color.link_blue') })
-        Text($r('app.string.starred_create_list'))
-          .fontSize($r('app.float.body_font_size'))
-          .fontColor($r('app.color.link_blue'))
-      }
-      .width('100%')
-      .height(52)
-      .padding({ left: 20, right: 20 })
-      .onClick((): void => {
-        // 先收 sheet 再推页，避免弹窗盖在新页面上
-        this.listSheetOpen = false;
-        this.pathStack.pushPathByName('createList', '');
-      })
-    }
-    .width('100%')
-    }
-    .align(Alignment.Top)
-    .scrollBar(BarState.Off)
-    .width('100%')
-  }
-
   /** 官方语义：点 Suggestions 直接创建同名列表，成功后刷新（review D8） */
   private createListFromSuggestion(index: number): void {
-    const name = this.stringOf(StarredRepositoriesView.LIST_SUGGESTIONS[index]);
+    const name = this.stringOf(STARRED_SUGGESTIONS[index]);
     WorkService.createList(this.token, name, '')
       .then((): void => {
         this.fetchLists();
@@ -292,99 +189,19 @@ export struct StarredRepositoriesView {
       });
   }
 
-  /** 建议行 emoji（官方三件套） */
-  private suggestionEmoji(index: number): string {
-    if (index === 0) {
-      return '🔮';
-    }
-    if (index === 1) {
-      return '🪄';
-    }
-    return '✨';
-  }
-
-  private comingSoon(): void {
-    promptAction.showToast({ message: $r('app.string.home_feature_coming') });
-  }
-
+  /** 弹层（单个 bindSheet 引用，避免多 bindSheet 失效） */
   @Builder
-  repoRow(repo: WorkStarredRepoItem) {
-    Column({ space: 6 }) {
-      Row({ space: 8 }) {
-        if (repo.ownerAvatar !== '') {
-          Image(repo.ownerAvatar)
-            .width(18)
-            .height(18)
-            .borderRadius(9)
-            .backgroundColor($r('app.color.heat_empty'))
-        }
-        Text(repo.ownerLogin)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .layoutWeight(1)
-        // 图标贴触点框右上、行内容顶对齐：顶部留白与下方 star 行一致（card_padding 12）
-        Stack({ alignContent: Alignment.TopEnd }) {
-          OctIcon({
-            res: $r('app.media.oct_kebab_horizontal_16'),
-            iconSize: 15,
-            iconColor: $r('app.color.text_secondary')
-          })
-        }
-        .width(32)
-        .height(32)
-        .accessibilityDescription($r('app.string.a11y_more'))
-        .focusable(true)
-        .onClick((): void => {
-          this.sheetRepoId = repo.id;
-          this.fetchLists();
-          this.listSheetOpen = true;
-        })
+  listSheet() {
+    StarredListSheet({
+      lists: this.lists,
+      sheetRepoId: this.sheetRepoId,
+      onToggleMember: (list: WorkUserList): void => this.toggleListMember(list),
+      onCreateSuggestion: (index: number): void => this.createListFromSuggestion(index),
+      onCreateList: (): void => {
+        // 先收 sheet 再推页，避免弹窗盖在新页面上
+        this.listSheetOpen = false;
+        this.pathStack.pushPathByName('createList', '');
       }
-      .width('100%')
-      .alignItems(VerticalAlign.Top)
-
-      Text(repo.name)
-        .fontSize($r('app.float.body_font_size'))
-        .fontWeight(600)
-        .fontColor($r('app.color.text_primary'))
-        .maxLines(1)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
-        .width('100%')
-
-      if (repo.description !== '') {
-        Text(repo.description)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .maxLines(2)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .width('100%')
-      }
-
-      Row({ space: 8 }) {
-        OctIcon({ res: $r('app.media.oct_star_fill_16'), iconSize: 12, iconColor: $r('app.color.star_gold') })
-        Text(compactCount(repo.stargazerCount))
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_primary'))
-        if (repo.language !== '') {
-          Text('●')
-            .fontSize(12)
-            .fontColor(repo.languageColor !== '' ? repo.languageColor : $r('app.color.text_secondary'))
-          Text(repo.language)
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-        }
-      }
-      .width('100%')
-    }
-    .padding($r('app.float.card_padding'))
-    .borderRadius($r('app.float.card_radius'))
-    .backgroundColor($r('app.color.card_background'))
-    .width('100%')
-    .margin({ bottom: 8 })
-    .onClick(() => {
-      this.pathStack.pushPathByName('repoDetail', `${repo.ownerLogin}/${repo.name}`);
     })
   }
 
@@ -393,19 +210,19 @@ export struct StarredRepositoriesView {
       // 副标题（viewer login）+ 主标题 + 操作
       Row({ space: 8 }) {
         Stack() {
-  OctIcon({
-          res: $r('app.media.oct_arrow_left_24'),
-          iconSize: 20,
-          iconColor: $r('app.color.text_primary')
-  })
-}
-.width(44)
-.height(44)
+          OctIcon({
+            res: $r('app.media.oct_arrow_left_24'),
+            iconSize: 20,
+            iconColor: $r('app.color.text_primary')
+          })
+        }
+        .width(44)
+        .height(44)
         .accessibilityDescription($r('app.string.a11y_back'))
         .focusable(true)
-.onClick((): void => {
-            this.pathStack.pop();
-          })
+        .onClick((): void => {
+          this.pathStack.pop();
+        })
         if (this.inSearch) {
           Column() {
             TextInput({
@@ -451,38 +268,38 @@ export struct StarredRepositoriesView {
           .onClick((): void => this.exitSearch())
         } else {
           Stack() {
-  OctIcon({
-          res: $r('app.media.oct_search_24'),
-          iconSize: 20,
-          iconColor: $r('app.color.link_blue')
-  })
-}
-.width(44)
-.height(44)
-        .accessibilityDescription($r('app.string.a11y_search'))
-        .focusable(true)
-.onClick((): void => this.enterSearch())
+            OctIcon({
+              res: $r('app.media.oct_search_24'),
+              iconSize: 20,
+              iconColor: $r('app.color.link_blue')
+            })
+          }
+          .width(44)
+          .height(44)
+          .accessibilityDescription($r('app.string.a11y_search'))
+          .focusable(true)
+          .onClick((): void => this.enterSearch())
           .padding(6)
         }
         Stack() {
-  OctIcon({
-          res: $r('app.media.oct_kebab_horizontal_16'),
-          iconSize: 18,
-          iconColor: $r('app.color.link_blue')
-  })
-  .rotate({ angle: 90 })
-}
-.width(44)
-.height(44)
+          OctIcon({
+            res: $r('app.media.oct_kebab_horizontal_16'),
+            iconSize: 18,
+            iconColor: $r('app.color.link_blue')
+          })
+          .rotate({ angle: 90 })
+        }
+        .width(44)
+        .height(44)
         .accessibilityDescription($r('app.string.a11y_more'))
         .focusable(true)
-.bindMenu([
+        .bindMenu([
           {
             value: $r('app.string.inbox_menu_refresh'),
             action: (): void => this.refresh()
           }
         ])
-          .padding(6)
+        .padding(6)
       }
       .width('100%')
       .height(56)
@@ -528,7 +345,7 @@ export struct StarredRepositoriesView {
               .onClick((): void => {
                 this.pathStack.pushPathByName('listDetail', list.id);
               })
-            // key 含 itemCount：切换后计数重新渲染（同 key 复用 => 显示陈旧数量）
+              // key 含 itemCount：切换后计数重新渲染（同 key 复用 => 显示陈旧数量）
             }, (list: WorkUserList) => `${list.id}_${list.itemCount}`)
           } else {
             // Create your first list 空态卡
@@ -576,7 +393,17 @@ export struct StarredRepositoriesView {
 
           if (this.shownRepos().length > 0) {
             ForEach(this.shownRepos(), (repo: WorkStarredRepoItem) => {
-              this.repoRow(repo)
+              StarredRepoRow({
+                repo: repo,
+                onOpenDetail: (): void => {
+                  this.pathStack.pushPathByName('repoDetail', `${repo.ownerLogin}/${repo.name}`);
+                },
+                onOpenList: (): void => {
+                  this.sheetRepoId = repo.id;
+                  this.fetchLists();
+                  this.listSheetOpen = true;
+                }
+              })
             }, (repo: WorkStarredRepoItem) => repo.id)
             if (this.hasNextPage) {
               Text($r('app.string.issues_load_more'))
@@ -609,7 +436,9 @@ export struct StarredRepositoriesView {
       .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
-      .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
+      .onScroll((_x: number, y: number): void => {
+        this.scrollShadow = y > 0.001;
+      })
     }
     .width('100%')
     .height('100%')

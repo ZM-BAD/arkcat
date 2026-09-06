@@ -1,5 +1,6 @@
 /**
  * User Profile 页（Spec 005 + Spec 034/035 改造）：头像/bio/元信息 + Pinned + 两段可点计数行 + 三导航入口。
+ * 头卡组件化于 ProfileHeaderCard、导航入口组组件化于 ProfileNavRows，本页保留状态与 Follow 逻辑。
  * Packages 无公开 API 不展示，Projects 按边界跳过；··· 菜单提供 Follow/Unfollow；
  * 贡献日历与内嵌切换按官方 App 对齐移除（Spec 035）。
  */
@@ -12,6 +13,8 @@ import { RepoCard } from '../components/RepoCard';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
+import { ProfileHeaderCard } from '../components/ProfileHeaderCard';
+import { ProfileNavRows } from '../components/ProfileNavRows';
 import { RepoSummary } from '../models/GitHubModels';
 import { resText } from '../utils/I18n';
 
@@ -133,265 +136,23 @@ export struct ProfileView {
     return resText(this.getUIContext(), res, arg);
   }
 
-  /** 信息行：icon 固定在 16×16 容器保证跨行对齐；bold 时内容加粗 */
-  @Builder
-  metaRow(iconRes: Resource, text: string, bold: boolean = false) {
-    if (text !== '') {
-      Row({ space: 8 }) {
-        Stack() {
-          OctIcon({ res: iconRes, iconSize: 16, iconColor: $r('app.color.text_secondary') })
-        }
-        .width(16)
-        .height(16)
-        Text(text)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .fontWeight(bold ? 600 : FontWeight.Normal)
-          .maxLines(1)
-      }
-      .width('100%')
-    }
-  }
-
-  /** 状态行：emoji + Focusing 文案 + 最右铅笔（灰）；灰底矩形背景，仅自己主页可编辑入口 */
-  @Builder
-  statusRow() {
-    if (this.profile !== null && this.profile.statusMessage !== '') {
-      Row() {
-        Text(`${this.profile.statusEmoji} ${this.profile.statusMessage}`)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .maxLines(1)
-        Blank()
-        if (isSelfProfile(this.profile.viewerLogin, this.profile.user.login)) {
-          OctIcon({ res: $r('app.media.oct_pencil_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
-            .padding(4)
-            .responseRegion({ x: -10, y: -10, width: '183%', height: '183%' })
-            .onClick(() => {
-              promptAction.showToast({ message: $r('app.string.home_feature_coming') });
-            })
-        }
-      }
-      .width('100%')
-      .padding({ left: 12, right: 4, top: 8, bottom: 8 })
-      .borderRadius(6)
-      .backgroundColor($r('app.color.heat_empty'))
-    }
-  }
-
-  /** 勋章行：trophy + GitHub 官方徽章图列表（AchievementsService 抓取 HTML） */
-  @Builder
-  achievementsRow() {
-    if (this.achievements.length > 0) {
-      Row({ space: 8 }) {
-        OctIcon({ res: $r('app.media.oct_trophy_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
-        // 徽章数量不定：包横向 Scroll 防溢出，内层行 minWidth 撑满、超宽可滑
-        Scroll() {
-          Row({ space: 0 }) {
-            ForEach(this.achievements, (url: string, index: number) => {
-              Image(url)
-                .width(24)
-                .height(24)
-                .borderRadius(12)
-                .backgroundColor($r('app.color.heat_empty'))
-                .padding(2)
-                .onClick(() => {
-                  this.pathStack.pushPathByName('achievementDetail', `${this.login}|${index}`);
-                })
-            }, (url: string, index: number) => `${url}_${index}`)
-          }
-          .constraintSize({ minWidth: '100%' })
-        }
-        .scrollBar(BarState.Off)
-        .layoutWeight(1)
-      }
-      .width('100%')
-    }
-  }
-
-  @Builder
-  headerCard() {
-    Column({ space: 8 }) {
-      Row({ space: 12 }) {
-        Image(this.profile?.user.avatarUrl ?? '')
-          .width(72)
-          .height(72)
-          .borderRadius(36)
-          .backgroundColor($r('app.color.heat_empty'))
-        Column({ space: 4 }) {
-          Text(this.profile?.user.name ?? '')
-            .fontSize($r('app.float.title_font_size'))
-            .fontWeight(600)
-            .fontColor($r('app.color.text_primary'))
-          Text(`@${this.profile?.user.login ?? ''}`)
-            .fontSize($r('app.float.body_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-        }
-        .alignItems(HorizontalAlign.Start)
-        .layoutWeight(1)
-      }
-      .width('100%')
-
-      this.statusRow()
-
-      if (this.profile !== null && this.profile.user.bio !== '') {
-        Text(this.profile.user.bio)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_primary'))
-          .width('100%')
-      }
-
-      Column({ space: 8 }) {
-        this.metaRow($r('app.media.oct_location_16'), this.profile?.location ?? '')
-        this.metaRow($r('app.media.oct_link_16'), this.profile?.websiteUrl ?? '', true)
-        this.metaRow($r('app.media.oct_mail_16'), this.profile?.email ?? '', true)
-        if (this.profile?.twitterUsername !== '') {
-          Row({ space: 8 }) {
-            Stack() {
-              Text('𝕏')
-                .fontSize(14)
-                .fontColor($r('app.color.text_secondary'))
-            }
-            .width(16)
-            .height(16)
-            Text(`@${this.profile?.twitterUsername ?? ''}`)
-              .fontSize($r('app.float.caption_font_size'))
-              .fontColor($r('app.color.text_secondary'))
-              .fontWeight(600)
-              .maxLines(1)
-          }
-          .width('100%')
-        }
-      }
-      .width('100%')
-      .alignItems(HorizontalAlign.Start)
-
-      // Developer Program Member（用户实际为成员时才显示，官方徽章位序=X 之下、followers 之上）
-      if (this.profile !== null && this.profile.isDeveloperProgramMember) {
-        Row({ space: 8 }) {
-          Stack() {
-            OctIcon({ res: $r('app.media.oct_cpu_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
-          }
-          .width(16)
-          .height(16)
-          Text($r('app.string.profile_dev_program_member'))
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-            .maxLines(1)
-        }
-        .width('100%')
-      }
-
-      // 两段可点计数行（Spec 034）：person 图标 + N followers · M following（数字加粗）
-      Row({ space: 8 }) {
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_person_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
-        }
-        .width(16)
-        .height(16)
-        Text(`${this.profile?.user.followers ?? 0}`)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontWeight(600)
-          .fontColor($r('app.color.text_primary'))
-          .responseRegion({ x: 0, y: -12, width: '100%', height: '220%' })
-          .onClick(() => {
-            this.pathStack.pushPathByName('userList', `${this.profile?.user.login ?? ''}|followers`);
-          })
-        Text(resText(this.getUIContext(), $r('app.string.profile_followers_unit')))
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .responseRegion({ x: 0, y: -12, width: '100%', height: '220%' })
-          .onClick(() => {
-            this.pathStack.pushPathByName('userList', `${this.profile?.user.login ?? ''}|followers`);
-          })
-        Text('·')
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-        Text(`${this.profile?.user.following ?? 0}`)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontWeight(600)
-          .fontColor($r('app.color.text_primary'))
-          .responseRegion({ x: 0, y: -12, width: '100%', height: '220%' })
-          .onClick(() => {
-            this.pathStack.pushPathByName('userList', `${this.profile?.user.login ?? ''}|following`);
-          })
-        Text(resText(this.getUIContext(), $r('app.string.profile_following_unit')))
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .responseRegion({ x: 0, y: -12, width: '100%', height: '220%' })
-          .onClick(() => {
-            this.pathStack.pushPathByName('userList', `${this.profile?.user.login ?? ''}|following`);
-          })
-        Blank()
-      }
-      .width('100%')
-
-      this.achievementsRow()
-    }
-    .padding($r('app.float.card_padding'))
-    .borderRadius($r('app.float.card_radius'))
-    .backgroundColor($r('app.color.card_background'))
-    .width('100%')
-  }
-
-  /** 导航入口行（Spec 035）：彩块图标 + 标签 + 计数（行容器由 navRowsSection 提供） */
-  @Builder
-  navRow(iconRes: Resource, color: ResourceColor, labelRes: Resource, count: number, onClick: () => void) {
-    Row({ space: 12 }) {
-      Stack() {
-        OctIcon({ res: iconRes, iconSize: 16, iconColor: Color.White })
-      }
-      .width(44)
-      .height(44)
-      .backgroundColor(color)
-      .borderRadius(6)
-      Text(labelRes)
-        .fontSize($r('app.float.body_font_size'))
-        .fontColor($r('app.color.text_primary'))
-        .layoutWeight(1)
-      Text(`${count}`)
-        .fontSize($r('app.float.body_font_size'))
-        .fontColor($r('app.color.text_secondary'))
-    }
-    .width('100%')
-    .padding({ left: 10, right: 10, top: 6, bottom: 6 })
-    .onClick(onClick)
-  }
-
-  /** 三导航入口组（Spec 035）：单卡片容器，一行一行展示 */
-  @Builder
-  navRowsSection() {
-    Column() {
-      this.navRow($r('app.media.oct_repo_16'), $r('app.color.text_secondary'), $r('app.string.profile_repositories'), this.profile?.repositoriesCount ?? 0,
-        () => this.pathStack.pushPathByName('repositoriesList', `${this.profile?.user.login ?? ''}|user`))
-      this.navRow($r('app.media.oct_organization_16'), $r('app.color.shortcut_orange_fg'), $r('app.string.profile_organizations'), this.orgCount,
-        () => this.pathStack.pushPathByName('orgList', this.profile?.user.login ?? ''))
-      this.navRow($r('app.media.oct_star_16'), $r('app.color.star_gold'), $r('app.string.profile_starred'), this.profile?.starredCount ?? 0,
-        () => this.pathStack.pushPathByName('starred', this.profile?.user.login ?? ''))
-    }
-    .padding({ top: 4, bottom: 4 })
-    .borderRadius($r('app.float.card_radius'))
-    .backgroundColor($r('app.color.card_background'))
-    .width('100%')
-  }
-
   build() {
     Column() {
       Row() {
         Stack() {
-  OctIcon({
-          res: $r('app.media.oct_arrow_left_24'),
-          iconSize: 20,
-          iconColor: $r('app.color.text_primary')
-  })
-}
-.width(44)
-.height(44)
+          OctIcon({
+            res: $r('app.media.oct_arrow_left_24'),
+            iconSize: 20,
+            iconColor: $r('app.color.text_primary')
+          })
+        }
+        .width(44)
+        .height(44)
         .accessibilityDescription($r('app.string.a11y_back'))
         .focusable(true)
-.onClick((): void => {
-            this.pathStack.pop();
-          })
+        .onClick((): void => {
+          this.pathStack.pop();
+        })
         Blank()
         // 🔗 分享：系统分享能力后续 Spec（Spec 005 边界；右侧组统一 44 触点与左侧返回对称）
         Stack() {
@@ -433,7 +194,12 @@ export struct ProfileView {
       Scroll() {
         Column({ space: 12 }) {
           if (this.profile !== null) {
-            this.headerCard()
+            ProfileHeaderCard({
+              profile: this.profile,
+              achievements: this.achievements,
+              login: this.login,
+              pathStack: this.pathStack
+            })
 
             // Pinned 横滑双列（Spec 005 官方布局）
             Row({ space: 6 }) {
@@ -464,7 +230,13 @@ export struct ProfileView {
             .scrollBar(BarState.Off)
 
             // 三导航入口（Spec 035：单容器三行，跳独立列表页）
-            this.navRowsSection()
+            ProfileNavRows({
+              login: this.profile.user.login,
+              repositoriesCount: this.profile.repositoriesCount,
+              orgCount: this.orgCount,
+              starredCount: this.profile.starredCount,
+              pathStack: this.pathStack
+            })
           } else {
             StateView({
               loading: this.loading,
