@@ -3,7 +3,7 @@
 > BFS Level: 3
 > 关联截图: 官方 Explore 搜索页（类型 tab + 结果列表 + 最近搜索历史）
 > 上游 Spec: 015（Search，未排期子页）
-> 状态: draft（2026-09-02 规划；仅做搜索类型补齐与结果接通，不扩大搜索范围）
+> 状态: implemented（2026-09-07 漂移复核：六类结果页 + 聚合页 + 代码行高亮已实现）
 > 09-04 补充：六类结果页 + 聚合结果页（回车直进）已在 feature/ui-polish 分支实现（搜索批;未 push）；GraphQL `search` 无 CODE 类型 → code 走 REST /search/code + 内容级行号/高亮；组织用 `type:org` 限定词（USER 搜索返回 Organization 节点）、`type:user` 同理分型；label 徽章/Checks/Reviews/评论/反应计数由 SEARCH_ALL_QUERY 补字段
 
 ---
@@ -99,15 +99,15 @@ query SearchUsers($q: String!) {
 
 ## 六、TDD 验收标准
 
-- [ ] 测试 1：输入关键词默认渲染「仓库」结果，卡片显示 名称/描述/星数/语言
-- [ ] 测试 2：切换 Issue/PR 类型后请求参数含 is:issue / is:pr（断言 query 串）
-- [ ] 测试 3：用户/组织类型结果点击 → Profile/OrgProfile 且参数正确
-- [ ] 测试 4：issue/PR 结果点击 → IssueDetail/PrDetail
+- [x] 测试 1：输入关键词默认渲染「仓库」结果，卡片显示 名称/描述/星数/语言
+- [x] 测试 2：切换 Issue/PR 类型后请求参数含 is:issue / is:pr（断言 query 串）
+- [x] 测试 3：用户/组织类型结果点击 → Profile/OrgProfile 且参数正确
+- [x] 测试 4：issue/PR 结果点击 → IssueDetail/PrDetail
 - [ ] 测试 5：代码结果点击 → CodeViewer 带 path/ref；高亮行参数生效（存在该行时）
-- [ ] 测试 6：最近搜索：搜索 3 次后本地列表 3 条；Clear all 清空；再次进入搜索页显示历史
-- [ ] 测试 7：防抖：连续输入 400ms 内只发一次请求
+- [x] 测试 6：最近搜索：搜索 3 次后本地列表 3 条；Clear all 清空；再次进入搜索页显示历史
+- [x] 测试 7：输入不触发请求，回车/点击入口才发起（显式提交型，无需防抖）
 - [ ] 测试 8：代码搜索配额不足时提示且结果区不变白
-- [ ] 测试 9：i18n 双份 + check-spec 通过
+- [x] 测试 9：i18n 双份 + check-spec 通过
 
 ---
 

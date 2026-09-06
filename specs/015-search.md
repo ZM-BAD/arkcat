@@ -47,7 +47,7 @@
 | 3 | 导航头 | ⋯ 竖三点（蓝色） | 菜单入口 | ✅ 纯 UI | — | 菜单项后续 Spec，暂点击提示 |
 | 4 | 空态 | 「Find your stuff.」+ 五类说明 | 引导 | ✅ 纯 UI | — | 无输入且无历史时显示 |
 | 5 | chips | qualifier 快捷 chip（repo/user/org/path/symbol） | 点击插入限定词前缀 | ✅ 纯 UI | — | 聚焦且键盘弹出时显示；第 5 项「sy…」截图截断，按 symbol 推断 |
-| 6 | 建议列表 | 六类入口行 | 点击进入结果页 | ✅ | `search(type: CODE/REPOSITORY/ISSUE/PR/USER)` | Organizations 无 search type，REST 兜底 |
+| 6 | 建议列表 | 六类入口行 | 点击进入结果页 | ✅ | `search(type: CODE/REPOSITORY/ISSUE/USER)` | Organizations 用 USER + `type:org` 限定词 |
 | 7 | 建议列表 | Jump to "q" | 跳转首个匹配实体 | ✅ | `search(type: REPOSITORY)` 探测 | 首个匹配仓库 → RepoDetail；无匹配 toast |
 | 8 | 空态 | Recent searches + CLEAR + 历史行(↗) | 本地历史回填/清除 | ✅ 纯 UI | — | preferences 持久化，最多 10 条 |
 | 9 | 结果页 | 六类结果列表（复用卡片：RepoCard/Issue/PR/User/Org/Code 卡） | 展示与翻页 | ✅ | 同 6；分页 `pageInfo` | Code 沿用 v1 结果卡 |
@@ -92,8 +92,8 @@ query CodeSearch($query: String!, $first: Int = 10) {
 
 | 项 | 原因 | StarRaft 处理方式 |
 | ---- | ------ | ------------------- |
-| Organizations 结果（GraphQL） | GraphQL search 无 ORGANIZATION 类型 | 走 REST `/search/users?type=organization` 兜底；结果卡复用 UserCard/OrgSummary |
-| 代码行内容+高亮 | GraphQL CODE 无文本内容；REST code search 需单独 token scope | 降级展示 文件名/路径/仓库；内容高亮随 Spec 011（Code Viewer）对应路线补充 |
+| Organizations 结果（GraphQL） | GraphQL search 无 ORGANIZATION 类型 | `type:org` 限定词 + USER 搜索返回 Organization 节点；SearchRows 行组件 |
+| 代码行内容+高亮 | GraphQL CODE 无文本内容；REST code search 需单独 token scope | REST `/search/code` 承载（046）：内容级行号/高亮已实现 |
 | 底部 Tab 保留 | 官方搜索页保留底部 Tab（Home 激活）；本实现为 Navigation 覆盖式二级页，展示 Tab 需重构导航架构 | 不追此项（平台导航取舍），走查说明 |
 | qualifier chips 位置 | 官方在键盘上方（页面底部）；HarmonyOS 无窗口级键盘压缩 API（keyboardAvoidMode 仅 Select/Sheet/Menu），页面不被压缩 | chips 置于输入栏下方、聚焦时显示（交互等价：输入辅助+随键盘出现）；后续官方图校准 |
 | qualifier chips 第 5 项 | 截图「sy…」截断，无法确认完整词 | 按 GitHub 官方 code search `symbol:` 推断；后续官方图可校准 |
@@ -118,6 +118,6 @@ query CodeSearch($query: String!, $first: Int = 10) {
 ## 七、备注
 
 - v1（2026-08-31）：搜索建议 + Code 结果布局完成，截图验收通过
-- v2（2026-09-03）：按官方入口页 5 张图实现——空态「Find your stuff.」、qualifier chips（repo/user/org/path/symbol）、建议列表第 7 行 Jump to、Recent searches 历史（preferences 持久化、最多 10 条、CLEAR）、六类入口行进统一 SearchResults 结果页（Organizations 走 REST 兜底）
-- GraphQL CODE search 只返回 File 节点元数据（仓库/路径/文件名），代码行正文由 REST 兜底后续接入
+- v2（2026-09-03）：按官方入口页 5 张图实现——空态「Find your stuff.」、qualifier chips（repo/user/org/path/symbol）、建议列表第 7 行 Jump to、Recent searches 历史（preferences 持久化、最多 10 条、CLEAR）、六类入口行进统一 SearchResults 结果页（Organizations 用 USER + `type:org`）
+- GraphQL CODE search 只返回 File 节点元数据（仓库/路径/文件名），代码行正文由 REST `/search/code` 承载（046）
 - 竖三点「⋮」蓝色菜单为新增资源 oct_kebab_vertical_24（官方 Octicon kebab-vertical 图形）

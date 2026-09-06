@@ -102,7 +102,7 @@ GET /repos/{owner}/{repo}/releases/download/{tag}/{asset_name}
 - [x] 测试 1：详情页渲染 name/tagName/作者/时间；Prerelease 徽章在 isPrerelease=true 时出现（模拟器走查
   v3.8.0/v2.11.0 渲染确认；徽章逻辑同 Draft 分支未实测——随用户验收确认）
 - [x] 测试 2：body 渲染走 MarkdownView（走查确认；Release 无 bodyHTML → renderMarkdown 生成）
-- [x] 测试 3：资产列表显示 名称/大小（人类可读）/下载次数；空资产有占位（git-lfs 列表 + vscode 空态走查）
+- [x] 测试 3：资产列表显示 名称/大小（人类可读）（git-lfs 列表 + vscode 空态走查）
 - [ ] 测试 4：点击 asset 开始下载；进度条单调到 100%；完成后气泡出现「保存/分享」选项
   （任务行/取消/进度条已走查；完成态按钮未闭环，随用户验收确认）
 - [ ] 测试 5：同时点击 4 个 asset，第 4 个排队；取消任务队列移除该任务

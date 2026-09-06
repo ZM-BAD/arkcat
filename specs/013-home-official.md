@@ -12,7 +12,7 @@
 对照 GitHub 官方 App 的 Home Tab 截图，将 StarRaft 首页从「用户卡片 + 贡献日历 + Pinned 仓库」重构为官方布局：
 
 - **Header**：`Home` 标题 + 搜索/刷新/新建/头像 四个操作
-- **My Work**：Issues / Pull Requests / Discussions / Projects / Top Repositories / Organizations / Starred 七个彩色图标入口（点击进对应列表页，列表页属后续 Spec）
+- **My Work**：Issues / Pull Requests / Discussions / Projects / Top Repositories / Organizations / Starred 七个彩色图标入口（点击进对应列表页，见 017-023）
 - **Favorites**：收藏仓库空态（说明文案 + `ADD FAVORITES` 按钮）
 - **Shortcuts**：彩色圆形图标行 + 引导文案 + `GET STARTED` 按钮
 
@@ -36,12 +36,12 @@
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | Header 左 | `Home` 标题 | 页面标题 | ✅ | —（纯 UI） | — |
-| 2 | Header 右 | 🔍 搜索 | 提示搜索后续版本提供 | ✅ | —（纯 UI） | 复用 home_search_hint |
+| 2 | Header 右 | 🔍 搜索 | 进入搜索页 | ✅ | —（纯 UI） | 复用 home_search_hint；路由见 015/046 |
 | 3 | Header 右 | 🔄 刷新 | 重新拉取 viewer 基础信息 | ✅ | `viewer { login name avatarUrl }` | — |
 | 4 | Header 右 | ＋ 新建 | 提示新建在后续版本提供 | ✅ | —（纯 UI） | — |
 | 5 | Header 右 | 头像 | 点击进入查看者个人主页 | ✅ | `viewer.avatarUrl/login` | 路由复用 userProfile |
-| 6 | My Work | 区块标题 + ⋯ | 展开更多（后续 Spec） | ✅ | —（纯 UI） | 点击提示 |
-| 7 | My Work | 七行彩色入口 | 点击进入对应列表（列表页后续 Spec） | ✅ | —（纯 UI） | 点击提示「后续 Spec 提供」 |
+| 6 | My Work | 区块标题 + ⋯ | 打开编辑页（016） | ✅ | —（纯 UI） | 路由 editMyWork |
+| 7 | My Work | 七行彩色入口 | 点击进入对应列表（见 017-023） | ✅ | —（纯 UI） | 路由至对应列表页 |
 | 8 | Favorites | 空态文案 + ADD FAVORITES | 收藏仓库入口 | ✅ | —（纯 UI） | 添加流程后续 Spec；无数据即空态 |
 | 9 | Shortcuts | 图标行 + 文案 + GET STARTED | 快捷引导 | ✅ | —（纯 UI） | 点击提示 |
 | 10 | 底部 Tab | Inbox 未读蓝点 | 未读通知提示 | ✅ | REST `/notifications?per_page=1` | 复用 REST 兜底，从旧 Home 迁移 |

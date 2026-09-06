@@ -3,7 +3,7 @@
 > BFS Level: 2
 > 关联截图: 三图批次第 1 张（ponytail Contributors）、第 2 张（ponytail Watchers）
 > 上游 Spec: 006（仓库详情页 More 折叠区 Contributors/Watchers 入口）
-> 状态: draft
+> 状态: implemented（2026-09-07 漂移复核：页面/服务/模型完整实现）
 
 ---
 

@@ -80,11 +80,11 @@ code_font_size（number，fp，默认 16，范围 12–20）
 
 ## 六、TDD 验收标准
 
-- [ ] 测试 1：默认值正确——Scrollable Path / Line numbers / Override font / Wrap 开，Dark theme 关；字号 16
-- [ ] 测试 2：字号滑杆仅 Override system font size 开启时可见；拖动后代码预览字号跟随并持久化
-- [ ] 测试 3：Wrap lines 关 → 注释行单行省略；开 → 按截图两行换行展示；行号随实际行数
-- [ ] 测试 4：Always use dark theme 切换 → 代码预览深浅两套配色切换；App 主题（Spec 026）不影响代码区
-- [ ] 测试 5：重启重进页面状态保持；grep 页面无中文字符串字面量；check-spec.sh 通过
+- [x] 测试 1：默认值正确——Scrollable Path / Line numbers / Override font / Wrap 开，Dark theme 关；字号 16
+- [x] 测试 2：字号滑杆仅 Override system font size 开启时可见；拖动后代码预览字号跟随并持久化
+- [x] 测试 3：Wrap lines 关 → 注释行单行省略；开 → 按截图两行换行展示；行号随实际行数
+- [x] 测试 4：Always use dark theme 切换 → 代码预览深浅两套配色切换；App 主题（Spec 026）不影响代码区
+- [x] 测试 5：重启重进页面状态保持；grep 页面无中文字符串字面量；check-spec.sh 通过
 
 ---
 

@@ -17,7 +17,7 @@
 
 ```text
 resources/
-├── base/element/color.json          # 浅色值（语义 token，约 34 个）
+├── base/element/color.json          # 浅色值（语义 token，65 个）
 └── dark/element/color.json          # 深色覆盖（同名 token，系统自动切换）
 
 Settings → Theme → [跟随系统] [浅色] [深色]（单选，默认跟随系统）

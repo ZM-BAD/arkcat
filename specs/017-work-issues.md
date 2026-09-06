@@ -33,7 +33,7 @@ Home My Work「Issues」入口进入的跨仓库 Issue 列表页（区别于 007
 | 3 | App Bar 右 | 🔍 搜索 | 跳转全局搜索页 | ✅ | —（纯 UI） | 复用路由 search |
 | 4 | App Bar 右 | ⋯ 更多 | 预留 | ✅ | —（纯 UI） | 点击提示 |
 | 5 | 筛选行 | 漏斗徽标 + 激活数 | 展示当前激活筛选数 | ✅ | —（纯 UI） | 客户端计数 |
-| 6 | 筛选行 | 状态下拉（All/Open/Closed） | 状态筛选 | ✅ | `search query: is:open / is:closed` | 默认 All |
+| 6 | 筛选行 | 状态下拉（All/Open/Closed） | 状态筛选 | ✅ | `search query: is:open / is:closed` | 默认 Open |
 | 7 | 筛选行 | 归属下拉（Created by me / Assigned to me / Mentioned） | 归属筛选 | ✅ | `author:@me / assignee:@me / mentions:@me` | 默认 Created by me |
 | 8 | 筛选行 | 可见性下拉（All/Public/Private） | 可见性筛选 | ✅ | `is:public / is:private` | 默认 All |
 | 9 | Issue 行 | 状态图标（绿✔/紫✔/灰⊘） | 展示状态与关闭原因 | ✅ | `state / stateReason` | OPEN→绿；COMPLETED→紫；NOT_PLANNED→灰 |

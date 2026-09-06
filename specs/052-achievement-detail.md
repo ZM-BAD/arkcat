@@ -3,7 +3,7 @@
 > BFS Level: 2
 > 关联截图: 微信图片_20260903231418_49_181.jpg（YOLO 徽章详情：渐变底/大徽章/解锁信息/圆点翻页/Share）
 > 上游 Spec: 005（用户主页勋章行）
-> 状态: draft
+> 状态: implemented（2026-09-07 漂移复核：页面/模型/服务完整实现）
 
 ---
 
@@ -78,12 +78,12 @@ GET https://github.com/users/{login}/achievements/{slug}/detail
 
 ## 六、TDD 验收标准
 
-- [ ] 测试 1：parseAchievementDetail：正常详情片段 → name/description/badgeImageUrl/unlockedAt/eventLabel/eventRef 完整
-- [ ] 测试 2：parseAchievementDetail：事件引用为 `inaccessible` → eventRef = ''，eventLabel 保留
-- [ ] 测试 3：parseAchievementDetail：空 / 异常 HTML → 抛出 ParseError
-- [ ] 测试 4：parseAchievementDetail：无 relative-time 时 unlockedAt = ''（无 crash）
-- [ ] 测试 5：unlockDateText：合法 ISO → 本地日期「月 日」非空；非法 ISO → ''
-- [ ] 测试 6：fetchSlugs（抽出后的 slug 提取纯函数）：重复 slug 去重保序（沿用现有 fetch 正则）
+- [x] 测试 1：parseAchievementDetail：正常详情片段 → name/description/badgeImageUrl/unlockedAt/eventLabel/eventRef 完整
+- [x] 测试 2：parseAchievementDetail：事件引用为 `inaccessible` → eventRef = ''，eventLabel 保留
+- [x] 测试 3：parseAchievementDetail：空 / 异常 HTML → 抛出 ParseError
+- [x] 测试 4：parseAchievementDetail：无 relative-time 时 unlockedAt = ''（无 crash）
+- [x] 测试 5：unlockDateText：合法 ISO → 本地日期「月 日」非空；非法 ISO → ''
+- [x] 测试 6：fetchSlugs（抽出后的 slug 提取纯函数）：重复 slug 去重保序（沿用现有 fetch 正则）
 
 ---
 

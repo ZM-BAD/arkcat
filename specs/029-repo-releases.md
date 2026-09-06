@@ -31,7 +31,7 @@
 | 2 | 头卡 | tag + Latest release 徽章 | 展示 | ✅ | `isLatest/tagName` | 仅最近一条 |
 | 3 | 头卡 | 发布者 + 日期「released this M/D」 | 展示 | ✅ | `author/createdAt` | 月名+日格式 |
 | 4 | 头卡 | What's Changed 正文（截断） | 展示 | ✅ | `body/description` | 4 行省略 |
-| 5 | 头卡 | View release details | 跳转 | ✅ | —（纯 UI） | 提示外部打开 |
+| 5 | 头卡 | View release details | 跳转 | ✅ | —（纯 UI） | 站内跳转详情页（047） |
 | 6 | 列表 | All Releases（tag + 时间 + Latest 徽章） | 展示 | ✅ | `releases{ nodes }` | — |
 | 7 | 列表 | Load more 分页 | 翻页 | ✅ | `releases.pageInfo` | — |
 

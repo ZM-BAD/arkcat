@@ -3,7 +3,7 @@
 > BFS Level: 2
 > 关联截图: 三图批次第 3 张（ponytail License）
 > 上游 Spec: 006（仓库详情页 More 折叠区 License 入口）
-> 状态: draft
+> 状态: implemented（2026-09-07 漂移复核：页面/服务/模型完整实现）
 
 ---
 

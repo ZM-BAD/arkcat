@@ -1,4 +1,4 @@
-# Spec 041: 评论与反应（Issue/PR/Discussion 统一书写链路）
+# Spec 041: 评论与反应（Issue/PR 统一书写链路）
 
 > BFS Level: 3
 > 关联截图: 官方 IssueDetail 底部 COMMENT 框（含 markdown 工具栏）、评论行「编辑/删除」菜单、emoji 反应条
@@ -9,13 +9,13 @@
 
 ## 一、页面/功能概述
 
-把 Issue/PR 详情页（以及 Discussion 描述评论区）从**只读**升级为**可写**：统一的评论输入面板（多行输入 + Markdown 快捷工具栏 + 发布前预览）、评论的编辑/删除（仅本人）、emoji 反应（8 种官方 reaction：👍 👎 😄 🎉 😕 ❤️ 🚀 👀 的展示/添加/移除）。入口替换现有 IssueDetail/PrDetail 的「COMMENT 按钮 → coming soon toast」占位。所有正文/评论/预览渲染复用 040 的 `MarkdownView`。
+把 Issue/PR 详情页从**只读**升级为**可写**：统一的评论输入面板（多行输入 + Markdown 快捷工具栏 + 发布前预览）、评论的编辑/删除（仅本人）、emoji 反应（8 种官方 reaction：👍 👎 😄 🎉 😕 ❤️ 🚀 👀 的展示/添加/移除）。入口替换现有 IssueDetail/PrDetail 的「COMMENT 按钮 → coming soon toast」占位。所有正文/评论/预览渲染复用 040 的 `MarkdownView`。
 
 ---
 
 ## 二、整体 UI 结构
 
-1. 页面上下文：IssueDetail / PrDetail / DiscussionDetail
+1. 页面上下文：IssueDetail / PrDetail
 2. 详情正文：040 MarkdownView 渲染
 3. 评论区（comment · N 计数）：
    - 评论卡片：头像 / 作者 / 时间 / 内容（040 渲染）

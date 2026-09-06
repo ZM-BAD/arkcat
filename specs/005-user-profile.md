@@ -42,7 +42,7 @@
 | 4 | Header | 头像/名字/@login | 纯展示 | ✅ | `user.avatarUrl/name/login` | — |
 | 5 | Header | 状态行（emoji+message+编辑笔） | 观众可见状态 | ✅ | `user.status { emoji message }` | 编辑笔仅视图 |
 | 6 | Header | bio | 纯展示 | ✅ | `user.bio` | — |
-| 7 | Header | 元信息行：位置/链接/X 账号 | 纯展示 | ✅ | `user.location/websiteUrl/twitterUsername` | email 需 user:email scope 移出查询 |
+| 7 | Header | 元信息行：位置/邮箱/链接/X 账号 | 纯展示 | ✅ | `user.location/email/websiteUrl/twitterUsername` | email 空值隐藏 |
 | 8 | Header | followers/following 计数 | 纯展示 | ✅ | `user.followers/following.totalCount` | — |
 | 9 | Pinned 区 | 横滑双列仓库卡 | 打开仓库 | ✅ | `user.pinnedItems` | Grid 横向滚动 |
 | 10 | 计数入口 | Repositories/Organizations/Starred + 计数 | 展开对应列表 | ✅ | `user { repositories.totalCount organizations.totalCount starredRepositories.totalCount }` | 点击展开下方视图 |
@@ -78,8 +78,8 @@ query UserProfile($login: String!) {
 | 项 | 原因 | StarRaft 处理方式 |
 | ---- | ------ | ------------------- |
 | Packages/Projects | 无公开用户级入口 / 超范围 | 不展示（原边界） |
-| Achievements 徽章行 | 官方 App 专有，无公开 API | 不展示 |
-| user.email 字段 | 需 `user:email` scope，普通 repo scope token 会报错 | 移出主查询，邮箱行不展示 |
+| Achievements 徽章行 | 官方 HTML 抓取（052） | 展示（点击进成就详情） |
+| user.email 字段 | 随 user 主查询获取（实测不触发 scope 报错） | 展示邮箱行，空值隐藏 |
 | 系统分享 | 分享能力依赖系统能力集成 | 顶栏保留 🔗 图标，点击提示后续 |
 | 编辑状态笔 | 编辑状态需页面级交互 | 图标展示（不触发编辑），后续 Spec |
 
@@ -88,7 +88,7 @@ query UserProfile($login: String!) {
 ## 六、TDD 验收标准
 
 - [x] 顶栏 share/gear 图标渲染，gear 进入 Settings 页（截图验证）
-- [x] 状态行、X 元信息行渲染，缺失字段隐藏（邮箱因 scope 边界不展示）
+- [x] 状态行、X 元信息行渲染，缺失字段隐藏（邮箱空值隐藏）
 - [x] Pinned 横滑双列卡片
 - [x] Repositories/Organizations/Starred 三计数入口渲染且计数正确（8/0/93 实测）
 - [x] base/zh_CN key 对齐；ohosTest 21/21 通过

@@ -14,7 +14,7 @@
 - **头部**：业主头像+名字 / 仓库名 / 描述 / ★ stars · ⑂ forks
 - **操作区**：`STAR` 大按钮 + fork/铃铛两个圆形按钮
 - **计数入口**：Issues / Pull Requests / Actions / Releases（彩块 + 计数；Releases 带最新版卡片 0.1.0 · 7d · Latest）
-- **More 折叠区**：Current branch main ✓ / Code / Commits / README.md · EDIT
+- **More 折叠区**：Contributors / Watchers / License（见 053-055）；Current branch main ✓ / Code / Commits 为独立分支区卡片
 - **README**：富文本渲染（Markdown 标题/图片/链接/列表）
 
 ---
@@ -25,11 +25,8 @@
 2. 头部：👤 业主（ZM-BAD）+ 仓库名（headroom）+ 描述（Know when your AI is...）+ ★ 43 stars · ⑂ 3 forks
 3. 操作区：[ STAR ] 大按钮 + [⑂] fork 圆钮 + [🔔] 铃铛圆钮（← 操作区）
 4. 计数入口：🟩 Issues 1 / 🟦 Pull Requests 1 / 🟧 Actions 0 / ⬛ Releases 2，Releases 行下挂最新版卡片（0.1.0 · 7d · Latest）
-5. More 折叠区：··· More + ▾ 下拉
-   - ⑂ Current branch main ✓ + CHANGE
-   - ▣ Code
-   - ▤ Commits
-   - ® README.md + EDIT
+5. More 折叠区：··· More + ▾ 下拉（Contributors / Watchers / License，见 053-055）
+   - 分支区卡（独立于 More）：⑂ Current branch main ✓ + CHANGE · ▣ Code · ▤ Commits
 6. README：📖 富文本渲染（标题/图片/链接）
 
 ---
@@ -41,14 +38,14 @@
 | 1 | 顶栏左 | ← 返回 | 回退 | ✅ 纯 UI | — | — |
 | 2 | 顶栏右 | ＋ / ··· | 新建/更多 | ⚠️ | — | 点击提示 |
 | 3 | 头部 | 业主头像+名/仓库名/描述 | 纯展示 | ✅ | `repository { owner { avatarUrl login } name description }` | — |
-| 4 | 头部 | ★ stars / ⑂ forks | 纯展示 | ✅ | `stargazerCount/forkCount` | — |
+| 4 | 头部 | ★ stars / ⑂ forks | 进入 Stargazers/Forks | ✅ | `stargazerCount/forkCount` | 点击进入（见 053） |
 | 5 | 操作区 | STAR 大按钮 | Star/取消 | ✅ | `addStar/removeStar` | 已实现 |
 | 6 | 操作区 | fork 圆钮 | Fork | ✅ | `createFork` | 已实现 |
 | 7 | 操作区 | 🔔 圆钮 | 订阅 | ⚠️ | `updateSubscription` | 点击提示 |
 | 8 | 计数区 | Issues/PR/Actions/Releases 行 | 进入对应列表 | ✅ | `issues.totalCount/pullRequests.totalCount/actions.totalCount/releases.totalCount` | Actions 无 API 时显示 0 |
 | 9 | Release 卡 | 最新版 0.1.0·7d·Latest | 进入 Release | ⚠️ | `releases.first.tagName/publishedAt/isLatest` | 点击提示 |
 | 10 | More 区 | Current branch main ✓ · CHANGE | 分支切换 | ⚠️ | `defaultBranchRef.name` | CHANGE 提示 |
-| 11 | More 区 | Code/Commits 行 | 进入 Code/提交 | ⚠️ | — | 点击提示（Spec 011/016 接管） |
+| 11 | 分支区 | Code/Commits 行 | 进入文件树/提交列表 | ✅ | — | 路由 Code（038）/ Commits（028） |
 | 12 | More 区 | README.md · EDIT | 编辑 README | ⚠️ | — | EDIT 提示 |
 | 13 | README | 富文本渲染 | 展示 | ⚠️ | `object(expression: "HEAD:README.md")` | Markdown 简化渲染（标题加粗/链接/图片行） |
 

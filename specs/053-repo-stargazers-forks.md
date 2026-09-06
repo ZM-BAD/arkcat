@@ -3,7 +3,7 @@
 > BFS Level: 2
 > 关联截图: 微信图片_20260903232059_50_181.jpg（DAG-chat Stargazers）、微信图片_20260903232100_51_181.jpg（DAG-chat Forks）
 > 上游 Spec: 006（仓库详情页头部 stars/forks 计数）
-> 状态: draft
+> 状态: implemented（2026-09-07 漂移复核：双页/服务/模型完整实现）
 
 ---
 
@@ -93,8 +93,8 @@ query RepoForks($owner: String!, $name: String!, $first: Int = 50, $after: Strin
 
 ## 六、TDD 验收标准
 
-- [ ] 测试 1：mapFork：完整片段（owner/语言色/parent）→ 全字段映射正确
-- [ ] 测试 2：mapFork：parent = null → parentNameWithOwner = ''（行隐藏由 UI 判空）
+- [x] 测试 1：mapFork：完整片段（owner/语言色/parent）→ 全字段映射正确
+- [x] 测试 2：mapFork：parent = null → parentNameWithOwner = ''（行隐藏由 UI 判空）
 - 测试 3：mapFork：primaryLanguage = null → 语言为 ''（UI 隐藏语言点）
 
 ---

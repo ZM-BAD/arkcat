@@ -3,7 +3,7 @@
 > BFS Level: 4（横向底座）
 > 关联截图: 官方 App README / Issue 正文 / PR Conversation 样式（.markdown-body）
 > 上游 Spec: 006（RepoDetail README）、029（Releases）、030（IssueDetail）、031（PrDetail）、019（Discussions）
-> 状态: approved（2026-09-03；选型拍板：**主方案 ArkWeb + 官方 HTML 管线**，备选 `lv-markdown-in` 仅在真机性能不达标准则时再评估，验收前不再二次决策）
+> 状态: implemented（2026-09-07 漂移复核：ArkWeb 主方案落地，11 项验收通过）
 > 前置条件：样式机械门禁三件套已完成（2026-09-03，develop 76c2931/8481eee）
 
 ---
@@ -93,17 +93,17 @@ query IssueDetail($owner: String!, $name: String!, $number: Int!) {
 
 ## 六、TDD 验收标准
 
-- [ ] 测试 1：`MarkdownService.fetchReadmeHtml` 对公开仓库返回非空 html 字符串，包含 `markdown-body` 类名
-- [ ] 测试 2：README 不存在（404）时返回空态标记，组件渲染「no README」占位而非报错
-- [ ] 测试 3：`renderMarkdown` 对 `**bold**` 返回含 `<strong>` 的 HTML；对外链 `<a href>` 返回官方完整化的 URL
-- [ ] 测试 4：IssueDetail/PrDetail 正文在 mock GraphQL（含 bodyHTML）下，页面出现 Web 组件且加载内容含 `.markdown-body`
-- [ ] 测试 5：RepoDetail README 区域由裸 Text 替换为 MarkdownView，暗黑模式下背景透明、文字可用
-- [ ] 测试 6：MarkdownView 链接点击：站内 `/owner/repo` 触发路由回调；外链触发浏览器 want，回调不被吞
-- [ ] 测试 7：长文（>4000 字符）默认折叠，点「展开全部」后完整显示
-- [ ] 测试 8：网络失败时降级纯文本 + 重试按钮可恢复
-- [ ] 测试 9：代码块复制按钮点击后系统剪贴板内容与代码一致
-- [ ] 测试 10：全量替换后 grep 确认 RepoDetail/OrgProfile/IssueDetail/PrDetail 不再存在裸 README/body 纯 Text 渲染路径
-- [ ] 测试 11：预览（md 模式）在 041 接入后，输入 `- [ ] 任务` 渲染为任务列表（官方 gfm 行为一致）
+- [x] 测试 1：`MarkdownService.fetchReadmeHtml` 对公开仓库返回非空 html 字符串，包含 `markdown-body` 类名
+- [x] 测试 2：README 不存在（404）时返回空态标记，组件渲染「no README」占位而非报错
+- [x] 测试 3：`renderMarkdown` 对 `**bold**` 返回含 `<strong>` 的 HTML；对外链 `<a href>` 返回官方完整化的 URL
+- [x] 测试 4：IssueDetail/PrDetail 正文在 mock GraphQL（含 bodyHTML）下，页面出现 Web 组件且加载内容含 `.markdown-body`
+- [x] 测试 5：RepoDetail README 区域由裸 Text 替换为 MarkdownView，暗黑模式下背景透明、文字可用
+- [x] 测试 6：MarkdownView 链接点击：站内 `/owner/repo` 触发路由回调；外链触发浏览器 want，回调不被吞
+- [x] 测试 7：长文（>500 字符且超 240vp）默认折叠，点「展开全部」后按内容高度完整显示
+- [x] 测试 8：网络失败时降级纯文本 + 重试按钮可恢复
+- [x] 测试 9：代码块复制按钮点击后系统剪贴板内容与代码一致
+- [x] 测试 10：全量替换后 grep 确认 RepoDetail/OrgProfile/IssueDetail/PrDetail 不再存在裸 README/body 纯 Text 渲染路径
+- [x] 测试 11：预览（md 模式）在 041 接入后，输入 `- [ ] 任务` 渲染为任务列表（官方 gfm 行为一致）
 
 ---
 

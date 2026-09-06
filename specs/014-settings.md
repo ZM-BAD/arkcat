@@ -17,7 +17,7 @@
 - **More Options**：Share Feedback / Get Help / Terms of Service / Privacy Policy & Analytics / Open Source Libraries / Sign Out
 - 底部版本号
 
-真实功能：Theme（跟随系统/浅色/深色，持久化）、Language（English/简体中文，`setAppPreferredLanguage` 冷启动生效）、Sign Out（清 Token 回 TokenSetup）。其余为分组行 + 点击提示后续。
+真实功能：Theme（跟随系统/浅色/深色，持久化）、Language（English/简体中文，`setAppPreferredLanguage` 冷启动生效）、Notification Options→二级页（032）、Code Options→二级页（033）、Sign Out（清 Token 回 TokenSetup）。其余为分组行 + 点击提示后续。
 
 ---
 
@@ -37,9 +37,9 @@
 | # | 位置 | 元素 | 功能 | 可行性 | 接口 | 备注 |
 | --- | ------ | ------ | ------ | -------- | ------ | ------ |
 | 1 | 顶栏 | ← 返回 + Settings 标题 | 返回个人主页 | ✅ 纯 UI | — | — |
-| 2 | Notifications | Notification Options 行 | 提示后续 | ⚠️ | — | 点击提示 |
+| 2 | Notifications | Notification Options 行 | 进 Notification Settings | ✅ | — | 二级页（032） |
 | 3 | General | Theme 行（下拉 Follow system/Light/Dark） | 主题切换 | ✅ | `preferences` 持久化 + UI 配置 markMode | 真功能 |
-| 4 | General | Code Options 行 | 提示后续 | ⚠️ | — | — |
+| 4 | General | Code Options 行 | 进 Code Options | ✅ | — | 二级页（033） |
 | 5 | General | Language 行（English/简体中文） | 语言切换 | ✅ | `i18n.System.setAppPreferredLanguage` + preferences | 真功能（冷启动生效） |
 | 6 | General | Accounts 行 | 提示后续 | ⚠️ | — | — |
 | 7 | General | App Lock 行 | 提示后续 | ⚠️ | — | — |
