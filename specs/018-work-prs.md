@@ -31,7 +31,7 @@ Home My Work「Pull Requests」入口进入的跨仓库 PR 列表页。展示用
 | 1 | App Bar 左 | ← 返回 | 回退 | ✅ | —（纯 UI） | — |
 | 2 | App Bar 中 | 「Pull Requests」标题 | 页面标题 | ✅ | —（纯 UI） | — |
 | 3 | App Bar 右 | 🔍 就地搜索 | 页内 TextInput 客户端过滤 | ✅ | —（纯 UI） | 按标题/仓库全名过滤已加载列表 |
-| 4 | App Bar 右 | ⋯ 更多 | 预留 | ✅ | —（纯 UI） | 点击提示 |
+| 4 | App Bar 右 | ⋯ 更多 | 菜单入口 | ✅ | —（纯 UI） | bindMenu（筛选重置等） |
 | 5 | 筛选行 | 漏斗徽标 + 激活数 | 展示激活筛选数 | ✅ | —（纯 UI） | — |
 | 6 | 筛选行 | 状态下拉（Open/Merged/Closed/Queued/All） | 状态筛选 | ✅ | `is:open / is:merged / is:closed / is:queued` | 默认 All |
 | 7 | 筛选行 | 归属下拉（Created by me / Assigned to me / Mentioned / Review requested / Involved） | 归属筛选 | ✅ | `author:@me / assignee:@me / mentions:@me / review-requested:@me / involves:@me` | 默认 Created by me |

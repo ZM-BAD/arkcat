@@ -30,7 +30,7 @@ Home My Work「Discussions」入口进入的跨仓库 Discussion 列表页。按
 | 1 | App Bar 左 | ← 返回 | 回退 | ✅ | —（纯 UI） | — |
 | 2 | App Bar 中 | 「Discussions」标题 | 页面标题 | ✅ | —（纯 UI） | — |
 | 3 | App Bar 右 | 🔍 就地搜索 | 页内 TextInput 客户端过滤 | ✅ | —（纯 UI） | 按标题/仓库全名过滤已加载列表 |
-| 4 | App Bar 右 | ⋯ 更多 | 预留 | ✅ | —（纯 UI） | 点击提示 |
+| 4 | App Bar 右 | ⋯ 更多 | 菜单入口 | ✅ | —（纯 UI） | bindMenu（筛选重置等） |
 | 5 | 筛选行 | 漏斗徽标 + 激活数 | 展示激活筛选数 | ✅ | —（纯 UI） | 客户端计数；筛选行另含 Sort by 下拉（New / Top 时间窗 6 项） |
 | 6 | 筛选行 | 状态下拉（All/Open/Closed） | 状态筛选 | ✅ | `is:open / is:closed` | 默认 All |
 | 7 | 筛选行 | 归属下拉（Created by me / Commented） | 归属筛选 | ✅ | `author:@me / commenter:@me` | 默认 Created by me |
@@ -78,7 +78,7 @@ query WorkDiscussions($query: String!, $first: Int = 25, $after: String) {
 
 ## 六、TDD 验收标准
 
-- [x] 测试 1：`buildWorkDiscussionsQuery(state, scope, unanswered)`：`is:unanswered` 组合正确
+- [x] 测试 1：`buildWorkDiscussionsQuery(state, scope, unanswered, sortKey)`：`is:unanswered` 组合正确
 - [x] 测试 2：`mapDiscussion` / `mapWorkDiscussionsPage` 纯函数：分类、回复数、分页字段正确
 - [x] 测试 3：模拟器实测 — Unanswered 开关切换触发重查；空态 RESET ALL FILTERS 清空筛选
 - [x] 测试 4：grep 检查 Discussions.ets 无中文字符串字面量残留

@@ -31,7 +31,7 @@ Home My Work「Issues」入口进入的跨仓库 Issue 列表页（区别于 007
 | 1 | App Bar 左 | ← 返回 | 回退 | ✅ | —（纯 UI） | — |
 | 2 | App Bar 中 | 「Issues」标题 | 页面标题 | ✅ | —（纯 UI） | 复用 nav_issues_title |
 | 3 | App Bar 右 | 🔍 就地搜索 | 页内 TextInput 客户端过滤 | ✅ | —（纯 UI） | 按标题/仓库全名过滤已加载列表 |
-| 4 | App Bar 右 | ⋯ 更多 | 预留 | ✅ | —（纯 UI） | 点击提示 |
+| 4 | App Bar 右 | ⋯ 更多 | 菜单入口 | ✅ | —（纯 UI） | bindMenu（筛选重置等） |
 | 5 | 筛选行 | 漏斗徽标 + 激活数 | 展示当前激活筛选数 | ✅ | —（纯 UI） | 客户端计数；筛选行另含 Sort by 排序下拉（四组含 reactions）与 Organization/Repository 多选（Bottom Sheet） |
 | 6 | 筛选行 | 状态下拉（All/Open/Closed） | 状态筛选 | ✅ | `search query: is:open / is:closed` | 默认 Open |
 | 7 | 筛选行 | 归属下拉（Created by me / Assigned to me / Mentioned） | 归属筛选 | ✅ | `author:@me / assignee:@me / mentions:@me` | 默认 Created by me |
