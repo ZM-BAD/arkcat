@@ -10,6 +10,7 @@ import { systemShare } from '@kit.ShareKit';
 import { OctIcon } from '../components/OctIcon';
 import { MarkdownView } from '../components/MarkdownView';
 import { DownloadRow } from '../components/DownloadRow';
+import { ReactionBar } from '../components/ReactionBar';
 import { ReleaseAsset, ReleaseDetailPage, formatBytes, releaseAssetBrowserUrl, monthDayText } from '../models/RepoSubModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { DownloadService, DownloadTask } from '../services/DownloadService';
@@ -385,6 +386,13 @@ export struct ReleaseDetailView {
                   }
                 })
               }
+              // 官方 release 反应行：笑脸圆钮弹六宫格，芯片横滑，自己的回应蓝框高亮（走查修正九轮）
+              ReactionBar({
+                token: this.token,
+                subjectId: this.detail.id,
+                reactions: this.detail.reactions,
+                smileyTrigger: true
+              })
             }
             .alignItems(HorizontalAlign.Start)
             .padding($r('app.float.card_padding'))
@@ -422,24 +430,18 @@ export struct ReleaseDetailView {
               .padding({ top: 10, bottom: 10 })
             }
 
-            // Assets 分区（官方布局：平铺行=zip 图标+名称+尺寸胶囊，右 … 菜单；走查修正八轮）
-            Divider().color($r('app.color.divider'))
-            Text($r('app.string.release_assets_title'))
-              .fontSize($r('app.float.caption_font_size'))
-              .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.text_secondary'))
-              .width('100%')
-              .padding({ top: 12, bottom: 4 })
+            // Assets 分区（官方布局）：无资产时整个分区不渲染（走查修正九轮）
             if (this.detail.assets.length > 0) {
+              Divider().color($r('app.color.divider'))
+              Text($r('app.string.release_assets_title'))
+                .fontSize($r('app.float.caption_font_size'))
+                .fontWeight(FontWeight.Medium)
+                .fontColor($r('app.color.text_secondary'))
+                .width('100%')
+                .padding({ top: 12, bottom: 4 })
               ForEach(this.detail.assets, (asset: ReleaseAsset) => {
                 this.assetRow(asset)
               }, (asset: ReleaseAsset) => asset.id)
-            } else {
-              Text($r('app.string.release_assets_empty'))
-                .fontSize($r('app.float.caption_font_size'))
-                .fontColor($r('app.color.text_secondary'))
-                .width('100%')
-                .padding({ bottom: 8 })
             }
 
             // 下载任务

@@ -117,6 +117,8 @@ export interface ReleaseDetailPage {
   authorLogin: string;
   authorAvatar: string;
   assets: ReleaseAsset[];
+  /** release 正文反应组（Release 实现 Reactable，2026-09-06 gh api 实测） */
+  reactions: ReactionGroup[];
 }
 
 /** 字节数 → 人类可读（B/KB/MB/GB，保留 1 位小数；未知回退 0 B） */
@@ -279,6 +281,10 @@ export const REACTION_META: ReactionMeta[] = [
   { content: 'ROCKET', emoji: '🚀' },
   { content: 'EYES', emoji: '👀' }
 ];
+
+/** Release 官方选择器子集：6 种正向反应（官方 release 详情面板无 👎/😕，走查修正九轮） */
+export const RELEASE_REACTION_META: ReactionMeta[] = REACTION_META.filter((m: ReactionMeta) =>
+  m.content !== 'THUMBS_DOWN' && m.content !== 'CONFUSED');
 
 /** 枚举 → emoji；未知回退空串 */
 export function reactionEmoji(content: string): string {
@@ -531,6 +537,10 @@ export function mapReleaseDetail(data: JsonMap): ReleaseDetailPage | null {
   for (const nodeItem of Json.arr(assetsWrap, 'nodes')) {
     assets.push(mapReleaseAsset(nodeItem as JsonMap));
   }
+  const reactions: ReactionGroup[] = [];
+  for (const groupItem of Json.arr(release, 'reactionGroups')) {
+    reactions.push(mapReactionGroup(groupItem as JsonMap));
+  }
   return {
     id: Json.str(release, 'id'),
     tagName: Json.str(release, 'tagName'),
@@ -547,7 +557,8 @@ export function mapReleaseDetail(data: JsonMap): ReleaseDetailPage | null {
     bodyHTML: '',
     authorLogin: author !== null ? Json.str(author, 'login') : '',
     authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : '',
-    assets: assets
+    assets: assets,
+    reactions: reactions
   };
 }
 

@@ -2,12 +2,14 @@
  * 反应条（Spec 041）：reactionGroups 渲染（emoji+count），点击 emoji add/remove，
  * 点击 count 展开用户列表；「+」打开 8 种官方 reaction 选择面板。
  * mutation 成功后本地翻转（flipReactionGroups），刷新由父级 onChanged 驱动。
+ * smileyTrigger（release 详情官方变体）：圆轮廓笑脸触发钮 + 居中六宫格弹层（6 种正向反应）。
  */
 import { promptAction } from '@kit.ArkUI';
-import { ReactionGroup, ReactionUser, ReactionMeta, REACTION_META, reactionEmoji,
-  findReactionGroup, flipReactionGroups } from '../models/RepoSubModels';
+import { ReactionGroup, ReactionUser, ReactionMeta, REACTION_META, RELEASE_REACTION_META,
+  reactionEmoji, findReactionGroup, flipReactionGroups } from '../models/RepoSubModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { ApiError } from '../services/GitHttpClient';
+import { OctIcon } from './OctIcon';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -16,6 +18,8 @@ export struct ReactionBar {
   /** add/remove 的 subjectId（评论节点 id） */
   @Param subjectId: string = '';
   @Param reactions: ReactionGroup[] = [];
+  /** 官方 release 变体：笑脸圆钮 + 六宫格弹层替代「+」chip（走查修正九轮） */
+  @Param smileyTrigger: boolean = false;
   /** mutation 成功回调（父级远期刷新；即时翻转由组件本地完成） */
   @Event onChanged: () => void = (): void => { };
   @Local mirror: ReactionGroup[] = [];
@@ -25,6 +29,8 @@ export struct ReactionBar {
   @Local sheetKind: string = '';
   /** 当前打开用户列表的反应 content */
   @Local sheetContent: string = '';
+  /** release 六宫格弹层（bindPopup $$ 双向：点外部自动回写关闭） */
+  @Local pickerOpen: boolean = false;
 
   aboutToAppear(): void {
     this.mirror = this.reactions;
@@ -86,6 +92,7 @@ export struct ReactionBar {
   /** 「+」面板选择：直接 toggle（已反应则移除，与官方语义一致；review F4 此前对他人已建组无响应） */
   private pick(content: string): void {
     this.sheetOpen = false;
+    this.pickerOpen = false;
     this.toggle(content);
   }
 
@@ -164,10 +171,57 @@ export struct ReactionBar {
     .backgroundColor($r('app.color.bg_page'))
   }
 
+  /** 官方 release 六宫格选择面板（2×3 仅 6 种正向反应；自己已选的淡灰底，走查修正九轮） */
+  @Builder
+  releasePickerPanel() {
+    Grid() {
+      ForEach(RELEASE_REACTION_META, (m: ReactionMeta) => {
+        GridItem() {
+          Text(m.emoji)
+            .fontSize(30)
+            .width(72)
+            .height(56)
+            .textAlign(TextAlign.Center)
+            .borderRadius(8)
+            .backgroundColor(findReactionGroup(this.mirror, m.content)?.viewerHasReacted === true
+              ? $r('app.color.chip_bg') : Color.Transparent)
+            .onClick(() => this.pick(m.content))
+        }
+      }, (m: ReactionMeta) => m.content)
+    }
+    .columnsTemplate('1fr 1fr 1fr')
+    .columnsGap(8)
+    .rowsGap(8)
+    .padding(16)
+    .width(272)
+    .height(152)
+  }
+
   build() {
     // 芯片行可横向滚动：外层 Scroll 限宽防溢出容器，内层行 minWidth 撑满、超宽时可滑（不能 width('100%')，否则永不溢出）
     Scroll() {
       Row({ space: 6 }) {
+        // 官方 release 触发钮：圆轮廓笑脸，点击弹居中六宫格（bindPopup $$ 双向，点外部自关）
+        if (this.smileyTrigger) {
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_smiley_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
+          }
+          .width(36)
+          .height(36)
+          .border({ width: 1, color: $r('app.color.divider'), radius: 18 })
+          .responseRegion({ x: -4, y: -4, width: '128%', height: '128%' })
+          .accessibilityDescription($r('app.string.a11y_reaction_add'))
+          .bindPopup($$this.pickerOpen, {
+            builder: this.releasePickerPanel(),
+            placement: Placement.Bottom,
+            popupColor: $r('app.color.card_background'),
+            radius: 12,
+            autoCancel: true
+          })
+          .onClick(() => {
+            this.pickerOpen = !this.pickerOpen;
+          })
+        }
         ForEach(this.mirror, (g: ReactionGroup) => {
           Row({ space: 2 }) {
             Text(reactionEmoji(g.content))
@@ -187,7 +241,7 @@ export struct ReactionBar {
           .border({ width: g.viewerHasReacted ? 1 : 0, color: $r('app.color.link_blue') })
           .margin({ right: 2 })
         }, (g: ReactionGroup) => g.content + '_' + g.count + (g.viewerHasReacted ? '_r' : ''))
-        if (this.mirror.length < REACTION_META.length) {
+        if (!this.smileyTrigger && this.mirror.length < REACTION_META.length) {
           Text('+')
             .fontSize(16)
             .fontColor($r('app.color.text_secondary'))

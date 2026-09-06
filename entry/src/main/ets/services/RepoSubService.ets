@@ -103,6 +103,18 @@ query ReleaseDetail($owner: String!, $name: String!, $tag: String!) {
       id tagName name isDraft isPrerelease publishedAt createdAt url
       isLatest
       tagCommit { oid }
+      reactionGroups {
+        content viewerHasReacted
+        reactors(first: 8) {
+          totalCount
+          nodes {
+            ... on User { login avatarUrl }
+            ... on Bot { login avatarUrl }
+            ... on Mannequin { login avatarUrl }
+            ... on Organization { login avatarUrl }
+          }
+        }
+      }
       author { login avatarUrl }
       description
       releaseAssets(first: 50) {
