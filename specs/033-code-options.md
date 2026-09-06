@@ -15,27 +15,22 @@ Settings 页「Code Options」行点击进入的代码查看选项二级页。�
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│ ←  Code Options                     │
-├─────────────────────────────────────┤
-│ Scrollable File Path            [●] │
-│ Show line numbers               [●] │
-│ Always use dark theme           [ ] │
-│ Override system font size       [●] │
-│ A ─────◉─────── A                    │
-│ Wrap lines                      [●] │
-├─ Preview ───────────────────────────┤
-│ ▾ n/code-scanning/new/README.md ▢ ⋯ │
-│ 1 def fibonacci(n)                   │
-│ 2   // A long comment demonstrating │
-│       the effects of the line       │
-│   ·  wrapping option.               │
-│ 3   return n if (0..1).include? n   │
-│ 4   (fibonacci(n-1) + fibonacci(n-2))│
-│ 5 end                               │
-└─────────────────────────────────────┘
-```
+1. App Bar：← 返回 + Code Options 标题
+2. 开关区（自上而下逐行）：
+   - Scrollable File Path（开）
+   - Show line numbers（开）
+   - Always use dark theme（关）
+   - Override system font size（开）
+   - Wrap lines（开）
+3. 字号滑杆：A —— ◉ —— A（仅 Override system font size 开启时显示）
+4. Preview 区块：
+   - 路径行：▾ n/code-scanning/new/README.md + ▢ + ⋯
+   - 代码预览（行号 + 语法着色 + 换行效果）：
+     - 1 `def fibonacci(n)`
+     - 2 `// A long comment demonstrating the effects of the line`（跨两行展示换行效果，第二行为 `· wrapping option.`）
+     - 3 `return n if (0..1).include? n`
+     - 4 `(fibonacci(n-1) + fibonacci(n-2))`
+     - 5 `end`
 
 ---
 

@@ -21,34 +21,16 @@
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│  ←                         ＋  ⋯  │
-├─────────────────────────────────────┤
-│  👤 ZM-BAD                           │
-│  headroom                           │
-│  Know when your AI is...             │
-│  ★ 43 stars   ⑂ 3 forks              │
-├─────────────────────────────────────┤
-│  [ STAR ]        [⑂] [🔔]          │  ← 操作区
-├─────────────────────────────────────┤
-│  🟩 Issues                 1        │
-│  🟦 Pull Requests         1        │
-│  🟧 Actions               0        │
-│  ⬛ Releases              2        │
-│       ┌──────────────┐             │
-│       │ 0.1.0 7d·Latest│            │
-│       └──────────────┘             │
-├─────────────────────────────────────┤
-│  ··· More                    ▾      │
-│  ⑂ Current branch main ✓  CHANGE   │
-│  ▣ Code                             │
-│  ▤ Commits                          │
-│  ® README.md                EDIT    │
-├─────────────────────────────────────┤
-│  📖 README（富文本标题/图片/链接）    │
-└─────────────────────────────────────┘
-```
+1. 顶部 App Bar：← 返回 + ＋ 新建 + ⋯ 更多菜单
+2. 头部：👤 业主（ZM-BAD）+ 仓库名（headroom）+ 描述（Know when your AI is...）+ ★ 43 stars · ⑂ 3 forks
+3. 操作区：[ STAR ] 大按钮 + [⑂] fork 圆钮 + [🔔] 铃铛圆钮（← 操作区）
+4. 计数入口：🟩 Issues 1 / 🟦 Pull Requests 1 / 🟧 Actions 0 / ⬛ Releases 2，Releases 行下挂最新版卡片（0.1.0 · 7d · Latest）
+5. More 折叠区：··· More + ▾ 下拉
+   - ⑂ Current branch main ✓ + CHANGE
+   - ▣ Code
+   - ▤ Commits
+   - ® README.md + EDIT
+6. README：📖 富文本渲染（标题/图片/链接）
 
 ---
 

@@ -15,30 +15,13 @@ Home My Work「Starred」入口进入的星标仓库列表页。顶部 App Bar �
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│  ←  ZM-BAD                          │ ← 副标题（灰色小字）
-│     Starred Repositories    🔍 ⋯   │ ← 主标题 + 操作
-├─────────────────────────────────────┤
-│  ☰  My lists                + NEW   │ ← 列表入口（预留）
-│  ┌─────────────────────────────┐    │
-│  │  Create your first list     │    │ ← 空态卡（无 lists 时）
-│  │  Lists make it easier ...   │    │
-│  │  [ CREATE A LIST ]          │    │
-│  └─────────────────────────────┘    │
-├─────────────────────────────────────┤
-│  ☆  Starred                          │ ← 分组头
-│  ◯  chen08209                    ⋯  │ ← 仓库行
-│     FIClash                          │
-│     A multi-platform proxy client…   │
-│     ★ 50.5k   ● Dart                 │
-│  ◯  harry0703                     ⋯  │
-│     MoneyPrinterTurbo                │
-│     利用 AI 大模型…（中文描述原样展示）│
-│     ★ 118.9k  ● Python               │
-│  （… 分页 Load more）                 │
-└─────────────────────────────────────┘
-```
+1. 顶部 App Bar：← 返回 + 副标题灰色小字（ZM-BAD）+ 主标题「Starred Repositories」+ 操作（搜索 🔍 + 更多菜单 ⋯）
+2. 列表入口（预留）：☰ My lists + 「+ NEW」
+3. 空态卡（无 lists 时）：标题「Create your first list」+ 副文案「Lists make it easier ...」+ 「CREATE A LIST」按钮
+4. 分组头：☆ Starred
+5. 仓库行一：◯ 头像 + 仓库名（chen08209）+ 描述（FIClash / A multi-platform proxy client…）+ 星数（★ 50.5k）+ 主语言（● Dart）+ 行尾更多菜单（⋯）
+6. 仓库行二：◯ 头像 + 仓库名（harry0703）+ 描述（MoneyPrinterTurbo / 利用 AI 大模型…（中文描述原样展示））+ 星数（★ 118.9k）+ 主语言（● Python）+ 行尾更多菜单（⋯）
+7. 列表底部分页：Load more
 
 ---
 

@@ -15,22 +15,11 @@ Home My Work「Discussions」入口进入的跨仓库 Discussion 列表页。按
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│  ←   Discussions             🔍 ⋯  │ ← App Bar
-├─────────────────────────────────────┤
-│  ⌄⌄① [ All ⌄ ] [ Created by me ⌄ ] [ Unanswered ]  │ ← 筛选行
-├─────────────────────────────────────┤
-│  ✔  owner/repo #12                  3d        │ ← Discussion 行
-│     Could we support multi-arch?               │
-│     [ Announcement ]  💬4                      │
-│  （… 分页 Load more）                           │
-├─────────────────────────────────────┤
-│  （空态：🐱 插图 + There aren't any discussions.  │
-│         Use fewer filters or reset all filters │
-│         [ RESET ALL FILTERS ]）               │
-└─────────────────────────────────────┘
-```
+1. 顶部 App Bar：← 返回、「Discussions」标题、搜索（🔍）、更多菜单（⋯）
+2. 筛选行：漏斗徽标 + 激活数、「All」状态下拉、「Created by me」归属下拉、「Unanswered」快捷标
+3. Discussion 行：状态图标（✔）+ `owner/repo #编号`（owner/repo #12）+ 相对时间（3d）+ 标题（Could we support multi-arch?）+ 分类胶囊（[Announcement]）+ 回复数（💬4）
+4. 列表底部分页：Load more
+5. 空态：🐱 插图 + 标题「There aren't any discussions.」+ 副文案「Use fewer filters or reset all filters」+ 「RESET ALL FILTERS」按钮
 
 ---
 

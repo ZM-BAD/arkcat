@@ -15,21 +15,12 @@
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│ ←  dragonflyoss        🔍           │
-│     Repositories                    │
-├─────────────────────────────────────┤
-│ [All ▾] [Language ▾] [Sort: Recent…]│
-│ nydus                               │
-│ Nydus – a reliable, high-perf…      │
-│ ⭐ 1.6k  ● Rust                     │
-│ dragonfly                           │
-│ Delivers efficient, stable…         │
-│ ⭐ 3.3k  ● Go                       │
-│ ……（加载更多）                       │
-└─────────────────────────────────────┘
-```
+1. 顶部 App Bar：← 返回 + login dragonflyoss（灰）+ 标题 Repositories（粗体）+ 搜索（🔍）
+2. 筛选条：三个胶囊下拉 [All ▾] [Language ▾] [Sort: Recent… ▾]
+3. 仓库行列表（整行点击进仓库详情）：
+   - 仓库名 nydus + 描述 Nydus – a reliable, high-perf… + 星数 ⭐ 1.6k + 语言 ● Rust
+   - 仓库名 dragonfly + 描述 Delivers efficient, stable… + 星数 ⭐ 3.3k + 语言 ● Go
+   - ……（加载更多）
 
 ---
 

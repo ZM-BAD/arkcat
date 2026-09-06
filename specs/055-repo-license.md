@@ -17,21 +17,8 @@
 
 ## 二、整体 UI 结构
 
-```text
-License
-┌─────────────────────────┐
-│ ←  ponytail(灰小字)      │
-│    License(黑粗体大字)   │
-├─────────────────────────┤
-│ Copyright (c) 2026 t…   │
-│                         │
-│ Permission is hereby…   │
-│  ……正文段落全文……       │
-│                         │
-│ THE SOFTWARE IS PROVIDED│
-│  ……                     │
-└─────────────────────────┘
-```
+1. App Bar：返回按钮 + 仓库名 ponytail（灰小字，上）+ License（黑粗体大字，下）
+2. 正文区：许可证全文（正文段落占位，不复制全文）
 
 正文整页 Scroll，无卡片无分割线；StateView（loading/错误重试）；无许可证 → 空态文案。
 

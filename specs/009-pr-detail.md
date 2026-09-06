@@ -15,33 +15,13 @@ PR 详情页，展示 PR 标题/分支信息/操作按钮（Merge/Review/Update 
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│  ←   Pull request #1          ···    │
-├─────────────────────────────────────┤
-│  📝 Update UI design                │
-│  #1 · 3af9c11 → main                │
-│  · requested review · 1d ago        │
-├─────────────────────────────────────┤
-│ [ Conversation ] [ Commits ]        │
-│ [ Checks ]        [ Files changed ] │
-├─────────────────────────────────────┤
-│  🔀 Merge pull request              │
-│  ✖️ Remove request review           │
-│  ⚠️ Show checks failure             │
-│  🔄 Update branch                   │
-│  📝 Add your review                 │
-│  🔁 Re-request                      │
-├─────────────────────────────────────┤
-│  📅 时间线 / 活动记录                │
-│  💬 评论/Review/Commit/Merge 事件   │
-├─────────────────────────────────────┤
-│  👤 started a review 1d ago         │
-│    [Review 内容]                    │
-├─────────────────────────────────────┤
-│  💬 Add a comment...         📎 📤  │
-└─────────────────────────────────────┘
-```
+1. 顶部 App Bar：← 返回 + Pull request #1 标题 + ⋯ 更多菜单
+2. 标题区：📝 标题（Update UI design）+ 元信息行（#1 · 3af9c11 → main）+ 状态/时间行（· requested review · 1d ago）
+3. 内容子 Tab：[ Conversation ] / [ Commits ] / [ Checks ] / [ Files changed ]
+4. 操作按钮：🔀 Merge pull request / ✖️ Remove request review / ⚠️ Show checks failure / 🔄 Update branch / 📝 Add your review / 🔁 Re-request
+5. 时间线/活动记录：📅 时间线 + 💬 评论/Review/Commit/Merge 事件
+6. Review 区块：👤 started a review 1d ago + [Review 内容]
+7. 评论输入：💬 Add a comment... + 📎 附件 + 📤 发布
 
 ---
 

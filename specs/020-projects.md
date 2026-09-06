@@ -15,19 +15,11 @@ Home My Work「Projects」入口进入的 Projects 列表页，展示 viewer 可
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│  ←   Projects                🔍 ⋯  │ ← App Bar
-├─────────────────────────────────────┤
-│ [ All projects ⌄ ] [ Open ⌄ ] [ Sort: Most recently vi… ] │ ← 筛选行（可横向溢出）
-├─────────────────────────────────────┤
-│  ▦ 项目标题                    #12   │ ← Project 行
-│     Open · 3d ago                    │
-│  （… 分页 Load more）                 │
-├─────────────────────────────────────┤
-│  （空态：🐱 插图 + There aren't any projects.） │
-└─────────────────────────────────────┘
-```
+1. 顶部 App Bar：← 返回、「Projects」标题、搜索（🔍）、更多菜单（⋯）
+2. 筛选行（可横向溢出）：「All projects」范围下拉、「Open」状态下拉、「Sort: Most recently visited」排序标签（截断显示）
+3. Project 行：项目图标（▦）+ 项目标题 + 编号（#12）+ 状态（Open）+ 更新时间（3d ago）
+4. 列表底部分页：Load more
+5. 空态：🐱 插图 + 标题「There aren't any projects.」
 
 ---
 

@@ -15,18 +15,16 @@ Inbox（已实现：四类 filter + 单条已读 + 卡片美化）继续补三�
 
 ## 二、整体 UI 结构
 
-```text
-Inbox
-├─ 顶部：当前过滤器 tabs（已有）+ 新增「类型 chips：Issues/PRs/Releases/讨论」→ 本地过滤
-├─ 工具栏：「全部已读」(REST PUT /notifications) ｜ 清空已读
-├─ 列表卡片（已有）→ tap 行为：标记已读 + 路由跳转（issue/PR/discussion/release 对应页面）
-└─ 行滑动：手滑动过（已有 032 仅本地设置 → 落地为实组件）
+Inbox：
+1. 顶部：当前过滤器 tabs（已有）+ 新增「类型 chips：Issues/PRs/Releases/讨论」→ 本地过滤
+2. 工具栏：「全部已读」(REST PUT /notifications) ｜ 清空已读
+3. 列表卡片（已有）→ tap 行为：标记已读 + 路由跳转（issue/PR/discussion/release 对应页面）
+4. 行滑动：手滑动过（已有 032 仅本地设置 → 落地为实组件）
 
-RepoDetail
-└─ Bell（已有占位）：
-   未订阅: 空心 Bell → tap → 弹「Watch/忽略」（SUBSCRIBED/IGNORED）
-   已订阅: 实心 Bell（viewerSubscription=SUBSCRIBED）
-```
+RepoDetail：
+1. Bell（已有占位）：
+   - 未订阅：空心 Bell → tap → 弹「Watch/忽略」（SUBSCRIBED/IGNORED）
+   - 已订阅：实心 Bell（viewerSubscription=SUBSCRIBED）
 
 ---
 

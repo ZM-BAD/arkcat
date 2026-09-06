@@ -15,21 +15,14 @@
 
 ## 二、整体 UI 结构
 
-```text
-PrDetail
-├─ Changes 卡（现有）
-│  └─ 010 Files Changed 列表 → DiffView（行内可点）
-│     每次点击行号行尾 ↯ 弹出：
-│     ┌───────────────────────────┐
-│     │ 评论 thread（041 输入面板）｜
-│     │ [Comment] 即可提交 thread ｜
-│     └───────────────────────────┘
-├─ Review 状态：Approve/Request changes/Comment 三态按钮组
-│  └─ 汇总输入框（可选 body）→ Submit
-├─ Status 卡：mergeable（MERGEABLE/CONFLICTING）+ 合并方式
-│  └─ Merge 下拉：SQUASH · MERGE · REBASE → 确认
-└─ Conversation：已提交审阅卡 + ReviewThreads（Resolved 标记）
-```
+PrDetail 页面结构：
+1. Changes 卡（现有）：010 Files Changed 列表 → DiffView（行内可点）
+   - 每次点击行号行尾（评论图标）弹出：评论 thread（041 输入面板），点击 Comment 即可提交 thread
+2. Review 状态：Approve / Request changes / Comment 三态按钮组
+   - 汇总输入框（可选 body）→ Submit
+3. Status 卡：mergeable（MERGEABLE / CONFLICTING）+ 合并方式
+   - Merge 下拉：SQUASH · MERGE · REBASE → 确认
+4. Conversation：已提交审阅卡 + ReviewThreads（Resolved 标记）
 
 ---
 

@@ -15,20 +15,10 @@ Home My Work「Top Repositories」入口进入的仓库列表页，展示 viewer
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│  ←   Top Repositories               │ ← App Bar（无搜索/后续按钮）
-├─────────────────────────────────────┤
-│ [ All ⌄ ]                           │ ← 筛选行
-├─────────────────────────────────────┤
-│  ◯  ZM-BAD                          │ ← 仓库行（头像 + owner + name 两行）
-│     DAG-chat                        │
-│  ◯  ZM-BAD                          │
-│     headroom                        │
-│  …                                  │
-│  （… 分页 Load more）                 │
-└─────────────────────────────────────┘
-```
+1. 顶部 App Bar：← 返回、「Top Repositories」标题（无搜索/更多按钮）
+2. 筛选行：「All」可见性下拉
+3. 仓库行（头像 + owner + name 两行）：◯ 头像 + 第一行 owner 灰色小字（ZM-BAD）+ 第二行仓库名大字（DAG-chat）；后续行同构（headroom 等），多行滚动
+4. 列表底部分页：Load more
 
 ---
 

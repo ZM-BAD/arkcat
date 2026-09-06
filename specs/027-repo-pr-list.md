@@ -15,18 +15,10 @@
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────┐
-│ ←  DAG-chat                     │
-│  Pull Requests           🔍 ＋ │
-│ [⏲①][ All ⌄ ][ Label ⌄ ][ Author ⌄ ][ Assignee ] │
-├─────────────────────────────────┤
-│ ⑂ fix(backend): use $addToSet…  │
-│    #82 · dependencies · ✓ Checks · 💬1 · 👁1 · 🀫 │
-│ ⑂ chore(deps): … #81          │
-│    dependencies · ✓ Checks · 💬1 · 🀫 │
-└─────────────────────────────────┘
-```
+1. 顶部 App Bar：← 返回 + 副标题仓库名（DAG-chat）+ 主标题「Pull Requests」+ 搜索（🔍）+ 新建（＋）
+2. 筛选行：标签徽标（⏲①）+「All」状态下拉 +「Label」下拉 +「Author」下拉 +「Assignee」
+3. PR 行一：状态图标（⑂）+ 标题（fix(backend): use $addToSet…）+ 编号（#82）+ 标签（dependencies）+ Checks 胶囊（✓ Checks）+ 评论数（💬1）+ 审查数（👁1）+ 作者头像（🀫）
+4. PR 行二：状态图标（⑂）+ 标题（chore(deps): …）+ 编号（#81）+ 标签（dependencies）+ Checks 胶囊（✓ Checks）+ 评论数（💬1）+ 作者头像（🀫）
 
 ## 三、元素清单
 

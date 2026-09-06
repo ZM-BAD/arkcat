@@ -18,23 +18,12 @@
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│ MarkdownView（无 AppBar，纯内容）     │
-│  ┌─────────────────────────────┐   │
-│  │ ArkWeb（Web 组件，透明底）     │   │
-│  │  <div class=markdown-body>   │   │
-│  │  <h1>标题</h1><p>正文</p>     │   │
-│  │  <pre><code>代码块</code></pre> │   │
-│  │  <table>表格</table>          │   │
-│  └─────────────────────────────┘   │
-│  加载态：骨架/Progress              │
-│  错误态：内容降级为纯文本 + 重试     │
-└─────────────────────────────────────┘
-接入点（替换现有裸 Text）：
-RepoDetail README · OrgProfile README · IssueDetail 正文/评论 ·
-PrDetail 正文/评论 · Releases 说明 · Discussion 描述 · 041 评论预览
-```
+1. MarkdownView 组件（无 AppBar，纯内容区）：
+   - ArkWeb（Web 组件，透明底）
+   - 渲染 `div.markdown-body`：`<h1>标题</h1>`、`<p>正文</p>`、`<pre><code>代码块</code></pre>`、`<table>表格</table>`
+   - 加载态：骨架 / Progress
+   - 错误态：内容降级为纯文本 + 重试
+2. 接入点（替换现有裸 Text）：RepoDetail README · OrgProfile README · IssueDetail 正文/评论 · PrDetail 正文/评论 · Releases 说明 · Discussion 描述 · 041 评论预览
 
 ---
 

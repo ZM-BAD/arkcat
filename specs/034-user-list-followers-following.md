@@ -15,21 +15,12 @@ Profile 页「N followers · N following」计数行拆为**两个可点击片�
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│ ←  ZM-BAD            （粗体 login） │
-│     Followers                        │
-├─────────────────────────────────────┤
-│ (头像)  unmissable guy               │
-│          transmutat                  │
-│ (头像)  shellRaining  [仅用户名行]   │
-│          shellRaining                │
-│ (头像)  Li2C03                       │
-│          HeyJavaBean                 │
-│          To be a rock and not to roll│
-│        ……（加载更多/其余行）          │
-└─────────────────────────────────────┘
-```
+1. 顶部 App Bar：← 返回 + 标题 ZM-BAD（粗体 login）+ 副标题 Followers（灰）
+2. 用户列表（头像 + 行信息，整行点击进用户主页）：
+   - 头像 + 显示名 unmissable guy + 用户名 transmutat
+   - 头像 + shellRaining（仅用户名行，无显示名）
+   - 头像 + 显示名 Li2C03 + 用户名 HeyJavaBean + 简介 To be a rock and not to roll
+   - ……（加载更多/其余行）
 
 ---
 

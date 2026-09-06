@@ -22,31 +22,19 @@
 
 ## 二、整体 UI 结构
 
-```text
-┌──────────────────────────────────────────────┐
-│  ←  [Search GitHub 输入框 ×]      ⋮(蓝)      │   ← 自绘导航头
-├──────────────────────────────────────────────┤
-│  Find your stuff.                            │   ← 空态（无历史时）
-│  Search all of GitHub for People,            │
-│  Repositories, Organizations, Issues,        │
-│  and Pull Requests.                          │
-│ ────────────────────────────────────────────│
-│  Recent searches                     CLEAR   │   ← 空态（有历史时）
-│  cli                                  ↗      │
-│ ────────────────────────────────────────────│
-│  < >  Code with "q"                          │   ← 输入关键词后
-│  ▣    Repositories with "q"                  │
-│  ◔    Issues with "q"                        │
-│  ⑂    Pull Requests with "q"                 │
-│  👤   People with "q"                        │
-│  ▤    Organizations with "q"                 │
-│  →    Jump to "q"                            │
-│ ────────────────────────────────────────────│
-│     repo  user  org  path  sy…               │   ← 键盘弹起时底部 chips
-├──────────────────────────────────────────────┤
-│  Home(蓝)  Inbox  Explore  Copilot           │   ← 官方保留底部 Tab（见边界）
-└──────────────────────────────────────────────┘
-```
+1. 顶部导航头（自绘）：← 返回 + 搜索输入框（占位 Search GitHub，× 清除）+ ⋮ 竖三点菜单（蓝色）（← 自绘导航头）
+2. 空态（无输入且无历史时）：「Find your stuff.」+ 说明文案（Search all of GitHub for People, Repositories, Organizations, Issues, and Pull Requests.）（← 空态（无历史时））
+3. 空态（有历史时）：Recent searches + CLEAR，历史行 cli + ↗（← 空态（有历史时））
+4. 建议列表（输入关键词后）（← 输入关键词后）：每行 = 图标 + 入口名
+   - < > Code with "q"
+   - ▣ Repositories with "q"
+   - ◔ Issues with "q"
+   - ⑂ Pull Requests with "q"
+   - 👤 People with "q"
+   - ▤ Organizations with "q"
+   - → Jump to "q"
+5. qualifier chips（键盘弹起时底部）：repo / user / org / path / sy…（← 键盘弹起时底部 chips）
+6. 底部 Tab：Home（蓝，选中态）/ Inbox / Explore / Copilot（← 官方保留底部 Tab，见边界）
 
 ---
 

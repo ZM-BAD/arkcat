@@ -18,20 +18,16 @@ Stargazers = 用户行（圆头像/显示名/login/两行简介）；Forks = 分
 
 ## 二、整体 UI 结构
 
-```text
-Stargazers                          Forks
-┌─────────────────────────┐   ┌─────────────────────────┐
-│ ←  DAG-chat             │   │ ←  DAG-chat    🔍 ＋   │
-│    Stargazers(灰)        │   │    Forks(灰)            │
-├─────────────────────────┤   ├─────────────────────────┤
-│ (avatar) Xiaoqiang Wang │   │ (avt) ⑂ yjnzen          │
-│          Robert-xiaoqiang│   │    DAG-chat             │
-│   简介…(2行灰)          │   │    描述 2 行             │
-│ (avatar) Yangwu Chen    │   │    ⑂ Forked from ZM-BAD… │
-│          chenyang50     │   │    ★ 0  ● TypeScript    │
-│ …（加载更多/空态/错误） │   │ …（搜索行/加载更多/空态）│
-└─────────────────────────┘   └─────────────────────────┘
-```
+**Stargazers 页：**
+1. App Bar：返回按钮 + 仓库名 DAG-chat（粗体）+ 副标题 Stargazers（灰）
+2. 用户行一：圆形头像 + 显示名 Xiaoqiang Wang + login Robert-xiaoqiang（灰）+ 简介（2 行灰省略）
+3. 用户行二：圆形头像 + 显示名 Yangwu Chen + login chenyang50
+4. 列表尾部：加载更多 / 空态 / 错误
+
+**Forks 页：**
+1. App Bar：返回按钮 + 仓库名 DAG-chat（粗体）+ 副标题 Forks（灰）+ 搜索按钮 + 加号按钮（＋）
+2. 仓库行一：头像 + fork 图标 + 属主 yjnzen（灰）+ 仓库名 DAG-chat + 描述 2 行 + fork 图标 + Forked from ZM-BAD…（灰）+ 星数 0 + 语言点 ● + TypeScript
+3. 列表尾部：搜索行 / 加载更多 / 空态
 
 行间无分隔线，纯留白（参考截图）；两页均 Scroll + 保留 StateView（loading/错误重试）。
 

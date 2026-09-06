@@ -18,24 +18,13 @@
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│  Inbox                          ⋯   │  ← 标题+菜单
-├─────────────────────────────────────┤
-│  [Inbox▾] [Focused] [Unread] [Repo▾] │  ← 四个筛选 pill
-├─────────────────────────────────────┤
-│  ZM-BAD / DAG-chat #82          11h  │
-│  fix(backend): use $addToSet...     │
-│  ● Merged #82 into main.            │  ← 卡片(状态图标+摘要)
-│  ────────────────────────────────── │
-│  ZM-BAD / headroom #5           5d  │
-│  chore(deps): update ...            │
-│  ● @renovate[bot] pushed 1 commit.  │
-│  ...                                │
-├─────────────────────────────────────┤
-│  🏠    🔔      🧭      🤖           │
-└─────────────────────────────────────┘
-```
+1. 顶部 App Bar：Inbox 标题 + ⋯ 更多菜单（← 标题+菜单）
+2. 筛选行：Inbox（下拉）/ Focused / Unread / Repository（下拉）四个筛选 pill（← 四个筛选 pill）
+3. 通知卡片列表：卡片 = 仓库名+编号行 + 右侧相对时间 → 标题（加粗）→ 类型状态图标 + 摘要行（← 卡片：状态图标+摘要）
+   - 示例卡片 1：ZM-BAD / DAG-chat #82 · 11h · fix(backend): use $addToSet... · ● Merged #82 into main.
+   - 示例卡片 2：ZM-BAD / headroom #5 · 5d · chore(deps): update ... · ● @renovate[bot] pushed 1 commit.
+   - ...（后续卡片）
+4. 底部导航：Home / Inbox / Explore / Copilot
 
 ---
 

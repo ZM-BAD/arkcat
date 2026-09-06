@@ -17,20 +17,12 @@
 
 ## 二、整体 UI 结构
 
-```text
-Contributors / Watchers（两页结构一致，仅副标题与数据源不同）
-┌─────────────────────────┐
-│ ←  ponytail             │
-│    Contributors(灰)      │
-├─────────────────────────┤
-│ (savatar) DietrichGebert│  ← 无显示名：仅灰 login 单行
-│ (avatar) Lakshya Sharma │
-│          Lakshya77089   │
-│    bio…（2行灰省略）    │
-│ (avatar) {…}            │
-│ …（加载更多/空态/错误） │
-└─────────────────────────┘
-```
+Contributors / Watchers 两页结构一致，仅副标题与数据源不同：
+1. App Bar：返回按钮 + 仓库名 ponytail（粗体）+ 副标题 Contributors（灰）
+2. 用户行一：圆形头像 + DietrichGebert（无显示名：仅灰 login 单行）
+3. 用户行二：圆形头像 + 显示名 Lakshya Sharma + login Lakshya77089 + 简介（2 行灰省略）
+4. 用户行…：圆形头像 + {…}（更多用户）
+5. 列表尾部：加载更多 / 空态 / 错误
 
 行间无分隔线，纯留白（参考截图）；Scroll + StateView（loading/错误重试），沿用 Stargazers 页骨架。
 

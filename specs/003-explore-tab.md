@@ -19,33 +19,11 @@
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│  Explore                             │  ← 标题
-├─────────────────────────────────────┤
-│  Discover                            │
-│  🔥 Trending Repositories            │  ← 入口块
-│  ✦  Awesome Lists                    │
-├─────────────────────────────────────┤
-│  Activity                       ⚙ │  ← 信息流
-│  ┌───────────────────────────┐     │
-│  │ 🤖 gh-actions-bot ... 28m │     │
-│  │   PR Build                │     │
-│  │   v0.0.10-nightly...      │     │
-│  │   [ View release details>]│     │
-│  ├───────────────────────────┤     │
-│  │ 🌟 Recommended for you  1d │     │
-│  │   easy-javadoc ...        │     │
-│  │   ☆ 2.9k  Java            │     │
-│  │   [ STAR ]                │     │
-│  └───────────────────────────┘     │
-├─────────────────────────────────────┤
-│  Topics                              │
-│  🏷 harmonyos 🏷 arkts ...           │
-├─────────────────────────────────────┤
-│  🏠    🔔      🧭      🤖           │
-└─────────────────────────────────────┘
-```
+1. 顶部 App Bar：标题 Explore
+2. Discover 区：入口块（Trending Repositories、Awesome Lists）
+3. Activity 信息流（右上设置）：动态卡（事件推送、带角标与详情跳转）、推荐卡（仓库 + 星数/语言 + STAR 按钮）
+4. Topics 区：标签 chip（harmonyos、arkts 等）
+5. 底部导航：Home / Inbox / Explore / Copilot
 
 ---
 

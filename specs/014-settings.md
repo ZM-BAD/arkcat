@@ -23,32 +23,12 @@
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│  ←  Settings                         │  ← 顶栏（返回）
-├─────────────────────────────────────┤
-│  Notifications  (分组标题)            │
-│  Notification Options >              │
-├─────────────────────────────────────┤
-│  General                             │
-│  Theme          Follow system       │
-│  Code Options                        │
-│  Language       English              │
-│  Accounts                            │
-│  App Lock                            │
-├─────────────────────────────────────┤
-│  Subscriptions                       │
-│  Copilot        Copilot Free         │
-├─────────────────────────────────────┤
-│  More Options                        │
-│  Share Feedback / Get Help /         │
-│  Terms of Service / Privacy &        │
-│  Analytics / Open Source Libraries / │
-│  Sign Out                            │
-├─────────────────────────────────────┤
-│           StarRaft v1.0.0            │
-└─────────────────────────────────────┘
-```
+1. 顶部 App Bar：← 返回 + Settings 标题（← 顶栏（返回））
+2. Notifications 分组：分组标题 + Notification Options（> 行）
+3. General 分组：Theme（当前值 Follow system）/ Code Options / Language（当前值 English）/ Accounts / App Lock
+4. Subscriptions 分组：Copilot（当前值 Copilot Free）
+5. More Options 分组：Share Feedback / Get Help / Terms of Service / Privacy Policy & Analytics / Open Source Libraries / Sign Out
+6. 底部：StarRaft v1.0.0 版本号
 
 ---
 

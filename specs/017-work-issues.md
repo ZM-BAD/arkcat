@@ -15,26 +15,12 @@ Home My Work「Issues」入口进入的跨仓库 Issue 列表页（区别于 007
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│  ←   Issues                  🔍 ⋯  │ ← App Bar
-├─────────────────────────────────────┤
-│  ⌄⌄① [ Closed ⌄ ] [ Created by me ⌄ ] [ Visibility ⌄ ]  │ ← 筛选行
-├─────────────────────────────────────┤
-│  ✔  microsoft/MicrosoftEdge-Extensions #689      1mo    │ ← Issue 行
-│     [Bug - Partner Center] Review stuck ...              │
-│     [Task] [Bug] [Tracked] [Partner Center]  💬1        │
-│  ─────────────────────────────────────────────────────  │
-│  ✔  6tail/tyme4py #6                        8mo         │
-│     Python的版本可以升级到3.14吗?                        │
-│     💬3                                                │
-│  （… 分页 Load more）                                    │
-├─────────────────────────────────────┤
-│  （空态：插图 + There aren't any issues.                  │
-│         Use fewer filters or reset all filters          │
-│         [ RESET ALL FILTERS ]）                          │
-└─────────────────────────────────────┘
-```
+1. 顶部 App Bar：← 返回、「Issues」标题、搜索（🔍）、更多菜单（⋯）
+2. 筛选行：漏斗徽标 + 激活数、状态「Closed」下拉、归属「Created by me」下拉、「Visibility」下拉
+3. Issue 行一：状态图标（✔）+ `owner/repo #编号`（microsoft/MicrosoftEdge-Extensions #689）+ 相对时间（1mo）+ 标题（[Bug - Partner Center] Review stuck ...）+ 标签胶囊（[Task] [Bug] [Tracked] [Partner Center]）+ 评论数（💬1）
+4. Issue 行二：状态图标（✔）+ 6tail/tyme4py #6 + 相对时间（8mo）+ 标题（Python的版本可以升级到3.14吗?）+ 评论数（💬3）
+5. 列表底部分页：Load more
+6. 空态：插图 + 标题「There aren't any issues.」+ 副文案「Use fewer filters or reset all filters」+ 「RESET ALL FILTERS」按钮
 
 ---
 

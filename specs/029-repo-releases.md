@@ -15,24 +15,13 @@
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────┐
-│ ← DAG-chat  Releases            │
-├─────────────────────────────────┤
-│ 1.3.2                           │
-│ [ Latest release ]              │
-│ 🀫 ZM-BAD released this June 30 │
-│ What's Changed                  │
-│  LLM                             │
-│  • DeepSeek V4… (截断 4 行)     │
-│  View release details           │
-├─────────────────────────────────┤
-│ All Releases                    │
-│ 1.3.2  2mo · Latest release    │
-│ 1.3.1  4mo                      │
-│ …（Load more）                   │
-└─────────────────────────────────┘
-```
+1. 顶部 App Bar：← 返回 + 副标题（DAG-chat）+ 主标题「Releases」
+2. 最新 Release 头卡：版本号（1.3.2）+「Latest release」徽章
+3. 头卡发布信息：🀫 头像 + 发布者（ZM-BAD）+ 「released this June 30」
+4. 头卡正文：「What's Changed」标题 + 内容条目（LLM / • DeepSeek V4…，截断 4 行）+「View release details」链接
+5. 版本清单分组头：「All Releases」
+6. 版本行：1.3.2 · 相对时间 2mo · 「Latest release」徽章；1.3.1 · 4mo
+7. 列表底部分页：Load more
 
 ## 三、元素清单
 

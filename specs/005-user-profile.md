@@ -21,33 +21,14 @@
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│  ←  @ZM-BAD                🔗 ⚙      │  ← 返回/分享/设置
-├─────────────────────────────────────┤
-│  ┌───────────────────────────────┐  │
-│  │ 🖼 周铭   @ZM-BAD             │  │
-│  │ ⚡ Focusing              ✏    │  │  ← 状态行+编辑
-│  │ Backend developer...           │  │
-│  │ 📍 Hangzhou                    │  │
-│  │ ✉ prozm.bad@gmail.com          │  │
-│  │ 🔗 https://zmbad.me            │  │
-│  │ 🔗 @zm_bad                     │  │
-│  │ 👥 33 followers · 61 following │  │
-│  └───────────────────────────────┘  │
-├─────────────────────────────────────┤
-│  📌 Pinned  (横滑双列)               │
-│  ┌─────┐ ┌─────┐                    │
-│  │DAG  │ │kuan │  →                │
-│  └─────┘ └─────┘                    │
-├─────────────────────────────────────┤
-│  ▶ Repositories            8        │  ← 计数入口
-│  ▶ Organizations           0        │
-│  ▶ Starred                93        │
-├─────────────────────────────────────┤
-│  展开内容（日历/Pinned/仓库列表/Star 列表）│
-└─────────────────────────────────────┘
-```
+1. 顶部 App Bar：← 返回 + 用户名标题（@ZM-BAD）+ 🔗 分享 + ⚙ 设置（← 返回/分享/设置）
+2. Header 卡：头像 + 名字（🖼 周铭）+ @ZM-BAD + 状态行 + bio + 元信息行（← 状态行+编辑）
+   - 状态行：⚡ Focusing + ✏ 编辑笔
+   - bio：Backend developer...
+   - 元信息：📍 Hangzhou、✉ `prozm.bad@gmail.com`、🔗 `https://zmbad.me`、🔗 @zm_bad、👥 33 followers · 61 following
+3. Pinned 区：📌 Pinned 标题（横滑双列），两条仓库卡 DAG / kuan，→ 横滑查看更多
+4. 计数入口：▶ Repositories 8 / ▶ Organizations 0 / ▶ Starred 93（← 计数入口）
+5. 展开内容：展开视图（日历 / Pinned / 仓库列表 / Star 列表）
 
 ---
 

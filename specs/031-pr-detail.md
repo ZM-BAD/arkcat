@@ -15,27 +15,12 @@ PR 详情页三区块：**Changes 卡片**（N files changed · +A −D · commi
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────┐
-│ ←  owner/repo #N     share ⋯    │
-├─────────────────────────────────┤
-│ 标题（2 行省略）                 │
-│ [ Merged ] 分支胶囊              │
-│ 🀫 作者登录名 · Owner · 时间 ⋯  │
-├─ Changes ────────────────────────┤
-│ 📄 3 files changed  +249 −49    │
-│ 1 commit · 20h ago              │
-├─ Status ─────────────────────────┤
-│ 👁 Reviews · None requested      │
-│ ✓ All checks have passed        │
-│ ⇄ Branch merged eb43eaa…        │
-├─ Conversation ───────────────────┤
-│ 正文/评论列表（codecov 等）       │
-│ [ DELETE BRANCH ]               │
-├─────────────────────────────────┤
-│ [ COMMENT ] 😊                  │
-└─────────────────────────────────┘
-```
+1. 顶部 App Bar：← 返回 + `owner/repo #N` + 分享（share）+ 更多菜单（⋯）
+2. 标题区：标题（2 行省略）+ [Merged] 徽章 + 分支胶囊 + 作者行（🀫 头像 + 作者登录名 + Owner 标记 + 相对时间 + 更多菜单 ⋯）
+3. Changes 卡片：📄 文件数（3 files changed）+ 增减行数（+249 −49）+ commit 数（1 commit · 20h ago）
+4. Status 卡片：👁 Reviews · None requested + ✓ All checks have passed + ⇄ Branch merged（eb43eaa…）
+5. Conversation 区块：正文/评论列表（codecov 等）+ [DELETE BRANCH] 按钮
+6. 底部：[COMMENT] 输入 + 表情按钮（😊）
 
 ## 三、元素清单
 

@@ -15,18 +15,14 @@
 
 ## 二、整体 UI 结构
 
-```text
-PrDetail
-├─ Status 卡（已有）→ 「View all」→
-│  CheckRunsList（弹层/页面）
-│  ├─ 每行：名称 · 状态 spinner/✓/✗ · 时长
-│  └─ 行点击 → CheckRunDetail
-│     ├─ 顶部：conclusion 大徽章/进度条
-│     ├─ steps 列表（序号/名/状态/时长，折叠展开）
-│     └─ 动作：Rerun failed checks | 查看官方详情(Web) | 复制链接
-│
-└─ 通知（045）：CI 失败通知 → 点击直达 CheckRunDetail
-```
+PrDetail 页面结构：
+1. Status 卡（已有）→ 「View all」→ CheckRunsList（弹层/页面）：
+   - 每行：名称 · 状态（spinner / 对勾 / 叉号）· 时长
+   - 行点击 → CheckRunDetail：
+     - 顶部：conclusion 大徽章/进度条
+     - steps 列表（序号/名/状态/时长，折叠展开）
+     - 动作：Rerun failed checks | 查看官方详情(Web) | 复制链接
+2. 通知（045）：CI 失败通知 → 点击直达 CheckRunDetail
 
 ---
 

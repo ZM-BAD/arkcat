@@ -15,24 +15,13 @@
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│  ←   Pull requests       +  ···     │
-├─────────────────────────────────────┤
-│  [ Reviewed ]  [ Mentions ]         │
-├─────────────────────────────────────┤
-│  [ Open ]  [ Closed ]               │
-├─────────────────────────────────────┤
-│  🟠 Add network layer                │
-│  zm_bad/starraft#1 · bug            │
-│  @zm_bad · d1 · 💬 2                 │
-│  ──────────────────────────────────  │
-│  🟠 Bump gradle version              │
-│  zm_bad/starraft#1 · deps           │
-│  @zm_bad · d2 · 💬 0                 │
-│  ...                                │
-└─────────────────────────────────────┘
-```
+1. 顶部 App Bar：← 返回 + Pull requests 标题 + ＋ 新建 + ⋯ 更多菜单
+2. 筛选 chips：[ Reviewed ] / [ Mentions ]
+3. 状态 Tab：[ Open ] / [ Closed ]
+4. PR 卡片列表：卡片 = 🟠 Review 状态图标 + 标题 + 元信息行（仓库名#编号 · label · @作者 · 相对时间 · 💬 评论数）
+   - 示例卡片 1：🟠 Add network layer / zm_bad/starraft#1 · bug / @zm_bad · d1 · 💬 2
+   - 示例卡片 2：🟠 Bump gradle version / zm_bad/starraft#1 · deps / @zm_bad · d2 · 💬 0
+   - ...（后续卡片）
 
 ---
 

@@ -15,25 +15,17 @@
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│ ←                        🔗  ⋯       │
-│ (logo) dragonflyoss                  │
-│         dragonflyoss                 │
-│ 简介段落                             │
-│ 🔗 d7y.io                            │
-│ ✉️ dragonfly-…@googlegroups.com      │
-│ 𝕏 dragonfly_oss                      │
-│ ┌───────[ + FOLLOW ]───────┐         │
-├─ dragonflyoss/README.md ────────────►│
-│ Welcome to Dragonfly                 │
-│ [徽章群]                             │
-│ 正文…（折叠）        [📥 Read more]   │
-├─ 📍 Pinned ──────────────────────────┤
-│ [dragonflyoss│dragonfly 3.3k Go] …   │
-│ ┌▤ Repositories ─── 31 ─►┐           │
-└─────────────────────────────────────┘
-```
+1. App Bar：← 返回 + 分享（🔗）+ 更多菜单（⋯）
+2. 头部：logo + 组织名 dragonflyoss（粗体）+ login dragonflyoss（灰）
+3. 简介段落
+4. 信息行：官网 d7y.io（🔗）、邮箱 dragonfly-…@googlegroups.com（✉️）、X 账号 dragonfly_oss（𝕏）
+5. 关注按钮：通栏 [+ FOLLOW] 描边按钮
+6. README 区块（标题行 dragonflyoss/README.md + 右侧滚动条）：
+   - Welcome to Dragonfly（正文首行）
+   - [徽章群]
+   - 正文…（折叠）+ Read more 展开按钮（📥）
+7. Pinned 置顶区（📍 标题）：横滑卡片 dragonflyoss / dragonfly 3.3k Go …
+8. Repositories 区（▤ 图标）：Repositories 计数行 31 + ›
 
 ---
 

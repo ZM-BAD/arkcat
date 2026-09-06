@@ -15,21 +15,19 @@
 
 ## 二、整体 UI 结构
 
-```text
-IssueDetail / PrDetail
-├─ 标题行 · 状态徽章 · 动作区（关闭/编辑/更多）
-├─ 元数据区（现有“无渲染”）→ 增强为卡片：
-│   Labels: [bug][enhancement]（点击 → 编辑器）
-│   Assignees: 头像组（点击 → 编辑器）
-│   Milestone: 当前/未设置
-│   Projects: 命中项目列表（→ 020 项目页）
-├─ 编辑器（半屏 Sheet/全屏）：
-│   ① Labels: 仓库 labels 全部（分色 chip，多选）
-│   ② Assignees: assignableUsers 搜索列表（多选）
-│   ③ Milestone: 开/关里程碑列表（单选）
-│   ④ Projects: 项目项添加/状态（简化：项目下拉 + 状态子菜单）
-└─ 保存即 mutation，底部 toast 反馈 + timeline 事件刷新
-```
+IssueDetail / PrDetail 页面结构：
+1. 标题行 · 状态徽章 · 动作区（关闭/编辑/更多）
+2. 元数据区（现有“无渲染”）→ 增强为卡片：
+   - Labels: `bug`/`enhancement` 标签（点击 → 编辑器）
+   - Assignees: 头像组（点击 → 编辑器）
+   - Milestone: 当前/未设置
+   - Projects: 命中项目列表（→ 020 项目页）
+3. 编辑器（半屏 Sheet/全屏）：
+   - Labels: 仓库 labels 全部（分色 chip，多选）
+   - Assignees: assignableUsers 搜索列表（多选）
+   - Milestone: 开/关里程碑列表（单选）
+   - Projects: 项目项添加/状态（简化：项目下拉 + 状态子菜单）
+4. 保存即 mutation，底部 toast 反馈 + timeline 事件刷新
 
 ---
 

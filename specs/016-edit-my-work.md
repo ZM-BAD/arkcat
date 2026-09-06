@@ -15,21 +15,10 @@ Home Tab「My Work」区块的编辑页（入口：My Work 标题右侧 ⋯）�
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│  ←   Edit My Work         SAVE ⋯   │ ← App Bar（返回/标题/保存/更多）
-├─────────────────────────────────────┤
-│  ☑ ▢ Issues              ⋮⋮        │ ← 复选框 + 彩色图标 + 标签 + 拖拽柄
-│  ☑ ▢ Pull Requests       ⋮⋮        │
-│  ☑ ▢ Discussions         ⋮⋮        │
-│  ☑ ▢ Projects            ⋮⋮        │
-│  ☑ ▢ Top Repositories    ⋮⋮        │
-│  ☑ ▢ Organizations       ⋮⋮        │
-│  ☑ ▢ Starred             ⋮⋮        │
-├─────────────────────────────────────┤
-│  （空白区）                         │
-└─────────────────────────────────────┘
-```
+1. 顶部 App Bar：← 返回 + Edit My Work 标题 + SAVE 按钮 + ⋯ 更多菜单（← App Bar：返回/标题/保存/更多）
+2. 条目列表：七行，每行 = ☑/▢ 复选框 + 彩色图标 + 标签 + ⋮⋮ 拖拽柄（← 复选框 + 彩色图标 + 标签 + 拖拽柄）
+   - Issues / Pull Requests / Discussions / Projects / Top Repositories / Organizations / Starred
+3. 底部空白区
 
 ---
 

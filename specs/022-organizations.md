@@ -15,19 +15,10 @@ Home My Work「Organizations」入口进入的组织列表页，展示 viewer �
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│  ←   Organizations                  │ ← App Bar（无筛选/搜索按钮，与截图一致）
-├─────────────────────────────────────┤
-│  ◯  StarRaft Org                    │ ← 组织行（头像 + 名称）
-│     starraft                        │
-│  ◯  6tail                           │
-│     6tail                           │
-│  （… 分页 Load more）                 │
-├─────────────────────────────────────┤
-│  （空态：There aren't any organizations. 纯文字居中） │
-└─────────────────────────────────────┘
-```
+1. 顶部 App Bar：← 返回、「Organizations」标题（无筛选/搜索按钮，与截图一致）
+2. 组织行（头像 + 名称）：◯ 头像 + 组织名称大字（StarRaft Org）+ 登录名灰色小字（starraft）；第二条 6tail / 6tail 同构
+3. 列表底部分页：Load more
+4. 空态：纯文字居中「There aren't any organizations.」
 
 ---
 

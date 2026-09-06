@@ -15,16 +15,9 @@
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────┐
-│ ←  Commits                      │
-├─────────────────────────────────┤
-│ Merge pull request #82 from ZM-…│ ✓ 20h │
-│ 🀫 ZM-BAD authored              │      │
-│ fix(backend): use $addToSet…    │ ✓ 20h │
-│ 🀫 ZM-BAD authored              │      │
-└─────────────────────────────────┘
-```
+1. 顶部 App Bar：← 返回 + 「Commits」标题
+2. 提交行一：提交标题（Merge pull request #82 from ZM-…，单行省略）+ 右侧状态绿✓ + 相对时间（20h），下方作者行：🀫 头像 + 登录名（ZM-BAD）+「authored」
+3. 提交行二：提交标题（fix(backend): use $addToSet…）+ 状态绿✓ + 相对时间（20h），下方作者行：🀫 头像 + ZM-BAD +「authored」
 
 ## 三、元素清单
 

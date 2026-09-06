@@ -15,26 +15,12 @@ Home My Work「Pull Requests」入口进入的跨仓库 PR 列表页。展示用
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│  ←   Pull Requests          🔍 ⋯   │ ← App Bar
-├─────────────────────────────────────┤
-│  ⌄⌄① [ All ⌄ ] [ Created by me ⌄ ] [ Visibility ⌄ ]  │ ← 筛选行
-├─────────────────────────────────────┤
-│  ⑂  ZM-BAD/DAG-chat #82                    12h      │ ← PR 行
-│     fix(backend): use $addToSet for children   links │
-│     ✔ Checks   💬1   👁1                          │
-│  ─────────────────────────────────────────────────  │
-│  ✗  ZM-BAD/DAG-chat #1                    7mo        │
-│     Add files for GitHub Actions ...                 │
-│     ✗ Checks failed  (avatar)                        │
-│  （… 分页 Load more）                                  │
-├─────────────────────────────────────┤
-│  （空态：插图 + There aren't any pull requests.        │
-│         Use fewer filters or reset all filters       │
-│         [ RESET ALL FILTERS ]）                       │
-└─────────────────────────────────────┘
-```
+1. 顶部 App Bar：← 返回、「Pull Requests」标题、搜索（🔍）、更多菜单（⋯）
+2. 筛选行：漏斗徽标 + 激活数、「All」状态下拉、「Created by me」归属下拉、「Visibility」下拉
+3. PR 行一：状态图标（⑂）+ `owner/repo #编号`（ZM-BAD/DAG-chat #82）+ 相对时间（12h）+ 标题（fix(backend): use $addToSet for children）+ 提示（links）+ Checks 胶囊（✔ Checks）+ 评论数（💬1）+ 审查数（👁1）
+4. PR 行二：状态图标（✗）+ ZM-BAD/DAG-chat #1 + 相对时间（7mo）+ 标题（Add files for GitHub Actions ...）+ Checks 胶囊（✗ Checks failed）+ 作者头像
+5. 列表底部分页：Load more
+6. 空态：插图 + 标题「There aren't any pull requests.」+ 副文案「Use fewer filters or reset all filters」+ 「RESET ALL FILTERS」按钮
 
 ---
 

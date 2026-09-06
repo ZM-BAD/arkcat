@@ -15,29 +15,12 @@ Settings 页「Notification Options」行点击进入的通知设置二级页。
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│ ←  Notifications                    │
-├─────────────────────────────────────┤
-│ General                             │
-│ Working hours               Off     │
-├─ Push Notifications Types ──────────┤
-│ Direct Mentions                  [●]│
-│ Review Requested                 [ ]│
-│ Assigned                         [ ]│
-│ Deployment Review                [ ]│
-│ Pull Request Review              [ ]│
-│ Workflow Runs                    [ ]│
-├─ Live notifications ───────────────┤
-│ Cloud Agent Updates             [●]│
-│ Remote Session Updates          [●]│
-├─ Swipe Options ────────────────────┤
-│ Left swipe    Mark as done  CHANGE │
-│ ░░ ░░░                    ▣ (绿)   │
-│ Right swipe   Unsubscribe   CHANGE │
-│ ▣ (灰·铃铛)        ░░ ░░░          │
-└─────────────────────────────────────┘
-```
+1. 顶部 App Bar：← 返回 + 「Notifications」标题
+2. General 组：Working hours 行 + 状态 Off
+3. Push Notifications Types 组（6 个开关行）：Direct Mentions（开）、Review Requested（关）、Assigned（关）、Deployment Review（关）、Pull Request Review（关）、Workflow Runs（关）
+4. Live notifications 组（2 个开关行，默认开）：Cloud Agent Updates、Remote Session Updates
+5. Swipe Options 组：左滑动作行（Left swipe · Mark as done · CHANGE）+ 左滑预览卡（骨架 ░░ ░░░ + 绿色动作块 ▣）
+6. Swipe Options 组：右滑动作行（Right swipe · Unsubscribe · CHANGE）+ 右滑预览卡（灰色·铃铛动作块 ▣ + 骨架 ░░ ░░░）
 
 ---
 

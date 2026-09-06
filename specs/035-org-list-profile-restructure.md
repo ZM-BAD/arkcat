@@ -15,20 +15,11 @@ Profile 页下方 **Repositories / Organizations / Starred 三入口**由「内�
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│ ←  gaius-qi           （灰 login 上）│
-│     Organizations      （粗体标题下）│
-├─────────────────────────────────────┤
-│ (logo) Feedit                       │
-│         feedit                      │
-│         feed it reader.             │
-│ (logo) Macaca                       │
-│         macacajs                    │
-│         AI 自动化解决方案...         │
-│        ……（加载更多）                │
-└─────────────────────────────────────┘
-```
+1. 顶部 App Bar：← 返回 + 标题 gaius-qi（灰 login，上）+ Organizations（粗体标题，下）
+2. 组织列表（logo + 显示名 + login + 简介，整行点击进组织主页）：
+   - logo + 显示名 Feedit + login feedit + 简介 feed it reader.
+   - logo + 显示名 Macaca + login macacajs + 简介 AI 自动化解决方案…
+   - ……（加载更多）
 
 ---
 

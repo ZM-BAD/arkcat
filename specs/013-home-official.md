@@ -22,38 +22,12 @@
 
 ## 二、整体 UI 结构
 
-```text
-┌─────────────────────────────────────┐
-│  Home                    🔍 🔄 ＋ 🖼 │  ← Header（搜索/刷新/新建/头像）
-├─────────────────────────────────────┤
-│  My Work                          ⋯ │
-│  ┌───┐ Issues                       │
-│  │ 🟢 │ Pull Requests                │
-│  │ 🔵 │ Discussions                  │
-│  │ 🟣 │ Projects                     │
-│  │ ⚪ │ Top Repositories              │
-│  │ ⬛ │ Organizations                │
-│  │ 🟠 │ Starred                      │
-│  └───┘                               │
-├─────────────────────────────────────┤
-│  Favorites                           │
-│  Add favorite repositories ...       │
-│  ┌─────────────────────────────┐    │
-│  │       ADD FAVORITES         │    │
-│  └─────────────────────────────┘    │
-├─────────────────────────────────────┤
-│  Shortcuts                           │
-│     ⚡ ✓ ⑂ ❞ ▤ ⌂ ★ ▦                │
-│  The things you need, one tap away  │
-│  Fast access your lists of ...       │
-│  ┌─────────────────────────────┐    │
-│  │        GET STARTED          │    │
-│  └─────────────────────────────┘    │
-├─────────────────────────────────────┤
-│  🏠     🏔      🧭      🤖           │
-│  Home  Inbox  Explore  Copilot       │
-└─────────────────────────────────────┘
-```
+1. 顶部 Header：Home 标题 + 🔍 搜索 + 🔄 刷新 + ＋ 新建 + 🖼 头像（← Header：搜索/刷新/新建/头像）
+2. My Work 区块：区块标题 + ⋯ 更多菜单
+   - 七个彩色圆点图标入口：Issues / Pull Requests / Discussions / Projects / Top Repositories / Organizations / Starred
+3. Favorites 区块：标题 + 空态文案（Add favorite repositories ...）+ ADD FAVORITES 按钮
+4. Shortcuts 区块：标题 + 彩色图标行（⚡ ✓ ⑂ ❞ ▤ ⌂ ★ ▦）+ 引导文案（The things you need, one tap away / Fast access your lists of ...）+ GET STARTED 按钮
+5. 底部导航：Home / Inbox / Explore / Copilot 四个 Tab（🏠 🏔 🧭 🤖 图标）
 
 ---
 
