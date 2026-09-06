@@ -97,6 +97,10 @@
       "value": "#3FB950"
     },
     {
+      "name": "success_subtle_bg",
+      "value": "#12261E"
+    },
+    {
       "name": "danger_text",
       "value": "#F85149"
     },

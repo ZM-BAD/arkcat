@@ -95,7 +95,7 @@ export struct RepoReleasesView {
         .fontSize($r('app.float.body_font_size'))
         .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
-      // 官方布局：时间 · Latest release 徽章（绿字绿描边）一排，时间在前（走查修正四轮）
+      // 官方布局：时间 · Latest release 纯绿字一排，时间在前（走查修正四/六轮）
       Row({ space: 6 }) {
         Text(this.timeText(timeParts(item.createdAt, Date.now())))
           .fontSize($r('app.float.caption_font_size'))
@@ -105,11 +105,8 @@ export struct RepoReleasesView {
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))
           Text($r('app.string.releases_latest'))
-            .fontSize(12)
+            .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.success_text'))
-            .padding({ left: 6, right: 6, top: 1, bottom: 1 })
-            .borderRadius(6)
-            .outline({ width: 1.5, color: $r('app.color.success_text'), radius: 6, style: OutlineStyle.SOLID })
         }
       }
       .alignItems(VerticalAlign.Center)
@@ -168,7 +165,8 @@ export struct RepoReleasesView {
                   .fontColor($r('app.color.success_text'))
                   .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                   .borderRadius(6)
-                  .outline({ width: 1.5, color: $r('app.color.success_text'), radius: 6, style: OutlineStyle.SOLID })
+                  .outline({ width: 0.5, color: $r('app.color.success_text'), radius: 6, style: OutlineStyle.SOLID })
+                  .backgroundColor($r('app.color.success_subtle_bg'))
               }
               Row({ space: 8 }) {
                 if (this.releases[0].authorAvatar !== '') {
@@ -178,8 +176,13 @@ export struct RepoReleasesView {
                     .borderRadius(11)
                     .backgroundColor($r('app.color.heat_empty'))
                 }
+                // 官方布局：作者名黑体 + released this + 具体日期（月名+日，走查修正六轮）
+                Text(this.releases[0].authorLogin)
+                  .fontSize($r('app.float.caption_font_size'))
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor($r('app.color.text_primary'))
                 Text(resText(this.getUIContext(), $r('app.string.releases_released_this'),
-                  this.timeText(timeParts(this.releases[0].createdAt, Date.now()))))
+                  monthDayText(this.releases[0].createdAt)))
                   .fontSize($r('app.float.caption_font_size'))
                   .fontColor($r('app.color.text_secondary'))
               }

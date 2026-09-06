@@ -1178,7 +1178,7 @@
     },
     {
       "name": "releases_released_this",
-      "value": "released %1$s"
+      "value": "released this %1$s"
     },
     {
       "name": "releases_view_details",

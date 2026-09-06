@@ -10,12 +10,11 @@ import { systemShare } from '@kit.ShareKit';
 import { OctIcon } from '../components/OctIcon';
 import { MarkdownView } from '../components/MarkdownView';
 import { DownloadRow } from '../components/DownloadRow';
-import { ReleaseAsset, ReleaseDetailPage, formatBytes, releaseAssetBrowserUrl } from '../models/RepoSubModels';
+import { ReleaseAsset, ReleaseDetailPage, formatBytes, releaseAssetBrowserUrl, monthDayText } from '../models/RepoSubModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { DownloadService, DownloadTask } from '../services/DownloadService';
 import { MarkdownService } from '../services/MarkdownService';
 import { StateView } from '../components/StateView';
-import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
 /** 大文件阈值：超过仅提示浏览器打开（spec 边界） */
@@ -109,10 +108,6 @@ export struct ReleaseDetailView {
 
   private stringOf(res: Resource): string {
     return resText(this.getUIContext(), res);
-  }
-
-  private timeText(parts: TimeParts | null): string {
-    return parts !== null ? githubShortTime(parts) : '';
   }
 
   /** 任务运行速度（字节/秒；采样不足返回 0） */
@@ -335,11 +330,14 @@ export struct ReleaseDetailView {
                     .borderRadius(11)
                     .backgroundColor($r('app.color.heat_empty'))
                 }
+                // 与列表页头卡同款：作者名黑体 + released this + 具体日期（走查修正六轮）
                 Text(this.detail.authorLogin)
                   .fontSize($r('app.float.caption_font_size'))
-                  .fontColor($r('app.color.text_secondary'))
-                Text(this.timeText(timeParts(this.detail.publishedAt !== ''
-                  ? this.detail.publishedAt : this.detail.createdAt, Date.now())))
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor($r('app.color.text_primary'))
+                Text(resText(this.getUIContext(), $r('app.string.releases_released_this'),
+                  monthDayText(this.detail.publishedAt !== ''
+                    ? this.detail.publishedAt : this.detail.createdAt)))
                   .fontSize($r('app.float.caption_font_size'))
                   .fontColor($r('app.color.text_secondary'))
               }
