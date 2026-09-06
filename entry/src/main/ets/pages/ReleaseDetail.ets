@@ -267,15 +267,24 @@ export struct ReleaseDetailView {
         .onClick(() => {
           this.pathStack.pop();
         })
-        Text(this.detail !== null && this.detail.name !== '' ? this.detail.name : this.tag)
-          .fontSize($r('app.float.title_font_size'))
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.text_primary'))
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .layoutWeight(1)
+        // 官方布局：两行标题=灰小字 owner / repo + release 标题；右上单图标蓝 share-android（走查修正七轮）
+        Column({ space: 0 }) {
+          Text(`${this.owner} / ${this.name}`)
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor($r('app.color.text_secondary'))
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+          Text(this.detail !== null && this.detail.name !== '' ? this.detail.name : this.tag)
+            .fontSize($r('app.float.title_font_size'))
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.text_primary'))
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+        }
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
         Stack() {
-          OctIcon({ res: $r('app.media.oct_share_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+          OctIcon({ res: $r('app.media.oct_share_android_16'), iconSize: 18, iconColor: $r('app.color.link_blue') })
         }
 .width(44)
 .height(44)
@@ -287,22 +296,9 @@ export struct ReleaseDetailView {
             this.copyUrl(this.detail.releaseUrl);
           }
         })
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_link_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
-        }
-.width(44)
-.height(44)
-        .padding(6)
-        .accessibilityDescription($r('app.string.release_copy_link'))
-        .focusable(true)
-        .onClick(() => {
-          if (this.detail !== null) {
-            this.copyUrl(this.detail.releaseUrl);
-          }
-        })
       }
       .width('100%')
-      .height(48)
+      .height(56)
       .padding({ left: 0, right: 0 })
 
       Scroll() {
