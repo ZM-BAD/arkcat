@@ -35,6 +35,7 @@ import { RepoPrsView } from './RepoPrs';
 import { RepoCommitsView } from './RepoCommits';
 import { RepoReleasesView } from './RepoReleases';
 import { ReleaseDetailView } from './ReleaseDetail';
+import { ReactionUsersView } from './ReactionUsers';
 import { IssueDetailView } from './IssueDetail';
 import { PrDetailView } from './PrDetail';
 import { PrFilesView } from './PrFiles';
@@ -67,6 +68,9 @@ struct Index {
   @State repoName: string = '';
   @State detailNumber: number = 0;
   @State releaseTag: string = '';
+  /** Spec 047：Reactees 页参数（encodeURIComponent(subjectId)|content） */
+  @State reactionSubjectId: string = '';
+  @State reactionContent: string = '';
   @State inboxHasUnread: boolean = false;
   /** Inbox 标记已读后经 AppStorage 通知重算未读角标（review A4） */
   @StorageProp('inboxUnreadTick') @Watch('onInboxUnreadTick') inboxUnreadTick: number = 0;
@@ -755,6 +759,30 @@ struct Index {
     .hideTitleBar(true)
   }
 
+  /** Reactees 页参数：首段=编码后的 subjectId（base64 可能含 /，编码后安全），次段=content */
+  private parseReactionUsersParam(param: string): void {
+    const parts: string[] = param.split('/');
+    this.reactionSubjectId = parts.length > 0 ? decodeURIComponent(parts[0]) : '';
+    this.reactionContent = parts.length > 1 ? parts[1] : '';
+  }
+
+  /** Spec 047：release 反应用户整页（emoji + Reactees 两行头） */
+  @Builder
+  reactionUsersDestination() {
+    NavDestination() {
+      ReactionUsersView({
+        subjectId: this.reactionSubjectId,
+        content: this.reactionContent,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseReactionUsersParam(context.pathInfo.param as string);
+    })
+    .hideTitleBar(true)
+  }
+
   /** 文件路由参数解析：owner|name|path（path 可为空 = 根目录） */
   private parseFileParam(param: string): void {
     const parts: string[] = param.split('|');
@@ -936,6 +964,8 @@ struct Index {
       this.repoReleasesDestination()
     } else if (name === 'releaseDetail') {
       this.releaseDetailDestination()
+    } else if (name === 'reactionUsers') {
+      this.reactionUsersDestination()
     } else if (name === 'issueDetail') {
       this.issueDetailDestination()
     } else if (name === 'prDetail') {

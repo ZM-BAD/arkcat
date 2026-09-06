@@ -76,6 +76,8 @@ export interface RepoReleasesPage {
 /** 反应用户（reactionGroups.users 前 8 位） */
 export interface ReactionUser {
   login: string;
+  /** 显示名（union 片段仅 User/Organization 提供，可空；Reactees 页黑粗行） */
+  name: string;
   avatarUrl: string;
 }
 
@@ -502,6 +504,7 @@ function mapReactionGroup(raw: JsonMap): ReactionGroup {
     const node = nodeItem as JsonMap;
     nodes.push({
       login: Json.str(node, 'login'),
+      name: Json.str(node, 'name'),
       avatarUrl: Json.str(node, 'avatarUrl')
     });
   }
@@ -511,6 +514,42 @@ function mapReactionGroup(raw: JsonMap): ReactionGroup {
     viewerHasReacted: Json.bool(raw, 'viewerHasReacted'),
     users: nodes
   };
+}
+
+/** Reactees 整页（release 反应用户，走查九轮）：取指定 content 组的分页 reactors */
+export interface ReactionUsersPage {
+  totalCount: number;
+  users: ReactionUser[];
+  endCursor: string;
+  hasNextPage: boolean;
+}
+
+export function mapReactionUsersPage(data: JsonMap, content: string): ReactionUsersPage {
+  const node = Json.obj(data, 'node') ?? ({} as JsonMap);
+  for (const groupItem of Json.arr(node, 'reactionGroups')) {
+    const group = groupItem as JsonMap;
+    if (Json.str(group, 'content') !== content) {
+      continue;
+    }
+    const reactors = Json.obj(group, 'reactors') ?? ({} as JsonMap);
+    const pageInfo = Json.obj(reactors, 'pageInfo') ?? ({} as JsonMap);
+    const users: ReactionUser[] = [];
+    for (const nodeItem of Json.arr(reactors, 'nodes')) {
+      const raw = nodeItem as JsonMap;
+      users.push({
+        login: Json.str(raw, 'login'),
+        name: Json.str(raw, 'name'),
+        avatarUrl: Json.str(raw, 'avatarUrl')
+      });
+    }
+    return {
+      totalCount: Json.num(reactors, 'totalCount'),
+      users: users,
+      endCursor: Json.str(pageInfo, 'endCursor'),
+      hasNextPage: Json.bool(pageInfo, 'hasNextPage')
+    };
+  }
+  return { totalCount: 0, users: [], endCursor: '', hasNextPage: false };
 }
 
 function mapReleaseAsset(raw: JsonMap): ReleaseAsset {

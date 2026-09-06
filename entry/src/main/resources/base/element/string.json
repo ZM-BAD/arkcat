@@ -1489,6 +1489,10 @@
       "value": "Reacted"
     },
     {
+      "name": "reaction_reactees_title",
+      "value": "Reactees"
+    },
+    {
       "name": "a11y_reaction_add",
       "value": "Add reaction"
     },

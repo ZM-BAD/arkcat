@@ -1457,6 +1457,10 @@
       "value": "已反应"
     },
     {
+      "name": "reaction_reactees_title",
+      "value": "反应用户"
+    },
+    {
       "name": "a11y_reaction_add",
       "value": "添加反应"
     },

@@ -22,6 +22,8 @@ export struct ReactionBar {
   @Param smileyTrigger: boolean = false;
   /** mutation 成功回调（父级远期刷新；即时翻转由组件本地完成） */
   @Event onChanged: () => void = (): void => { };
+  /** release 变体长按芯片：跳 Reactees 整页（评论变体保持底部 sheet） */
+  @Event onOpenUsers: (subjectId: string, content: string) => void = (): void => { };
   @Local mirror: ReactionGroup[] = [];
   @Local pending: string = '';
   /** sheet 打开状态 + 分派 kind（记忆坑：同组件多 bindSheet 只有最后一个生效，须合并） */
@@ -82,6 +84,18 @@ export struct ReactionBar {
     this.sheetContent = group.content;
     this.sheetKind = 'users';
     this.sheetOpen = true;
+  }
+
+  /** 芯片长按：release 变体跳 Reactees 整页（整页拉全量，不受前 8 预取限制）；评论变体保持 sheet */
+  private onChipLongPress(content: string): void {
+    if (this.smileyTrigger) {
+      this.onOpenUsers(this.subjectId, content);
+      return;
+    }
+    const group = findReactionGroup(this.mirror, content);
+    if (group !== null) {
+      this.openUsers(group);
+    }
   }
 
   private openAll(): void {
@@ -240,7 +254,7 @@ export struct ReactionBar {
           .margin({ right: 2 })
           .onClick(() => this.toggle(g.content))
           .gesture(LongPressGesture({ repeat: false })
-            .onAction(() => this.openUsers(g)))
+            .onAction(() => this.onChipLongPress(g.content)))
         }, (g: ReactionGroup) => g.content + '_' + g.count + (g.viewerHasReacted ? '_r' : ''))
         if (!this.smileyTrigger && this.mirror.length < REACTION_META.length) {
           Text('+')

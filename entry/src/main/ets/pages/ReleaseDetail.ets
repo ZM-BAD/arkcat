@@ -386,12 +386,17 @@ export struct ReleaseDetailView {
                   }
                 })
               }
-              // 官方 release 反应行：笑脸圆钮弹六宫格，芯片横滑，自己的回应蓝框高亮（走查修正九轮）
+              // 官方 release 反应行：笑脸圆钮弹六宫格，芯片整颗可点翻转，长按进 Reactees 整页
               ReactionBar({
                 token: this.token,
                 subjectId: this.detail.id,
                 reactions: this.detail.reactions,
-                smileyTrigger: true
+                smileyTrigger: true,
+                onOpenUsers: (subjectId: string, content: string): void => {
+                  // id 经 encodeURIComponent（GraphQL id 为 base64，可能含 /）
+                  this.pathStack.pushPathByName('reactionUsers',
+                    `${encodeURIComponent(subjectId)}/${content}`);
+                }
               })
             }
             .alignItems(HorizontalAlign.Start)

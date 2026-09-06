@@ -34,7 +34,7 @@ import { mapFork, mapStargazerPage, mapWatcherPage, mapContributorPage } from '.
 import { mapLicenseInfo, stripLicenseTitle } from '../../../main/ets/models/RepoLicenseModels';
 import { parseDiffPatch, fileBaseName, DiffLine, DiffHunk } from '../../../main/ets/utils/Diff';
 import { mapPrFiles, applyRestPatch, PrFileItem } from '../../../main/ets/models/PrDiffModels';
-import { mapReleaseDetail, formatBytes } from '../../../main/ets/models/RepoSubModels';
+import { mapReleaseDetail, formatBytes, mapReactionUsersPage } from '../../../main/ets/models/RepoSubModels';
 import { mapIssue, mapIssuesPage, issueOrderField } from '../../../main/ets/models/IssuesModels';
 import { MarkdownService } from '../../../main/ets/services/MarkdownService';
 import { ReactionGroup, REACTION_META, reactionEmoji, findReactionGroup, flipReactionGroups } from '../../../main/ets/models/RepoSubModels';
@@ -1445,6 +1445,22 @@ export default function logicTest(testsuiteName: string) {
       const data: JsonMap = { 'repository': repoWrap };
       const page = mapReleaseDetail(data);
       expect(page === null).assertTrue();
+    });
+    it('mapReactionUsersPage_picksContent', 0, () => {
+      const reactor: JsonMap = { 'login': 'alice', 'name': 'Alice', 'avatarUrl': 'av-a' };
+      const pageInfo: JsonMap = { 'hasNextPage': true, 'endCursor': 'c1' };
+      const reactors: JsonMap = { 'totalCount': 2, 'pageInfo': pageInfo, 'nodes': [reactor] };
+      const group: JsonMap = { 'content': 'THUMBS_UP', 'reactors': reactors };
+      const node: JsonMap = { 'reactionGroups': [group] };
+      const data: JsonMap = { 'node': node };
+      const page = mapReactionUsersPage(data, 'THUMBS_UP');
+      expect(page.totalCount).assertEqual(2);
+      expect(page.users.length).assertEqual(1);
+      expect(page.users[0].name).assertEqual('Alice');
+      expect(page.hasNextPage).assertTrue();
+      expect(page.endCursor).assertEqual('c1');
+      const miss = mapReactionUsersPage(data, 'HEART');
+      expect(miss.users.length).assertEqual(0);
     });
 
     // ─────── Spec 041：Markdown 工具栏插入 / 反应 / 评论映射 ───────
