@@ -9,7 +9,7 @@
 
 ## 一、页面/功能概述
 
-Home My Work「Pull Requests」入口进入的跨仓库 PR 列表页。展示用户相关 PR（我创建/分配给我/提及我），按状态（All/Open/Closed/Merged）与可见性筛选，行内展示状态图标（merged 紫✔ / open 绿⑂ / closed 灰✗）、Checks 状态胶囊（✓ Checks / ✗ Checks failed）、评论数与审查数。数据源 `search(type: PR)`；空态沿用官方风格 + RESET ALL FILTERS。
+Home My Work「Pull Requests」入口进入的跨仓库 PR 列表页。展示用户相关 PR（我创建/分配给我/提及我），按状态（All/Open/Closed/Merged）与可见性筛选，行内展示状态图标（merged 紫⑂ / open 绿⭘ / closed 灰✗）、Checks 状态胶囊（✓ Checks / ✗ Checks failed）、评论数与审查数。数据源 `search(type: ISSUE)` + `is:pr` 限定词；空态沿用官方风格 + RESET ALL FILTERS。
 
 ---
 
@@ -30,16 +30,16 @@ Home My Work「Pull Requests」入口进入的跨仓库 PR 列表页。展示用
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar 左 | ← 返回 | 回退 | ✅ | —（纯 UI） | — |
 | 2 | App Bar 中 | 「Pull Requests」标题 | 页面标题 | ✅ | —（纯 UI） | — |
-| 3 | App Bar 右 | 🔍 搜索 | 跳转全局搜索页 | ✅ | —（纯 UI） | 复用路由 search |
+| 3 | App Bar 右 | 🔍 就地搜索 | 页内 TextInput 客户端过滤 | ✅ | —（纯 UI） | 按标题/仓库全名过滤已加载列表 |
 | 4 | App Bar 右 | ⋯ 更多 | 预留 | ✅ | —（纯 UI） | 点击提示 |
 | 5 | 筛选行 | 漏斗徽标 + 激活数 | 展示激活筛选数 | ✅ | —（纯 UI） | — |
-| 6 | 筛选行 | 状态下拉（All/Open/Closed/Merged） | 状态筛选 | ✅ | `is:open / is:closed / is:merged` | 默认 All |
-| 7 | 筛选行 | 归属下拉（Created by me / Assigned to me / Mentioned） | 归属筛选 | ✅ | `author:@me / assignee:@me / mentions:@me` | 默认 Created by me |
+| 6 | 筛选行 | 状态下拉（Open/Merged/Closed/Queued/All） | 状态筛选 | ✅ | `is:open / is:merged / is:closed / is:queued` | 默认 All |
+| 7 | 筛选行 | 归属下拉（Created by me / Assigned to me / Mentioned / Review requested / Involved） | 归属筛选 | ✅ | `author:@me / assignee:@me / mentions:@me / review-requested:@me / involves:@me` | 默认 Created by me |
 | 8 | 筛选行 | 可见性下拉（All/Public/Private） | 可见性筛选 | ✅ | `is:public / is:private` | 默认 All |
-| 9 | PR 行 | 状态图标（merged 紫✔ / open 绿⑂ / closed 灰✗） | 状态展示 | ✅ | `state / merged` | — |
+| 9 | PR 行 | 状态图标（merged 紫⑂ / open 绿⭘ / closed 灰✗ / draft 灰〇） | 状态展示 | ✅ | `state / merged / isDraft` | draft 灰图标 |
 | 10 | PR 行 | `owner/repo #N` + 相对时间 | 仓库与时间 | ✅ | `repository.nameWithOwner / createdAt` | 年粒度 |
 | 11 | PR 行 | 标题（加粗，2 行截断） | 展示 | ✅ | `title` | — |
-| 12 | PR 行 | Checks 胶囊（✔ Checks / ✗ Checks failed / ⏳ Checks pending） | CI 状态展示 | ✅ | `statusCheckRollup { state }` | state 为空不显示胶囊 |
+| 12 | PR 行 | Checks 胶囊（✔ Checks / ✗ Checks failed / ✗ Checks pending） | CI 状态展示 | ✅ | `statusCheckRollup { state }` | Checks 非 SUCCESS 显示 ✗（oct_x_16 + warning）；pending 文案单独 |
 | 13 | PR 行 | 💬 评论数 + 👁 审查请求数 | 展示 | ✅ | `comments.totalCount / reviewRequests.totalCount` | — |
 | 14 | 空态 | 插图 + 标题 + 副文案 + RESET ALL FILTERS | 空态引导；重置筛选 | ✅ | —（纯 UI） | 插图用占位字形 |
 | 15 | 列表底部 | Load more 分页 | 翻页 | ✅ | `search.pageInfo` | — |
@@ -52,11 +52,11 @@ Home My Work「Pull Requests」入口进入的跨仓库 PR 列表页。展示用
 
 ```graphql
 query WorkPullRequests($query: String!, $first: Int = 25, $after: String) {
-  search(query: $query, type: PR, first: $first, after: $after) {
+  search(query: $query, type: ISSUE, first: $first, after: $after) {
     pageInfo { hasNextPage endCursor }
     nodes {
       ... on PullRequest {
-        id number title state merged createdAt
+        id number title state merged isDraft createdAt
         repository { nameWithOwner }
         comments { totalCount }
         reviewRequests(first: 10) { totalCount }
@@ -66,6 +66,8 @@ query WorkPullRequests($query: String!, $first: Int = 25, $after: String) {
   }
 }
 ```
+
+- query 由 `buildWorkPrsQuery(state, scope, visibility, sortKey, orgs, repos)` 生成：PR = ISSUE + `is:pr` 限定词 + 状态（`is:open` / `is:merged` / `is:closed` / `is:queued`）+ 归属 + 可见性 + 排序 qualifier。
 
 ---
 

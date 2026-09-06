@@ -35,11 +35,11 @@
 | 2 | 输入面板 | 多行输入框 | TextArea + 草稿记忆（取消后保留在 @Local） | ✅ | 无 | 进入页面即保存草稿 |
 | 3 | 输入面板 | Markdown 快捷工具栏 | 粗体/斜体/引用/链接/行内代码/删除线/任务列表列表项插入 | ✅ | 无 | 对应官方 1.4.14 markdown bar |
 | 4 | 输入面板 | 发布前预览 | 复用 MarkdownView md 模式（POST /markdown 渲染） | ✅ | REST `POST /markdown` | 官方 1.266 同款能力；一键切回「写」 |
-| 5 | 输入面板 | 发布评论 | `addComment`（subject = Issue/PR/Discussion 节点 id） | ✅ | 见四 | 成功后清空 + 列表局部刷新 |
+| 5 | 输入面板 | 发布评论 | `addComment`（subject = Issue/PR/Discussion 节点 id） | ✅ | 见四 | 发布成功后整页刷新（服务端权威数据） |
 | 6 | 评论卡片 | 编辑评论 | 本人评论显示「编辑」：回填输入 + `updateIssueComment` / `updatePullRequestReviewComment`（Discussion 评论同型） | ✅ | 见四 | 仅 `viewerDidAuthor` 行显示 |
-| 7 | 评论卡片 | 删除评论 | 本人评论「删除」+ 二次确认弹窗 | ✅ | 见四 | 删除后移除行 + toast |
+| 7 | 评论卡片 | 删除评论 | 本人评论「删除」+ 二次确认弹窗 | ✅ | 见四 | 删除成功后整页刷新（服务端权威数据） |
 | 8 | 评论卡片 | 反应条 | reactionGroups 渲染（content/count/viewerHasReacted），点击即 add/remove `addReaction`/`removeReaction` | ✅ | 见四 | 8 种官方 reaction 常量映射 |
-| 9 | 反应 | 反应用户详情 | 点击计数展开用户列表弹层（reactionGroups.users[2x6]） | ✅ | 见四 | 简单弹层，非官方悬浮卡 |
+| 9 | 反应 | 反应用户详情 | 整芯片点击=翻转（add/remove）；长按=打开反应用户列表 | ✅ | 见四 | 简单弹层，非官方悬浮卡 |
 | 10 | 输入面板 | 选中文本引用 | 选中评论/正文（TextArea 选区）→ 引用按钮，插入 `> 原文` | ⚠️ | 无 | 依赖 ArkTS TextArea 选区 API（API 16+ 可测）不可用则降级为「引用整条评论按钮」 |
 | 11 | 输入面板 | @提及补全 | 输入 `@` 时弹出候选（issue 参与者 + assignableUsers 前 10） | ⚠️ | search/assignableUsers | 全站用户搜索太重，先做仓库内候选 |
 | 12 | 输入面板 | 错误处理 | 429 冷却 / 403 无权限 / 404 已关闭评论锁定 → 明确文案 + 输入内容不丢失 | ✅ | 无 | 错误字典进 i18n（base+zh） |
@@ -53,7 +53,7 @@
 
 ```graphql
 # 评论列表（detail 查询补充）
-comments(first: 50) {
+comments(first: 20) {
   totalCount
   nodes {
     id author { login avatarUrl avatarUrl(size: 40) }
@@ -62,7 +62,7 @@ comments(first: 50) {
       content
       viewerHasReacted
       reactors(first: 8) { totalCount
-        nodes { ... on User { login avatarUrl } ... on Bot { login avatarUrl } }
+        nodes { ... on User { login avatarUrl } ... on Bot { login avatarUrl } ... on Mannequin { login } ... on Organization { login } }
       }
     }
   }
@@ -71,12 +71,12 @@ comments(first: 50) {
 # 发布
 mutation Add($subjectId: ID!, $body: String!) {
   addComment(input: { subjectId: $subjectId, body: $body }) {
-    comment { id viewerDidAuthor createdAt }
+    commentEdge { node { id } }
   }
 }
 
 # 编辑（Issue / PR 评论分开；Discussion 待勘探）
-mutation UpdateIssueComment { updateIssueComment(input: { id: $id, body: $body }) { comment { body } } }
+mutation UpdateIssueComment { updateIssueComment(input: { id: $id, body: $body }) { clientMutationId } }
 mutation UpdatePrReviewComment { updatePullRequestReviewComment(input: { pullRequestReviewCommentId: $id, body: $body }) { pullRequestReviewComment { id } } }
 
 # 删除
@@ -112,12 +112,12 @@ query MentionCandidates($owner: String!, $name: String!) {
 
 ## 六、TDD 验收标准
 
-- [x] 测试 1：mock 服务下 IssueDetail 底部 COMMENT 展开输入面板；发布成功后评论数 +1 且新评论可见（模拟器实走 #334425/#334428 发布后评论数 0→1）
+- [x] 测试 1：mock 服务下 IssueDetail 底部 COMMENT 展开输入面板；发布成功后新评论可见（模拟器实走 #334425/#334428 发布后评论数 0→1）
 - [x] 测试 2：输入 `**粗体**` 发布后，正文渲染为 `<strong>`（040 组件断言；复核走查时正文/预览渲染链路与 040 一致）
 - [x] 测试 3：预览模式将 `- [ ] 待办` 渲染为任务列表（官方 gfm）且切回「写」不丢文字（预览渲染+切回保文实走；gfm 任务列表渲染链路同 040）
 - [x] 测试 4：`viewerDidAuthor=true` 的评论显示编辑/删除；false 不显示（实走：ZM-BAD 评论有 ⋯，vs-code-engineering 无）
 - [x] 测试 5：编辑回填原文，保存后评论内容更新（实走 + 服务端 updated_at 确认）
-- [x] 测试 6：删除走二次确认，确认后本地行移除（实走 AlertDialog 确认后服务端清空）
+- [x] 测试 6：删除走二次确认，确认后刷新列表（实走 AlertDialog 确认后服务端清空）
 - [x] 测试 7：反应条显示 count 与 viewerHasReacted 高亮；点击后对应 mutation 触发且图标态翻转（mutation 服务端确认；翻转纯函数 flipReactionGroups 单测覆盖 + ForEach key 已含 count 修复）
 - [ ] 测试 8：反应用户列表弹层列出前 8 位用户头像/登录名（实现完成，走查未覆盖该弹层路径，随用户验收确认）
 - [x] 测试 9：工具栏插入任务列表/引用/链接后 TextArea 内容光标位置正确（MarkdownEdit 纯函数 6 组单测覆盖）
@@ -131,4 +131,4 @@ query MentionCandidates($owner: String!, $name: String!) {
 
 - 官方参照：1.4.14 引入 markdown bar；1.241（2026-01）选中文本多行引用；1.266（2026-07）发布前预览——本 Spec 就是这三项的移动端对齐。
 - 评论「时间线」事件（timelineItems）渲染不属本 Spec（030 已有；如 030 未展示可作后续补丁备注）。
-- 编辑/删除按钮的图标沿用 024 归档 Octicons（oct_pencil_16、oct_trash_16 需复制）。
+- 行尾 ⋯ + bindMenu（编辑/删除）。

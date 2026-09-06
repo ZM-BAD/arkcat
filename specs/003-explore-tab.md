@@ -21,7 +21,7 @@
 
 1. 顶部 App Bar：标题 Explore
 2. Discover 区：入口块（Trending Repositories、Awesome Lists）
-3. Activity 信息流（右上设置）：动态卡（事件推送、带角标与详情跳转）、推荐卡（仓库 + 星数/语言 + STAR 按钮）
+3. Activity 信息流：推荐仓库卡流（作者/星数/语言/STAR 按钮；无动态卡、无右上设置）
 4. Topics 区：标签 chip（harmonyos、arkts 等）
 5. 底部导航：Home / Inbox / Explore / Copilot
 
@@ -32,14 +32,14 @@
 | # | 位置 | 元素 | 功能 | 可行性 | 接口 | 备注 |
 | --- | ------ | ------ | ------ | -------- | ------ | ------ |
 | 1 | 标题 | Explore | 纯展示 | ✅ 纯 UI | — | — |
-| 2 | Discover 区 | 🔥 Trending Repositories 入口块 | 跳转趋势仓库 | ⚠️ | REST `search/repositories?q=stars:>1000&sort=stars` | 无官方 trending 接口，用高星 search 近似 |
-| 3 | Discover 区 | ✦ Awesome Lists 入口块 | 跳转精选列表 | ✅ | GraphQL `search topic:awesome` | — |
+| 2 | Discover 区 | 🔥 Trending Repositories 入口块 | 占位提示 | ⚠️ | REST `search/repositories?q=stars:>1000&sort=stars` | 无官方 trending 接口；占位提示（近似列表待排期） |
+| 3 | Discover 区 | ✦ Awesome Lists 入口块 | 占位提示 | ⚠️ | GraphQL `search topic:awesome` | 占位提示 |
 | 4 | Activity 区 | 推荐仓库卡（作者/标题/星数/语言 + STAR 按钮） | 展示推荐流 | ✅ | GraphQL `search(type: REPOSITORY, sort: stars)` | 官方个性化推荐无公开 API，用高星近似 |
 | 5 | Activity 区 | Release 样式卡（版本/Release Time/View release details） | 版本流 | ⚠️ | REST `releases/latest` | 简化：推荐仓库卡复用 |
 | 6 | Topics 区 | Topic 标签网格 | 展示主题仓库 | ✅ | GraphQL `search(query: "topic:$topic")` | 原功能保留 |
 | 7 | 底部导航 | Explore Tab 选中态 | 导航 | ✅ 纯 UI | — | — |
 
-> 可行性比例声明：5/7 可行。
+> 可行性比例声明：4/7 可行。
 
 ---
 
@@ -78,7 +78,7 @@ query StarredSearch($query: String!, $first: Int = 20) {
 
 ## 六、TDD 验收标准
 
-- [x] Discover 区：Trending / Awesome 两个入口块渲染，点击进入对应列表
+- [x] Discover 区：Trending / Awesome 两个入口块渲染
 - [x] Activity 区：推荐仓库卡渲染（作者/星数/语言/STAR 按钮）
 - [x] Topics 标签网格功能保留
 - [x] 模拟器截图验收：布局与官方对齐

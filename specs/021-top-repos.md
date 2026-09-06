@@ -9,14 +9,14 @@
 
 ## 一、页面/功能概述
 
-Home My Work「Top Repositories」入口进入的仓库列表页，展示 viewer 的仓库按最近推送时间降序排列（近似官方「Top Repositories」）。筛选：All / Public / Private（`All ⌄` 下拉）。行结构：左侧仓库头像（owner 头像），上/下两行 = 灰色小字 owner + 黑色大字仓库名；点击进入仓库详情（复用 006 路由）。数据源 `viewer.repositories`。
+Home My Work「Top Repositories」入口进入的仓库列表页，展示 viewer 的仓库按最近推送时间降序排列（近似官方「Top Repositories」）。筛选：8 项（All/Archived/Fork/Mirror/Private/Public/Source/Template，`All ⌄` 下拉，拉全量后客户端过滤）。行结构：左侧仓库头像（owner 头像），上/下两行 = 灰色小字 owner + 黑色大字仓库名；点击进入仓库详情（复用 006 路由）。数据源 `viewer.repositories`。
 
 ---
 
 ## 二、整体 UI 结构
 
-1. 顶部 App Bar：← 返回、「Top Repositories」标题（无搜索/更多按钮）
-2. 筛选行：「All」可见性下拉
+1. 顶部 App Bar：← 返回、「Top Repositories」标题 + 右上 🔍 搜索（进全局搜索页）
+2. 筛选行：「All」仓库筛选下拉（8 项，客户端过滤）
 3. 仓库行（头像 + owner + name 两行）：◯ 头像 + 第一行 owner 灰色小字（ZM-BAD）+ 第二行仓库名大字（DAG-chat）；后续行同构（headroom 等），多行滚动
 4. 列表底部分页：Load more
 
@@ -28,7 +28,7 @@ Home My Work「Top Repositories」入口进入的仓库列表页，展示 viewer
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar 左 | ← 返回 | 回退 | ✅ | —（纯 UI） | — |
 | 2 | App Bar 中 | 「Top Repositories」标题 | 页面标题 | ✅ | —（纯 UI） | — |
-| 3 | 筛选行 | All 下拉（All/Public/Private） | 可见性筛选 | ✅ | `repositories(privacy:)` | 默认 All |
+| 3 | 筛选行 | All 下拉（All/Archived/Fork/Mirror/Private/Public/Source/Template） | 仓库筛选（客户端过滤） | ✅ | `isArchived / isFork / isMirror / visibility / isTemplate`（拉全量后过滤） | 默认 All |
 | 4 | 仓库行 | 仓库头像 | 展示 | ✅ | `owner { avatarUrl }` | — |
 | 5 | 仓库行 | owner（灰色小字） | 展示 | ✅ | `owner { login }` | — |
 | 6 | 仓库行 | 仓库名（黑色大字） | 展示 | ✅ | `name` | — |
@@ -43,13 +43,13 @@ Home My Work「Top Repositories」入口进入的仓库列表页，展示 viewer
 ## 四、核心 GraphQL 片段
 
 ```graphql
-query WorkTopRepositories($privacy: RepositoryPrivacy, $first: Int = 50, $after: String) {
+query WorkTopRepositories($first: Int = 50, $after: String) {
   viewer {
-    repositories(first: $first, after: $after, orderBy: { field: PUSHED_AT, direction: DESC }, privacy: $privacy) {
+    repositories(first: $first, after: $after, orderBy: { field: PUSHED_AT, direction: DESC }) {
       totalCount
       pageInfo { hasNextPage endCursor }
       nodes {
-        id name nameWithOwner
+        id name nameWithOwner isArchived isFork isMirror isTemplate visibility
         owner { login avatarUrl }
       }
     }
@@ -70,9 +70,9 @@ query WorkTopRepositories($privacy: RepositoryPrivacy, $first: Int = 50, $after:
 
 ## 六、TDD 验收标准
 
-- [x] 测试 1：`buildTopReposPrivacy(privacy)` 纯函数：All 传 null / Public/Private 传枚举值
+- [x] 测试 1：`filterTopRepos(repos, filterKey)` 纯函数：8 项维度（all/archived/fork/mirror/private/public/source/template）过滤正确
 - [x] 测试 2：`mapTopRepo` / `mapTopReposPage` 纯函数：owner 缺失回退空串；分页字段正确
-- [x] 测试 3：模拟器实测 — All/Public/Private 下拉切换触发重查；行点击进入仓库详情
+- [x] 测试 3：模拟器实测 — 8 项筛选下拉切换（客户端过滤，不触发重查）；行点击进入仓库详情
 - [x] 测试 4：grep 检查 TopRepositories.ets 无中文字符串字面量残留
 - [x] 测试 5：`bash scripts/check-spec.sh` 通过
 - [x] 测试 6：`devecocli build` 全量构建通过

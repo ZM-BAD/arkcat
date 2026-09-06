@@ -36,13 +36,13 @@
 | 1 | App Bar | ← + 🔗 分享 + ⋯ | 导航 | ✅ | —（纯 UI） | 自绘头部，hideTitleBar；分享/⋯ 提示后续 |
 | 2 | 头部 | logo + 组织名（粗体）+ login（灰） | 展示 | ✅ | `name/login/avatarUrl` | avatar 圆角 12 |
 | 3 | 头部 | 简介段落（灰色，多行） | 展示 | ✅ | `description` | — |
-| 4 | 信息行 | 🔗 官网 / ✉️ 邮箱 / 𝕏 X 账号 | 展示 | ✅ | `websiteUrl/twitterUsername` + REST mailbox | 邮箱 GraphQL 无字段 → REST `/orgs/{login}` 兜底 |
+| 4 | 信息行 | 🔗 官网 / ✉️ 邮箱 / 𝕏 X 账号 | 展示 | ✅ | `websiteUrl/twitterUsername` + REST mailbox | 邮箱直接取组织 REST 字段 |
 | 5 | 按钮 | [+ FOLLOW] 通栏描边按钮 | 真实关注 | ✅ | REST `PUT/DELETE /user/follows/{login}` | 切换关注；初始态 `GET /user/follows` 探测；失败 toast；已有 `user:follow` scope |
 | 6 | README | 标题行 `{login}/README.md` + 右侧滚动条 | 展示 | ✅ | —（纯 UI） | 固定格式文案 |
-| 7 | README | 简化富文本（标题加粗/链接/正文行） | 展示 | ✅ | `repository(owner:login,name:".github") object(expression:"HEAD:profile/README.md")` | 复用 RepoDetail 简化渲染；降级 `HEAD:README.md`；双双取不到 → 整区块隐藏 |
-| 8 | README | Read more 展开/收起（默认折叠 6 行） | 交互 | ✅ | —（纯 UI） | 悬浮胶囊按钮 |
+| 7 | README | 简化富文本（标题加粗/链接/正文行） | 展示 | ✅ | REST `contents/{login}/.github/profile/README.md`（profile 优先）→ `/repos/{login}/.github/readme` 兜底 | 双 404 → 整区块隐藏；复用 RepoDetail 简化渲染 |
+| 8 | README | Read more 展开/收起 | 交互 | ✅ | —（纯 UI） | MarkdownView 折叠阈值 500 字符/240vp（040）；悬浮胶囊按钮 |
 | 9 | Pinned | 📍 标题 + 横滑卡片（RepoCard 复用） | 展示/导航 | ✅ | `pinnedItems(first:6,types:[REPOSITORY])` | 卡点击 → repoDetail |
-| 10 | Repositories | 图标 + 计数行（count 右侧 + ›） | 导航 | ✅ | `repositories { totalCount }` | pushPathByName('repositoriesList', login) |
+| 10 | Repositories | 图标 + 计数行（count 右侧 + ›） | 导航 | ✅ | REST `public_repos`（repositoriesCount） | pushPathByName('repositoriesList', login) |
 
 > 可行性比例声明：10/10 可行。
 
@@ -50,22 +50,22 @@
 
 ## 四、核心 GraphQL 片段
 
+主数据走 REST `GET /orgs/{login}`（blog→websiteUrl、public_repos→repositoriesCount、email 直取）；仅 Pinned 走 GraphQL（ORG_PINNED_QUERY，`pinnedItems(first: 6, types: [REPOSITORY])`）：
+
 ```graphql
-query Organization($login: String!) {
+query OrgPinned($login: String!) {
   organization(login: $login) {
-    id login name avatarUrl description websiteUrl twitterUsername
     pinnedItems(first: 6, types: [REPOSITORY]) {
       nodes { ... on Repository {
         id nameWithOwner description stargazerCount forkCount
         primaryLanguage { name color }
       } }
     }
-    repositories { totalCount }
   }
 }
 ```
 
-REST 兜底：`GET /orgs/{login}`（email）、`GET /user/follows/{login}`（跟随态，204=是）、`PUT|DELETE /user/follows/{login}`（跟随/取关）。
+REST：`GET /orgs/{login}`（主数据）、`GET /user/follows/{login}`（跟随态，204=是）、`PUT|DELETE /user/follows/{login}`（跟随/取关）。
 
 ---
 

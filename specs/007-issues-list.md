@@ -15,9 +15,9 @@
 
 ## 二、整体 UI 结构
 
-1. 顶部 App Bar：← 返回 + Issues 标题 + ＋ 新建 + ⋯ 更多菜单
+1. 顶部 App Bar：← 返回 + Issues 标题 + ＋ 新建 + 🔍 搜索
 2. 排序条：🔍 Sort by... 下拉
-3. 状态 Tab：[ Open ] / [ Closed ]
+3. 状态 Tab：All/Open/Closed 下拉 chip（FilterDropdownChip）
 4. Issue 卡片列表：卡片 = 标题 + 元信息行（#编号 · label · @作者 · 相对时间 · 💬 评论数）
    - 示例卡片 1：🐛 Add network error layer / #4 · bug · @zm_bad · d1 · 💬 0
    - 示例卡片 2：📝 update UI design / #1 · documentation · @zm_bad · d3
@@ -31,22 +31,25 @@
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar 左 | ← 返回 | 回退 | ✅ 纯 UI | — | — |
 | 2 | App Bar 中 | 标题「Issues」 | 展示 | ✅ 纯 UI | — | — |
-| 3 | App Bar 右 | + 新建按钮 | 跳转创建页 | ✅ 纯 UI | — | — |
-| 4 | App Bar 右 | ··· 更多菜单 | 筛选/排序 | ✅ 客户端 | — | — |
-| 5 | 排序条 | Sort by 下拉 | 排序 | ✅ | `orderBy: { field: CREATED_AT }` | — |
-| 6 | 状态 Tab | `[Open]` `[Closed]` | 切换 | ✅ | `states: [OPEN]` / `[CLOSED]` | — |
-| 7 | Issue 卡片 | Issue 标题 | 点击进入详情 | ✅ | `issue.title` | — |
-| 8 | Issue 卡片 | Issue 编号 `#N` | 展示 | ✅ | `issue.number` | — |
-| 9 | Issue 卡片 | Label 标签 | 点击筛选 | ✅ | `issue.labels { name color }` | — |
-| 10 | Issue 卡片 | 作者 `@user` | 进入 Profile | ✅ | `issue.author.login` | — |
-| 11 | Issue 卡片 | 时间 | 展示 | ✅ | `issue.createdAt` | — |
-| 12 | Issue 卡片 | 评论数 💬 | 展示 | ✅ | `issue.comments.totalCount` | — |
-| 13 | Issue 卡片 | 关联 PR 图标 🔀 | 展示 | ✅ | `timelineItems(CROSS_REFERENCED_EVENT)` | — |
-| 14 | Issue 卡片 | 选中态 | 点击进入详情 | ✅ 纯 UI | — | — |
+| 3 | App Bar 右 | + 新建按钮 | 占位提示 | ✅ 纯 UI | — | 创建页由 043 承接 |
+| 4 | App Bar 右 | 右键漏斗徽标 | bindMenu（创建快捷方式/清除全部筛选） | ✅ 客户端 | — | — |
+| 5 | App Bar 右 | 🔍 搜索 | 进全局搜索 | ✅ 纯 UI | — | — |
+| 6 | 排序条 | Sort by 下拉 | 排序 | ✅ | `orderBy: { field: CREATED_AT }` | — |
+| 7 | 状态 Tab | All/Open/Closed 下拉 chip（FilterDropdownChip） | 切换 | ✅ | `states: [OPEN]` / `[CLOSED]` | — |
+| 8 | Issue 卡片 | Issue 标题 | 点击进入详情 | ✅ | `issue.title` | — |
+| 9 | Issue 卡片 | Issue 编号 `#N` | 展示 | ✅ | `issue.number` | — |
+| 10 | Issue 卡片 | Label 标签 | 点击筛选 | ✅ | `issue.labels { name color }` | — |
+| 11 | Issue 卡片 | 作者 `@user` | 进入 Profile | ✅ | `issue.author.login` | — |
+| 12 | Issue 卡片 | 时间 | 展示 | ✅ | `issue.createdAt` | — |
+| 13 | Issue 卡片 | 评论数 💬 | 展示 | ✅ | `issue.comments.totalCount` | — |
+| 14 | Issue 卡片 | 关联 PR 图标 🔀 | 展示 | ✅ | `timelineItems(CROSS_REFERENCED_EVENT)` | — |
+| 15 | Issue 卡片 | 选中态 | 点击进入详情 | ✅ 纯 UI | — | — |
 
 ---
 
 ## 四、核心 GraphQL 片段
+
+> PR 系查询字段：`number title state createdAt author{login}`。
 
 ```graphql
 query IssuesList(
@@ -60,27 +63,19 @@ query IssuesList(
       totalCount
       pageInfo { hasNextPage endCursor }
       nodes {
-        id number title state stateReason createdAt updatedAt closedAt
-        author { login avatarUrl }
-        labels(first: 5) { nodes { name color description } }
+        id number title state stateReason createdAt
+        author { login }
+        labels(first: 5) { nodes { name color } }
         comments { totalCount }
-        reactionGroups { content users { totalCount } }
-        assignees(first: 3) { nodes { login avatarUrl } }
-        milestone { title dueOn }
+        assignees(first: 10) { nodes { login } }
         timelineItems(itemTypes: [CROSS_REFERENCED_EVENT], first: 5) {
           nodes {
-            ... on CrossReferencedEvent { source { ... on PullRequest { number title state } } }
+            ... on CrossReferencedEvent { source { ... on PullRequest { number } } }
           }
         }
       }
     }
-    labels(first: 30) { nodes { name color description } }
-  }
-}
-
-mutation CreateIssue($repositoryId: ID!, $title: String!, $body: String) {
-  createIssue(input: { repositoryId: $repositoryId, title: $title, body: $body }) {
-    issue { number title url }
+    labels(first: 30) { nodes { name } }
   }
 }
 ```

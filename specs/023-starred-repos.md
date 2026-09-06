@@ -9,18 +9,18 @@
 
 ## 一、页面/功能概述
 
-Home My Work「Starred」入口进入的星标仓库列表页。顶部 App Bar 展示副标题（viewer login）+ 主标题「Starred Repositories」；下方「My lists」区（+ NEW 预留）与「Create your first list」空态卡；再下方「Starred」分组的星标仓库列表（owner 头像 + 加粗仓库名 + 断行描述 + ★ 星数（紧凑格式 50.5k/118.9k）+ 主语言点）。数据源 `viewer.starredRepositories`。
+Home My Work「Starred」入口进入的星标仓库列表页。顶部 App Bar 展示副标题（viewer login）+ 主标题「Starred Repositories」；下方「My lists」区（+ NEW 进创建页；已建列表行进列表详情）与「Create your first list」空态卡（CREATE A LIST 进创建页）；再下方「Starred」分组的星标仓库列表（owner 头像 + 加粗仓库名 + 断行描述 + ★ 星数（紧凑格式 50.5k/118.9k）+ 主语言点）。数据源 `viewer.starredRepositories`。
 
 ---
 
 ## 二、整体 UI 结构
 
 1. 顶部 App Bar：← 返回 + 副标题灰色小字（ZM-BAD）+ 主标题「Starred Repositories」+ 操作（搜索 🔍 + 更多菜单 ⋯）
-2. 列表入口（预留）：☰ My lists + 「+ NEW」
+2. 列表入口：☰ My lists + 「+ NEW」（进创建页）
 3. 空态卡（无 lists 时）：标题「Create your first list」+ 副文案「Lists make it easier ...」+ 「CREATE A LIST」按钮
 4. 分组头：☆ Starred
-5. 仓库行一：◯ 头像 + 仓库名（chen08209）+ 描述（FIClash / A multi-platform proxy client…）+ 星数（★ 50.5k）+ 主语言（● Dart）+ 行尾更多菜单（⋯）
-6. 仓库行二：◯ 头像 + 仓库名（harry0703）+ 描述（MoneyPrinterTurbo / 利用 AI 大模型…（中文描述原样展示））+ 星数（★ 118.9k）+ 主语言（● Python）+ 行尾更多菜单（⋯）
+5. 仓库行一：◯ 头像 + 仓库名（chen08209）+ 描述（FIClash / A multi-platform proxy client…）+ 星数（★ 50.5k）+ 主语言（● Dart）+ 行尾 ⋯（打开列表成员 sheet）
+6. 仓库行二：◯ 头像 + 仓库名（harry0703）+ 描述（MoneyPrinterTurbo / 利用 AI 大模型…（中文描述原样展示））+ 星数（★ 118.9k）+ 主语言（● Python）+ 行尾 ⋯（打开列表成员 sheet）
 7. 列表底部分页：Load more
 
 ---
@@ -31,18 +31,18 @@ Home My Work「Starred」入口进入的星标仓库列表页。顶部 App Bar �
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar 左 | ← 返回 | 回退 | ✅ | —（纯 UI） | — |
 | 2 | App Bar | 副标题（viewer login）+ 主标题「Starred Repositories」 | 标题展示 | ✅ | `viewer.login` | 双行字号 |
-| 3 | App Bar 右 | 🔍 搜索 | 跳转全局搜索页 | ✅ | —（纯 UI） | 复用路由 search |
-| 4 | App Bar 右 | ⋯ 更多 | 预留 | ✅ | —（纯 UI） | 点击提示 |
-| 5 | My lists 行 | ☰ My lists + + NEW | 列表入口 | ⚠️ | 预留（lists API 后续 Spec） | MVP 点击提示；后续接入 REST/GraphQL lists |
-| 6 | My lists 区 | Create your first list 空态卡（标题+副文案+按钮） | 空态展示 | ✅ | —（纯 UI） | 按钮点击提示 |
+| 3 | App Bar 右 | 🔍 就地搜索 | 页内 TextInput 客户端过滤 | ✅ | —（纯 UI） | 按仓库名过滤已加载列表 |
+| 4 | App Bar 右 | ⋯ 更多 | 刷新列表 | ✅ | —（纯 UI） | 菜单含刷新 |
+| 5 | My lists 行 | ☰ My lists + + NEW | 列表入口（进创建页） | ✅ | `createUserList / updateUserList / deleteUserList / updateUserListsForItem` | My lists 完整实现：+NEW/CREATE A LIST 进创建页（创建/编辑/删除/重命名）、列表行进 ListDetail、行内 ⋯ 打开成员切换 sheet（乐观更新 updateUserListsForItem）、Suggestions 快捷创建 |
+| 6 | My lists 区 | Create your first list 空态卡（标题+副文案+按钮） | 空态展示 | ✅ | —（纯 UI） | CREATE A LIST 进创建页 |
 | 7 | Starred 区 | ☆ Starred 分组头 | 分组标题 | ✅ | —（纯 UI） | — |
 | 8 | 仓库行 | owner 头像 + login | 展示 | ✅ | `owner { login avatarUrl }` | — |
 | 9 | 仓库行 | 仓库名（加粗）+ 描述（断行） | 展示 | ✅ | `name / description` | 描述原样展示（含多语言） |
 | 10 | 仓库行 | ★ 星数（紧凑格式）+ 主语言点/名称 | 展示 | ✅ | `stargazerCount / primaryLanguage { name color }` | 星数 ≥1000 显示 xx.xk |
-| 11 | 仓库行 | 行点击 | 进入仓库详情 | ✅ | —（纯 UI） | 路由复用 repoDetail |
+| 11 | 仓库行 | 行点击 | 进入仓库详情 | ✅ | —（纯 UI） | 路由复用 repoDetail；行尾 ⋯ 打开列表成员 sheet（乐观更新 updateUserListsForItem） |
 | 12 | 列表底部 | Load more 分页 | 翻页 | ✅ | `starredRepositories.pageInfo` | — |
 
-> 可行性比例声明：11/12 可行。
+> 可行性比例声明：12/12 可行。
 
 ---
 
@@ -71,9 +71,9 @@ query WorkStarred($first: Int = 30, $after: String) {
 
 | 项 | 原因 | StarRaft 处理方式 |
 | ---- | ------ | ------------------- |
-| My lists 数据与创建流程 | GitHub Lists 功能（API 可用性待验证，截图为空态） | MVP：展示 My lists 行 + 空态卡，+ NEW / CREATE A LIST 点击提示；列表数据后续 Spec 接入 |
+| My lists 数据与创建流程 | GitHub Lists 功能（API 可用性待验证，截图为空态） | 已实现：+NEW / CREATE A LIST 进创建页（createUserList / updateUserList / deleteUserList 覆盖创建/编辑/删除/重命名）；列表行进 ListDetail；行内 ⋯ 打开成员切换 sheet |
 | 星数超 100 万的显示 | 截图仅展示 k 级别 | `compactCount`：≥1000 显示 xx.xk（一位小数，整数值去小数位），≥1000000 显示 x.x m 暂不实现（亿级无需，备注） |
-| 行内 ⋯（取消加星等操作） | 截图可见 ⋯ 按钮 | MVP 点击提示；取消星标等操作后续 Spec |
+| 行内 ⋯ | 截图可见 ⋯ 按钮 | ⋯ 打开列表成员 sheet（添加/移除列表，乐观更新 updateUserListsForItem） |
 
 ---
 
@@ -82,7 +82,7 @@ query WorkStarred($first: Int = 30, $after: String) {
 - [x] 测试 1：`compactCount` 纯函数：50500→"50.5k"、118900→"118.9k"、1000→"1k"、999→"999"
 - [x] 测试 2：`mapStarredRepo` / `mapWorkStarredPage` 纯函数：语言缺失回退空串；分页字段正确
 - [x] 测试 3：模拟器实测 — Starred 分组行结构（头像/名/描述/星数/语言）与截图一致
-- [x] 测试 4：模拟器实测 — My lists 空态卡展示；+ NEW 与 CREATE A LIST 点击提示
+- [x] 测试 4：模拟器实测 — My lists 空态卡展示；+ NEW 与 CREATE A LIST 进创建页（创建/编辑/删除/重命名）
 - [x] 测试 5：grep 检查 StarredRepositories.ets 无中文字符串字面量残留
 - [x] 测试 6：`bash scripts/check-spec.sh` 通过
 - [x] 测试 7：`devecocli build` 全量构建通过

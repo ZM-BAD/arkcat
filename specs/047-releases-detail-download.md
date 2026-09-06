@@ -24,12 +24,12 @@ RepoReleases（029，列表 + 最新卡）现有「View release details」为占
 ## 二、整体 UI 结构
 
 1. 入口：RepoReleases 列表（已有）→ 点击进入详情
-2. App Bar：版本号 · 分享 · 复制链接
+2. App Bar：share-android 图标（=复制 release URL）
 3. 版本头卡：标题 / 作者 / 时间 / 标签 / 徽章
    - 徽章：草稿 [Draft]、预发布 [Prerelease]（仅可见时显示）
    - tag / commit / 创建者信息行
    - MarkdownView：release body
-4. 资产列表（name / size / 下载次数）：
+4. 资产列表（name / size）：
    - 点击 → 下载气泡（进度 / 速度 / 取消）
    - 完成 → 弹「保存到下载 / 分享 / 复制链接」
 
@@ -41,13 +41,13 @@ RepoReleases（029，列表 + 最新卡）现有「View release details」为占
 | --- | ------ | ------ | ------ | -------- | ------------------- | ------ |
 | 1 | 列表 | 详情入口 | Release 卡片点击进入详情（替换占位 toast）；2026 后发布/最新卡同样可点 | ✅ | 已有查询（补 tagName/publishedAt） | React 现有卡片 onClick 缺失项 |
 | 2 | 详情 | 版本头卡 | name/tagName/author/publishedAt + Draft/Prerelease 徽章 | ✅ | repository.releases.nodes{…} 补字段 | —— |
-| 3 | 详情 | body 渲染 | release bodyHTML → MarkdownView（若 API 无 bodyHTML 则 raw markdown + renderMarkdown） | ✅ | 见四 | 040 组件直接复用 |
-| 4 | 详情 | 资产列表 | assets：name/size/downloadCount/contentType + 文本/bin/图像/zip 图标区分 | ✅ | 见四 | 无资产显示「此发布无资产」 |
+| 3 | 详情 | body 渲染 | description 原文 → POST /markdown → MarkdownView（040） | ✅ | 见四 | 040 组件直接复用 |
+| 4 | 详情 | 资产列表 | 名称 + 大小胶囊（无下载次数字段渲染） | ✅ | 见四 | 空资产整分区不渲染 |
 | 5 | 详情 | 下载执行 | GET asset `url`（Accept: application/octet-stream）→ 进度回调 → 沙箱 cache 落盘 | ✅ | REST `GET /repos/{o}/{r}/releases/assets/{asset_id}` | HTTP 下载不走 GraphQL; 断点/续传不做 |
 | 6 | 下载 | 进度气泡 | 进度条/速率/可取消；多并发最多 3 个排队 | ✅ | 无 | DownloadManager 服务（任务队列） |
 | 7 | 完成 | 保存到系统下载 | SaveButton/FilePicker 保存（用户可见位置），成功后提示路径 | ✅ | 无（ArkUI 保存面板） | 避免敏感权限：只用系统保存对话框 |
 | 8 | 完成 | 分享资产 | Share Kit 分享文件（缓存 URI） | ✅ | 无 | 与「复制直链」并列 |
-| 9 | 完成 | 复制直链 | 复制 asset 浏览器直链（`browser_download_url`） | ✅ | 无 | 官方 App 无下载时显示“在浏览器打开” |
+| 9 | 完成 | 复制直链 | 完成态复制的是沙箱缓存 file:// 路径；浏览器直链在 ⋯ 菜单 Copy link | ✅ | 无 | 官方 App 无下载时显示“在浏览器打开” |
 | 10 | 边界 | 下载失败/权限/限流 | 404（被删）/403（私有资产 token）/中断重试提示 | ⚠️ | 无 | 私有仓库 asset 下载需要 token 头；HTTP 也要鉴权 |
 | 11 | 边界 | 大文件（>200MB） | 提示用浏览器打开（移动端不再下载） | ✅ | 无 | 上限阈值可配 |
 | 12 | 附加 | 历史版本入口 | 详情页底部跳转到「更早版本」列表（029 已有滚动列表） | ✅ | 无 | 简单滚动锚点 |
@@ -62,17 +62,19 @@ RepoReleases（029，列表 + 最新卡）现有「View release details」为占
 query ReleaseDetail($owner: String!, $name: String!, $tag: String!) {
   repository(owner: $owner, name: $name) {
     release(tagName: $tag) {
-      id tagName name isDraft isPrerelease publishedAt createdAt
+      id tagName name isDraft isPrerelease isLatest publishedAt createdAt
       author { login avatarUrl }
-      url shortDescription
-      bodyHTML
-      resources { resourcePath url }
-      assets(first: 50) {
-        nodes { id name size downloadCount contentType url browserDownloadUrl }
+      url description
+      tagCommit { oid }
+      releaseAssets(first: 15) {
+        nodes { id name size downloadCount }
       }
     }
   }
 }
+
+# 实测修正：Release 无 bodyHTML → description 经 POST /markdown 渲染；
+# ReleaseAsset 无 browserDownloadUrl → 直链按 github.com/{o}/{r}/releases/download/{tag}/{name} 拼接
 ```
 
 ```rest

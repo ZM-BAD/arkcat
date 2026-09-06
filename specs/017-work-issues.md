@@ -16,7 +16,7 @@ Home My Work「Issues」入口进入的跨仓库 Issue 列表页（区别于 007
 ## 二、整体 UI 结构
 
 1. 顶部 App Bar：← 返回、「Issues」标题、搜索（🔍）、更多菜单（⋯）
-2. 筛选行：漏斗徽标 + 激活数、状态「Closed」下拉、归属「Created by me」下拉、「Visibility」下拉
+2. 筛选行：漏斗徽标 + 激活数、状态「Closed」下拉、归属「Created by me」下拉、「Visibility」下拉、Sort: Newest 排序下拉（四组含 reactions）、Organization / Repository 多选（Bottom Sheet）
 3. Issue 行一：状态图标（✔）+ `owner/repo #编号`（microsoft/MicrosoftEdge-Extensions #689）+ 相对时间（1mo）+ 标题（[Bug - Partner Center] Review stuck ...）+ 标签胶囊（[Task] [Bug] [Tracked] [Partner Center]）+ 评论数（💬1）
 4. Issue 行二：状态图标（✔）+ 6tail/tyme4py #6 + 相对时间（8mo）+ 标题（Python的版本可以升级到3.14吗?）+ 评论数（💬3）
 5. 列表底部分页：Load more
@@ -30,16 +30,16 @@ Home My Work「Issues」入口进入的跨仓库 Issue 列表页（区别于 007
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar 左 | ← 返回 | 回退 | ✅ | —（纯 UI） | — |
 | 2 | App Bar 中 | 「Issues」标题 | 页面标题 | ✅ | —（纯 UI） | 复用 nav_issues_title |
-| 3 | App Bar 右 | 🔍 搜索 | 跳转全局搜索页 | ✅ | —（纯 UI） | 复用路由 search |
+| 3 | App Bar 右 | 🔍 就地搜索 | 页内 TextInput 客户端过滤 | ✅ | —（纯 UI） | 按标题/仓库全名过滤已加载列表 |
 | 4 | App Bar 右 | ⋯ 更多 | 预留 | ✅ | —（纯 UI） | 点击提示 |
-| 5 | 筛选行 | 漏斗徽标 + 激活数 | 展示当前激活筛选数 | ✅ | —（纯 UI） | 客户端计数 |
+| 5 | 筛选行 | 漏斗徽标 + 激活数 | 展示当前激活筛选数 | ✅ | —（纯 UI） | 客户端计数；筛选行另含 Sort by 排序下拉（四组含 reactions）与 Organization/Repository 多选（Bottom Sheet） |
 | 6 | 筛选行 | 状态下拉（All/Open/Closed） | 状态筛选 | ✅ | `search query: is:open / is:closed` | 默认 Open |
 | 7 | 筛选行 | 归属下拉（Created by me / Assigned to me / Mentioned） | 归属筛选 | ✅ | `author:@me / assignee:@me / mentions:@me` | 默认 Created by me |
 | 8 | 筛选行 | 可见性下拉（All/Public/Private） | 可见性筛选 | ✅ | `is:public / is:private` | 默认 All |
 | 9 | Issue 行 | 状态图标（绿✔/紫✔/灰⊘） | 展示状态与关闭原因 | ✅ | `state / stateReason` | OPEN→绿；COMPLETED→紫；NOT_PLANNED→灰 |
 | 10 | Issue 行 | `owner/repo #N` + 相对时间 | 仓库与时间 | ✅ | `repository.nameWithOwner / createdAt` | 相对时间含年粒度（2y/5y） |
 | 11 | Issue 行 | 标题（加粗，2 行截断） | 展示 | ✅ | `title` | — |
-| 12 | Issue 行 | 标签胶囊 | 展示 | ✅ | `labels(first:5) { nodes { name color } }` | — |
+| 12 | Issue 行 | 标签胶囊 | 展示 | ✅ | `labels(first:5) { nodes { name color } }` | 标签真实色值实底+白字 |
 | 13 | Issue 行 | 评论数 💬 N | 展示 | ✅ | `comments.totalCount` | — |
 | 14 | 空态 | 插图 + 标题 + 副文案 + RESET ALL FILTERS | 空态引导；重置筛选并可重查 | ✅ | —（纯 UI） | 插图用占位字形（无官方素材） |
 | 15 | 列表底部 | Load more 分页 | 翻页 | ✅ | `search.pageInfo` | — |
@@ -67,6 +67,8 @@ query WorkIssues($query: String!, $first: Int = 25, $after: String) {
 }
 ```
 
+- query 由 `buildWorkIssuesQuery(state, scope, visibility, sortKey, orgs, repos)` 生成：`is:issue` + 状态（`is:open` / `is:closed`）+ 归属（`author:` / `assignee:` / `mentions:` / `involves:@me`）+ 可见性（`is:public` / `is:private`）+ `org:` / `repo:`（多值）+ 排序 qualifier。
+
 ---
 
 ## 五、边界 / 不可行项
@@ -75,13 +77,13 @@ query WorkIssues($query: String!, $first: Int = 25, $after: String) {
 | ---- | ------ | ------------------- |
 | 官方「Status / Event」(里程碑/分配人) 筛选 | 截图未展示，MVP 不实现 | 仅提供状态/归属/可见性三组筛选，后续 Spec 扩展 |
 | 搜索结果计数（issueCount） | search 分页 count 仅供展示 | 列表不额外展示总数，与官方一致 |
-| 标签颜色映射 | GraphQL 返回十六进制色值 | 胶囊背景用浅色固定底 + 深色文字（沿用 007 视觉） |
+| 标签颜色映射 | GraphQL 返回十六进制色值 | 胶囊背景用标签真实色值（hex）实底 + 白字 |
 
 ---
 
 ## 六、TDD 验收标准
 
-- [x] 测试 1：`buildWorkIssuesQuery(state, scope, visibility)` 纯函数：qualifier 组合正确（含默认值）
+- [x] 测试 1：`buildWorkIssuesQuery(state, scope, visibility, sortKey, orgs, repos)` 纯函数：qualifier 组合正确（含默认值）
 - [x] 测试 2：`mapWorkIssue` 纯函数：状态/关闭原因 → 图标键映射正确；`mapWorkIssuesPage` 分页字段正确
 - [x] 测试 3：灰色 ⊘（NOT_PLANNED）与 ✔（COMPLETED）图标区分正确
 - [x] 测试 4：模拟器实测 — 三组筛选可切换且触发重查；空态 RESET ALL FILTERS 可重置

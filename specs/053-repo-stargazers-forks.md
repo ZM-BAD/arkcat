@@ -26,10 +26,10 @@ Stargazers = 用户行（圆头像/显示名/login/两行简介）；Forks = 分
 
 **Forks 页：**
 1. App Bar：返回按钮 + 仓库名 DAG-chat（粗体）+ 副标题 Forks（灰）+ 搜索按钮 + 加号按钮（＋）
-2. 仓库行一：头像 + fork 图标 + 属主 yjnzen（灰）+ 仓库名 DAG-chat + 描述 2 行 + fork 图标 + Forked from ZM-BAD…（灰）+ 星数 0 + 语言点 ● + TypeScript
-3. 列表尾部：搜索行 / 加载更多 / 空态
+2. 仓库行一：属主头像（20vp）+ login yjnzen（灰）+ 仓库名 DAG-chat + 描述 2 行 + fork 图标 + Forked from ZM-BAD…（灰）+ 星数 0 + 语言点 ● + TypeScript
+3. 列表尾部：加载更多 / 空态；搜索框在 App Bar（搜索态替换标题行）
 
-行间无分隔线，纯留白（参考截图）；两页均 Scroll + 保留 StateView（loading/错误重试）。
+Stargazers 行间无分隔线；Forks 行间有 Divider。两页均 Scroll + 保留 StateView（loading/错误重试）。
 
 ---
 
@@ -37,11 +37,11 @@ Stargazers = 用户行（圆头像/显示名/login/两行简介）；Forks = 分
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
-| 1 | AppBar | ← + 仓库名（粗体 20fp）+ 副标题（灰 16fp） | 返回 / 标题 | ✅ | — | 参数为 nameWithOwner；副标题=Stargazers/Forks |
+| 1 | AppBar | ← + 仓库名（粗体 20fp）+ 副标题（灰 14fp（body_font_size）） | 返回 / 标题 | ✅ | — | 参数为 nameWithOwner；副标题=Stargazers/Forks |
 | 2 | Stargazers 行 | 56vp 圆头像 + 显示名（粗体）/login（灰·无@）/bio（灰 2 行省略） | 展示 | ✅ | repository.stargazers(first:50) nodes{login name avatarUrl bio} | bio 为空隐藏；整行点击 → userProfile |
 | 3 | Stargazers | 分页（hasNextPage → 加载更多文字钮） | 翻页 | ✅ | 同上 pageInfo | 沿用 UserList 加载更多模式 |
 | 4 | Stargazers | 空态 / StateView | 展示 | ✅ | — | 复用现有文案模式 |
-| 5 | Forks 行 | owner 头像(32vp圆) + ⑂+login（灰） | 展示属主 | ✅ | repository.forks(first:50) nodes{ owner{login avatarUrl} } | 行头小 fork 图标=oct_repo_forked_16 灰 |
+| 5 | Forks 行 | 属主头像（20vp）+ login（灰） | 展示属主 | ✅ | repository.forks(first:50) nodes{ owner{login avatarUrl} } | — |
 | 6 | Forks 行 | 仓库名（粗体）+ 描述（2 行）+ ⑂ Forked from {上游}(灰) | 展示 | ✅ | 同上 parent{name owner{login}} | 上游可空（parent=null）→ 隐藏该行 |
 | 7 | Forks 行 | ★ 星数（黄）+ ● 语言色 + 语言名 | 展示 | ✅ | 同上 stargazerCount primaryLanguage{name color} | 行点击 → repoDetail |
 | 8 | Forks 行 | 分页 / 空态 / StateView | 展示 | ✅ | — | — |

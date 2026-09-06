@@ -9,7 +9,7 @@
 
 ## 一、页面/功能概述
 
-仓库维度的 PR 列表（区别于 Spec 018 工作区跨仓库列表）。顶部副标题为仓库 owner，筛选行为漏斗徽标 + 状态下拉（All/Open/Closed/Merged）+ Label + Author + Assignee（Label 走 GraphQL，Author/Assignee 为客户端过滤）；行含状态图标、标题、`owner/repo #编号`、相对时间、Label 胶囊、Checks/评论数/审查数/作者头像。行点击进入 PR 详情（Spec 031）。
+仓库维度的 PR 列表（区别于 Spec 018 工作区跨仓库列表）。顶部副标题为仓库 owner，筛选行为漏斗徽标 + 状态下拉（All/Open/Closed/Merged）+ Label + Author + Assignee（Label 走 GraphQL，Author/Assignee 为客户端过滤）；行含状态图标、标题、`owner/repo #编号`、相对时间、Label 胶囊、Checks/评论数/作者头像。行点击进入 PR 详情（Spec 031）。
 
 ---
 
@@ -17,7 +17,7 @@
 
 1. 顶部 App Bar：← 返回 + 副标题仓库名（DAG-chat）+ 主标题「Pull Requests」+ 搜索（🔍）+ 新建（＋）
 2. 筛选行：标签徽标（⏲①）+「All」状态下拉 +「Label」下拉 +「Author」下拉 +「Assignee」
-3. PR 行一：状态图标（⑂）+ 标题（fix(backend): use $addToSet…）+ 编号（#82）+ 标签（dependencies）+ Checks 胶囊（✓ Checks）+ 评论数（💬1）+ 审查数（👁1）+ 作者头像（🀫）
+3. PR 行一：状态图标（⑂）+ 标题（fix(backend): use $addToSet…）+ 编号（#82）+ 标签（dependencies）+ Checks 胶囊（✓ Checks）+ 评论数（💬1）+ 作者头像（🀫）
 4. PR 行二：状态图标（⑂）+ 标题（chore(deps): …）+ 编号（#81）+ 标签（dependencies）+ Checks 胶囊（✓ Checks）+ 评论数（💬1）+ 作者头像（🀫）
 
 ## 三、元素清单
@@ -31,9 +31,9 @@
 | 5 | 筛选行 | Label 下拉 | 标签筛选 | ✅ | `pullRequests(labels:)` | 仓库标签枚举 |
 | 6 | 筛选行 | Author 下拉 | 作者筛选 | ⚠️ | 客户端过滤 | 取首屏作者集合 |
 | 7 | 筛选行 | Assignee 下拉 | 分配人筛选 | ⚠️ | 客户端过滤 | 取首屏 assignees 集合 |
-| 8 | PR 行 | 状态图标 + 标题 + `#N` + 时间 | 展示 | ✅ | `state/merged/createdAt` | 沿用 018 图标规范 |
+| 8 | PR 行 | 状态图标 + 标题 + `#N` + 时间 | 展示 | ✅ | `state/merged/isDraft/createdAt` | 沿用 018 图标规范；draft 灰图标 oct_git_pull_request_draft_16 |
 | 9 | PR 行 | Label 胶囊 + Checks 胶囊 | 展示 | ✅ | `labels/statusCheckRollup` | — |
-| 10 | PR 行 | 💬 / 👁 / 作者头像 | 展示 | ✅ | `comments/reviewRequests/author` | — |
+| 10 | PR 行 | 💬 / 作者头像 | 展示 | ✅ | `comments/author` | — |
 | 11 | 列表 | Load more 分页 | 翻页 | ✅ | `pullRequests.pageInfo` | 客户端过滤时首页 50 条 |
 
 > 可行性比例声明：9/11 可行。
@@ -49,7 +49,7 @@ query RepoPullRequests($owner: String!, $name: String!, $states: [PullRequestSta
       totalCount
       pageInfo { hasNextPage endCursor }
       nodes {
-        id number title state merged createdAt
+        id number title state merged isDraft createdAt
         labels(first: 8) { nodes { name color } }
         comments { totalCount }
         reviewRequests(first: 10) { totalCount }

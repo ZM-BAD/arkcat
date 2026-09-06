@@ -13,7 +13,7 @@
 - **顶栏**：← 返回 + ＋（新建）+ ⋯ 菜单
 - **头部**：业主头像+名字 / 仓库名 / 描述 / ★ stars · ⑂ forks
 - **操作区**：`STAR` 大按钮 + fork/铃铛两个圆形按钮
-- **计数入口**：Issues / Pull Requests / Actions / Releases（彩块 + 计数；Releases 带最新版卡片 0.1.0 · 7d · Latest）
+- **计数入口**：Issues / Pull Requests / Actions / Releases（彩块 + 计数）
 - **More 折叠区**：Contributors / Watchers / License（见 053-055）；Current branch main ✓ / Code / Commits 为独立分支区卡片
 - **README**：富文本渲染（Markdown 标题/图片/链接/列表）
 
@@ -24,7 +24,7 @@
 1. 顶部 App Bar：← 返回 + ＋ 新建 + ⋯ 更多菜单
 2. 头部：👤 业主（ZM-BAD）+ 仓库名（headroom）+ 描述（Know when your AI is...）+ ★ 43 stars · ⑂ 3 forks
 3. 操作区：[ STAR ] 大按钮 + [⑂] fork 圆钮 + [🔔] 铃铛圆钮（← 操作区）
-4. 计数入口：🟩 Issues 1 / 🟦 Pull Requests 1 / 🟧 Actions 0 / ⬛ Releases 2，Releases 行下挂最新版卡片（0.1.0 · 7d · Latest）
+4. 计数入口：🟩 Issues 1 / 🟦 Pull Requests 1 / 🟧 Actions 0 / ⬛ Releases 2（点击进列表，见 029）
 5. More 折叠区：··· More + ▾ 下拉（Contributors / Watchers / License，见 053-055）
    - 分支区卡（独立于 More）：⑂ Current branch main ✓ + CHANGE · ▣ Code · ▤ Commits
 6. README：📖 富文本渲染（标题/图片/链接）
@@ -43,11 +43,9 @@
 | 6 | 操作区 | fork 圆钮 | Fork | ✅ | `createFork` | 已实现 |
 | 7 | 操作区 | 🔔 圆钮 | 订阅 | ⚠️ | `updateSubscription` | 点击提示 |
 | 8 | 计数区 | Issues/PR/Actions/Releases 行 | 进入对应列表 | ✅ | `issues.totalCount/pullRequests.totalCount/actions.totalCount/releases.totalCount` | Actions 无 API 时显示 0 |
-| 9 | Release 卡 | 最新版 0.1.0·7d·Latest | 进入 Release | ⚠️ | `releases.first.tagName/publishedAt/isLatest` | 点击提示 |
 | 10 | More 区 | Current branch main ✓ · CHANGE | 分支切换 | ⚠️ | `defaultBranchRef.name` | CHANGE 提示 |
 | 11 | 分支区 | Code/Commits 行 | 进入文件树/提交列表 | ✅ | — | 路由 Code（038）/ Commits（028） |
-| 12 | More 区 | README.md · EDIT | 编辑 README | ⚠️ | — | EDIT 提示 |
-| 13 | README | 富文本渲染 | 展示 | ⚠️ | `object(expression: "HEAD:README.md")` | Markdown 简化渲染（标题加粗/链接/图片行） |
+| 13 | README | 富文本渲染 | 展示 | ✅ | `object(expression: "HEAD:README.md")` | REST /readme 官方 HTML + MarkdownView 直渲（040） |
 
 ---
 
@@ -93,8 +91,8 @@ query RepositoryDetail($owner: String!, $name: String!) {
 
 - [x] 头部（业主/仓库名/描述/stars/forks）正确渲染（n8n 实测：★202919 ⑂60470）
 - [x] STAR/fork/🔔 操作区按钮组渲染
-- [x] Issues/PR/Actions/Releases 计数入口渲染（实测 10165/26942/0/782 + n8n@2.36.8·2天前·最新卡）
-- [x] More 折叠区（master✓/文件/提交/README·编辑）展开验证通过
+- [x] Issues/PR/Actions/Releases 计数入口渲染（实测 10165/26942/0/782）
+- [x] More 折叠区（Contributors/Watchers/License）展开验证通过
 - [x] README 简化富文本渲染（图片/标题/正文行）
 - [x] ohosTest 22/22；模拟器截图验收
 

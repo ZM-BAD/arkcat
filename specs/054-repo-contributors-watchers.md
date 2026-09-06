@@ -32,7 +32,7 @@ Contributors / Watchers 两页结构一致，仅副标题与数据源不同：
 
 | # | 位置 | 元素 | 功能 | 可行性 | 接口 | 备注 |
 | --- | ------ | ------ | ------ | -------- | ------ | ------ |
-| 1 | AppBar | ← + 仓库名（粗体 20fp）+ 副标题（灰 16fp） | 返回 / 标题 | ✅ | — | 副标题文案复用 repo_contributors/repo_watchers；参数 owner/name |
+| 1 | AppBar | ← + 仓库名（粗体 20fp）+ 副标题（灰 14fp（body_font_size）） | 返回 / 标题 | ✅ | — | 副标题文案复用 repo_contributors/repo_watchers；参数 owner/name |
 | 2 | 行 | 56vp 圆头像 + 显示名（粗体）/login（灰·无@）/bio（灰 2 行省略） | 展示 | ✅ | Watchers: repository.watchers(first:50) nodes{login name bio avatarUrl}；Contributors: REST /contributors 取 login 序 + GraphQL user(login) 批量补 name/bio/avatarUrl | bio 为空隐藏；无显示名时仅灰 login 单行（与 Stargazers 行一致）；行点击 → userProfile |
 | 3 | 行 | 无头像占位：底色 + oct_person_16 灰 icon | 展示（官方灰人形近似） | ✅ | — | 与现有头像底色占位共存：Image 加载中/失败时叠 person 图标 |
 | 4 | 列表 | 分页（hasNextPage → 加载更多文字钮） | 翻页 | ✅ | Watchers: pageInfo{hasNextPage endCursor}；Contributors: REST page=N 且返回长度=50 近似 | 沿用 Stargazers 加载更多模式 |

@@ -21,7 +21,7 @@
 1. 顶部：关闭按钮（深蓝圆底）+ 渐变底 #434986 → #303788
 2. 居中：大徽章圆图
 3. 徽章名称：YOLO（粗体白）
-4. 徽章描述：You want it? You merge it.（白·90%）
+4. 徽章描述：You want it? You merge it.（白 15fp、opacity 0.85）
 5. 解锁信息：奖杯圆钮 + Unlocked September 1（粗体白）
 6. 触发事件：圆点 + ZM-BAD/starraft #3 · Merged without a review（白）
 7. 翻页圆点（当前 = 白实心）
@@ -34,9 +34,9 @@
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | 右上 | ✕ 关闭（深蓝圆底） | 返回 Profile | ✅ | — | 与二级页返回语义一致，自绘 |
-| 2 | 居中 | 大徽章图（约 300vp 圆） | 展示 | ⚠️ | — | 详情片段 img（hash 版）→ 兜底 CDN `{slug}-default.png` |
-| 3 | 居中 | 名称（粗体白 26fp） | 展示 | ✅ | — | 片段 `<h3>` |
-| 4 | 居中 | 描述（白 90%、16fp） | 展示 | ✅ | — | 片段 `<div class="mt-1">` |
+| 2 | 居中 | 大徽章图（260×260） | 展示 | ⚠️ | — | 详情片段 img（hash 版）→ 兜底 CDN `{slug}-default.png` |
+| 3 | 居中 | 名称（20fp（title_font_size）） | 展示 | ✅ | — | 片段 `<h3>` |
+| 4 | 居中 | 描述（15fp（chip_font_size）、opacity 0.85） | 展示 | ✅ | — | 片段 `<div class="mt-1">` |
 | 5 | 中部 | 🏆 圆钮 + 「Unlocked 9月1日」 | 展示解锁日期 | ✅ | — | 片段 relative-time datetime（UTC → 本地「月 日」，intl 格式化） |
 | 6 | 中部 | • +「`引用` · `事件标签`」 | 展示触发事件 | ⚠️ | — | 片段 `.achievement-history-tier`；私有仓库引用为 `inaccessible` → 仅显示事件标签 |
 | 7 | 底部 | 圆点翻页（Swiper 已解锁徽章） | 左右滑切换徽章 | ✅ | — | 页数=已解锁徽章数；入口参数为起始下标 |
@@ -92,6 +92,6 @@ GET https://github.com/users/{login}/achievements/{slug}/detail
 - 渐变底色从参考截图采样：顶 #434986（右缘 y≈0.10）、底 #303788（右缘 y≈0.90），竖直 linearGradient；
   颜色入 resources color.json（base/dark 双套），ets 禁止 #RRGGBB 硬编码。
 - Profile 页勋章行图片目前 24vp；详情页大图用官方 `{slug}-default-{hash}.png`（详情片段内嵌），失败兜底 CDN 无 hash URL（服务端仍有效）。
-- 翻页圆点：oct_dot_fill_16 白（当前页）/白 30%（其余）；Swiper indicator 自绘。
-- 关闭按钮用 oct_x_16 白，深蓝圆底（参考截图约 44vp 触点）。
+- 翻页圆点：自绘 Circle（当前页白实心 7vp / 其余白 30% 7vp）；Swiper indicator 自绘。
+- 关闭按钮用 oct_x_16 白，深蓝圆底（36×36）。
 - 保留现有 AchievementsService.fetch（Profile 行）不变；新增 fetchSlugs / fetchDetail。

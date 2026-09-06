@@ -9,14 +9,14 @@
 
 ## 一、页面/功能概述
 
-Home My Work「Projects」入口进入的 Projects 列表页，展示 viewer 可见的 ProjectsV2（跨仓库/组织）。筛选：项目范围（All projects / Owned by me）、状态（Open / Closed）、排序标签（Sort: Most recently visited）。行内展示项目图标、标题、编号、状态与更新时间。数据源 `viewer.projectsV2`；空态为官方蓝色猫插画 + 「There aren't any projects.」（截图所示即为此空态，无 RESET 按钮）。
+Home My Work「Projects」入口进入的 Projects 列表页，展示 viewer 可见的 ProjectsV2（跨仓库/组织）。筛选：项目范围（All projects / Owned by me）、状态（Open / Closed / Template）、Sort 排序下拉（8 项）。行内展示项目图标、标题、编号、状态与更新时间。数据源 `viewer.projectsV2`；空态为官方蓝色猫插画 + 「There aren't any projects.」（截图所示即为此空态，无 RESET 按钮）。
 
 ---
 
 ## 二、整体 UI 结构
 
 1. 顶部 App Bar：← 返回、「Projects」标题、搜索（🔍）、更多菜单（⋯）
-2. 筛选行（可横向溢出）：「All projects」范围下拉、「Open」状态下拉、「Sort: Most recently visited」排序标签（截断显示）
+2. 筛选行（可横向溢出）：「All projects」范围下拉、「Open」状态下拉（Open/Closed/Template）、「Sort」排序下拉（8 项，截断显示）
 3. Project 行：项目图标（▦）+ 项目标题 + 编号（#12）+ 状态（Open）+ 更新时间（3d ago）
 4. 列表底部分页：Load more
 5. 空态：🐱 插图 + 标题「There aren't any projects.」
@@ -29,11 +29,11 @@ Home My Work「Projects」入口进入的 Projects 列表页，展示 viewer 可
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar 左 | ← 返回 | 回退 | ✅ | —（纯 UI） | — |
 | 2 | App Bar 中 | 「Projects」标题 | 页面标题 | ✅ | —（纯 UI） | — |
-| 3 | App Bar 右 | 🔍 搜索 | 跳转全局搜索页 | ✅ | —（纯 UI） | 复用路由 search |
+| 3 | App Bar 右 | 🔍 就地搜索 | 页内 TextInput 客户端过滤 | ✅ | —（纯 UI） | 按项目标题过滤已加载列表 |
 | 4 | App Bar 右 | ⋯ 更多 | 预留 | ✅ | —（纯 UI） | 点击提示 |
 | 5 | 筛选行 | 范围下拉（All projects / Owned by me） | 项目范围筛选 | ✅ | `viewer.projectsV2` + `owner { login }` 客户端过滤 | 默认 All projects |
-| 6 | 筛选行 | 状态下拉（Open / Closed） | 状态筛选 | ✅ | `closed` 字段客户端过滤 | 默认 Open |
-| 7 | 筛选行 | 排序标签（Sort: Most recently visited） | 排序展示 | ⚠️ | `updatedAt` 客户端降序近似 | 「最近访问」无 GraphQL 字段，近似排序 |
+| 6 | 筛选行 | 状态下拉（Open / Closed / Template） | 状态筛选 | ✅ | `closed / template` 字段客户端过滤 | 默认 Open |
+| 7 | 筛选行 | Sort 排序下拉（8 项） | 排序 | ⚠️ | 客户端本地排序（viewedAt 本会话记录 / updatedAt / createdAt / title） | 8 项排序：Most/Least recently viewed（本会话浏览记录 viewedAt）、Updated/Newest/Oldest、Created/Newest/Oldest、Title/A-Z/Z-A |
 | 8 | Project 行 | 项目图标 + 标题 | 展示 | ✅ | `title` | — |
 | 9 | Project 行 | 编号 `#N` | 展示 | ✅ | `number` | — |
 | 10 | Project 行 | 状态 + 更新时间 | 展示 | ✅ | `closed / updatedAt` | 复用相对时间 |
@@ -47,15 +47,15 @@ Home My Work「Projects」入口进入的 Projects 列表页，展示 viewer 可
 ## 四、核心 GraphQL 片段
 
 ```graphql
-query WorkProjects($first: Int = 30) {
+query WorkProjects($first: Int = 30, $after: String) {
   viewer {
     login
-    projectsV2(first: $first) {
+    projectsV2(first: $first, after: $after) {
       totalCount
       pageInfo { hasNextPage endCursor }
       nodes {
-        id title number closed updatedAt
-        owner { login }
+        title number closed template createdAt updatedAt
+        owner { ... on Organization { login } ... on User { login } }
       }
     }
   }
@@ -68,7 +68,7 @@ query WorkProjects($first: Int = 30) {
 
 | 项 | 原因 | StarRaft 处理方式 |
 | ---- | ------ | ------------------- |
-| 「Most recently visited」排序 | GraphQL ProjectV2 无 visited 字段，连接无 orderBy 参数 | 展示官方文案标签，实际按 `updatedAt` 客户端降序近似（备注中说明） |
+| 「Most/Least recently viewed」排序 | GraphQL ProjectV2 无 viewed 字段，连接无 orderBy 参数 | 客户端本地排序：本会话浏览记录 viewedAt + updatedAt/createdAt/title |
 | 官方猫插画素材 | 无官方矢量素材 | 用占位字形（🐱）替代，文案一致 |
 | 项目内 Issue 视图（点击项目进入看板） | 独立 Spec 范围 | 点击项目行提示后续 Spec 提供 |
 | viewer.projectsV2 数据获取 | ProjectsV2 字段（title 等）需 `read:project` scope | 错误态展示 GitHub 引导文案（含 scopes 链接）；用户授权后无需改版即可用 |
@@ -88,7 +88,7 @@ query WorkProjects($first: Int = 30) {
 
 ## 七、备注
 
-- ProjectsV2 连接无 orderBy 参数，排序全部客户端完成：先按 closed 分组（Open 前置），再按 updatedAt 降序。
+- ProjectsV2 连接无 orderBy 参数，排序全部客户端完成：8 项（Most/Least recently viewed 以本会话浏览记录 viewedAt 为准；Updated/Created 的 Newest/Oldest 与 Title A-Z/Z-A 按字段本地排）。
 - 入口复用 013 的 Projects 彩色图标（灰 `#57606A`）。
 - 筛选行与官方一致可横向溢出（长文案被截断），不强制换行。
 

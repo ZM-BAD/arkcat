@@ -9,7 +9,7 @@
 
 ## 一、页面/功能概述
 
-Home My Work「Discussions」入口进入的跨仓库 Discussion 列表页。按状态（All/Open/Closed）、归属（Created by me / Mentioned）与 Unanswered 快捷标筛选；行内展示状态图标、`owner/repo #编号`、相对时间、标题、分类标签与回复数。空态为官方蓝色猫插画 + 「There aren't any discussions.」+ 副文案 + RESET ALL FILTERS（截图所示即为此空态）。数据源 `search(type: DISCUSSION)`。
+Home My Work「Discussions」入口进入的跨仓库 Discussion 列表页。按状态（All/Open/Closed）、归属（Created by me / Commented）与 Unanswered 快捷标筛选；行内展示状态图标、`owner/repo #编号`、相对时间、标题、分类标签与回复数。空态为官方蓝色猫插画 + 「There aren't any discussions.」+ RESET ALL FILTERS（仅激活筛选时，无副文案；截图所示即为此空态）。数据源 `search(type: DISCUSSION)`。
 
 ---
 
@@ -19,7 +19,7 @@ Home My Work「Discussions」入口进入的跨仓库 Discussion 列表页。按
 2. 筛选行：漏斗徽标 + 激活数、「All」状态下拉、「Created by me」归属下拉、「Unanswered」快捷标
 3. Discussion 行：状态图标（✔）+ `owner/repo #编号`（owner/repo #12）+ 相对时间（3d）+ 标题（Could we support multi-arch?）+ 分类胶囊（[Announcement]）+ 回复数（💬4）
 4. 列表底部分页：Load more
-5. 空态：🐱 插图 + 标题「There aren't any discussions.」+ 副文案「Use fewer filters or reset all filters」+ 「RESET ALL FILTERS」按钮
+5. 空态：🐱 插图 + 标题「There aren't any discussions.」+ 「RESET ALL FILTERS」按钮（仅在激活筛选时出现，无副文案）
 
 ---
 
@@ -29,18 +29,18 @@ Home My Work「Discussions」入口进入的跨仓库 Discussion 列表页。按
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar 左 | ← 返回 | 回退 | ✅ | —（纯 UI） | — |
 | 2 | App Bar 中 | 「Discussions」标题 | 页面标题 | ✅ | —（纯 UI） | — |
-| 3 | App Bar 右 | 🔍 搜索 | 跳转全局搜索页 | ✅ | —（纯 UI） | 复用路由 search |
+| 3 | App Bar 右 | 🔍 就地搜索 | 页内 TextInput 客户端过滤 | ✅ | —（纯 UI） | 按标题/仓库全名过滤已加载列表 |
 | 4 | App Bar 右 | ⋯ 更多 | 预留 | ✅ | —（纯 UI） | 点击提示 |
-| 5 | 筛选行 | 漏斗徽标 + 激活数 | 展示激活筛选数 | ✅ | —（纯 UI） | — |
+| 5 | 筛选行 | 漏斗徽标 + 激活数 | 展示激活筛选数 | ✅ | —（纯 UI） | 客户端计数；筛选行另含 Sort by 下拉（New / Top 时间窗 6 项） |
 | 6 | 筛选行 | 状态下拉（All/Open/Closed） | 状态筛选 | ✅ | `is:open / is:closed` | 默认 All |
-| 7 | 筛选行 | 归属下拉（Created by me / Mentioned） | 归属筛选 | ✅ | `author:@me / mentions:@me` | 默认 Created by me |
+| 7 | 筛选行 | 归属下拉（Created by me / Commented） | 归属筛选 | ✅ | `author:@me / commenter:@me` | 默认 Created by me |
 | 8 | 筛选行 | Unanswered 快捷标 | 未解答筛选 | ✅ | `is:unanswered` | 开关式 chip |
-| 9 | Discussion 行 | 状态图标（open 绿✔ / closed 灰⊘） | 状态展示 | ✅ | `state` | — |
+| 9 | Discussion 行 | 状态图标（discussion 气泡 oct_comment_discussion_16，open 紫 / closed 灰） | 状态展示 | ✅ | `state` | — |
 | 10 | Discussion 行 | `owner/repo #N` + 相对时间 | 仓库与时间 | ✅ | `repository.nameWithOwner / createdAt` | 年粒度 |
 | 11 | Discussion 行 | 标题（加粗，2 行截断） | 展示 | ✅ | `title` | — |
 | 12 | Discussion 行 | 分类胶囊 | 展示 | ✅ | `category { name }` | — |
 | 13 | Discussion 行 | 回复数 💬 N | 展示 | ✅ | `comments.totalCount` | — |
-| 14 | 空态 | 插图 + 标题 + 副文案 + RESET ALL FILTERS | 空态引导；重置筛选 | ✅ | —（纯 UI） | 插图用占位字形（无官方素材） |
+| 14 | 空态 | 插图 + 标题 + RESET ALL FILTERS | 空态引导；重置筛选 | ✅ | —（纯 UI） | RESET ALL FILTERS 仅在激活筛选时出现；无副文案 |
 | 15 | 列表底部 | Load more 分页 | 翻页 | ✅ | `search.pageInfo` | — |
 
 > 可行性比例声明：15/15 可行。

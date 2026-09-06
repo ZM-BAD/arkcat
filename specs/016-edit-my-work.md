@@ -31,7 +31,7 @@ Home Tab「My Work」区块的编辑页（入口：My Work 标题右侧 ⋯）�
 | 3 | App Bar 右 | SAVE 按钮 | 持久化配置 + 返回 | ✅ | —（纯 UI） | Preferences `work_sections_v1` |
 | 4 | App Bar 右 | ⋯ 更多 | 预留菜单 | ✅ | —（纯 UI） | 点击提示后续 Spec |
 | 5 | 行左 | 复选框 | 切换条目在 Home 显示 | ✅ | —（纯 UI） | — |
-| 6 | 行中 | 彩色图标 + 标签 | 条目标识 | ✅ | —（纯 UI） | 色系/图标复用 Home 013 |
+| 6 | 行中 | 彩色图标 + 标签 | 条目标识 | ✅ | —（纯 UI） | 色系/图标复用 Home 013（Top Repos 用 work_dark_bg 令牌） |
 | 7 | 行右 | ⋮⋮ 拖拽柄 | 长按拖拽排序 | ✅ | —（纯 UI） | List onItemDragStart/Drop |
 | 8 | 行本体 | 整行可拖拽 | 排序交互 | ✅ | —（纯 UI） | — |
 

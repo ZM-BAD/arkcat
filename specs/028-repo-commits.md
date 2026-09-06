@@ -25,7 +25,7 @@
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar | ← 返回 + 「Commits」标题 | 导航 | ✅ | —（纯 UI） | — |
 | 2 | 提交行 | 提交标题（单行省略） | 展示 | ✅ | `messageHeadline` | — |
-| 3 | 提交行 | 绿✓ 状态 | CI 状态 | ✅ | `statusCheckRollup.state` | 仅 SUCCESS 显示 |
+| 3 | 提交行 | 行状态图标（✓/✗/●） | CI 状态 | ✅ | `statusCheckRollup.state` | SUCCESS→绿✓；FAILURE/ERROR→红✗（oct_x_16）；PENDING→黄点（oct_dot_fill_16） |
 | 4 | 提交行 | 相对时间 | 展示 | ✅ | `committedDate` | 年粒度 |
 | 5 | 提交行 | 作者头像 + 登录名 + `authored` | 展示 | ✅ | `author { login avatarUrl }` | 缺失回退占位 |
 | 6 | 列表 | Load more 分页 | 翻页 | ✅ | `history.pageInfo` | — |
@@ -64,7 +64,7 @@ query RepoCommits($owner: String!, $name: String!, $first: Int = 40, $after: Str
 
 | 项 | 原因 | StarRaft 处理方式 |
 | ---- | ------ | ------------------- |
-| 提交文件变更查看 | 属代码查看器 Spec 011 | 行点击提示后续 |
+| 提交文件变更查看 | 属代码查看器 Spec 011 | 行点击进入 Commit 详情页（CHANGES 无文件 diff 与 DETAILS 双分区） |
 | 无默认分支仓库 | 历史不存在 | 空态复用 StateView |
 
 ---

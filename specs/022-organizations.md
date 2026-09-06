@@ -9,7 +9,7 @@
 
 ## 一、页面/功能概述
 
-Home My Work「Organizations」入口进入的组织列表页，展示 viewer 所属组织。行结构：组织头像 + 名称（大字）+ 登录名（灰色小字），点击进入组织主页（复用 userProfile 路由，登录名作为参数）。空态为纯文字居中「There aren't any organizations.」（官方截图无插图）。数据源 `viewer.organizations`。
+Home My Work「Organizations」入口进入的组织列表页，展示 viewer 所属组织。行结构：组织头像 + 名称（大字）+ 登录名（灰色小字），点击进入组织主页（复用 orgProfile 路由，登录名作为参数，Organization 节点解析）。空态为纯文字居中「There aren't any organizations.」（官方截图无插图）。数据源 `viewer.organizations`。
 
 ---
 
@@ -31,7 +31,7 @@ Home My Work「Organizations」入口进入的组织列表页，展示 viewer �
 | 3 | 组织行 | 组织头像 | 展示 | ✅ | `avatarUrl` | — |
 | 4 | 组织行 | 组织名称（大字） | 展示 | ✅ | `name` | name 缺失回退 login |
 | 5 | 组织行 | 登录名（灰色小字） | 展示 | ✅ | `login` | — |
-| 6 | 组织行 | 行点击 | 进入组织主页 | ✅ | —（纯 UI） | 路由复用 userProfile（param: login） |
+| 6 | 组织行 | 行点击 | 进入组织主页 | ✅ | —（纯 UI） | 路由复用 orgProfile（param: login，Organization 节点解析） |
 | 7 | 空态 | 纯文字空态 | 无组织时展示 | ✅ | —（纯 UI） | 居中大字，无插图（对齐截图） |
 | 8 | 列表底部 | Load more 分页 | 翻页 | ✅ | `organizations.pageInfo` | — |
 
@@ -61,7 +61,7 @@ query WorkOrganizations($first: Int = 50, $after: String) {
 
 | 项 | 原因 | StarRaft 处理方式 |
 | ---- | ------ | ------------------- |
-| 组织内仓库/成员列表 | 独立 Spec 范围 | 点击进入组织主页（现有 userProfile 路由）即可查看该组织仓库 |
+| 组织内仓库/成员列表 | 独立 Spec 范围 | 点击进入组织主页（orgProfile 路由）即可查看该组织仓库 |
 | 官方插画 | 该页为空态纯文字，无插图 | 无需处理（纯文字空态） |
 | viewer.organizations 数据获取 | Organization 字段（login/name 等）需 `read:org` scope | 错误态展示 GitHub 引导文案（含 scopes 链接）；用户授权后无需改版即可用 |
 
