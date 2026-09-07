@@ -5,6 +5,8 @@ build/
 /oh_modules/
 /local.properties
 entry/.test/
+# DevEco Previewer 产物（IDE 生成，机器本地）
+entry/.preview/
 
 # 编辑器
 .idea/
