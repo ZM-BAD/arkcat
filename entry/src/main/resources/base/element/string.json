@@ -497,6 +497,86 @@
       "value": "STAR"
     },
     {
+      "name": "explore_filter_today",
+      "value": "Today"
+    },
+    {
+      "name": "explore_filter_this_week",
+      "value": "This week"
+    },
+    {
+      "name": "explore_filter_this_month",
+      "value": "This month"
+    },
+    {
+      "name": "explore_filter_language",
+      "value": "Language"
+    },
+    {
+      "name": "explore_filter_spoken",
+      "value": "Spoken language"
+    },
+    {
+      "name": "explore_filter_language_title",
+      "value": "Filter by language"
+    },
+    {
+      "name": "explore_filter_spoken_title",
+      "value": "Filter by spoken language"
+    },
+    {
+      "name": "explore_add_to_list",
+      "value": "ADD TO LIST"
+    },
+    {
+      "name": "explore_stars_today_fmt",
+      "value": "%1$d today"
+    },
+    {
+      "name": "explore_contributors_fmt",
+      "value": "%1$d contributors"
+    },
+    {
+      "name": "explore_lists_empty",
+      "value": "No lists yet"
+    },
+    {
+      "name": "explore_filter_activity",
+      "value": "Filter Activity"
+    },
+    {
+      "name": "explore_filter_save",
+      "value": "SAVE"
+    },
+    {
+      "name": "explore_filter_save_failed",
+      "value": "Couldn't save activity filters"
+    },
+    {
+      "name": "explore_kind_announcements",
+      "value": "Announcements"
+    },
+    {
+      "name": "explore_kind_releases",
+      "value": "Releases"
+    },
+    {
+      "name": "explore_kind_stars",
+      "value": "Stars"
+    },
+    {
+      "name": "explore_kind_repositories",
+      "value": "Repositories"
+    },
+    {
+      "name": "explore_kind_follows",
+      "value": "Follows"
+    },
+    {
+      "name": "explore_kind_recommendations",
+      "value": "Recommendations"
+    },
+    {
       "name": "profile_settings",
       "value": "Settings"
     },

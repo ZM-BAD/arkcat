@@ -2,9 +2,11 @@
  * Explore Tab（Spec 056 官方化）：Discover 入口（Trending/Awesome Lists）+ Activity 合并 PR 动态流。
  * 003 的 Topics 网格/高星推荐已随官方版式移除；
  * 官方个性化 feed 无公开 API，Activity 用 received_events 近似（Spec 056 边界）。
+ * Activity 类型：Filter Activity 页六类勾选（SAVE 持久化），当前 merged PR 动态近似 “Follows”。
  */
-import { promptAction } from '@kit.ArkUI';
+import { common } from '@kit.AbilityKit';
 import { ExploreActivityEvent } from '../models/ExploreModels';
+import { readActivityKinds } from '../models/ActivityKinds';
 import { ExploreService } from '../services/ExploreService';
 import { friendlyError } from '../services/GitHttpClient';
 import { StateView } from '../components/StateView';
@@ -21,8 +23,12 @@ export struct ExploreView {
   @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  /** Filter Activity 已保存的类型（当前数据源仅 follows 对应动态） */
+  @Local activityKinds: string[] = ['follows'];
 
   aboutToAppear(): void {
+    const ctx = this.getUIContext().getHostContext() as common.Context | undefined;
+    this.activityKinds = readActivityKinds(ctx);
     this.load();
   }
 
@@ -31,7 +37,8 @@ export struct ExploreView {
     this.errorMsg = '';
     ExploreService.fetchActivity(this.token)
       .then((events: ExploreActivityEvent[]) => {
-        this.events = events;
+        // merged PR 动态近似的官方类目 = Follows（关注网络产生的活动）
+        this.events = this.activityKinds.indexOf('follows') >= 0 ? events : [];
         this.loading = false;
       })
       .catch((e: Error) => {
@@ -44,9 +51,9 @@ export struct ExploreView {
     this.pathStack.pushPathByName('exploreRepoList', kind);
   }
 
-  /** Activity 类型筛选：官方面板无参考图，占位待下批（Spec 056 边界） */
-  private filterComing(): void {
-    promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+  /** Activity 类型筛选：Filter Activity 页（六类勾选 + SAVE，Spec 056 收口） */
+  private openActivityFilter(): void {
+    this.pathStack.pushPathByName('exploreActivityFilter', '');
   }
 
   /** Discover 入口行：彩色方标 + 标题（入参均为静态资源，无状态刷新问题） */
@@ -108,12 +115,12 @@ export struct ExploreView {
                 .fontWeight(600)
                 .fontColor($r('app.color.text_primary'))
               Blank()
-              Row() {
-                OctIcon({ res: $r('app.media.oct_filter_16'), iconSize: 18, iconColor: $r('app.color.text_primary') })
-              }
-              .width(36)
-              .height(36)
-              .onClick(() => this.filterComing())
+            Row() {
+              OctIcon({ res: $r('app.media.oct_filter_16'), iconSize: 18, iconColor: $r('app.color.text_primary') })
+            }
+            .width(36)
+            .height(36)
+            .onClick(() => this.openActivityFilter())
             }
             .width('100%')
 

@@ -53,6 +53,7 @@ import { RepositoriesListView } from './RepositoriesList';
 import { FileTreeView } from './FileTree';
 import { CodeViewerView } from './CodeViewer';
 import { ExploreRepoListView } from './ExploreRepoList';
+import { FilterActivityView } from './FilterActivity';
 
 @Entry
 @Component
@@ -932,6 +933,18 @@ struct Index {
     .hideTitleBar(true)
   }
 
+  /** Spec 056 收口：Explore Activity 类型筛选页（Filter Activity，六类勾选 + SAVE） */
+  @Builder
+  exploreActivityFilterDestination() {
+    NavDestination() {
+      FilterActivityView({
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .hideTitleBar(true)
+  }
+
   @Builder
   destinationMap(name: string) {
     if (name === 'userProfile') {
@@ -1016,6 +1029,8 @@ struct Index {
       this.commitDetailDestination()
     } else if (name === 'exploreRepoList') {
       this.exploreRepoListDestination()
+    } else if (name === 'exploreActivityFilter') {
+      this.exploreActivityFilterDestination()
     }
   }
 

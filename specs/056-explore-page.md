@@ -38,13 +38,36 @@ Explore 底栏 Tab 页，按官方 App 2026 版式重做：上部 Discover 区�
 └──────────────────────────────────────┘
 ```
 
-二级页 `exploreRepoList`（kind=trending/awesome 共用）：自绘返回头 + RepoCard 列表，空态/加载/错误用 StateView。
+二级页 `exploreRepoList`（kind=trending/awesome 共用）：官方参考图到位后已收口（2026-09-07）——
+
+```text
+Trending 页（Awesome Lists 无筛选行，同构列表）
+┌──────────────────────────────────────┐
+│  ← Trending（自绘返回头）              │
+│  [Today ∨] [Language ∨] [Spoken lg ∨]│  ← 固定筛选行（不随列表滚动）
+│ ┌────────────────────────────────────┐│
+│ │  横幅图（openGraphImageUrl 按比例贴宽）││
+│ │  avatar owner（灰）                 ││
+│ │  仓库名（黑 600 + 下划线）           ││
+│ │  描述（text_primary，最多 4 行）     ││
+│ │  ⭐ 121 today  ● JavaScript        ││
+│ │  👥 89 contributors ›              ││
+│ │  [ ☆ STAR ]（未星）                 ││
+│ │  [★][+ ADD TO LIST]（已星）        ││
+│ └────────────────────────────────────┘│
+│ ┌─ 横幅+内容/contributors 行/按钮行 ──┐│  ← 兄弟节点分区点击
+└──────────────────────────────────────┘
+```
+
+- Today = 下拉菜单（Today ✓ / This week / This month，FilterDropdownChip 蓝勾）
+- Language / Spoken language = 底部 sheet（✕ + 标题 + 蓝色🔍展开搜索框；语言行=色圆点+名称，口语行=纯文本；点选中项=取消筛选）
+- Filter Activity 页（Activity 区 filter 图标进入）：返回 + Filter Activity + SAVE；六类勾选行（蓝复选框+彩色圆角图标+名称），SAVE 持久化 Preferences 后返回
 
 ---
 
 ## 三、元素清单
 
-> 可行性：15 项中 11/15 可行
+> 可行性：16 项中 11/16 可行
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
@@ -52,17 +75,19 @@ Explore 底栏 Tab 页，按官方 App 2026 版式重做：上部 Discover 区�
 | 2 | Discover | 节标题 | 静态 | ✅ | - | |
 | 3 | Discover | Trending Repositories 入口 | 跳转列表页 | ✅ | - | 红方块（flame_fg）+ oct_flame_16 白 icon |
 | 4 | Discover | Awesome Lists 入口 | 跳转列表页 | ✅ | - | 紫方块（merged_badge_bg 同紫）+ oct_smiley_16 白 icon |
-| 5 | Activity 头 | filter 图标 | 类型筛选 | ⚠️ | - | 官方筛选面板无参考图，点击 toast 占位待下批 |
-| 6 | 活动卡头 | 贡献者头像+org 小头像/X contributed to/仓库全名/相对时间 | 跳 profile/repo | ✅ | - | org 小头像取 event.org.avatar_url；时间 githubShortTime |
-| 7 | 活动卡 | 仓库行（repo 图标+全名） | 跳 repoDetail | ✅ | - | |
-| 8 | 活动卡 | PR 标题 | 展示 | ✅ | alias 补 title | |
-| 9 | 活动卡 | Merged 徽章+分支芯片+chevron | 跳 prDetail | ✅ | - | 复用 merged_badge_bg/shortcut_blue_bg 令牌 |
-| 10 | 活动卡 | Summary 区（bullet+渐隐+Read more 展开） | 展开/收起 | ✅ | alias 补 body | 原生轻量 markdown 解析，展开=全高无内滚（010 定案） |
-| 11 | 活动卡 | 反应笑脸按钮 | 8 官方 reaction 选择 | ✅ | addReaction/removeReaction | 复用 041 REACTION_META + mutation |
-| 12 | 数据源 | Activity 动态流 | 拉取合并 PR 事件 | ⚠️ | viewer.login + alias | 官方个性化 feed 无公开 API，received_events 近似 |
-| 13 | 数据源 | Trending 列表 | 按星近似 | ⚠️ | - | REST search created:>7d sort:stars，官方算法无 API |
+| 5 | Activity 头 | filter 图标 | 跳 Filter Activity 页 | ✅ | - | 六类勾选 + SAVE（2026-09-07 收口） |
+| 6-12 | Activity 卡 | （沿用官方化首版，未变） | - | ✅ | - | 接收事件近似，仅 merged PR |
+| 13 | 数据源 | Trending 列表 | 按星近似 | ⚠️ | - | REST search created:>N sort:stars，官方算法无 API |
 | 14 | 数据源 | Awesome Lists 列表 | 精选近似 | ⚠️ | - | REST search topic:awesome-list sort:stars |
-| 15 | 二级页 | Trending/Awesome 列表页 | RepoCard 列表 | ✅ | - | 基线样式，待官方参考图再收口 |
+| 15 | 二级页 | Trending/Awesome 列表页 | 官方风卡列表 | ✅ | 补横幅 + meta | 官方参考图到位已收口 |
+| 16 | 二级页 | 筛选行（Today/Language/Spoken language） | 服务端重过滤 | ✅ | - | 仅 Trending；qualifier 实测服务端有效 |
+| 17 | 二级页 | Today 下拉菜单（3 项蓝勾） | 窗口切换 | ⚠️ | - | 窗口=created:>N 近似（非官方今日增量星） |
+| 18 | 二级页 | Language/Spoken sheet（✕+标题+🔍+搜索） | 语言/口语过滤 | ✅ | - | 列表=内置常见子集（官方内部端点无 API） |
+| 19 | 列表卡 | 横幅图（openGraphImageUrl 按比例贴宽） | 展示 | ✅ | repository.openGraphImageUrl | 未设置 social preview 的仓库无横幅 |
+| 20 | 列表卡 | ⭐ N today + 语言点 + 👥 N contributors › | 展示/跳转 | ⚠️ | contributors 无 GraphQL 字段 | today=总数近似；contributors=REST Link last 页 |
+| 21 | 列表卡 | 三态按钮（全宽 STAR / ★ + ADD TO LIST） | star/列表 mutation | ✅ | addStar/removeStar/updateUserListsForItem | ADD TO LIST 未星先自动 star |
+| 22 | Filter Activity | 六类勾选行 + SAVE | 类型设置持久化 | ⚠️ | - | 勾选存 Preferences；仅 merged PR 近似 Follows |
+| 23 | 页面 | Dark 模式 | 双套令牌 | ✅ | - | 无新增硬编码色值 |
 
 ---
 
@@ -93,6 +118,20 @@ query ExploreActivity {
 REST GET /users/{login}/received_events?per_page=60   # 过滤 type=PullRequestEvent 且 payload.action=merged
 REST GET /search/repositories?q=created%3A%3E{7天前}&sort=stars&order=desc&per_page=25
 REST GET /search/repositories?q=topic%3Aawesome-list&sort=stars&order=desc&per_page=25
+REST GET /search/repositories?q=...%20language%3AGo%20spoken_language%3AEnglish&...
+  # 语言/口语 qualifier 服务端过滤（2026-09-07 实测有效）
+REST GET /repos/{owner}/{name}/contributors?per_page=1&anon=0
+  # Link 头 rel="last" 的 page 数 = 贡献者数（GraphQL Repository 无 contributors 字段）
+```
+
+```graphql
+# 列表元信息（r0..rN alias 单请求批量补全，失败降级 REST-only）
+query ExploreRepoMeta {
+  r0: repository(owner: "anomalyco", name: "opencode") {
+    openGraphImageUrl
+    viewerHasStarred
+  }
+}
 ```
 
 ---
@@ -102,9 +141,15 @@ REST GET /search/repositories?q=topic%3Aawesome-list&sort=stars&order=desc&per_p
 | 项 | 原因 | StarRaft 处理方式 |
 | ---- | ------ | ------------------- |
 | 官方个性化 Activity feed | 无公开 API | REST received_events（关注者+watch 仓库事件）近似，仅取 merged PR 事件，repo+number 去重、上限 10 条 |
-| 官方 Trending 算法 | 无公开 API | REST search 近似（7 天新建按星排序） |
+| 官方 Trending 算法 | 无公开 API | REST search 近似（N 天新建按星排序） |
 | 官方 Awesome Lists 精选 | 编辑内容无 API | REST search topic:awesome-list 按星近似 |
-| Activity filter 面板 | 无官方参考图 | 图标照常渲染，点击 toast 占位，待参考图后实现 |
+| 「今日获星」/「本周获星」窗口 | 增量星数无公开 API | 窗口=created:>N 新建近似；★ 文案 「N today」取总数；官方默认 Today 因近 24h 新建稀疏，默认 This week（7 天） |
+| 官方 Activity feed | 无公开 API | REST received_events（关注者+watch 仓库事件）近似，仅取 merged PR 事件，repo+number 去重、上限 10 条 |
+| Activity 六类（Announcements/Releases/Stars/Repositories/Follows/Recommendations） | 其余五类无公开数据源 | Filter Activity 页完整实现（勾选+SAVE 持久化）；内容侧仅 merged PR 动态（近似 Follows），关闭 Follows 后 Activity 区为空 |
+| 语言/口语筛选列表 | 官方 App 走内部端点 | 内置常见子集（42 编程语言 + 65 口语，linguist 色）；选中后服务端 qualifier 过滤，非纯客户端 |
+| 横幅图 | 官方沿用仓库社交预览图 | repository.openGraphImageUrl（1200x630 social preview，按比例贴宽高自适应）；无自定义预览的仓库不显示横幅 |
+| contributors 计数 | GraphQL 无 contributors 字段 | REST /contributors?per_page=1 的 Link last 页 = 总贡献者数（不存在=0） |
+| 广告/赞助卡（openwhispr 式） | 无广告源 | 不渲染，仅普通仓库卡 |
 | Summary 完整 Markdown | 信息流卡片需轻量 | 原生解析 bullet/inline code，剥离链接/图片/标题/围栏行；完整渲染在 prDetail |
 | Spec 003 Topics 网格与推荐卡 | 官方页无此区块 | 移除；buildTopicQuery/mapSearchResult/FEATURED_TOPICS 及对应 LogicTest 一并清理 |
 
@@ -117,10 +162,16 @@ REST GET /search/repositories?q=topic%3Aawesome-list&sort=stars&order=desc&per_p
 - [ ] buildPrDetailsQuery：N 条 ref 生成 r0..rN alias，owner/name 引号转义
 - [ ] mapPrDetails：事件与 GraphQL 详情合并；PR 已删（alias 为 null）的条目被剔除；author 空时 fallback actor
 - [ ] summarizeBody：bullet 行识别、inline code 分段（code=true）、链接/图片/标题行/围栏标记剥离
-- [ ] buildTrendingPath/buildAwesomePath：7 天窗口日期与 topic qualifier 拼接
+- [ ] buildRepoListPath：窗口/语言/口语 qualifier 组合（trending=created:>N，awesome=topic；空 qualifier 不拼）
+- [ ] mapSearchRepos：node_id → graphqlId；语言色走 programLanguageColor（42 项全集）
+- [ ] contributorCount：Link rel="last" 页数解析；>=1 无分页=1；空数组/非法=0
+- [ ] buildRepoMetaQuery/mapRepoMeta：r0..rN alias 补 openGraphImageUrl/viewerHasStarred；alias 为 null 保留 REST 原值
 - [ ] 主页面：Discover 两入口跳转、Activity 加载/错误重试/空态渲染
-- [ ] 卡片：整体点击进 prDetail，仓库行进 repoDetail，头像/名字进 userProfile，Read more 展开/收起
-- [ ] 反应笑脸：picker 选择 add/remove、viewerHasReacted 高亮、失败 toast
+- [ ] 列表页：筛选行三 chip 交互（Today 下拉改窗口重拉；Language/Spoken sheet 搜索/选中/再点取消）
+- [ ] 列表卡：横幅按比例；三态按钮（STAR→★+ADD TO LIST；★→STAR；ADD TO LIST 未星先自动 star）
+- [ ] 卡片：整体点击进 repoDetail，contributors 行进贡献者页，按钮区独立不冒泡
+- [ ] 活动卡：整体点击进 prDetail，仓库行进 repoDetail，头像/名字进 userProfile，Read more 展开/收起
+- [ ] Filter Activity：六类勾选翻转、SAVE 持久化（Preferences explore_activity_kinds）、Explore 按保存类型过滤
 - [ ] Dark 模式全部走双套令牌，无新增硬编码色值
 
 ---
@@ -131,4 +182,5 @@ REST GET /search/repositories?q=topic%3Aawesome-list&sort=stars&order=desc&per_p
 - Summary 渐隐浮层 + Read more 沿用 Spec 010 定案（展开=全高无内滚）
 - 卡片内多组件实例各自 bindSheet 单实例（041 ReactionBar 同模式已验证）
 - 时间短格式 githubShortTime（Inbox 批约定）；复用令牌 merged_badge_bg/shortcut_blue_bg/flame_fg，无新增色值
-- Trending/Awesome 二级页为基线样式，官方参考图到位后单独收口
+- Trending/Awesome 二级页已于 2026-09-07 按官方参考图收口（筛选行/横幅卡/三态按钮/Filter Activity 页）；
+  语言与口语列表为内置常见子集，官方 App 全量列表走内部端点（详见边界表）

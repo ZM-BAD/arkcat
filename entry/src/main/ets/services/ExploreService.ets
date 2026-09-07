@@ -3,12 +3,12 @@
  * Activity = REST received_events 过滤 merged PR 事件，GraphQL alias 单请求批量补详情；
  * Trending/Awesome 官方无公开 API，REST search 近似（Spec 056 边界）。
  */
-import { ApiError, graphql, restGet } from './GitHttpClient';
+import { ApiError, RawResponse, graphql, restGet } from './GitHttpClient';
 import {
   ActivityPrRef, ExploreActivityEvent, mapActivityEvents, mapActivityEventsWithDetails
 } from '../models/ExploreModels';
 import { RepoSummary } from '../models/GitHubModels';
-import { LANGUAGE_COLORS } from '../models/LanguageColors';
+import { programLanguageColor } from '../models/ExploreLanguages';
 import { Json, JsonMap } from '../utils/Json';
 
 const VIEWER_LOGIN_QUERY = `
@@ -16,7 +16,7 @@ query ViewerLogin {
   viewer { login }
 }`;
 
-/** Trending 近似窗口（天）：近 N 天新建仓库按星排序 */
+/** Trending 筛选窗口（官方 Today/This week/This month → 天数；官方算法无 API，Spec 056 近似） */
 export const TRENDING_WINDOW_DAYS = 7;
 const SEARCH_PER_PAGE = 25;
 
@@ -39,17 +39,128 @@ export function buildPrDetailsQuery(refs: ActivityPrRef[]): string {
   return `query ExploreActivity {\n  ${parts.join('\n  ')}\n}`;
 }
 
-/** Trending 搜索路径（纯函数便于单测；nowMs/daysWindow 注入） */
-export function buildTrendingPath(nowMs: number, daysWindow: number): string {
-  const since = new Date(nowMs - daysWindow * 86400000).toISOString().substring(0, 10);
-  const query = encodeURIComponent(`created:>${since}`);
+/** 横幅图/Star 状态 alias 查询：r0..rN 一批补 openGraphImageUrl + viewerHasStarred */
+export function buildRepoMetaQuery(repos: RepoSummary[]): string {
+  const parts: string[] = [];
+  for (let i = 0; i < repos.length; i++) {
+    const slash = repos[i].nameWithOwner.indexOf('/');
+    if (slash <= 0) {
+      continue;
+    }
+    const owner = gqlEscape(repos[i].nameWithOwner.substring(0, slash));
+    const name = gqlEscape(repos[i].nameWithOwner.substring(slash + 1));
+    parts.push(`r${i}: repository(owner: "${owner}", name: "${name}") { openGraphImageUrl viewerHasStarred }`);
+  }
+  return `query ExploreRepoMeta {\n  ${parts.join('\n  ')}\n}`;
+}
+
+/** 搜索结果 + GraphQL 元信息合并（alias 为 null / 查询不命中时保留 REST 原值） */
+export function mapRepoMeta(repos: RepoSummary[], data: JsonMap): RepoSummary[] {
+  const merged: RepoSummary[] = [];
+  for (let i = 0; i < repos.length; i++) {
+    const node = Json.obj(data, `r${i}`);
+    const repo = repos[i];
+    if (node === null) {
+      merged.push(repo);
+      continue;
+    }
+    merged.push({
+      id: repo.id,
+      name: repo.name,
+      nameWithOwner: repo.nameWithOwner,
+      description: repo.description,
+      stargazerCount: repo.stargazerCount,
+      forkCount: repo.forkCount,
+      primaryLanguage: repo.primaryLanguage,
+      languageColor: repo.languageColor,
+      isPrivate: repo.isPrivate,
+      ownerLogin: repo.ownerLogin,
+      ownerAvatarUrl: repo.ownerAvatarUrl,
+      graphqlId: repo.graphqlId,
+      openGraphImageUrl: Json.str(node, 'openGraphImageUrl'),
+      viewerHasStarred: Json.bool(node, 'viewerHasStarred'),
+      contributorCount: repo.contributorCount
+    });
+  }
+  return merged;
+}
+
+/**
+ * /contributors?per_page=1 的 Link 头 → 贡献者数（rel="last" 页数即总数）。
+ * per_page=1 无分页时：body 空=0，非空=1；无 link 且响应异常按 0。
+ */
+export function contributorCount(body: string, link: string): number {
+  const parsed: Object | null = JSON.parse(body);
+  if (parsed === null || !Array.isArray(parsed)) {
+    return 0;
+  }
+  if ((parsed as Object[]).length === 0) {
+    return 0;
+  }
+  let last = 0;
+  for (const seg of link.split(',')) {
+    if (seg.indexOf('rel="last"') < 0) {
+      continue;
+    }
+    const m = /page=(\d+)/.exec(seg);
+    if (m !== null && m.length > 1) {
+      last = parseInt(m[1], 10);
+    }
+  }
+  return last > 0 ? last : 1;
+}
+
+/** 批量并发取贡献者数（一页 1 条 → Link last 页数）；单仓库失败按 0 降级不阻断 */
+export async function fetchContributorCounts(
+  token: string, repos: RepoSummary[]): Promise<Map<string, number>> {
+  const counts = new Map<string, number>();
+  const jobs: Promise<void>[] = [];
+  for (const repo of repos) {
+    jobs.push(
+      restGet(`/repos/${repo.nameWithOwner}/contributors?per_page=1&anon=0`, token)
+        .then((resp: RawResponse): void => {
+          counts.set(repo.nameWithOwner, contributorCount(resp.body, resp.link ?? ''));
+        })
+        .catch((_e: Error): void => {
+          // 404（无贡献者/空仓库）=0；网络失败同样按 0 降级
+          counts.set(repo.nameWithOwner, 0);
+        }));
+  }
+  await Promise.all(jobs);
+  return counts;
+}
+
+/**
+ * 列表搜索路径（kind=trending/awesome 共用）：
+ * trending 用 created:>X 窗口近似（官方趋势算法无 API）；qualifier 均服务端过滤（语言/口语经实测支持）。
+ */
+export function buildRepoListPath(
+  kind: string, nowMs: number, daysWindow: number, language: string, spoken: string): string {
+  const parts: string[] = [];
+  if (kind === 'awesome') {
+    parts.push('topic:awesome-list');
+  } else {
+    const since = new Date(nowMs - daysWindow * 86400000).toISOString().substring(0, 10);
+    parts.push(`created:>${since}`);
+  }
+  if (language !== '') {
+    parts.push(`language:${language}`);
+  }
+  if (spoken !== '') {
+    parts.push(`spoken_language:${spoken}`);
+  }
+  const query = encodeURIComponent(parts.join(' '));
   return `/search/repositories?q=${query}&sort=stars&order=desc&per_page=${SEARCH_PER_PAGE}`;
 }
 
-/** Awesome Lists 搜索路径（topic:awesome-list 按星近似官方精选） */
-export function buildAwesomePath(): string {
-  const query = encodeURIComponent('topic:awesome-list');
-  return `/search/repositories?q=${query}&sort=stars&order=desc&per_page=${SEARCH_PER_PAGE}`;
+/** Trending 搜索路径（纯函数便于单测；nowMs/daysWindow 注入；语言/口语可选） */
+export function buildTrendingPath(nowMs: number, daysWindow: number, language: string = '', spoken: string = ''): string {
+  return buildRepoListPath('trending', nowMs, daysWindow, language, spoken);
+}
+
+/** Awesome Lists 搜索路径（topic:awesome-list 按星近似官方精选；语言/口语可选） */
+export function buildAwesomePath(language: string = '', spoken: string = ''): string {
+  return buildRepoListPath('awesome', Date.now(), TRENDING_WINDOW_DAYS, language, spoken);
 }
 
 /** REST search 仓库条目 → RepoSummary（映射对齐 ProfileListService REST 兜底） */
@@ -73,10 +184,14 @@ export function mapSearchRepos(body: string): RepoSummary[] {
       stargazerCount: Json.num(item, 'stargazers_count'),
       forkCount: Json.num(item, 'forks_count'),
       primaryLanguage: language,
-      languageColor: LANGUAGE_COLORS[language] ?? '',
+      languageColor: programLanguageColor(language),
       isPrivate: Json.bool(item, 'private'),
       ownerLogin: owner !== null ? Json.str(owner, 'login') : '',
-      ownerAvatarUrl: owner !== null ? Json.str(owner, 'avatar_url') : ''
+      ownerAvatarUrl: owner !== null ? Json.str(owner, 'avatar_url') : '',
+      graphqlId: Json.str(item, 'node_id'),
+      openGraphImageUrl: '',
+      viewerHasStarred: false,
+      contributorCount: 0
     });
   }
   return repos;
@@ -107,15 +222,43 @@ export class ExploreService {
     return mapActivityEventsWithDetails(refs, data);
   }
 
-  /** Trending 仓库（近 7 天新建按星近似，官方算法无 API） */
-  static async fetchTrending(token: string): Promise<RepoSummary[]> {
-    const resp = await restGet(buildTrendingPath(Date.now(), TRENDING_WINDOW_DAYS), token);
-    return mapSearchRepos(resp.body);
-  }
-
-  /** Awesome Lists（topic:awesome-list 按星近似，官方精选无 API） */
-  static async fetchAwesome(token: string): Promise<RepoSummary[]> {
-    const resp = await restGet(buildAwesomePath(), token);
-    return mapSearchRepos(resp.body);
+  /**
+   * Trending/Awesome 仓库列表：REST search 近似的首次数据，随后并行补全二阶元信息——
+   * GraphQL alias 一次性补横幅图/Star 状态 + REST /contributors per_page=1 取 Link last 页
+   * 估贡献者数；任一补全失败各自降级（无横幅/Star 态/计数 0），不阻断列表。
+   */
+  static async fetchRepoList(
+    token: string, kind: string, daysWindow: number, language: string, spoken: string): Promise<RepoSummary[]> {
+    const resp = await restGet(buildRepoListPath(kind, Date.now(), daysWindow, language, spoken), token);
+    const repos = mapSearchRepos(resp.body);
+    if (repos.length === 0) {
+      return repos;
+    }
+    const metaTask: Promise<Object> = graphql(buildRepoMetaQuery(repos), null, token)
+      .then((data: JsonMap): RepoSummary[] => mapRepoMeta(repos, data))
+      .catch((_e: Error): RepoSummary[] => repos);
+    const countTask: Promise<Object> = fetchContributorCounts(token, repos);
+    const results = await Promise.all([metaTask, countTask]);
+    const merged = results[0] as RepoSummary[];
+    const counts = results[1] as Map<string, number>;
+    return merged.map((repo: RepoSummary): RepoSummary => {
+      return {
+        id: repo.id,
+        name: repo.name,
+        nameWithOwner: repo.nameWithOwner,
+        description: repo.description,
+        stargazerCount: repo.stargazerCount,
+        forkCount: repo.forkCount,
+        primaryLanguage: repo.primaryLanguage,
+        languageColor: repo.languageColor,
+        isPrivate: repo.isPrivate,
+        ownerLogin: repo.ownerLogin,
+        ownerAvatarUrl: repo.ownerAvatarUrl,
+        graphqlId: repo.graphqlId,
+        openGraphImageUrl: repo.openGraphImageUrl,
+        viewerHasStarred: repo.viewerHasStarred,
+        contributorCount: counts.get(repo.nameWithOwner) ?? 0
+      };
+    });
   }
 }
