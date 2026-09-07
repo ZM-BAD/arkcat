@@ -35,6 +35,7 @@ export struct SearchOverviewView {
   @Local loaded: boolean = false;
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  @Local isRefreshing: boolean = false;
 
   aboutToAppear(): void {
     this.query = this.keyword;
@@ -63,6 +64,7 @@ export struct SearchOverviewView {
         this.codeGroups = this.groupCodes(d.codeFiles);
         this.loading = false;
         this.loaded = true;
+        this.isRefreshing = false;
         // 记入 Recent searches（review E17）
         SearchHistoryStore.remember(this.getUIContext().getHostContext(), q);
       })
@@ -73,6 +75,7 @@ export struct SearchOverviewView {
         this.errorMsg = e.message;
         this.loading = false;
         this.loaded = true;
+        this.isRefreshing = false;
       });
   }
 
@@ -269,8 +272,9 @@ export struct SearchOverviewView {
 
       PageShadowBar({ show: this.scrollShadow })
 
-      Scroll() {
-        Column() {
+      Refresh({ refreshing: $$this.isRefreshing }) {
+        Scroll() {
+          Column() {
           if (!this.loaded) {
             StateView({ loading: this.loading, error: this.errorMsg, empty: false })
               .width('100%')
@@ -371,10 +375,15 @@ export struct SearchOverviewView {
         .width('100%')
         .padding({ bottom: 24 })
       }
-      .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
       .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
+      }
+      .layoutWeight(1)
+      .onRefreshing((): void => {
+        this.isRefreshing = true;
+        this.load();
+      })
     }
     .width('100%')
     .height('100%')

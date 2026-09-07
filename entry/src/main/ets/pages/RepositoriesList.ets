@@ -8,6 +8,7 @@ import { RepoListPage } from '../models/ProfileModels';
 import { RepoSummary } from '../models/GitHubModels';
 import { ProfileListService, RepoOrder } from '../services/ProfileListService';
 import { StateView } from '../components/StateView';
+import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { compactCount } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
@@ -27,6 +28,9 @@ export struct RepositoriesListView {
   @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  @Local isRefreshing: boolean = false;
+  /** 触底加载更多（底部转圈指示） */
+  @Local loadingMore: boolean = false;
   @Local typeFilter: string = 'all';
   @Local langFilter: string = '';
   @Local sortField: string = 'PUSHED_AT';
@@ -48,18 +52,23 @@ export struct RepositoriesListView {
         this.cursor = page.endCursor;
         this.hasNextPage = page.hasNextPage;
         this.loading = false;
+        this.isRefreshing = false;
+        this.loadingMore = false;
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
+        this.isRefreshing = false;
+        this.loadingMore = false;
       });
   }
 
   private loadMore(): void {
-    if (!this.hasNextPage || this.loading) {
+    if (!this.hasNextPage || this.loading || this.loadingMore) {
       return;
     }
     this.loading = true;
+    this.loadingMore = true;
     ProfileListService.fetchRepoList(this.token, this.owner, this.mode, this.cursor,
       this.orderRef(), this.langFilter, this.typeFilter)
       .then((page: RepoListPage) => {
@@ -67,10 +76,12 @@ export struct RepositoriesListView {
         this.cursor = page.endCursor;
         this.hasNextPage = page.hasNextPage;
         this.loading = false;
+        this.loadingMore = false;
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
+        this.loadingMore = false;
       });
   }
 
@@ -288,43 +299,52 @@ export struct RepositoriesListView {
       .width('100%')
       .padding({ left: 16, right: 16, top: 2, bottom: 8 })
 
-      if (this.repos.length > 0) {
-        Scroll() {
+      Refresh({ refreshing: $$this.isRefreshing }) {
+      Scroll() {
+        if (this.repos.length > 0) {
           Column() {
             ForEach(this.repos, (repo: RepoSummary) => {
               this.repoRow(repo)
             }, (repo: RepoSummary) => repo.id !== '' ? repo.id : repo.nameWithOwner)
             if (this.hasNextPage) {
-              Text($r('app.string.issues_load_more'))
-                .fontSize($r('app.float.body_font_size'))
-                .fontColor($r('app.color.link_blue'))
-                .padding(12)
-                .onClick(() => this.loadMore())
+              ListLoadingFooter({ show: this.loadingMore })
             }
           }
           .padding({ left: 16, right: 16 })
           .width('100%')
-        }
-        .layoutWeight(1)
-        .scrollBar(BarState.Off)
-        .align(Alignment.Top)
-        .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
-      } else {
-        StateView({
-          loading: this.loading,
-          error: this.errorMsg,
-          onRetry: () => this.refresh()
-        })
-        if (!this.loading && this.errorMsg === '') {
+        } else {
           Column() {
-            Text($r('app.string.repos_list_empty'))
-              .fontSize($r('app.float.body_font_size'))
-              .fontColor($r('app.color.text_secondary'))
+            StateView({
+              loading: this.loading,
+              error: this.errorMsg,
+              onRetry: () => this.refresh()
+            })
+            if (!this.loading && this.errorMsg === '') {
+              Column() {
+                Text($r('app.string.repos_list_empty'))
+                  .fontSize($r('app.float.body_font_size'))
+                  .fontColor($r('app.color.text_secondary'))
+              }
+              .layoutWeight(1)
+              .justifyContent(FlexAlign.Center)
+            }
           }
-          .layoutWeight(1)
-          .justifyContent(FlexAlign.Center)
+          .width('100%')
+          .height('100%')
         }
       }
+      .scrollBar(BarState.Off)
+      .align(Alignment.Top)
+      .onReachEnd((): void => {
+        this.loadMore();
+      })
+      .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
+      }
+      .layoutWeight(1)
+      .onRefreshing((): void => {
+        this.isRefreshing = true;
+        this.refresh();
+      })
     }
     .width('100%')
     .height('100%')

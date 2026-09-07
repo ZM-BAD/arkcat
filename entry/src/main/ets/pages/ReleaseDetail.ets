@@ -37,6 +37,7 @@ export struct ReleaseDetailView {
   @Local detail: ReleaseDetailPage | null = null;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  @Local isRefreshing: boolean = false;
   @Local tasks: DownloadTask[] = [];
   /** 正文渲染 HTML（Release 无 bodyHTML，走 /markdown 渲染） */
   @Local bodyHtml: string = '';
@@ -100,10 +101,12 @@ export struct ReleaseDetailView {
             });
         }
         this.loading = false;
+        this.isRefreshing = false;
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
+        this.isRefreshing = false;
       });
   }
 
@@ -344,9 +347,10 @@ export struct ReleaseDetailView {
       .height(56)
       .padding({ left: 0, right: 0 })
 
-      Scroll() {
-        Column() {
-          if (this.detail !== null) {
+      Refresh({ refreshing: $$this.isRefreshing }) {
+        Scroll() {
+          Column() {
+            if (this.detail !== null) {
             // 版本头卡：大标题=release name（如 1.3.2），tag（v1.3.2）降为小字（走查修正）
             Column({ space: 8 }) {
               Text(this.detail.name !== '' ? this.detail.name : this.detail.tagName)
@@ -475,9 +479,14 @@ export struct ReleaseDetailView {
         .padding({ left: 16, right: 16, bottom: 16 })
         .width('100%')
       }
-      .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
+      }
+      .layoutWeight(1)
+      .onRefreshing((): void => {
+        this.isRefreshing = true;
+        this.refresh();
+      })
     }
     .width('100%')
     .height('100%')

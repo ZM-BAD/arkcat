@@ -23,6 +23,7 @@ export struct ListDetailView {
   @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  @Local isRefreshing: boolean = false;
 
   @Monitor('listTick')
   onTickChanged(): void {
@@ -53,10 +54,12 @@ export struct ListDetailView {
       .then((d: WorkListDetail) => {
         this.detail = d;
         this.loading = false;
+        this.isRefreshing = false;
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
+        this.isRefreshing = false;
       });
   }
 
@@ -203,65 +206,71 @@ export struct ListDetailView {
 
       PageShadowBar({ show: this.scrollShadow })
 
-      Scroll() {
-        Column({ space: 8 }) {
-          if (this.detail !== null) {
-            // 归属人 + 大标题 + 描述 + 仓库计数（官方布局）
-            Row({ space: 8 }) {
-              Image(this.detail.viewerAvatar)
-                .width(18)
-                .height(18)
-                .borderRadius(9)
-                .backgroundColor($r('app.color.heat_empty'))
-              Text(this.detail.viewerLogin)
-                .fontSize($r('app.float.caption_font_size'))
-                .fontColor($r('app.color.text_secondary'))
-              Blank()
-            }
-            .width('100%')
-
-            Text(this.detail.name)
-              .fontSize($r('app.float.title_font_size'))
-              .fontWeight(600)
-              .fontColor($r('app.color.text_primary'))
-              .maxLines(1)
-              .textOverflow({ overflow: TextOverflow.Ellipsis })
+      Refresh({ refreshing: $$this.isRefreshing }) {
+        Scroll() {
+          Column({ space: 8 }) {
+            if (this.detail !== null) {
+              // 归属人 + 大标题 + 描述 + 仓库计数（官方布局）
+              Row({ space: 8 }) {
+                Image(this.detail.viewerAvatar)
+                  .width(18)
+                  .height(18)
+                  .borderRadius(9)
+                  .backgroundColor($r('app.color.heat_empty'))
+                Text(this.detail.viewerLogin)
+                  .fontSize($r('app.float.caption_font_size'))
+                  .fontColor($r('app.color.text_secondary'))
+                Blank()
+              }
               .width('100%')
 
-            if (this.detail.description !== '') {
-              Text(this.detail.description)
-                .fontSize($r('app.float.caption_font_size'))
+              Text(this.detail.name)
+                .fontSize($r('app.float.title_font_size'))
+                .fontWeight(600)
                 .fontColor($r('app.color.text_primary'))
+                .maxLines(1)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
                 .width('100%')
-            }
 
-            Row({ space: 8 }) {
-              OctIcon({ res: $r('app.media.oct_repo_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
-              Text(`${this.detail.itemCount}`)
-                .fontSize($r('app.float.caption_font_size'))
-                .fontColor($r('app.color.text_secondary'))
-            }
-            .width('100%')
-            .margin({ top: 4, bottom: 8 })
+              if (this.detail.description !== '') {
+                Text(this.detail.description)
+                  .fontSize($r('app.float.caption_font_size'))
+                  .fontColor($r('app.color.text_primary'))
+                  .width('100%')
+              }
 
-            ForEach(this.detail.repos, (repo: WorkStarredRepoItem) => {
-              this.repoRow(repo)
-            }, (repo: WorkStarredRepoItem) => repo.id)
-          } else {
-            StateView({
-              loading: this.loading,
-              error: this.errorMsg,
-              onRetry: () => this.refresh()
-            })
+              Row({ space: 8 }) {
+                OctIcon({ res: $r('app.media.oct_repo_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
+                Text(`${this.detail.itemCount}`)
+                  .fontSize($r('app.float.caption_font_size'))
+                  .fontColor($r('app.color.text_secondary'))
+              }
+              .width('100%')
+              .margin({ top: 4, bottom: 8 })
+
+              ForEach(this.detail.repos, (repo: WorkStarredRepoItem) => {
+                this.repoRow(repo)
+              }, (repo: WorkStarredRepoItem) => repo.id)
+            } else {
+              StateView({
+                loading: this.loading,
+                error: this.errorMsg,
+                onRetry: () => this.refresh()
+              })
+            }
           }
+          .padding({ left: 16, right: 16, bottom: 16 })
+          .width('100%')
         }
-        .padding({ left: 16, right: 16, bottom: 16 })
-        .width('100%')
+        .scrollBar(BarState.Off)
+        .align(Alignment.Top)
+        .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
       }
       .layoutWeight(1)
-      .scrollBar(BarState.Off)
-      .align(Alignment.Top)
-      .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
+      .onRefreshing((): void => {
+        this.isRefreshing = true;
+        this.refresh();
+      })
     }
     .width('100%')
     .height('100%')

@@ -25,6 +25,7 @@ export struct ExploreView {
   @Local scrollShadow: boolean = false;
   /** Filter Activity 已保存的类型（当前数据源仅 follows 对应动态） */
   @Local activityKinds: string[] = ['follows'];
+  @Local isRefreshing: boolean = false;
 
   aboutToAppear(): void {
     const ctx = this.getUIContext().getHostContext() as common.Context | undefined;
@@ -40,10 +41,12 @@ export struct ExploreView {
         // merged PR 动态近似的官方类目 = Follows（关注网络产生的活动）
         this.events = this.activityKinds.indexOf('follows') >= 0 ? events : [];
         this.loading = false;
+        this.isRefreshing = false;
       })
       .catch((e: Error) => {
         this.errorMsg = friendlyError(this.getUIContext(), e);
         this.loading = false;
+        this.isRefreshing = false;
       });
   }
 
@@ -88,42 +91,43 @@ export struct ExploreView {
 
       PageShadowBar({ show: this.scrollShadow })
 
-      Scroll() {
-        Column() {
-          // Discover 区（白画布，水平 padding）
+      Refresh({ refreshing: $$this.isRefreshing }) {
+        Scroll() {
           Column() {
-            Text($r('app.string.explore_discover'))
-              .fontSize($r('app.float.title_font_size'))
-              .fontWeight(600)
-              .fontColor($r('app.color.text_primary'))
-              .width('100%')
-              .margin({ bottom: 4 })
-
-            this.discoverEntry($r('app.media.oct_flame_16'), $r('app.color.flame_fg'),
-              $r('app.string.explore_trending'), 'trending')
-            this.discoverEntry($r('app.media.oct_smiley_16'), $r('app.color.merged_badge_bg'),
-              $r('app.string.explore_awesome'), 'awesome')
-          }
-          .width('100%')
-          .padding({ left: 16, right: 16 })
-
-          // Activity 区（灰带全宽：官方 canvas.inset，页面画布为 canvas.default 白）
-          Column() {
-            Row() {
-              Text($r('app.string.explore_activity'))
+            // Discover 区（白画布，水平 padding）
+            Column() {
+              Text($r('app.string.explore_discover'))
                 .fontSize($r('app.float.title_font_size'))
                 .fontWeight(600)
                 .fontColor($r('app.color.text_primary'))
-              Blank()
-            Row() {
-              OctIcon({ res: $r('app.media.oct_filter_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
+                .width('100%')
+                .margin({ bottom: 4 })
+
+              this.discoverEntry($r('app.media.oct_flame_16'), $r('app.color.flame_fg'),
+                $r('app.string.explore_trending'), 'trending')
+              this.discoverEntry($r('app.media.oct_smiley_16'), $r('app.color.merged_badge_bg'),
+                $r('app.string.explore_awesome'), 'awesome')
             }
-            .justifyContent(FlexAlign.End)
-            .width(28)
-            .height(28)
-            // 图标右缘与下方贡献者行时间（4m）右缘对齐：灰带 16 内距，触点框内图标顶格右侧
-            .margin({ right: 0 })
-            .onClick(() => this.openActivityFilter())
+            .width('100%')
+            .padding({ left: 16, right: 16 })
+
+            // Activity 区（灰带全宽：官方 canvas.inset，页面画布为 canvas.default 白）
+            Column() {
+              Row() {
+                Text($r('app.string.explore_activity'))
+                  .fontSize($r('app.float.title_font_size'))
+                  .fontWeight(600)
+                  .fontColor($r('app.color.text_primary'))
+                Blank()
+              Row() {
+                OctIcon({ res: $r('app.media.oct_filter_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
+              }
+              .justifyContent(FlexAlign.End)
+              .width(28)
+              .height(28)
+              // 图标右缘与下方贡献者行时间（4m）右缘对齐：灰带 16 内距，触点框内图标顶格右侧
+              .margin({ right: 0 })
+              .onClick(() => this.openActivityFilter())
             }
             .width('100%')
             .alignItems(VerticalAlign.Top)
@@ -170,11 +174,16 @@ export struct ExploreView {
         }
         .width('100%')
       }
-      .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
       .onScroll((_x: number, y: number): void => {
         this.scrollShadow = y > 0.001;
+      })
+      }
+      .layoutWeight(1)
+      .onRefreshing((): void => {
+        this.isRefreshing = true;
+        this.load();
       })
     }
     .width('100%')

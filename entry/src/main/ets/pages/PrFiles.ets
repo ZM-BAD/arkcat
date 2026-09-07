@@ -34,6 +34,7 @@ export struct PrFilesView {
   @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  @Local isRefreshing: boolean = false;
   @Local finderOpen: boolean = false;
   @Local finderQuery: string = '';
   @Local commentText: string = '';
@@ -77,10 +78,12 @@ export struct PrFilesView {
         this.page = page;
         this.files = page.files;
         this.loading = false;
+        this.isRefreshing = false;
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
+        this.isRefreshing = false;
       });
   }
 
@@ -251,47 +254,52 @@ export struct PrFilesView {
 
       PageShadowBar({ show: this.scrollShadow })
 
-      if (this.loading || this.errorMsg !== '') {
-        StateView({ loading: this.loading, error: this.errorMsg, onRetry: (): void => { this.refresh(); } })
-          .layoutWeight(1)
-      } else {
+      Refresh({ refreshing: $$this.isRefreshing }) {
         Scroll() {
           Column() {
-            if (this.files.length === 0) {
-              Text($r('app.string.pr_files_empty'))
-                .fontSize($r('app.float.body_font_size'))
-                .fontColor($r('app.color.text_secondary'))
-                .width('100%')
-                .padding({ top: 48 })
-                .textAlign(TextAlign.Center)
+            if (this.loading || this.errorMsg !== '') {
+              StateView({ loading: this.loading, error: this.errorMsg, onRetry: (): void => { this.refresh(); } })
             } else {
-              Text($r('app.string.pr_changes_from_all_commits'))
-                .fontSize($r('app.float.caption_font_size'))
-                .fontColor($r('app.color.text_secondary'))
-                .width('100%')
-                .padding({ left: 16, top: 10, bottom: 8 })
-              ForEach(this.files, (item: PrFileItem) => {
-                PrDiffCard({
-                  item: item,
-                  expanded: this.expandedPaths.indexOf(item.path) >= 0,
-                  showLineNumbers: this.showLineNumbers,
-                  onToggle: (): void => this.togglePath(item.path),
-                  onSetExpanded: (expanded: boolean): void => this.setExpanded(item.path, expanded),
-                  onOpenFile: (): void => this.openFile(item)
-                })
-              }, (item: PrFileItem) => item.path)
+              if (this.files.length === 0) {
+                Text($r('app.string.pr_files_empty'))
+                  .fontSize($r('app.float.body_font_size'))
+                  .fontColor($r('app.color.text_secondary'))
+                  .width('100%')
+                  .padding({ top: 48 })
+                  .textAlign(TextAlign.Center)
+              } else {
+                Text($r('app.string.pr_changes_from_all_commits'))
+                  .fontSize($r('app.float.caption_font_size'))
+                  .fontColor($r('app.color.text_secondary'))
+                  .width('100%')
+                  .padding({ left: 16, top: 10, bottom: 8 })
+                ForEach(this.files, (item: PrFileItem) => {
+                  PrDiffCard({
+                    item: item,
+                    expanded: this.expandedPaths.indexOf(item.path) >= 0,
+                    showLineNumbers: this.showLineNumbers,
+                    onToggle: (): void => this.togglePath(item.path),
+                    onSetExpanded: (expanded: boolean): void => this.setExpanded(item.path, expanded),
+                    onOpenFile: (): void => this.openFile(item)
+                  })
+                }, (item: PrFileItem) => item.path)
+              }
             }
           }
           .width('100%')
           .padding({ left: 16, right: 16, bottom: 16 })
         }
-        .layoutWeight(1)
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
         .onScroll((_x: number, y: number): void => {
           this.scrollShadow = y > 0.001;
         })
       }
+      .layoutWeight(1)
+      .onRefreshing((): void => {
+        this.isRefreshing = true;
+        this.refresh();
+      })
 
       // 底部 Add a comment（全局评论，写操作最小实现）
       Row({ space: 10 }) {

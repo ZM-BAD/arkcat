@@ -11,6 +11,7 @@ import { PrStatusCard } from '../components/PrStatusCard';
 import { RepoComment, PrDetailPage } from '../models/RepoSubModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { StateView } from '../components/StateView';
+import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
@@ -26,6 +27,7 @@ export struct PrDetailView {
   @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  @Local isRefreshing: boolean = false;
   /** 评论输入面板（Spec 041） */
   @Local composerOpen: boolean = false;
   @Local draft: string = '';
@@ -49,10 +51,14 @@ export struct PrDetailView {
         this.commentsHasNext = page.commentsHasNext;
         this.commentsCursor = page.commentsCursor;
         this.loading = false;
+        this.isRefreshing = false;
+        this.loadingMore = false;
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
+        this.isRefreshing = false;
+        this.loadingMore = false;
       });
   }
 
@@ -223,9 +229,10 @@ export struct PrDetailView {
 
       PageShadowBar({ show: this.scrollShadow })
 
-      Scroll() {
-        Column() {
-          if (this.detail !== null) {
+      Refresh({ refreshing: $$this.isRefreshing }) {
+        Scroll() {
+          Column() {
+            if (this.detail !== null) {
             // 标题 + 徽章
             Column({ space: 8 }) {
               Text(this.detail.title)
@@ -374,13 +381,7 @@ export struct PrDetailView {
                 })
               }, (item: RepoComment) => `${item.id}-${item.body.length}`)
               if (this.commentsHasNext) {
-                Text($r('app.string.issues_load_more'))
-                  .fontSize($r('app.float.body_font_size'))
-                  .fontColor($r('app.color.link_blue'))
-                  .width('100%')
-                  .textAlign(TextAlign.Center)
-                  .padding(12)
-                  .onClick(() => this.loadMoreComments())
+                ListLoadingFooter({ show: this.loadingMore })
               }
               if (this.detail.merged) {
                 Button($r('app.string.pr_delete_branch'))
@@ -431,11 +432,19 @@ export struct PrDetailView {
         .padding({ left: 16, right: 16, bottom: 16 })
         .width('100%')
       }
-      .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
+      .onReachEnd((): void => {
+        this.loadMoreComments();
+      })
       .onScroll((_x: number, y: number): void => {
         this.scrollShadow = y > 0.001;
+      })
+      }
+      .layoutWeight(1)
+      .onRefreshing((): void => {
+        this.isRefreshing = true;
+        this.refresh();
       })
 
       // 底部 COMMENT（Spec 041：展开输入面板）

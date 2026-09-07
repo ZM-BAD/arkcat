@@ -40,6 +40,7 @@ export struct InboxView {
   @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  @Local isRefreshing: boolean = false;
 
   aboutToAppear(): void {
     this.refresh();
@@ -55,10 +56,12 @@ export struct InboxView {
         this.repoFilters = collectRepoFilters(items);
         this.applyFilters();
         this.loading = false;
+        this.isRefreshing = false;
       })
       .catch((e: Error) => {
         this.errorMsg = friendlyError(this.getUIContext(), e);
         this.loading = false;
+        this.isRefreshing = false;
       });
   }
 
@@ -341,33 +344,39 @@ export struct InboxView {
       .scrollBar(BarState.Off)
       .padding({ left: 16, right: 16, bottom: 8 })
 
-      Scroll() {
-        // 独立卡片列表：每张通知自带圆角与间距（同 Pull Requests 列表样式）
-        Column() {
-          if (this.items.length > 0) {
-            ForEach(this.items, (item: NotificationItem) => {
-              InboxNotifyCard({
-                item: item,
-                onMarkRead: (it: NotificationItem): void => this.markRead(it)
+      Refresh({ refreshing: $$this.isRefreshing }) {
+        Scroll() {
+          // 独立卡片列表：每张通知自带圆角与间距（同 Pull Requests 列表样式）
+          Column() {
+            if (this.items.length > 0) {
+              ForEach(this.items, (item: NotificationItem) => {
+                InboxNotifyCard({
+                  item: item,
+                  onMarkRead: (it: NotificationItem): void => this.markRead(it)
+                })
+              }, (item: NotificationItem) => item.threadId)
+            } else {
+              StateView({
+                loading: this.loading,
+                error: this.errorMsg,
+                empty: !this.loading && this.errorMsg === '',
+                emptyText: this.emptyText()
               })
-            }, (item: NotificationItem) => item.threadId)
-          } else {
-            StateView({
-              loading: this.loading,
-              error: this.errorMsg,
-              empty: !this.loading && this.errorMsg === '',
-              emptyText: this.emptyText()
-            })
+            }
           }
+          .padding({ left: 16, right: 16, bottom: 16 })
+          .width('100%')
         }
-        .padding({ left: 16, right: 16, bottom: 16 })
-        .width('100%')
+        .scrollBar(BarState.Off)
+        .align(Alignment.Top)
+        .onScroll((_x: number, y: number): void => {
+          this.scrollShadow = y > 0.001;
+        })
       }
       .layoutWeight(1)
-      .scrollBar(BarState.Off)
-      .align(Alignment.Top)
-      .onScroll((_x: number, y: number): void => {
-        this.scrollShadow = y > 0.001;
+      .onRefreshing((): void => {
+        this.isRefreshing = true;
+        this.refresh();
       })
     }
     .width('100%')
