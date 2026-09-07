@@ -602,12 +602,18 @@ export function mapReleaseDetail(data: JsonMap): ReleaseDetailPage | null {
 }
 
 
+/** reactionGroups 数组映射（Explore 信息流卡等复用，Spec 056） */
+export function mapReactionGroups(raw: Object[]): ReactionGroup[] {
+  const groups: ReactionGroup[] = [];
+  for (const nodeItem of raw) {
+    groups.push(mapReactionGroup(nodeItem as JsonMap));
+  }
+  return groups;
+}
+
 function mapComment(raw: JsonMap): RepoComment {
   const author = Json.obj(raw, 'author');
-  const reactions: ReactionGroup[] = [];
-  for (const nodeItem of Json.arr(raw, 'reactionGroups')) {
-    reactions.push(mapReactionGroup(nodeItem as JsonMap));
-  }
+  const reactions = mapReactionGroups(Json.arr(raw, 'reactionGroups'));
   return {
     id: Json.str(raw, 'id'),
     body: Json.str(raw, 'body'),

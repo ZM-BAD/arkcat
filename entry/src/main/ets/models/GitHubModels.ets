@@ -45,6 +45,14 @@ export interface RepoSummary {
   /** 仓库属主（Pinned 卡片头像/用户名；查询未带 owner 时为 ''） */
   ownerLogin: string;
   ownerAvatarUrl: string;
+  /** GraphQL 节点 id（Star mutation 与星标列表成员判断；REST 兜底取 node_id） */
+  graphqlId: string;
+  /** 仓库社交横幅图（StarRaft Trending 卡顶部大图；无自定义预览为 ''） */
+  openGraphImageUrl: string;
+  /** viewer 是否已 Star（Trending 卡三态按钮） */
+  viewerHasStarred: boolean;
+  /** 贡献者总数（REST /contributors Link last 页近似；未加载为 0） */
+  contributorCount: number;
 }
 
 /** 通知条目（REST /notifications） */
@@ -111,7 +119,12 @@ export function mapRepo(raw: JsonMap): RepoSummary {
     languageColor: languageColor,
     isPrivate: Json.bool(raw, 'isPrivate'),
     ownerLogin: owner !== null ? Json.str(owner, 'login') : '',
-    ownerAvatarUrl: owner !== null ? Json.str(owner, 'avatarUrl') : ''
+    ownerAvatarUrl: owner !== null ? Json.str(owner, 'avatarUrl') : '',
+    // GraphQL 语义：id 即节点 id；meta 字段随查询可选缺失（缺省空/false）
+    graphqlId: Json.str(raw, 'id'),
+    openGraphImageUrl: Json.str(raw, 'openGraphImageUrl'),
+    viewerHasStarred: Json.bool(raw, 'viewerHasStarred'),
+    contributorCount: 0
   };
 }
 

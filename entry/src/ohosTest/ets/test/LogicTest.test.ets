@@ -25,8 +25,9 @@ import { buildNotificationsPath, pullRefFromUrl, buildPullStatesQuery, mapPullMe
 import { buildCodeQuery, mapCodeSearch, mapSearchNode, mapSearchResults, buildQualifierInsert, pushSearchHistory, buildSearchQuery, mapSearchOverview, formatBigCount, isLightHexColor } from '../../../main/ets/services/SearchService';
 import { buildCodeSnippet, splitLines, buildFragmentLines, parseCodeSearchItem, fileBadgeKey } from '../../../main/ets/services/CodeSearchService';
 import { RawMatch } from '../../../main/ets/services/CodeSearchService';
-import { buildTopicQuery } from '../../../main/ets/services/ExploreService';
-import { mapSearchResult } from '../../../main/ets/models/ExploreModels';
+import { buildTrendingPath, buildAwesomePath, buildPrDetailsQuery, buildRepoListPath, buildRepoMetaQuery, mapRepoMeta, mapSearchRepos, contributorCount } from '../../../main/ets/services/ExploreService';
+import { RepoSummary } from '../../../main/ets/models/GitHubModels';
+import { mapActivityEvents, mapActivityEventsWithDetails, summarizeBody, ActivityPrRef } from '../../../main/ets/models/ExploreModels';
 import { mapUserProfile, isSelfProfile } from '../../../main/ets/models/ProfileModels';
 import { mapRepoDetail, nextStarAction } from '../../../main/ets/models/RepoDetailModels';
 import { parseAchievementDetail, extractAchievementSlugs } from '../../../main/ets/models/AchievementModels';
@@ -281,17 +282,194 @@ export default function logicTest(testsuiteName: string) {
       expect(items[1].isMarkdown).assertFalse();
     });
 
-    it('buildTopicQuery_and_mapSearchResult', 0, () => {
-      expect(buildTopicQuery('harmonyos')).assertEqual('topic:harmonyos');
-      const node1: JsonMap = { 'id': 'R1', 'nameWithOwner': 'a/b', 'stargazerCount': 5 };
-      const node2: JsonMap = { 'id': 'R2', 'nameWithOwner': 'c/d', 'stargazerCount': 1 };
-      const nodes: JsonMap[] = [node1, node2];
-      const searchNode: JsonMap = { 'repositoryCount': 2, 'nodes': nodes };
-      const result = mapSearchResult({ 'search': searchNode }, 'harmonyos');
-      expect(result.topic).assertEqual('harmonyos');
-      expect(result.repositoryCount).assertEqual(2);
-      expect(result.repos.length).assertEqual(2);
-      expect(result.repos[1].nameWithOwner).assertEqual('c/d');
+    it('mapActivityEvents_mergedOnly_dedupe', 0, () => {
+      // 嵌套结构经 JSON.parse 构造（ohosTest 禁无类型嵌套字面量）
+      const prEvent = (repoName: string, number: number, action: string): JsonMap => {
+        const raw = `{"type":"PullRequestEvent","id":"e_${repoName}_${number}",` +
+          `"created_at":"2026-09-05T18:51:20Z",` +
+          `"actor":{"login":"alice","avatar_url":"https://a/1"},` +
+          `"org":{"avatar_url":"https://o/1"},"repo":{"name":"${repoName}"},` +
+          `"payload":{"action":"${action}","number":${number},` +
+          `"pull_request":{"number":${number},"head":{"ref":"feature/x"}}}}`;
+        return JSON.parse(raw) as JsonMap;
+      };
+      const push = JSON.parse('{"type":"PushEvent"}') as JsonMap;
+      const events: Object[] = [
+        prEvent('a/b', 1, 'merged'),
+        push,
+        prEvent('a/b', 2, 'opened'),
+        prEvent('a/b', 1, 'merged'),
+        prEvent('c/d', 3, 'closed'),
+        prEvent('c/d', 4, 'merged')
+      ];
+      const refs = mapActivityEvents(events);
+      expect(refs.length).assertEqual(2);
+      expect(refs[0].repoFullName).assertEqual('a/b');
+      expect(refs[0].number).assertEqual(1);
+      expect(refs[0].actorLogin).assertEqual('alice');
+      expect(refs[0].orgAvatar).assertEqual('https://o/1');
+      expect(refs[0].headRef).assertEqual('feature/x');
+      expect(refs[1].number).assertEqual(4);
+    });
+
+    it('mapActivityEvents_cap10', 0, () => {
+      const events: Object[] = [];
+      for (let i = 1; i <= 15; i++) {
+        const raw = `{"type":"PullRequestEvent","id":"e${i}","repo":{"name":"a/b"},` +
+          `"payload":{"action":"merged","number":${i},"pull_request":{"number":${i}}}}`;
+        events.push(JSON.parse(raw) as JsonMap);
+      }
+      expect(mapActivityEvents(events).length).assertEqual(10);
+    });
+
+    it('buildPrDetailsQuery_alias_escape', 0, () => {
+      const normal: ActivityPrRef = {
+        eventId: 'e1', repoFullName: 'a/b', number: 7, headRef: 'f',
+        actorLogin: '', actorAvatar: '', orgAvatar: '', createdAt: ''
+      };
+      const weird: ActivityPrRef = {
+        eventId: 'e2', repoFullName: 'o/ha"ck', number: 8, headRef: '',
+        actorLogin: '', actorAvatar: '', orgAvatar: '', createdAt: ''
+      };
+      const q = buildPrDetailsQuery([normal, weird]);
+      expect(q.startsWith('query ExploreActivity {')).assertTrue();
+      expect(q.includes('r0: repository(owner: "a", name: "b")')).assertTrue();
+      expect(q.includes('pullRequest(number: 7)')).assertTrue();
+      expect(q.includes('pullRequest(number: 8)')).assertTrue();
+      expect(q.includes('name: "ha\\"ck"')).assertTrue();
+      expect(q.includes('headRefName')).assertTrue();
+      expect(q.includes('baseRefName')).assertTrue();
+    });
+
+    it('mapActivityEventsWithDetails_merge_fallback', 0, () => {
+      const refs: ActivityPrRef[] = [{
+        eventId: 'e1', repoFullName: 'a/b', number: 7, headRef: 'feature/x',
+        actorLogin: 'alice', actorAvatar: 'https://a/1', orgAvatar: '', createdAt: '2026-09-05T18:51:20Z'
+      }];
+      const data = JSON.parse(`{"r0":{"pullRequest":{"id":"PR_1","title":"T","body":"- x","merged":true,` +
+        `"headRefName":"feature/x","baseRefName":"main",` +
+        `"author":{"login":"bob","avatarUrl":"https://b/2"},` +
+        `"reactionGroups":[{"content":"THUMBS_UP","viewerHasReacted":false,` +
+        `"reactors":{"totalCount":3}}]}}}`) as JsonMap;
+      const out = mapActivityEventsWithDetails(refs, data);
+      expect(out.length).assertEqual(1);
+      expect(out[0].key).assertEqual('a/b/7');
+      expect(out[0].title).assertEqual('T');
+      expect(out[0].authorLogin).assertEqual('bob');
+      expect(out[0].subjectId).assertEqual('PR_1');
+      expect(out[0].reactions.length).assertEqual(1);
+      expect(out[0].reactions[0].count).assertEqual(3);
+      expect(out[0].headRef).assertEqual('feature/x');
+      expect(out[0].baseRef).assertEqual('main');
+      // alias 缺失（PR 已删）→ 剔除
+      expect(mapActivityEventsWithDetails(refs, { } as JsonMap).length).assertEqual(0);
+      // author 空 → 回退事件 actor
+      const noAuthor = JSON.parse(`{"r0":{"pullRequest":{"id":"PR_1","title":"T","body":"",` +
+        `"merged":true,"author":null,"reactionGroups":[]}}}`) as JsonMap;
+      const out2 = mapActivityEventsWithDetails(refs, noAuthor);
+      expect(out2.length).assertEqual(1);
+      expect(out2[0].authorLogin).assertEqual('alice');
+      expect(out2[0].authorAvatar).assertEqual('https://a/1');
+    });
+
+    it('summarizeBody_parse', 0, () => {
+      const body = [
+        '## Summary',
+        '',
+        '- replace `linkit@0.1.19` as owner',
+        '- see [docs](https://example.com) for more',
+        '![img](https://x/y.png)',
+        '```rust',
+        'let x = 1;',
+        '```',
+        '> quote',
+        'plain line'
+      ].join('\n');
+      const lines = summarizeBody(body);
+      // 标题/空行/图片行/围栏标记/引用行剥除，剩 bullet×2 + 围栏内容 + 普通行
+      expect(lines.length).assertEqual(4);
+      expect(lines[0].bullet).assertTrue();
+      expect(lines[0].segments.length).assertEqual(3);
+      expect(lines[0].segments[0].text).assertEqual('replace ');
+      expect(lines[0].segments[1].isCode).assertTrue();
+      expect(lines[0].segments[1].text).assertEqual('linkit@0.1.19');
+      expect(lines[0].segments[2].text).assertEqual(' as owner');
+      expect(lines[1].segments[0].text).assertEqual('see docs for more');
+      expect(lines[2].segments[0].isCode).assertTrue();
+      expect(lines[2].segments[0].text).assertEqual('let x = 1;');
+      expect(lines[3].bullet).assertFalse();
+      expect(lines[3].segments[0].text).assertEqual('plain line');
+    });
+
+    it('buildTrendingPath_and_awesomePath', 0, () => {
+      const now = Date.parse('2026-09-06T12:00:00Z');
+      const path = buildTrendingPath(now, 7);
+      expect(path.startsWith('/search/repositories?q=')).assertTrue();
+      expect(path.includes('pushed%3A%3E2026-08-30')).assertTrue();
+      expect(path.includes('sort=stars&order=desc')).assertTrue();
+      expect(buildAwesomePath().includes('topic%3Aawesome-list')).assertTrue();
+    });
+
+    it('mapSearchRepos_rest', 0, () => {
+      const body = `{"items":[{"id":"1","name":"b","full_name":"a/b","description":"d",` +
+        `"stargazers_count":10,"forks_count":2,"language":"TypeScript",` +
+        `"private":false,"owner":{"login":"a","avatar_url":"https://av"}}]}`;
+      const repos = mapSearchRepos(body);
+      expect(repos.length).assertEqual(1);
+      expect(repos[0].nameWithOwner).assertEqual('a/b');
+      expect(repos[0].stargazerCount).assertEqual(10);
+      expect(repos[0].forkCount).assertEqual(2);
+      expect(repos[0].primaryLanguage).assertEqual('TypeScript');
+      expect(repos[0].ownerLogin).assertEqual('a');
+    });
+
+    it('buildRepoListPath_qualifiers', 0, () => {
+      const now = Date.parse('2026-09-06T12:00:00Z');
+      const trending = buildRepoListPath('trending', now, 7, 'Go', 'English');
+      expect(trending.includes('pushed%3A%3E2026-08-30')).assertTrue();
+      expect(trending.includes('language%3AGo')).assertTrue();
+      expect(trending.includes('spoken_language%3AEnglish')).assertTrue();
+      expect(trending.includes('sort=stars&order=desc')).assertTrue();
+      const awesome = buildRepoListPath('awesome', now, 7, '', '');
+      expect(awesome.includes('topic%3Aawesome-list')).assertTrue();
+      expect(awesome.includes('language%3A')).assertFalse();
+      // 旧签名兼容（存量测试）：默认不带 qualifier
+      expect(buildTrendingPath(now, 7).includes('language%3A')).assertFalse();
+      expect(buildAwesomePath().includes('topic%3Aawesome-list')).assertTrue();
+    });
+
+    it('contributorCount_parse', 0, () => {
+      expect(contributorCount('[{"login":"a"}]', '')).assertEqual(1);
+      expect(contributorCount('[]', '')).assertEqual(0);
+      expect(contributorCount('[{"login":"a"}]',
+        '<https://api.github.com/repositories/1/contributors?page=2>; rel="next", ' +
+        '<https://api.github.com/repositories/1/contributors?page=435>; rel="last"')).assertEqual(435);
+      expect(contributorCount('null', '')).assertEqual(0);
+    });
+
+    it('buildRepoMetaQuery_and_mapRepoMeta', 0, () => {
+      const repoOne: RepoSummary = {
+        id: '1', name: 'b', nameWithOwner: 'a/b', description: '', stargazerCount: 1,
+        forkCount: 0, primaryLanguage: '', languageColor: '', isPrivate: false,
+        ownerLogin: 'a', ownerAvatarUrl: '', graphqlId: 'N1', openGraphImageUrl: '',
+        viewerHasStarred: false, contributorCount: 0
+      };
+      const repoTwo: RepoSummary = {
+        id: '2', name: 'c', nameWithOwner: 'a/c', description: '', stargazerCount: 2,
+        forkCount: 0, primaryLanguage: '', languageColor: '', isPrivate: false,
+        ownerLogin: 'a', ownerAvatarUrl: '', graphqlId: 'N2', openGraphImageUrl: '',
+        viewerHasStarred: false, contributorCount: 0
+      };
+      const query = buildRepoMetaQuery([repoOne, repoTwo]);
+      expect(query.includes('r0: repository(owner: "a", name: "b")')).assertTrue();
+      expect(query.includes('r1: repository(owner: "a", name: "c")')).assertTrue();
+      const meta0: JsonMap = { 'openGraphImageUrl': 'https://img', 'viewerHasStarred': true };
+      const data: JsonMap = { 'r0': meta0 };
+      const merged = mapRepoMeta([repoOne, repoTwo], data);
+      expect(merged[0].openGraphImageUrl).assertEqual('https://img');
+      expect(merged[0].viewerHasStarred).assertTrue();
+      // alias 缺失（等价为 null）：保留 REST 原值
+      expect(merged[1].openGraphImageUrl).assertEqual('');
     });
 
     it('buildQualifierInsert', 0, () => {
@@ -705,10 +883,9 @@ export default function logicTest(testsuiteName: string) {
       // 别名解析：缺失节点兜底 false
       const node1: JsonMap = { 'merged': true };
       const node2: JsonMap = { 'merged': false };
-      const repo1: JsonMap = { 'issueOrPullRequest': node1 };
-      const repo2: JsonMap = { 'issueOrPullRequest': node2 };
-      const alias0: JsonMap = { 'repository': repo1 };
-      const alias1: JsonMap = { 'repository': repo2 };
+      // 04472df 后 alias 即 repository 节点，内层直接是 issueOrPullRequest（旧双重嵌套为过期测试数据）
+      const alias0: JsonMap = { 'issueOrPullRequest': node1 };
+      const alias1: JsonMap = { 'issueOrPullRequest': node2 };
       const alias2: JsonMap = {};
       const data: JsonMap = { 't0': alias0, 't1': alias1, 't2': alias2 };
       const merged = mapPullMerged(data, 3);

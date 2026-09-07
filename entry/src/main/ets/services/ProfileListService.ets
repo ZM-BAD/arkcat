@@ -273,7 +273,11 @@ export class ProfileListService {
           languageColor: LANGUAGE_COLORS[language] ?? '',
           isPrivate: Json.bool(item, 'private'),
           ownerLogin: owner !== null ? Json.str(owner, 'login') : '',
-          ownerAvatarUrl: owner !== null ? Json.str(owner, 'avatar_url') : ''
+          ownerAvatarUrl: owner !== null ? Json.str(owner, 'avatar_url') : '',
+          graphqlId: Json.str(item, 'node_id'),
+          openGraphImageUrl: '',
+          viewerHasStarred: false,
+          contributorCount: 0
         });
       }
     }

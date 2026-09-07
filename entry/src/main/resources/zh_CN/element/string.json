@@ -177,14 +177,6 @@
       "value": "安全"
     },
     {
-      "name": "explore_topics_title",
-      "value": "Topics"
-    },
-    {
-      "name": "explore_topic_count",
-      "value": "topic:%1$s · %2$d 个仓库"
-    },
-    {
       "name": "copilot_title",
       "value": "Copilot Chat"
     },
@@ -474,7 +466,7 @@
     },
     {
       "name": "explore_trending",
-      "value": "趋势仓库"
+      "value": "趋势"
     },
     {
       "name": "explore_awesome",
@@ -485,8 +477,104 @@
       "value": "动态"
     },
     {
+      "name": "explore_contributed_to",
+      "value": "贡献了"
+    },
+    {
+      "name": "explore_summary",
+      "value": "摘要"
+    },
+    {
+      "name": "explore_read_more",
+      "value": "阅读更多"
+    },
+    {
+      "name": "explore_activity_empty",
+      "value": "暂无动态"
+    },
+    {
       "name": "explore_star",
       "value": "加星"
+    },
+    {
+      "name": "explore_filter_today",
+      "value": "今天"
+    },
+    {
+      "name": "explore_filter_this_week",
+      "value": "本周"
+    },
+    {
+      "name": "explore_filter_this_month",
+      "value": "本月"
+    },
+    {
+      "name": "explore_filter_language",
+      "value": "语言"
+    },
+    {
+      "name": "explore_filter_spoken",
+      "value": "口语"
+    },
+    {
+      "name": "explore_filter_language_title",
+      "value": "按语言筛选"
+    },
+    {
+      "name": "explore_filter_spoken_title",
+      "value": "按口语筛选"
+    },
+    {
+      "name": "explore_add_to_list",
+      "value": "添加到列表"
+    },
+    {
+      "name": "explore_stars_today_fmt",
+      "value": "%1$d 今日"
+    },
+    {
+      "name": "explore_contributors_fmt",
+      "value": "%1$d 个贡献者"
+    },
+    {
+      "name": "explore_lists_empty",
+      "value": "暂无列表"
+    },
+    {
+      "name": "explore_filter_activity",
+      "value": "活动筛选"
+    },
+    {
+      "name": "explore_filter_save",
+      "value": "保存"
+    },
+    {
+      "name": "explore_filter_save_failed",
+      "value": "活动筛选保存失败"
+    },
+    {
+      "name": "explore_kind_announcements",
+      "value": "公告"
+    },
+    {
+      "name": "explore_kind_releases",
+      "value": "发布"
+    },
+    {
+      "name": "explore_kind_stars",
+      "value": "星标"
+    },
+    {
+      "name": "explore_kind_repositories",
+      "value": "仓库"
+    },
+    {
+      "name": "explore_kind_follows",
+      "value": "关注"
+    },
+    {
+      "name": "explore_kind_recommendations",
+      "value": "推荐"
     },
     {
       "name": "profile_settings",
@@ -2155,6 +2243,14 @@
     {
       "name": "commit_deletions",
       "value": "删除 %1$d 行"
+    },
+    {
+      "name": "explore_filter_clear",
+      "value": "清除全部筛选"
+    },
+    {
+      "name": "explore_filter_no_results",
+      "value": "无匹配结果"
     }
   ]
 }

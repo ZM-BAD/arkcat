@@ -52,6 +52,8 @@ import { OrgProfileView } from './OrgProfile';
 import { RepositoriesListView } from './RepositoriesList';
 import { FileTreeView } from './FileTree';
 import { CodeViewerView } from './CodeViewer';
+import { ExploreRepoListView } from './ExploreRepoList';
+import { FilterActivityView } from './FilterActivity';
 
 @Entry
 @Component
@@ -116,6 +118,8 @@ struct Index {
   @State workIssuesTick: number = 0;
   /** Commit 详情路由参数（owner/name/oid 第三段） */
   @State commitOid: string = '';
+  /** Spec 056：Explore Trending/Awesome 列表页 kind 参数 */
+  @State exploreListKind: string = 'trending';
   private tabController: TabsController = new TabsController();
   private pathStack: NavPathStack = new NavPathStack();
 
@@ -912,6 +916,35 @@ struct Index {
     .hideTitleBar(true)
   }
 
+  /** Spec 056：Explore Trending/Awesome 列表页（路由参数：kind） */
+  @Builder
+  exploreRepoListDestination() {
+    NavDestination() {
+      ExploreRepoListView({
+        kind: this.exploreListKind,
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      const kind = context.pathInfo.param as string;
+      this.exploreListKind = kind === 'awesome' ? 'awesome' : 'trending';
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 056 收口：Explore Activity 类型筛选页（Filter Activity，六类勾选 + SAVE） */
+  @Builder
+  exploreActivityFilterDestination() {
+    NavDestination() {
+      FilterActivityView({
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .hideTitleBar(true)
+  }
+
   @Builder
   destinationMap(name: string) {
     if (name === 'userProfile') {
@@ -994,6 +1027,10 @@ struct Index {
       this.prFilesDestination()
     } else if (name === 'commitDetail') {
       this.commitDetailDestination()
+    } else if (name === 'exploreRepoList') {
+      this.exploreRepoListDestination()
+    } else if (name === 'exploreActivityFilter') {
+      this.exploreActivityFilterDestination()
     }
   }
 

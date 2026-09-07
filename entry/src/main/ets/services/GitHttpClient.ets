@@ -22,9 +22,11 @@ export class ApiError extends Error {
   }
 }
 
-interface RawResponse {
+export interface RawResponse {
   code: number;
   body: string;
+  /** Link 分页头（GitHub 分页接口返回；如 contributors 的 rel="last" 页数=贡献者计数） */
+  link?: string;
 }
 
 function baseHeaders(token: string): Record<string, string> {
@@ -57,6 +59,15 @@ async function request(method: http.RequestMethod, url: string, token: string, b
     const resp = await req.request(url, options);
     const code = typeof resp.responseCode === 'number' ? resp.responseCode : 0;
     const text = typeof resp.result === 'string' ? resp.result : '';
+    // GitHub 返回小写 "link"；部分代理/网关可能保留 "Link" 原样，双写兼容
+    let link = '';
+    if (resp.header !== undefined && resp.header !== null) {
+      const header = resp.header as Record<string, Object>;
+      const v = header['link'] ?? header['Link'];
+      if (typeof v === 'string') {
+        link = v;
+      }
+    }
     if (code < 200 || code >= 300) {
       // 拼入响应 body 的 message，便于 422/403 等业务失败排查（review G11）
       let detail = '';
@@ -69,7 +80,7 @@ async function request(method: http.RequestMethod, url: string, token: string, b
       }
       throw new ApiError(code, `GitHub API ${url} -> HTTP ${code}${detail.substring(0, 200)}`);
     }
-    return { code: code, body: text };
+    return { code: code, body: text, link: link };
   } catch (e) {
     if (e instanceof ApiError) {
       throw e;
