@@ -45,6 +45,9 @@ skills/
 # ZCode 会话调试截图（不入库）
 .zcode-tmp/
 
+# 宿主单元测试构建产物（scripts/ut）
+.ut/
+
 # Playwright MCP 调试产物（机器本地）
 .playwright-mcp/
 

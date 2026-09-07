@@ -55,3 +55,10 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
+      - id: ut-run
+        name: 单元测试（宿主 node:test，esbuild 打包 ArkTS 纯函数链）
+        entry: bash scripts/ut/run-local-tests.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
