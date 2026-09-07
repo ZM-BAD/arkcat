@@ -9,7 +9,7 @@
 
 ## 一、页面/功能概述
 
-引入 GitHub 官方图标集 **Octicons**（MIT 许可，Primer 设计系统）作为 StarRaft 的图标资产基座，替换现有页面中用于「App 骨架/系统级符号」的 Unicode 字形与 emoji（返回、搜索、更多、刷新、新建、Tab、My Work 七入口、列表状态图标、计数气泡、筛选漏斗、拖拽手柄等）。着色方式：SVG 纯路径 + ArkUI `Image.fillColor()` 按语义着色（与官方 App 的「Octicons 线框 + 品牌色」做法一致）。**不包含**：官方彩色插画（蓝色 Octocat 空态等）、内容性 emoji（趋势🔥、文档📖、位置📍 等）——这两类留待后续自研（本 Spec 登记为待定项）。
+引入 GitHub 官方图标集 **Octicons**（MIT 许可，Primer 设计系统）作为 ArkCat 的图标资产基座，替换现有页面中用于「App 骨架/系统级符号」的 Unicode 字形与 emoji（返回、搜索、更多、刷新、新建、Tab、My Work 七入口、列表状态图标、计数气泡、筛选漏斗、拖拽手柄等）。着色方式：SVG 纯路径 + ArkUI `Image.fillColor()` 按语义着色（与官方 App 的「Octicons 线框 + 品牌色」做法一致）。**不包含**：官方彩色插画（蓝色 Octocat 空态等）、内容性 emoji（趋势🔥、文档📖、位置📍 等）——这两类留待后续自研（本 Spec 登记为待定项）。
 
 ---
 
@@ -80,7 +80,7 @@ ets/components/OctIcon.ets            # 统一样式入口
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 官方彩色插画（蓝色 Octocat 空态等） | 无公开渠道，版权归 GitHub | 待定自研；当前沿用 🐱/文字占位（spec 017-023 既定处理） |
 | 非 Octicons 内容 emoji（🔥 趋势 / 📖 文档 / 📍 位置 / 🔗 链接 / 🗂 空态 / ◯ 头像占位 / ● 语言点） | 内容型符号或需定制 | 待定自研，本批次不改动 |

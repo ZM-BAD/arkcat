@@ -19,8 +19,8 @@
 2. 筛选 chips：[ Reviewed ] / [ Mentions ]
 3. 状态 Tab：[ Open ] / [ Closed ]
 4. PR 卡片列表：卡片 = 🟠 Review 状态图标 + 标题 + 元信息行（仓库名#编号 · label · @作者 · 相对时间 · 💬 评论数）
-   - 示例卡片 1：🟠 Add network layer / zm_bad/starraft#1 · bug / @zm_bad · d1 · 💬 2
-   - 示例卡片 2：🟠 Bump gradle version / zm_bad/starraft#1 · deps / @zm_bad · d2 · 💬 0
+   - 示例卡片 1：🟠 Add network layer / zm_bad/arkcat#1 · bug / @zm_bad · d1 · 💬 2
+   - 示例卡片 2：🟠 Bump gradle version / zm_bad/arkcat#1 · deps / @zm_bad · d2 · 💬 0
    - ...（后续卡片）
 
 ---
@@ -98,7 +98,7 @@ mutation CreatePullRequest(
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | Review 状态图标聚合 | `reviews` 需与 `totalCount` 同一字段集，避免参数冲突 | 合并为一个 `reviews(first: 10)` 选择集 |
 

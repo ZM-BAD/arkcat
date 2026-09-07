@@ -16,7 +16,7 @@ import { FileService } from '../services/FileService';
 import { FileContent } from '../models/FileModels';
 import { resText } from '../utils/I18n';
 
-const PREFS_NAME = 'starraft_settings';
+const PREFS_NAME = 'arkcat_settings';
 const FONT_DEFAULT = 16;
 /** 渐进渲染窗口行数（review C9：首屏与每次扩窗各渲染 800 行） */
 const RENDER_WINDOW = 800;

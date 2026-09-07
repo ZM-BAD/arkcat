@@ -9,7 +9,7 @@
 
 ## 一、页面/功能概述
 
-为用户提供主题三态：**跟随系统（默认）/ 浅色 / 深色**，入口在 Settings → Theme。实现路径：① 颜色全部语义化进 `color.json`（base=浅色，`resources/dark/element/color.json` = 深色覆盖，系统自动按 colorMode 解析）；② 三态持久化（`starraft_settings`，已有 `theme_mode` key）并调用 `ApplicationContext.setColorMode(ColorMode)` 应用；③ 全部页面/组件消除页面内硬编码色值（迁移 19 个文件约 90 处）；④ 深色配色以官方 App 深色截图为准（背景近似 `#010409`、卡片 `#0D1117`、边框 `#30363D` 基调）。本批次同时完成仓库二级页面（Spec 027-031），其新页面直接按语义色编写。
+为用户提供主题三态：**跟随系统（默认）/ 浅色 / 深色**，入口在 Settings → Theme。实现路径：① 颜色全部语义化进 `color.json`（base=浅色，`resources/dark/element/color.json` = 深色覆盖，系统自动按 colorMode 解析）；② 三态持久化（`arkcat_settings`，已有 `theme_mode` key）并调用 `ApplicationContext.setColorMode(ColorMode)` 应用；③ 全部页面/组件消除页面内硬编码色值（迁移 19 个文件约 90 处）；④ 深色配色以官方 App 深色截图为准（背景近似 `#010409`、卡片 `#0D1117`、边框 `#30363D` 基调）。本批次同时完成仓库二级页面（Spec 027-031），其新页面直接按语义色编写。
 
 ---
 
@@ -51,7 +51,7 @@ Settings → Theme → [跟随系统] [浅色] [深色]（单选，默认跟随�
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 品牌/数据色（紫绿橙黄蓝 tile、API 返回标签色、Checks 语义色） | 深浅通用，无单值适配必要 | 保持硬编码常量（tile 色 = GitHub 品牌色，深色下依然正确） |
 | 截图「半深半浅」漏网 | 硬编码漏迁移 | 迁移后以模拟器深色模式逐页截图核对 |

@@ -23,7 +23,7 @@
 3. 徽章名称：YOLO（粗体白）
 4. 徽章描述：You want it? You merge it.（白 15fp、opacity 0.85）
 5. 解锁信息：奖杯圆钮 + Unlocked September 1（粗体白）
-6. 触发事件：圆点 + ZM-BAD/starraft #3 · Merged without a review（白）
+6. 触发事件：圆点 + ZM-BAD/arkcat #3 · Merged without a review（白）
 7. 翻页圆点（当前 = 白实心）
 8. 底部：Share 按钮（全宽浅紫圆角钮·白字）
 
@@ -65,9 +65,9 @@ GET https://github.com/users/{login}/achievements/{slug}/detail
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
-| 私有仓库事件引用显示 `inaccessible` | 详情片段为匿名抓取；移动端因登录态可解析（如 ZM-BAD/starraft #3） | `inaccessible`/空 → 隐藏引用，仅显示事件标签（如 Merged without a review） |
+| 私有仓库事件引用显示 `inaccessible` | 详情片段为匿名抓取；移动端因登录态可解析（如 ZM-BAD/arkcat #3） | `inaccessible`/空 → 隐藏引用，仅显示事件标签（如 Merged without a review） |
 | 未解锁徽章 | 端点 404，且 slug 列表不含 | 不展示（swiper 页数=已解锁数） |
 | 徽章描述/名称本地化 | GitHub 原文为英文 | 原文展示（与官方一致） |
 | 分享图片 | 需下载底图到临时目录再分享 | 仅分享 URL（HYPERLINK），后续按需扩展 |

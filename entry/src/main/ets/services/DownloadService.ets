@@ -148,13 +148,13 @@ export class DownloadService {
     }
     const handle = file;
 
-    hilog.info(0x041, 'StarRaft', 'dl start url=%{public}s', url);
+    hilog.info(0x041, 'ArkCat', 'dl start url=%{public}s', url);
     req.request(url, {
       method: http.RequestMethod.GET,
       header: {
         'Accept': 'application/octet-stream',
         'Authorization': `Bearer ${token}`,
-        'User-Agent': 'StarRaft'
+        'User-Agent': 'ArkCat/1.0.0'
       },
       expectDataType: http.HttpDataType.ARRAY_BUFFER
     }).then((resp: http.HttpResponse) => {
@@ -187,13 +187,13 @@ export class DownloadService {
       }
       DownloadService.cancelWanted.delete(assetId);
       DownloadService.params.delete(assetId);
-      hilog.info(0x041, 'StarRaft', 'dl done bytes=%{public}d', task.received);
+      hilog.info(0x041, 'ArkCat', 'dl done bytes=%{public}d', task.received);
       task.path = path;
       task.state = 'done';
       DownloadService.emit(task);
       DownloadService.pumpNext();
     }).catch((e: Error) => {
-      hilog.warn(0x041, 'StarRaft', 'dl err=%{public}s', e.message);
+      hilog.warn(0x041, 'ArkCat', 'dl err=%{public}s', e.message);
       try {
         fs.closeSync(handle);
       } catch (err) {

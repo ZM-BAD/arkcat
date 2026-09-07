@@ -35,7 +35,7 @@ Scope 边界：本批只做鉴权层与登录 UI。不包含 Copilot 功能页�
 ┌─────────────────────────────────────┐
 │                                     │
 │                🐙                   │
-│          登录到 StarRaft（标题）      │
+│          登录到 ArkCat（标题）      │
 │    说明文案（两种方式一句话差异）      │
 │                                     │
 │  ┌─────────────────────────────┐   │
@@ -108,7 +108,7 @@ OAuth 授权等待页（发起 OAuth 后的独立视图，NavDestination 或同�
 ```text
 ① 获取设备码
 POST https://github.com/login/device/code
-Body: client_id=<STARRAFT_CLIENT_ID>&scope=repo%20read:user%20notifications%20read:org
+Body: client_id=<ARKCAT_CLIENT_ID>&scope=repo%20read:user%20notifications%20read:org
 → 200 {
     device_code, user_code, verification_uri: "https://github.com/login/device",
     verification_uri_expires_in, interval, expires_in   // 默认 interval=5s，expires_in≈900s
@@ -146,7 +146,7 @@ client_secret，符合纯端侧无后端架构。
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | PKCE web flow 浏览器回跳（点 Authorize 自动跳回 App） | GitHub 2025-07 起支持 PKCE，但鸿蒙浏览器对 302→自定义 scheme 的拉起行为需真机验证 | 本批不做；Device Flow 无回跳依赖、确定性最高，回跳作二期增强 |
 | PAT 退役 | 用户拍板：OAuth 稳定后再删 | 本批 PAT 与 OAuth 并存；退役另开批 |

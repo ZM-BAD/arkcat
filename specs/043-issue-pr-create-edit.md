@@ -102,7 +102,7 @@ mutation ToReady { markPullRequestReadyForReview(input: { pullRequestId: $prId }
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 新建分支（移动端无 commit 推送能力） | API 无“一步创建含 commit 的分支”能力 | head 分支仅在「现有分支列表」中选择；REST `POST /repos/{o}/{r}/git/refs` 建空 ref 作为 ⚠️ 待测项（需要 push 权限） |
 | 无权编辑 | viewerCanUpdate=false / 403 | 隐藏编辑入口，防护后端错误提示 |

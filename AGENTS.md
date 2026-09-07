@@ -1,4 +1,4 @@
-# AGENTS.md — StarRaft AI 辅助开发指南
+# AGENTS.md — ArkCat AI 辅助开发指南
 
 > 本文件供 AI 编码助手（Claude Code / GitHub Copilot / Cursor / ZCode 等）读取，
 > 用于快速理解项目上下文、开发规范与约定。
@@ -7,11 +7,11 @@
 
 ## 一、项目概览
 
-**StarRaft** 是基于 HarmonyOS NEXT（纯血鸿蒙）开发的 GitHub 第三方客户端应用。
+**ArkCat** 是基于 HarmonyOS NEXT（纯血鸿蒙）开发的 GitHub 第三方客户端应用。
 
 | 关键信息 | 值 |
 | --------- | ----- |
-| 包名 / 平台 | `me.zmbad.starraft`；目标 HarmonyOS 7.0（API 26），最低兼容 5.0（API 12） |
+| 包名 / 平台 | `me.zmbad.arkcat`；目标 HarmonyOS 7.0（API 26），最低兼容 5.0（API 12） |
 | 语言 / 构建 | ArkTS / ArkUI；hvigor（DevEco Studio 内置，CLI 经 `devecocli` 调用） |
 | 测试框架 | Hypium |
 | 架构 | 纯端侧直连 GitHub GraphQL API v4（REST v3 兜底），无 BFF/后端 |

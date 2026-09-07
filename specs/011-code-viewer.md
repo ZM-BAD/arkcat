@@ -34,7 +34,7 @@
 | 6 | 正文 | 行号列 | 显示行号 | ✅ 纯 UI | — | 受 Code Options `code_line_numbers` 控制 |
 | 7 | 正文 | 代码文本 | 展示 | ✅ | `repository.object(expression: "HEAD:path") { ... on Blob { text } }` | 等宽字体 |
 | 8 | 正文 | 语法着色 | 简单关键字/字符串/注释/函数着色 | ⚠️ 客户端部分 | — | 无原生高亮：本地 tokenizer（见备注） |
-| 9 | 行为 | Code Options 联动 | 暗色主题/字号/换行/重叠设置生效 | ✅ 纯 UI | — | preferences `starraft_settings`：`code_dark_theme`/`code_font_size`/`code_wrap_lines`/`code_line_numbers` |
+| 9 | 行为 | Code Options 联动 | 暗色主题/字号/换行/重叠设置生效 | ✅ 纯 UI | — | preferences `arkcat_settings`：`code_dark_theme`/`code_font_size`/`code_wrap_lines`/`code_line_numbers` |
 | 10 | 行为 | Markdown 预览 | 渲染预览 | ⚠️ | — | MVP 显示原始文本（渲染需三方库，见边界） |
 
 可行性：7/10 可行（7 ✅ + 3 ⚠️）。
@@ -65,7 +65,7 @@ query FileContent($owner: String!, $name: String!, $expression: String!) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 语法高亮 | ArkUI 无原生代码着色 | MVP 本地 tokenizer：注释 > 字符串 > 关键字 > 函数调用样式；按扩展名选用关键字集（js/ts/et/py/java/cs/go/rs/…） |
 | Markdown 渲染 | ArkUI 无原生 MD 渲染组件 | 显示原始文本；点击复制/代码查看不受影响（后续评估三方组件或自研简化渲染） |

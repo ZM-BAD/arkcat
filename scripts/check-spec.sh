@@ -64,7 +64,7 @@ for file in $SPEC_FILES; do
 
     # 5. 检查未完成的 ❌ 项是否有处理说明
     if grep -q "❌" "$file"; then
-        if ! grep -q "StarRaft 处理" "$file"; then
+        if ! grep -q "ArkCat 处理" "$file"; then
             echo "  ⚠️  $filename — 包含 ❌ 项但缺少处理方式说明"
             WARNINGS=$((WARNINGS + 1))
         fi

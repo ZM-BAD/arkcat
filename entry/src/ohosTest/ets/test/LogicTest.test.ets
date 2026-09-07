@@ -146,12 +146,12 @@ export default function logicTest(testsuiteName: string) {
       const owner: JsonMap = { 'login': 'zm_bad', 'avatarUrl': 'https://avatars.example/zm' };
       const raw: JsonMap = {
         'id': 'R_2',
-        'name': 'starraft',
-        'nameWithOwner': 'zm_bad/starraft',
+        'name': 'arkcat',
+        'nameWithOwner': 'zm_bad/arkcat',
         'owner': owner
       };
       const repo = mapRepo(raw);
-      expect(repo.name).assertEqual('starraft');
+      expect(repo.name).assertEqual('arkcat');
       expect(repo.ownerLogin).assertEqual('zm_bad');
       expect(repo.ownerAvatarUrl).assertEqual('https://avatars.example/zm');
       // 查询未带 owner 节点 → 兜底空串
@@ -755,7 +755,7 @@ export default function logicTest(testsuiteName: string) {
       const topicName: JsonMap = { 'name': 'arkts' };
       const topicNode: JsonMap = { 'topic': topicName };
       const topicsWrap: JsonMap = { 'nodes': [topicNode] };
-      const readmeBlob: JsonMap = { 'text': '# StarRaft' };
+      const readmeBlob: JsonMap = { 'text': '# ArkCat' };
       const entry1: JsonMap = { 'name': 'entry', 'type': 'tree' };
       const entry2: JsonMap = { 'name': 'README.md', 'type': 'blob' };
       const entries: JsonMap[] = [entry1, entry2];
@@ -778,8 +778,8 @@ export default function logicTest(testsuiteName: string) {
       const ownerNode: JsonMap = { 'avatarUrl': 'u', 'login': 'zm_bad' };
       const repo: JsonMap = {
         'id': 'R1',
-        'name': 'starraft',
-        'nameWithOwner': 'zm_bad/starraft',
+        'name': 'arkcat',
+        'nameWithOwner': 'zm_bad/arkcat',
         'description': 'gh client',
         'stargazerCount': 2,
         'forkCount': 1,
@@ -798,10 +798,10 @@ export default function logicTest(testsuiteName: string) {
       };
       const detail = mapRepoDetail({ 'repository': repo });
       expect(detail.repoId).assertEqual('R1');
-      expect(detail.name).assertEqual('starraft');
+      expect(detail.name).assertEqual('arkcat');
       expect(detail.licenseName).assertEqual('MIT License');
       expect(detail.topics[0]).assertEqual('arkts');
-      expect(detail.readmeText).assertEqual('# StarRaft');
+      expect(detail.readmeText).assertEqual('# ArkCat');
       expect(detail.files.length).assertEqual(2);
       expect(detail.files[0].type).assertEqual('tree');
       // 语言占比：750/1000 → 75%
@@ -866,9 +866,9 @@ export default function logicTest(testsuiteName: string) {
     });
 
     it('pullRefFromUrl_and_queries', 0, () => {
-      const ref = pullRefFromUrl('https://api.github.com/repos/ZM-BAD/starraft/pulls/123');
+      const ref = pullRefFromUrl('https://api.github.com/repos/ZM-BAD/arkcat/pulls/123');
       expect(ref?.owner).assertEqual('ZM-BAD');
-      expect(ref?.name).assertEqual('starraft');
+      expect(ref?.name).assertEqual('arkcat');
       expect(ref?.number).assertEqual(123);
       // Issue URL / 非法路径 → null（不探测合并态）
       expect(pullRefFromUrl('https://api.github.com/repos/a/b/issues/8')).assertNull();
@@ -954,16 +954,16 @@ export default function logicTest(testsuiteName: string) {
     it('workQueries_builders', 0, () => {
       expect(buildWorkIssuesQuery('all', 'created', 'all', 'newest', [], []))
         .assertEqual('is:issue author:@me sort:created-desc');
-      expect(buildWorkIssuesQuery('open', 'assigned', 'public', 'most_commented', ['ZM-BAD'], ['ZM-BAD/starraft']))
-        .assertEqual('is:issue is:open assignee:@me is:public org:ZM-BAD repo:ZM-BAD/starraft sort:comments-desc');
+      expect(buildWorkIssuesQuery('open', 'assigned', 'public', 'most_commented', ['ZM-BAD'], ['ZM-BAD/arkcat']))
+        .assertEqual('is:issue is:open assignee:@me is:public org:ZM-BAD repo:ZM-BAD/arkcat sort:comments-desc');
       expect(buildWorkIssuesQuery('closed', 'involved', 'private', 'reactions:+1', [], []))
         .assertEqual('is:issue is:closed involves:@me is:private sort:reactions-+1-desc');
       expect(buildWorkIssuesQuery('open', 'created', 'all', 'least_recently_updated', [], []))
         .assertEqual('is:issue is:open author:@me sort:updated-asc');
       expect(buildWorkPrsQuery('merged', 'created', 'private', 'newest', [], []))
         .assertEqual('is:pr is:merged author:@me is:private sort:created-desc');
-      expect(buildWorkPrsQuery('queued', 'review_requested', 'all', 'most_commented', ['ZM-BAD'], ['ZM-BAD/starraft']))
-        .assertEqual('is:pr is:queued review-requested:@me org:ZM-BAD repo:ZM-BAD/starraft sort:comments-desc');
+      expect(buildWorkPrsQuery('queued', 'review_requested', 'all', 'most_commented', ['ZM-BAD'], ['ZM-BAD/arkcat']))
+        .assertEqual('is:pr is:queued review-requested:@me org:ZM-BAD repo:ZM-BAD/arkcat sort:comments-desc');
       expect(buildWorkDiscussionsQuery('all', 'created', false, 'new'))
         .assertEqual('is:discussion author:@me sort:created-desc');
       expect(buildWorkDiscussionsQuery('open', 'commented', true, 'top_all'))
@@ -1303,20 +1303,20 @@ export default function logicTest(testsuiteName: string) {
 
     it('achievement_parse_anchor_ref', 0, () => {
       // 公共仓库事件：<a> 引用 + 事件标签
-      const html = `<div><h3>YOLO</h3></div><div class="achievement-history-tier"><div class="TimelineItem-body"><a href="https://github.com/ZM-BAD/starraft/pull/3">ZM-BAD/starraft #3</a> · <span>Merged without a review</span></div></div>`;
+      const html = `<div><h3>YOLO</h3></div><div class="achievement-history-tier"><div class="TimelineItem-body"><a href="https://github.com/ZM-BAD/arkcat/pull/3">ZM-BAD/arkcat #3</a> · <span>Merged without a review</span></div></div>`;
       const d = parseAchievementDetail(html, 'yolo', 'fb.png');
-      expect(d.events[0].ref).assertEqual('ZM-BAD/starraft #3');
+      expect(d.events[0].ref).assertEqual('ZM-BAD/arkcat #3');
       expect(d.events[0].label).assertEqual('Merged without a review');
     });
 
     it('achievement_parse_multi_tier', 0, () => {
       // 多次达成/多 tier：解析出多条事件（保持顺序）
       const html = `<div><h3>Pair Extraordinaire</h3></div>
-<div class="achievement-history-tier"><div class="TimelineItem-body"><a href="https://github.com/ZM-BAD/starraft/pull/1">ZM-BAD/starraft #1</a> · <span>Coauthored with @claude</span></div></div>
+<div class="achievement-history-tier"><div class="TimelineItem-body"><a href="https://github.com/ZM-BAD/arkcat/pull/1">ZM-BAD/arkcat #1</a> · <span>Coauthored with @claude</span></div></div>
 <div class="achievement-history-tier"><div class="TimelineItem-body"><span class="color-fg-muted">inaccessible</span> · <span>Coauthored with @claude</span></div></div>`;
       const d = parseAchievementDetail(html, 'pair-extraordinaire', 'fb.png');
       expect(d.events.length).assertEqual(2);
-      expect(d.events[0].ref).assertEqual('ZM-BAD/starraft #1');
+      expect(d.events[0].ref).assertEqual('ZM-BAD/arkcat #1');
       expect(d.events[0].label).assertEqual('Coauthored with @claude');
       expect(d.events[1].ref).assertEqual('');
       expect(d.events[1].label).assertEqual('Coauthored with @claude');
@@ -1485,7 +1485,7 @@ export default function logicTest(testsuiteName: string) {
         '--- a/README.md\n' +
         '+++ b/README.md\n' +
         '@@ -1,3 +1,4 @@\n' +
-        ' # starraft\n' +
+        ' # arkcat\n' +
         '-old line\n' +
         '+new line\n' +
         ' context\n' +
@@ -1503,7 +1503,7 @@ export default function logicTest(testsuiteName: string) {
       expect((lines[2] as DiffLine).kind).assertEqual('add');
       expect((lines[2] as DiffLine).newLine).assertEqual(2);
       expect((lines[3] as DiffLine).newLine).assertEqual(3);
-      expect((lines[0] as DiffLine).text).assertEqual('# starraft');
+      expect((lines[0] as DiffLine).text).assertEqual('# arkcat');
     });
 
     it('parseDiffPatch_addOnly', 0, () => {

@@ -68,7 +68,7 @@ query UserFollowing($login: String!, $first: Int = 25, $after: String) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 行内 Follow/操作按钮 | 截图无此元素 | 不实现（整行进主页） |
 | 头像加载失败 | 网络异常 | 圆形灰底占位（heat_empty） |

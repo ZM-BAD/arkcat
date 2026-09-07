@@ -77,7 +77,7 @@ DELETE /notifications
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 通知偏好云端设置 | 只有网页端 UI（watch 选项等） | 界面只读说明「请到 github.com 设置」，不模拟 |
 | PROTECTED 订阅（机构强制） | API 禁止解除 | Bell 显示锁图标灰态 + toast 说明 |

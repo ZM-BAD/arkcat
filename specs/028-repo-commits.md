@@ -62,7 +62,7 @@ query RepoCommits($owner: String!, $name: String!, $first: Int = 40, $after: Str
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 提交文件变更查看 | 属代码查看器 Spec 011 | 行点击进入 Commit 详情页（CHANGES 无文件 diff 与 DETAILS 双分区） |
 | 无默认分支仓库 | 历史不存在 | 空态复用 StateView |

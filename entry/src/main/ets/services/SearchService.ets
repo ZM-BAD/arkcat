@@ -449,7 +449,7 @@ export function pushSearchHistory(entries: string[], keyword: string): string[] 
   return next.slice(0, SEARCH_HISTORY_MAX);
 }
 
-const HISTORY_PREFS = 'starraft.search';
+const HISTORY_PREFS = 'arkcat.search';
 const HISTORY_KEY = 'recent';
 
 /** 搜索历史持久化（Preferences；非敏感数据不走加密存储） */

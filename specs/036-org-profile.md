@@ -71,7 +71,7 @@ REST：`GET /orgs/{login}`（主数据）、`GET /user/follows/{login}`（跟随
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 组织 README 不存在 | `.github` 无 README | README 区块隐藏 |
 | Markdown 完整渲染（表格/高亮/图片） | 复用简化渲染 | 标题/加粗/链接/正文行；徽章按纯文本行展示 |

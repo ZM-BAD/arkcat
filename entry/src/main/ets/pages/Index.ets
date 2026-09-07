@@ -140,7 +140,7 @@ struct Index {
     // 启动恢复主题（Spec 026 三态：system/light/dark）；同步读避免晚于首帧闪切（review A18）
     try {
       const pref = preferences.getPreferencesSync(
-        this.getUIContext().getHostContext() as common.UIAbilityContext, { name: 'starraft_settings' });
+        this.getUIContext().getHostContext() as common.UIAbilityContext, { name: 'arkcat_settings' });
       const mode = pref.getSync('theme_mode', 'system') as string;
       applyThemeMode(this.getUIContext().getHostContext() as common.UIAbilityContext | undefined, mode);
     } catch (e) {

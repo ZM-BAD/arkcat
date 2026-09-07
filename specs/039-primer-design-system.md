@@ -9,7 +9,7 @@
 
 ## 一、页面/功能概述
 
-横向规范批次：把 GitHub Primer 设计系统接入 StarRaft——将官方设计令牌（Design Tokens）本地化
+横向规范批次：把 GitHub Primer 设计系统接入 ArkCat——将官方设计令牌（Design Tokens）本地化
 （颜色已按官方 Light/Dark 落地；本批补齐尺寸/字号/圆角/动效/阴影/触摸目标），产出 `DESIGN.md`
 作为我们遵守的规范文档与 `utils/PrimerTokens.ets` 常量，并以此为基准对全部页面做深度
 code review 对齐（无新增页面，改动面=全 App 视觉与交互细节）。
@@ -51,7 +51,7 @@ code review 对齐（无新增页面，改动面=全 App 视觉与交互细节�
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | Primer React/CSS 组件运行时 | 鸿蒙无 React/WebView 运行时 | 采用「令牌消费 + 规范移植 + 组件重写」：ArkUI 原生实现，仅参考其 API 语义 |
 | 「#0377FF / #58A6FF 为当前 accent」 | 论述过时/有误 | **不采用**：官方当前 accent = #0969DA（light）/ #4493F8（dark），以 primitives 源码为准 |

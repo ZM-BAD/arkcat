@@ -9,7 +9,7 @@
 
 ## 一、页面/功能概述
 
-对照 GitHub 官方 App 的 Home Tab 截图，将 StarRaft 首页从「用户卡片 + 贡献日历 + Pinned 仓库」重构为官方布局：
+对照 GitHub 官方 App 的 Home Tab 截图，将 ArkCat 首页从「用户卡片 + 贡献日历 + Pinned 仓库」重构为官方布局：
 
 - **Header**：`Home` 标题 + 搜索/刷新/新建/头像 四个操作
 - **My Work**：Issues / Pull Requests / Discussions / Projects / Top Repositories / Organizations / Starred 七个彩色图标入口（点击进对应列表页，见 017-023）
@@ -67,7 +67,7 @@ query ViewerBasic {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | My Work 各列表页（我的 Issue/PR/Discussion 等） | 列表页设计超出本 Spec 范围 | 本次只做入口 UI，点击提示「将在后续 Spec 提供」，列表页立项后接入 |
 | Favorites 添加/移除流程 | 需要仓库选择器与本地持久化，独立 Spec | 本次只做空态 UI 与 ADD FAVORITES 按钮，点击提示 |

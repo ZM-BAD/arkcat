@@ -73,7 +73,7 @@ query WorkIssues($query: String!, $first: Int = 25, $after: String) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 官方「Status / Event」(里程碑/分配人) 筛选 | 截图未展示，MVP 不实现 | 仅提供状态/归属/可见性三组筛选，后续 Spec 扩展 |
 | 搜索结果计数（issueCount） | search 分页 count 仅供展示 | 列表不额外展示总数，与官方一致 |

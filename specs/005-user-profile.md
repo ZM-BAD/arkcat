@@ -75,7 +75,7 @@ query UserProfile($login: String!) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | Packages/Projects | 无公开用户级入口 / 超范围 | 不展示（原边界） |
 | Achievements 徽章行 | 官方 HTML 抓取（052） | 展示（点击进成就详情） |

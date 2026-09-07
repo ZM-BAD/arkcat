@@ -57,7 +57,7 @@ query RepoReleases($owner: String!, $name: String!, $first: Int = 30, $after: St
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 资产下载/查看跨渠道 | 外部链接 | View release details / tag 点击提示后续 |
 | What's Changed 富文本 | Markdown 渲染后续 | 纯文本截断 |

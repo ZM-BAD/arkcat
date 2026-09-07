@@ -47,7 +47,7 @@ Home Tab「My Work」区块的编辑页（入口：My Work 标题右侧 ⋯）�
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 官方 App 行内 ⋯ 菜单（Move up/down/Remove） | 与复选框 + 拖拽语义重复 | 不重复提供；拖拽即移动，复选框即显隐 |
 | 拖拽动画观感 | 原生 List 拖拽无 iOS 式弹性动画 | 用 List onItemDragStart/onItemDrop 原生拖拽，不做自绘动画（体验级复刻） |

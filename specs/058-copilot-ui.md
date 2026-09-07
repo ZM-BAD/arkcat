@@ -76,7 +76,7 @@ Copilot settings（黑 + Copilot 图标，点按跳转 settings）/ 分割线 / 
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | OAuth 登录 | 未接入（Spec 057 另批） | 本批不依赖登录态；settings「Active for ZM-BAD」跑 mock 文案 |
 | Copilot 对话/用量/套餐真实性 | Copilot 私有 API 无公开接口 | 全部 mock 常量；功能批另立 |

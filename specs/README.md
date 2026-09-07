@@ -1,6 +1,6 @@
 # Specs 目录
 
-> StarRaft 项目所有页面/功能的 Spec 文档
+> ArkCat 项目所有页面/功能的 Spec 文档
 
 ## 文件命名规范
 
@@ -76,7 +76,7 @@
 
 ## 不可实现功能汇总
 
-| Tab/页面 | 功能 | 原因 | StarRaft 处理 |
+| Tab/页面 | 功能 | 原因 | ArkCat 处理 |
 | --------- | ------ | ------ | -------------- |
 | Explore | Collections 精选集合 | 无公开 API | MVP 隐藏 |
 | Copilot | 全部 Chat 功能 | Copilot API 不公开 | 展示 Empty State |

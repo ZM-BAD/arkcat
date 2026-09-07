@@ -69,7 +69,7 @@ query WorkDiscussions($query: String!, $first: Int = 25, $after: String) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 官方猫插画素材 | 无官方矢量素材 | 用占位字形（🐱）替代，文案一致（体验级复刻） |
 | 分类筛选（按 category 过滤） | 截图未展示，搜索 qualifier 需分类名枚举 | MVP 仅展示分类，不做分类筛选 |

@@ -99,7 +99,7 @@ query MentionCandidates($owner: String!, $name: String!) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 编辑/删除他人评论 | GraphQL 仅允许作者操作 | 仅 `viewerDidAuthor` 展示菜单，后端 403 兜底提示 |
 | 评论频率/冷却 429 | API 限流 | 立即反馈「操作过快，请稍后再试」，草稿不丢 |

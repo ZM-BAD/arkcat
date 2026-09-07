@@ -8,7 +8,7 @@ import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { resText } from '../utils/I18n';
 
-const PREFS_NAME = 'starraft_settings';
+const PREFS_NAME = 'arkcat_settings';
 const SWIPE_DONE = 'done';
 const SWIPE_UNSUBSCRIBE = 'unsubscribe';
 

@@ -13,7 +13,7 @@ import {
   CodeSpan, CodeLine
 } from '../utils/CodeTheme';
 
-const PREFS_NAME = 'starraft_settings';
+const PREFS_NAME = 'arkcat_settings';
 const FONT_MIN = 12;
 const FONT_MAX = 20;
 const FONT_DEFAULT = 16;

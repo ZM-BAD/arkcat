@@ -55,7 +55,7 @@ Settings 页「Code Options」行点击进入的代码查看选项二级页。�
 
 ## 四、核心接口
 
-无 GraphQL 接口——纯本地偏好设置 + 固定示例渲染，数据经 `preferences`（`starraft_settings`）持久化，键前缀 `code_`：
+无 GraphQL 接口——纯本地偏好设置 + 固定示例渲染，数据经 `preferences`（`arkcat_settings`）持久化，键前缀 `code_`：
 
 ```text
 code_scrollable_path / code_line_numbers / code_dark_theme /
@@ -69,7 +69,7 @@ code_font_size（number，fp，默认 16，范围 12–20）
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 真实文件预览 | Spec 010/011 代码查看器未实现 | 固定示例（README.md + fibonacci 片段） |
 | 路径行 ▢ / ⋯ 按钮 | 语义属代码查看器（重跑/更多） | 点击提示后续 |

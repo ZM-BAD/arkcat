@@ -1,6 +1,6 @@
-# DESIGN.md — StarRaft 设计规范（GitHub Primer）
+# DESIGN.md — ArkCat 设计规范（GitHub Primer）
 
-> 本文件定义 StarRaft 的设计准则与令牌规范。**单一事实来源：GitHub Primer 设计系统**
+> 本文件定义 ArkCat 的设计准则与令牌规范。**单一事实来源：GitHub Primer 设计系统**
 > （[primer.style](https://primer.style)，MIT；源仓库 `primer/primitives` / `primer/octicons`）。
 >
 > 原则一句话：**用 HarmonyOS ArkTS/ArkUI 原生能力，尽可能满足 GitHub Primer 的设计要求**
@@ -11,7 +11,7 @@
 
 ## 0. 三层令牌模型（与 Primer 一致）
 
-| 层 | 含义 | StarRaft 落地 |
+| 层 | 含义 | ArkCat 落地 |
 | --- | --- | --- |
 | Base（原始值） | `base-color-blue-5` 等原始色板/尺寸 | `primer/primitives` 归档 + `PrimerTokens.ets` |
 | Functional（语义角色） | `fgColor-accent` / `bgColor-default` | resources base 与 dark 两套 `element/color.json`（双主题） |

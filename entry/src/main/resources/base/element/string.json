@@ -2,15 +2,15 @@
   "string": [
     {
       "name": "module_desc",
-      "value": "StarRaft entry module"
+      "value": "ArkCat entry module"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "StarRaft main entry"
+      "value": "ArkCat main entry"
     },
     {
       "name": "EntryAbility_label",
-      "value": "StarRaft"
+      "value": "ArkCat"
     },
     {
       "name": "tab_home",
@@ -46,7 +46,7 @@
     },
     {
       "name": "token_setup_desc",
-      "value": "StarRaft connects directly to the GitHub API. A Personal Access Token (read:user, repo, notifications) is required."
+      "value": "ArkCat connects directly to the GitHub API. A Personal Access Token (read:user, repo, notifications) is required."
     },
     {
       "name": "token_input_placeholder",
@@ -694,7 +694,7 @@
     },
     {
       "name": "settings_sign_out_confirm",
-      "value": "Sign out of StarRaft?"
+      "value": "Sign out of ArkCat?"
     },
     {
       "name": "settings_sign_out_confirm_desc",
@@ -710,7 +710,7 @@
     },
     {
       "name": "settings_version",
-      "value": "StarRaft v1.0.0"
+      "value": "ArkCat v1.0.0"
     },
     {
       "name": "search_placeholder",

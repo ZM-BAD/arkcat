@@ -59,7 +59,7 @@ query UserOrganizations($login: String!, $first: Int = 25, $after: String) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 组织内成员数/公开成员切换 | 截图未展示 | 不实现 |
 | 组织行点击只看组织主页 | — | 后续可在组织主页详情内达仓库（Spec 037） |

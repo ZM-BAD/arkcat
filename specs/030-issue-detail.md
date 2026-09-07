@@ -75,7 +75,7 @@ query IssueDetail($owner: String!, $name: String!, $number: Int!, $first: Int = 
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | Markdown 渲染（代码块/列表/引用） | 渲染器后续 Spec | MarkdownView 直渲（040） |
 | 关闭/重开操作 | 写操作暂不在范围 | COMMENT 已联通（041）；状态图标行点击提示（待后续） |

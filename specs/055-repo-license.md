@@ -49,7 +49,7 @@ query RepoLicense($owner: String!, $name: String!) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | licenseInfo 为 null | 仓库未声明许可证 | 正文区显示 repo_license_none 空态，头部照常 |
 | body 首行为许可证名（如 "MIT License"） | GitHub body 以许可证全名开头，官方截图无此行 | 首行等于 name 时 strip（name 为空不 strip） |

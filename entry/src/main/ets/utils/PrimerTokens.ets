@@ -1,5 +1,5 @@
 /**
- * GitHub Primer 设计令牌（Design Tokens）——StarRaft 本地化（Spec 039 / DESIGN.md）
+ * GitHub Primer 设计令牌（Design Tokens）——ArkCat 本地化（Spec 039 / DESIGN.md）
  *
  * 来源：primer/primitives（MIT，v2026-09 拉取）+ primer.style 设计文档。
  * 颜色不在此处：统一走 resources base/dark 双套 color.json（支持系统级 dark 切换），

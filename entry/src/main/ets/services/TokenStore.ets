@@ -7,8 +7,8 @@ import { asset } from '@kit.AssetStoreKit';
 import { util } from '@kit.ArkTS';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 
-const TOKEN_ALIAS = 'starraft.github.pat';
-const TAG = '[StarRaft]';
+const TOKEN_ALIAS = 'arkcat.github.pat';
+const TAG = '[ArkCat]';
 const DOMAIN = 0xFF00;
 
 function strToBytes(s: string): Uint8Array {

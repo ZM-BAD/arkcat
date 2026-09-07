@@ -16,7 +16,7 @@ import { RepoSubService } from '../services/RepoSubService';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
-const PREFS_NAME = 'starraft_settings';
+const PREFS_NAME = 'arkcat_settings';
 const KEY_LINE_NUMBERS = 'code_line_numbers';
 
 @ComponentV2

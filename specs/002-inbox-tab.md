@@ -67,7 +67,7 @@ PATCH /notifications/threads/{thread_id}
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 官方摘要行（"Merged #82 into main"） | 需 per-thread 事件 API，无公开接口 | 降级：类型图标 + reason 文案 |
 | Focused 语义 | 官方为通知分级，REST 无对应字段 | 用 `participating=true` 近似 |

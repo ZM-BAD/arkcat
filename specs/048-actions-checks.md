@@ -79,7 +79,7 @@ POST /repos/{owner}/{repo}/check-runs/{check_run_id}/rerequest
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 重跑权限（workflow scope） | PAT 默认无 workflow | 检测 403 → 提示「请为 token 开通 workflow 权限，或在浏览器重跑」，按钮保留但二次确认 |
 | 官方在 web 上的「复现失败/打包」 | Actions API 不开放给移动端 | 不做 |

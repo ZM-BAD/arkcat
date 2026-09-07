@@ -44,7 +44,7 @@ GitHub Copilot AI 助手对话页。用户通过自然语言与 Copilot 对话�
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 全部 Chat 功能 | GitHub Copilot 对话完全由私有 API 驱动，无公开 GraphQL/REST 接口 | Tab 显示「暂不支持」Empty State 页 |
 | 输入框 + 附件 | 依赖 Copilot 私有 API | Empty State |

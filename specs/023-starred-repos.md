@@ -69,7 +69,7 @@ query WorkStarred($first: Int = 30, $after: String) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | My lists 数据与创建流程 | GitHub Lists 功能（API 可用性待验证，截图为空态） | 已实现：+NEW / CREATE A LIST 进创建页（createUserList / updateUserList / deleteUserList 覆盖创建/编辑/删除/重命名）；列表行进 ListDetail；行内 ⋯ 打开成员切换 sheet |
 | 星数超 100 万的显示 | 截图仅展示 k 级别 | `compactCount`：≥1000 显示 xx.xk（一位小数，整数值去小数位），≥1000000 显示 x.x m 暂不实现（亿级无需，备注） |
