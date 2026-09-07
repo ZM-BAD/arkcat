@@ -16,7 +16,7 @@
 | **App Type** | GitHub Third-party Client |
 | **Language** | ArkTS / ArkUI |
 | **Build Tool** | hvigor (DevEco Studio built-in) |
-| **Test Framework** | Hypium |
+| **Test Framework** | Hypium + node:test (host unit tests) |
 
 ---
 
@@ -44,45 +44,25 @@
 - Design System: **GitHub Primer** (official tokens & rules, see [DESIGN.md](DESIGN.md))
 - State Management: V2 (`@ComponentV2` / `@Local`, API 18+)
 - **Architecture: Client-side direct connection to GitHub GraphQL API**, no BFF/backend
-- Auth: GitHub Personal Access Token (user-generated, stored locally)
+- Auth: **GitHub OAuth Device Flow** (primary login) with PAT compatibility (stored locally)
+- Routing: **Navigation** (`NavPathStack` + `navDestination`; secondary pages use self-drawn AppBar)
 - GraphQL Client: Hand-rolled lightweight implementation
-
-### To Be Confirmed
-- Routing management solution
 
 ---
 
-## 📊 Spec Breakdown Strategy: BFS (Breadth-First Search)
+## ✨ Features
 
-> Traverse all tabs and pages first to establish a complete IA overview, then drill down path by path by priority.
-> Avoid getting stuck in the details of any single sub-page early on.
+- **Home**: My Work workspace (Issues / PRs / Discussions / Projects / Top Repos / Organizations / Starred — editable order & visibility)
+- **Inbox**: notification inbox (type / repository / view filters, read state, merged-PR detection)
+- **Explore**: Trending / Awesome (language, date window, spoken-language filters)
+- **Copilot**: AI assistant (OAuth Device Flow authorization, sessions & chat UI)
+- **Repositories**: detail, PR / Commits / Releases lists, Contributors / Watchers / License, README & Markdown rendering, Stargazers / Forks, achievement badges
+- **Pull Requests**: detail, Files Changed (diff hunks, line numbers toggle, reviewed checkboxes, file comments), commits, Checks / Reviews
+- **Issues**: detail, comments, reactions (emoji panel / Reactees), label filters
+- **Search**: six result types (Code / Repos / Issues / PRs / People / Orgs), qualifier chips, recent searches
+- **Global**: three-state dark mode, English & Simplified Chinese, GitHub Primer design, pull-to-refresh & infinite scroll, GitHub relative timestamps
 
-**BFS Level Planning:**
-- **Level 0**: Bottom Tab structure (Home / Inbox / Explore / Copilot)
-- **Level 1**: Each Tab's page element breakdown
-- **Level 2**: GraphQL interface + feasibility annotation per element
-- **Level 3**: Sub-pages (Repo detail, Issue detail, PR detail...)
-- **Level 4**: Interaction elements within sub-pages
-
-**Spec files are located in the `specs/` directory**, see [specs/README.md](specs/README.md) for details.
-
-### Spec Progress
-
-| Page | Spec File | Status |
-| ------ | ---------- | -------- |
-| Home Tab | `specs/001-home-tab.md` | ✅ Done |
-| Inbox Tab | `specs/002-inbox-tab.md` | ✅ Done |
-| Explore Tab | `specs/003-explore-tab.md` | ✅ Done |
-| Copilot Tab | `specs/004-copilot-tab.md` | ✅ Done |
-| User Profile | `specs/005-user-profile.md` | ✅ Done |
-| Repo Detail | `specs/006-repo-detail.md` | ✅ Done |
-| Issues List | `specs/007-issues-list.md` | ✅ Done |
-| PR List | `specs/008-pr-list.md` | ✅ Done |
-| PR Detail | `specs/009-pr-detail.md` | ✅ Done |
-| PR Diff | `specs/010-pr-diff.md` | ✅ Done |
-| Code Viewer | `specs/011-code-viewer.md` | ✅ Done |
-
-**Coverage: ~95% of core scenarios (weighted by user frequency)**
+> Detailed design & progress for each feature live in [`specs/`](specs/) (full index: [specs/README.md](specs/README.md)).
 
 ---
 
@@ -97,18 +77,30 @@
 
 ```bash
 # 1. Clone the project
-git clone https://github.com/zm_bad/arkcat.git
+git clone https://github.com/ZM-BAD/arkcat.git
 cd arkcat
 
-# 2. Install Git hooks
+# 2. Install Node dependencies (required by the pre-commit host unit test gate)
+npm install
+
+# 3. Install Git hooks
 bash scripts/install-hooks.sh
 
-# 3. Open in DevEco Studio
+# 4. Open in DevEco Studio
 #    File → Open → select arkcat directory
 
-# 4. Build & Run
+# 5. Build & Run
 #    DevEco Studio → Build → Build Project (Ctrl/Cmd + F9)
 #    DevEco Studio → Run → Run 'entry' (Ctrl/Cmd + R)
+```
+
+### Optional CLI commands (macOS)
+
+```bash
+bash scripts/run-local-tests.sh   # host unit tests (node:test, needs npm install)
+bash scripts/run-local-test.sh    # official Local Test + coverage report (needs DevEco Studio)
+bash scripts/check-graphql.sh     # GraphQL contract check (needs `gh` login)
+devecocli build                   # build debug HAP
 ```
 
 ---

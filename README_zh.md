@@ -16,7 +16,7 @@
 | **应用类型** | GitHub 第三方客户端 |
 | **开发语言** | ArkTS / ArkUI |
 | **构建工具** | hvigor（DevEco Studio 内置） |
-| **测试框架** | Hypium |
+| **测试框架** | Hypium + node:test（宿主单元测试） |
 
 ---
 
@@ -44,45 +44,25 @@
 - 设计系统：**GitHub Primer**（官方令牌与规范，见 [DESIGN.md](DESIGN.md)）
 - 状态管理：V2（`@ComponentV2` / `@Local`，API 18+）
 - **架构：纯端侧直连 GitHub GraphQL API**，无 BFF/后端服务
-- 认证方式：GitHub Personal Access Token（用户自行生成，客户端本地存储）
+- 认证方式：**GitHub OAuth Device Flow**（主登录路径）+ PAT 兼容（客户端本地存储）
+- 路由：**Navigation**（`NavPathStack` + `navDestination`；二级页自绘 AppBar）
 - GraphQL Client：纯手工封装（自研轻量 GraphQL Client）
-
-### 待确认
-- 路由管理方案选型
 
 ---
 
-## 📊 Spec 拆解策略：BFS（广度优先）
+## ✨ 功能一览
 
-> 先遍历所有 Tab 和页面，建立完整 IA 全貌，再按优先级逐路径深入。
-> 避免一开始陷入某个子页面的细节。
+- **Home**：My Work 分区工作区（Issues / PRs / Discussions / Projects / Top Repos / Organizations / Starred，支持编辑排序与可见性）
+- **Inbox**：通知收件箱（类型 / 仓库 / 视图筛选、阅读态、合并 PR 检测）
+- **Explore**：Trending / Awesome（语言、时间窗、口语筛选）
+- **Copilot**：AI 助手（OAuth Device Flow 授权、会话与聊天界面）
+- **仓库**：详情、PR / Commits / Releases 列表、Contributors / Watchers / License、README 与 Markdown 渲染、Stargazers / Forks、成就徽章
+- **PR**：详情、Files Changed（diff hunk、行号开关、Reviewed 勾选、文件评论）、提交列表、Checks / Reviews
+- **Issue**：详情、评论、反应（emoji 面板 / Reactees）、标签筛选
+- **搜索**：六类结果（Code / Repos / Issues / PRs / People / Orgs）、qualifier 快捷词、最近搜索
+- **全局**：三态暗黑模式、中英双语、GitHub Primer 视觉、下拉刷新与触底加载、GitHub 相对时间
 
-**BFS 层级规划：**
-- **Level 0**：底部 Tab 结构（Home / Inbox / Explore / Copilot）
-- **Level 1**：每个 Tab 的页面元素拆解
-- **Level 2**：每个元素对应的 GraphQL 接口 + 可行性标注
-- **Level 3**：子页面（仓库详情、Issue 详情、PR 详情...）
-- **Level 4**：子页面内的交互元素
-
-**Spec 文件位于 `specs/` 目录**，详见 [specs/README.md](specs/README.md)。
-
-### Spec 进度
-
-| 页面 | Spec 文件 | 状态 |
-| ------ | ---------- | ------ |
-| Home Tab | `specs/001-home-tab.md` | ✅ 完成 |
-| Inbox Tab | `specs/002-inbox-tab.md` | ✅ 完成 |
-| Explore Tab | `specs/003-explore-tab.md` | ✅ 完成 |
-| Copilot Tab | `specs/004-copilot-tab.md` | ✅ 完成 |
-| User Profile | `specs/005-user-profile.md` | ✅ 完成 |
-| Repo Detail | `specs/006-repo-detail.md` | ✅ 完成 |
-| Issues List | `specs/007-issues-list.md` | ✅ 完成 |
-| PR List | `specs/008-pr-list.md` | ✅ 完成 |
-| PR Detail | `specs/009-pr-detail.md` | ✅ 完成 |
-| PR Diff | `specs/010-pr-diff.md` | ✅ 完成 |
-| Code Viewer | `specs/011-code-viewer.md` | ✅ 完成 |
-
-**覆盖率：~95% 核心场景（按用户使用频率加权）**
+> 各功能详细设计与进度见 [`specs/`](specs/)（完整索引：[specs/README.md](specs/README.md)）。
 
 ---
 
@@ -97,18 +77,30 @@
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/zm_bad/arkcat.git
+git clone https://github.com/ZM-BAD/arkcat.git
 cd arkcat
 
-# 2. 安装 Git hooks
+# 2. 安装 Node 依赖（pre-commit 宿主单元测试门禁需要）
+npm install
+
+# 3. 安装 Git hooks
 bash scripts/install-hooks.sh
 
-# 3. 用 DevEco Studio 打开项目
+# 4. 用 DevEco Studio 打开项目
 #    File → Open → 选择 arkcat 目录
 
-# 4. 构建运行
+# 5. 构建运行
 #    DevEco Studio → Build → Build Project (Ctrl/Cmd + F9)
 #    DevEco Studio → Run → Run 'entry' (Ctrl/Cmd + R)
+```
+
+### 可选 CLI 命令（macOS）
+
+```bash
+bash scripts/run-local-tests.sh   # 宿主单元测试（node:test，需 npm install）
+bash scripts/run-local-test.sh    # 官方 Local Test + 覆盖率报告（需 DevEco Studio）
+bash scripts/check-graphql.sh     # GraphQL 契约检查（需 gh 已登录）
+devecocli build                   # 构建 debug HAP
 ```
 
 ---
