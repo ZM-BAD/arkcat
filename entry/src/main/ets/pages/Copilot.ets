@@ -1,27 +1,67 @@
 /**
- * Copilot Tab 主页（Spec 058）：Agent Sessions 宣传卡 + Chats 会话列表（mock）+ 右下 FAB。
- * 纯 UI 架子：会话列表来自 mock 常量，不接 Copilot 私有 API（功能批另立）。
+ * Copilot Tab 主页（Spec 059）：Agent Sessions 宣传卡 + Chats 真实会话列表 + 右下 FAB。
+ * 数据源 = CopilotStore（本地持久化单例）。
+ *
+ * 刷新模型：不依赖 @Trace 自动刷新（静态单例 @Trace 在本版 SDK 不可靠，实测「数据已
+ * 加载但 UI 仍空态」），走 index.ets 发出的 refreshTick 泵 —— @Monitor 监听 @Param
+ * 变化后显式重读单例并赋值给 @Local 渲染副本（模式同 EditMyWork onSaved → Home workVersion）。
  */
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
-import { ChatSession, mockChatSessions } from '../models/CopilotModels';
+import { ChatSession } from '../models/CopilotModels';
+import { CopilotStore } from '../utils/CopilotStore';
 import { githubShortTime, timeParts } from '../utils/Format';
+import { resText } from '../utils/I18n';
 
 @ComponentV2
 export struct CopilotView {
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
-  @Local sessions: ChatSession[] = mockChatSessions();
+  /** 列表刷新泵（Index 在详情页变更后自增，@Monitor 触发重读） */
+  @Param refreshTick: number = 0;
+  /** 渲染副本：显式从单例拷贝（不走 @Trace） */
+  @Local sessions: ChatSession[] = [];
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+
+  aboutToAppear(): void {
+    this.reload();
+  }
+
+  @Monitor('refreshTick')
+  onRefreshTickChanged(): void {
+    this.reload();
+  }
+
+  /** 重读单例 → 渲染副本（App 启动/详情页变更/切回本 Tab 都会走到） */
+  private reload(): void {
+    CopilotStore.load(this.getUIContext().getHostContext()).then(() => {
+      this.sessions = CopilotStore.instance.sessions.slice();
+    });
+  }
 
   private comingSoon(): void {
     promptAction.showToast({ message: $r('app.string.home_feature_coming') });
   }
 
-  private openChat(title: string): void {
-    this.pathStack.pushPathByName('copilotChat', title);
+  /** 会话行点击 → 详情页（路由参数=会话 id） */
+  private openChat(sessionId: string): void {
+    this.pathStack.pushPathByName('copilotChat', sessionId);
+  }
+
+  /** FAB / NEW CHAT：本地新建会话并进详情（返回后列表由刷新泵更新；落盘由 store 内建） */
+  private newChat(): void {
+    const session = CopilotStore.createSession();
+    this.openChat(session.id);
+  }
+
+  /** 会话标题：空标题（尚无首条用户消息）显示 New conversation */
+  private titleText(session: ChatSession): string {
+    if (session.title !== '') {
+      return session.title;
+    }
+    return resText(this.getUIContext(), $r('app.string.copilot_menu_new_conversation'));
   }
 
   private timeText(session: ChatSession): string {
@@ -29,7 +69,7 @@ export struct CopilotView {
     return parts !== null ? githubShortTime(parts) : '';
   }
 
-  /** Agent Sessions 宣传卡：三个装饰圆钮 + 标题 + 说明 + UPGRADE 按钮 */
+  /** Agent Sessions 宣传卡：三个装饰圆钮 + 标题 + 说明 + UPGRADE 按钮（红线：保持 toast 占位） */
   @Builder
   agentSessionsCard() {
     Column({ space: 10 }) {
@@ -98,7 +138,7 @@ export struct CopilotView {
   @Builder
   sessionRow(session: ChatSession) {
     Row({ space: 10 }) {
-      Text(session.title)
+      Text(this.titleText(session))
         .fontSize(17)
         .fontColor($r('app.color.text_primary'))
         .maxLines(1)
@@ -110,7 +150,7 @@ export struct CopilotView {
     }
     .width('100%')
     .padding({ top: 16, bottom: 16 })
-    .onClick(() => this.openChat(session.title))
+    .onClick(() => this.openChat(session.id))
   }
 
   /** Chats 空态卡：No chats yet（对齐参考图 1） */
@@ -142,7 +182,7 @@ export struct CopilotView {
         .fontWeight(600)
         .fontColor($r('app.color.link_blue'))
         .padding({ top: 10, bottom: 10 })
-        .onClick(() => this.openChat(''))
+        .onClick(() => this.newChat())
     }
     .padding({ top: 24, bottom: 24 })
     .borderRadius($r('app.float.card_radius'))
@@ -162,7 +202,7 @@ export struct CopilotView {
     .backgroundColor($r('app.color.link_blue'))
     .shadow({ radius: 8, color: $r('app.color.shadow_floating'), offsetX: 0, offsetY: 4 })
     .margin({ right: 16, bottom: 16 })
-    .onClick(() => this.openChat(''))
+    .onClick(() => this.newChat())
   }
 
   build() {

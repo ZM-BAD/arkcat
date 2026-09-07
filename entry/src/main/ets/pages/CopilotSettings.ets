@@ -1,22 +1,74 @@
 /**
- * Copilot settings 页（Spec 058）：Subscription / Usage / About 三分组（用量为 mock）。
- * 纯 UI 架子：套餐名/用量/登录名均 mock 常量，UPGRADE 与链接动作 toast 占位。
+ * Copilot settings 页（Spec 059）：Subscription / Usage / About 三分组。
+ * login 来自当前账号（Index 透传 currentLogin，账号存储为 Spec 049a 的 AccountStore）；
+ * Usage 环=本地记账近似（无公开用量 API，见 059 五章）；套餐名保持静态文案（无公开套餐 API）。
  */
 import { promptAction } from '@kit.ArkUI';
+import { hilog } from '@kit.PerformanceAnalysisKit';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
+import { HomeService } from '../services/HomeService';
+import { CopilotStore } from '../utils/CopilotStore';
 import { resText } from '../utils/I18n';
+
+/** Copilot Free 月度上限（057 实测：chat 200 credits / completions 2000 / premium 0） */
+const FREE_CHAT_LIMIT = 200;
 
 @ComponentV2
 export struct CopilotSettingsView {
+  @Param token: string = '';
+  /** 当前账号 login（Index 的 currentLogin；v1 迁移 viewer 失败时为空串占位） */
+  @Param login: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
   /** 滚动顶部阴影 */
   @Local scrollShadow: boolean = false;
-  /** mock：套餐名/用量/登录名（OAuth 接入后由 057 落库信息替换） */
-  private readonly mockPlan: string = 'Copilot Free';
-  private readonly mockLogin: string = 'ZM-BAD';
-  private readonly mockCompletions: number = 50;
-  private readonly mockChat: number = 60;
+  /** 渲染用登录名：@Param 快照 + 占位为空时的兜底拉取结果 */
+  @Local displayLogin: string = '';
+  /** 套餐名：无公开 API 可查（见 059 边界），保持静态 */
+  private readonly planName: string = 'Copilot Free';
+
+  aboutToAppear(): void {
+    this.resolveLogin();
+  }
+
+  @Monitor('login')
+  onLoginChanged(): void {
+    this.resolveLogin();
+  }
+
+  /**
+   * 登录名解析：账号 login 正常则直接显示；仅占位为空（049a 迁移时 viewer 查询失败）
+   * 才兜底拉取 viewer 供本页展示——不回写账号存储（login 的事实源在 AccountStore）。
+   */
+  private resolveLogin(): void {
+    if (this.login !== '') {
+      this.displayLogin = this.login;
+      return;
+    }
+    if (this.token !== '') {
+      HomeService.fetchViewerBasic(this.token)
+        .then((viewer) => {
+          this.displayLogin = viewer.login;
+        })
+        .catch((e: Error) => {
+          hilog.warn(0xFF00, '[CopilotSettings]', 'viewer fetch failed: %{public}s', `${e}`);
+        });
+    }
+  }
+
+  /** 本地累计用户消息数 → Copilot Free chat 配额近似使用率（0-100） */
+  private chatPercent(): number {
+    let count = 0;
+    for (const session of CopilotStore.instance.sessions) {
+      for (const msg of session.messages) {
+        if (msg.isUser) {
+          count += 1;
+        }
+      }
+    }
+    const percent = Math.round(count * 100 / FREE_CHAT_LIMIT);
+    return percent > 100 ? 100 : percent;
+  }
 
   private comingSoon(): void {
     promptAction.showToast({ message: $r('app.string.home_feature_coming') });
@@ -122,17 +174,25 @@ export struct CopilotSettingsView {
             .width('100%')
             .margin({ top: 8, bottom: 4 })
 
-          Text(this.mockPlan)
+          Text(this.planName)
             .fontSize(28)
             .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
             .width('100%')
 
-          Text(resText(this.getUIContext(), $r('app.string.copilot_settings_active_for'), this.mockLogin))
-            .fontSize($r('app.float.body_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-            .width('100%')
-            .margin({ bottom: 16 })
+          if (this.displayLogin !== '') {
+            Text(resText(this.getUIContext(), $r('app.string.copilot_settings_active_for'), this.displayLogin))
+              .fontSize($r('app.float.body_font_size'))
+              .fontColor($r('app.color.text_secondary'))
+              .width('100%')
+              .margin({ bottom: 16 })
+          } else {
+            Text($r('app.string.copilot_settings_plan_unknown'))
+              .fontSize($r('app.float.body_font_size'))
+              .fontColor($r('app.color.text_secondary'))
+              .width('100%')
+              .margin({ bottom: 16 })
+          }
 
           this.groupGap()
 
@@ -143,8 +203,14 @@ export struct CopilotSettingsView {
             .width('100%')
             .margin({ top: 8, bottom: 4 })
 
-          this.usageRow($r('app.string.copilot_settings_code_completions'), this.mockCompletions)
-          this.usageRow($r('app.string.copilot_settings_chat_messages'), this.mockChat)
+          this.usageRow($r('app.string.copilot_settings_code_completions'), 0)
+          this.usageRow($r('app.string.copilot_settings_chat_messages'), this.chatPercent())
+
+          Text($r('app.string.copilot_usage_local_hint'))
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor($r('app.color.text_secondary'))
+            .width('100%')
+            .margin({ bottom: 4 })
 
           Button($r('app.string.copilot_settings_upgrade_plan'))
             .fontSize($r('app.float.body_font_size'))

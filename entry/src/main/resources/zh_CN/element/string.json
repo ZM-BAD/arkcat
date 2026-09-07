@@ -2479,6 +2479,34 @@
     {
       "name": "copilot_settings_footer_c",
       "value": "。"
+    },
+    {
+      "name": "copilot_settings_plan_unknown",
+      "value": "Active for account"
+    },
+    {
+      "name": "copilot_usage_local_hint",
+      "value": "本机本地估算；GitHub 服务器用量无公开接口"
+    },
+    {
+      "name": "copilot_error_send",
+      "value": "Copilot 请求失败，请检查网络后重试"
+    },
+    {
+      "name": "copilot_error_quota",
+      "value": "Copilot 当前不可用（配额或权限受限），请稍后再试"
+    },
+    {
+      "name": "copilot_retry",
+      "value": "重试"
+    },
+    {
+      "name": "copilot_delete_confirm",
+      "value": "要删除此会话吗？"
+    },
+    {
+      "name": "copilot_delete_action",
+      "value": "删除"
     }
   ]
 }

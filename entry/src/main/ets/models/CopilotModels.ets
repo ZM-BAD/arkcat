@@ -1,6 +1,7 @@
 /**
- * Copilot 页模型（Spec 058 UI 架子）。
- * 全部为 mock 数据——Copilot 私有 API 无公开契约，功能批接入后替换（见 058 备注）。
+ * Copilot 页模型与纯函数（Spec 059 功能批）。
+ * 会话/消息为本地持久化数据（Copilot 无会话历史公开 API，见 059 五章）；
+ * mock 常量已于本批删除（058 UI 架子数据源被 CopilotStore 替代）。
  */
 
 export interface ChatMessage {
@@ -12,36 +13,16 @@ export interface ChatMessage {
 export interface ChatSession {
   id: string;
   title: string;
-  /** ISO 时间戳 → githubShortTime 渲染相对时间（mock 取当前时刻 → just now） */
+  /** ISO 时间戳 → githubShortTime 渲染相对时间（消息变更时刷新） */
   updatedAt: string;
+  messages: ChatMessage[];
 }
 
-/** 主页 Chats mock 会话（对齐参考图：《网站性能优化方法》为当前会话） */
-export function mockChatSessions(): ChatSession[] {
-  const now = new Date().toISOString();
-  return [
-    { id: 'mock-2', title: '网站性能优化方法', updatedAt: now },
-    { id: 'mock-1', title: '参与 React 代码库的指导', updatedAt: now }
-  ];
-}
-
-/** 详情页 mock 消息：用户多要点 + 助手回复 + 追问（对齐参考图 3 内容） */
-export function mockChatMessages(): ChatMessage[] {
-  return [
-    {
-      id: 'm1',
-      isUser: true,
-      body: '如果您有：\n· 需要优化性能的网站\n· 想要搜索某个开源项目中的性能优化代码示例\n· 想配置 GitHub Actions 来进行性能测试'
-    },
-    {
-      id: 'm2',
-      isUser: false,
-      body: '我很乐意帮助！您能告诉我具体是哪方面的 GitHub 相关问题吗?'
-    },
-    {
-      id: 'm3',
-      isUser: true,
-      body: '网站性能优化方法'
-    }
-  ];
+/** 会话标题：首条用户消息前 40 字符（官方行为近似），失败回退空串（显示 New conversation） */
+export function firstMessageTitle(body: string): string {
+  const trimmed = body.trim();
+  if (trimmed === '') {
+    return '';
+  }
+  return trimmed.length > 40 ? trimmed.substring(0, 40) : trimmed;
 }

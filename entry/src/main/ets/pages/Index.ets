@@ -92,8 +92,10 @@ struct Index {
   /** Spec 052：成就详情参数（login|startIndex） */
   @State achLogin: string = '';
   @State achStart: number = 0;
-  /** Spec 058：Copilot 会话标题（路由参数：标题字符串，空=新建会话） */
-  @State chatTitle: string = '';
+  /** Spec 059：Copilot 会话 id（路由参数；新会话先建后传，空串兜底=不存在走 pop） */
+  @State chatSessionId: string = '';
+  /** Spec 059：Copilot 会话列表刷新泵（详情页变更后自增，驱动主页列表重渲染） */
+  @State copilotTick: number = 0;
   @State orgLogin: string = '';
   @State reposOwner: string = '';
   @State reposMode: string = 'org';
@@ -1049,14 +1051,22 @@ struct Index {
     .hideTitleBar(true)
   }
 
-  /** Spec 058：Copilot 聊天详情页（路由参数：会话标题，空=新建会话） */
+  /** Spec 059：Copilot 聊天详情页（路由参数=会话 id；新会话由主页 createSession 后携带） */
   @Builder
   copilotChatDestination() {
     NavDestination() {
-      CopilotChatView({ title: this.chatTitle, pathStack: this.pathStack })
+      CopilotChatView({
+        token: this.token,
+        sessionId: this.chatSessionId,
+        pathStack: this.pathStack,
+        onChanged: (): void => {
+          // 详情页变更（发送/删除/切换）→ 主页列表重渲染（刷新泵，模式同 EditMyWork onSaved）
+          this.copilotTick += 1;
+        }
+      })
     }
     .onReady((context: NavDestinationContext) => {
-      this.chatTitle = context.pathInfo.param as string;
+      this.chatSessionId = context.pathInfo.param as string;
     })
     .hideTitleBar(true)
   }
@@ -1073,11 +1083,11 @@ struct Index {
     .hideTitleBar(true)
   }
 
-  /** Spec 058：Copilot settings 页 */
+  /** Spec 058：Copilot settings 页（059：token/login 传入，登录名取当前账号） */
   @Builder
   copilotSettingsDestination() {
     NavDestination() {
-      CopilotSettingsView({ pathStack: this.pathStack })
+      CopilotSettingsView({ token: this.token, login: this.currentLogin, pathStack: this.pathStack })
     }
     .hideTitleBar(true)
   }
@@ -1195,7 +1205,7 @@ struct Index {
       }
 
       TabContent() {
-        CopilotView({ token: this.token, pathStack: this.pathStack })
+        CopilotView({ token: this.token, pathStack: this.pathStack, refreshTick: this.copilotTick })
       }
     }
     .onChange((index: number) => {

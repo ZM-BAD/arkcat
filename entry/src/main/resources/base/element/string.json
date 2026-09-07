@@ -2479,6 +2479,34 @@
     {
       "name": "copilot_settings_footer_c",
       "value": " at any time."
+    },
+    {
+      "name": "copilot_settings_plan_unknown",
+      "value": "Active for account"
+    },
+    {
+      "name": "copilot_usage_local_hint",
+      "value": "Local estimate from this device; GitHub-side usage is not publicly accessible."
+    },
+    {
+      "name": "copilot_error_send",
+      "value": "Copilot request failed. Check your network and try again."
+    },
+    {
+      "name": "copilot_error_quota",
+      "value": "Copilot is unavailable right now (quota or permission). Try again later."
+    },
+    {
+      "name": "copilot_retry",
+      "value": "Retry"
+    },
+    {
+      "name": "copilot_delete_confirm",
+      "value": "Delete this conversation?"
+    },
+    {
+      "name": "copilot_delete_action",
+      "value": "Delete"
     }
   ]
 }

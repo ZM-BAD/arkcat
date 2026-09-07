@@ -47,6 +47,9 @@ import {
   accountsToStorage, accountsFromStorage, legacyToAccount, nextAddResult,
   AccountInfo
 } from '../../entry/src/main/ets/services/AccountStore';
+import { buildChatPayload, parseChatResponse, isFreeModelAllowed, FREE_CHAT_MODELS } from '../../entry/src/main/ets/services/CopilotService';
+import { firstMessageTitle } from '../../entry/src/main/ets/models/CopilotModels';
+import { copilotSessionsToStorage, copilotSessionsFromStorage } from '../../entry/src/main/ets/utils/CopilotStore';
 
 const NOW = Date.parse('2026-08-31T12:00:00Z');
 const MINUTE_MS = 60 * 1000;
@@ -999,4 +1002,65 @@ test('nextAddResult 查重与 5 个上限', () => {
   assert.equal(nextAddResult(five, 'a'), 1); // 满员时重复仍走 DUPLICATE（重新授权语义）
   const four = [mk('a'), mk('b'), mk('c'), mk('d')];
   assert.equal(nextAddResult(four, 'e'), 0);
+});
+
+test('buildChatPayload 白名单模型 + 默认模型', () => {
+  const turns = [{ role: 'user', content: 'hi' }];
+  const payload = JSON.parse(buildChatPayload(turns));
+  assert.equal(payload.model, FREE_CHAT_MODELS[0]);
+  assert.equal(payload.messages.length, 1);
+  assert.equal(payload.messages[0].role, 'user');
+  assert.equal(payload.stream, false);
+});
+
+test('isFreeModelAllowed 白名单放行 premium 拒绝（红线）', () => {
+  assert.equal(isFreeModelAllowed('gpt-4o-mini-2024-07-18'), true);
+  assert.equal(isFreeModelAllowed('claude-opus-4.7'), false);
+  assert.equal(isFreeModelAllowed('gpt-5.4'), false);
+  assert.equal(isFreeModelAllowed(''), false);
+});
+
+test('parseChatResponse 正常/缺 choices/空 content', () => {
+  const ok = JSON.stringify({ 'choices': [{ 'message': { 'content': 'hello' } }] });
+  const emptyChoices = JSON.stringify({ 'choices': [] });
+  const noMessage = JSON.stringify({ 'choices': [{ 'index': 0 }] });
+  const noContent = JSON.stringify({ 'choices': [{ 'message': {} }] });
+  assert.equal(parseChatResponse(ok), 'hello');
+  assert.equal(parseChatResponse(emptyChoices), '');
+  assert.equal(parseChatResponse(noMessage), '');
+  assert.equal(parseChatResponse(noContent), '');
+  assert.equal(parseChatResponse('not json'), '');
+});
+
+test('firstMessageTitle 空/短/40 字符截断', () => {
+  assert.equal(firstMessageTitle(''), '');
+  assert.equal(firstMessageTitle('   '), '');
+  assert.equal(firstMessageTitle('hello'), 'hello');
+  const long = 'a'.repeat(50);
+  assert.equal(firstMessageTitle(long).length, 40);
+});
+
+test('copilotSessionsToStorage/fromStorage 往返', () => {
+  const sessions = [{
+    id: 's1', title: 't', updatedAt: '2026-09-08T00:00:00Z',
+    messages: [{ id: 'm1', isUser: true, body: 'hi' }, { id: 'm2', isUser: false, body: 'yo' }]
+  }];
+  const restored = copilotSessionsFromStorage(copilotSessionsToStorage(sessions));
+  assert.equal(restored.length, 1);
+  assert.equal(restored[0].id, 's1');
+  assert.equal(restored[0].messages.length, 2);
+  assert.equal(restored[0].messages[1].body, 'yo');
+});
+
+test('copilotSessionsFromStorage 坏输入回退空数组', () => {
+  assert.equal(copilotSessionsFromStorage('not json').length, 0);
+  assert.equal(copilotSessionsFromStorage('{"a":1}').length, 0);
+  assert.equal(copilotSessionsFromStorage('[]').length, 0);
+  const bad = JSON.stringify([{ 'title': 'no id' }]);
+  assert.equal(copilotSessionsFromStorage(bad).length, 0);
+  // 坏消息（无 body/id）被剔除，会话保留
+  const badMsg = JSON.stringify([{ 'id': 's1', 'title': 't', 'updatedAt': 'd', 'messages': [{ 'body': '' }] }]);
+  const restored = copilotSessionsFromStorage(badMsg);
+  assert.equal(restored.length, 1);
+  assert.equal(restored[0].messages.length, 0);
 });
