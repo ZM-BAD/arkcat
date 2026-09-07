@@ -20,7 +20,8 @@ import {
 } from '../../entry/src/main/ets/utils/WorkConfig';
 import {
   mapRepoCommit, mapRepoCommitsPage, mapPrCommits,
-  filterPrsByAuthor, filterPrsByAssignee, repoPrIconKey, RepoPrItem, mapIssueDetail
+  filterPrsByAuthor, filterPrsByAssignee, repoPrIconKey, RepoPrItem, mapIssueDetail,
+  mapPrDetail, mapRepoReleasesPage, formatBytes
 } from '../../entry/src/main/ets/models/RepoSubModels';
 import { mapPrFiles, mapFilesCursor, applyRestPatch, PrFileItem } from '../../entry/src/main/ets/models/PrDiffModels';
 import {
@@ -127,6 +128,10 @@ test('timeParts 边界：整分钟/整 30 天/31 天/未来时间', () => {
   assert.equal(timeParts(new Date(NOW - 30 * DAY_MS).toISOString(), NOW)?.value, 30);
   assert.equal(timeParts(new Date(NOW - 31 * DAY_MS).toISOString(), NOW)?.value, 1);
   assert.equal(timeParts('2099-01-01T00:00:00Z', NOW)?.unit, 'just_now');
+  // 26 个月跨年后仍在 month 粒度之下的边界（2026-06-01 → 约 3 个月）
+  assert.equal(timeParts('2024-06-01T12:00:00Z', NOW)?.unit, 'year' as string);
+  assert.equal(timeParts('2024-06-01T12:00:00Z', NOW)?.value, 2);
+  assert.equal(timeParts('2026-06-01T12:00:00Z', NOW)?.unit, 'month' as string);
 });
 
 test('githubShortTime 全单位', () => {
@@ -143,6 +148,8 @@ test('compactCount 缩略计数', () => {
   assert.equal(compactCount(1500), '1.5k');
   assert.equal(compactCount(1250), '1.3k');
   assert.equal(compactCount(12000), '12k');
+  assert.equal(compactCount(50500), '50.5k');
+  assert.equal(compactCount(118900), '118.9k');
 });
 
 test('notificationTypeKey 映射与未知原样', () => {
@@ -222,6 +229,17 @@ test('parseDiffPatch 新文件场景 -0,0 起始', () => {
 test('parseDiffPatch 非法 hunk 头整体跳过', () => {
   const patch = '@@ -x +y @@\nctx line\n';
   assert.equal(parseDiffPatch(patch).length, 0);
+});
+
+test('parseDiffPatch 无 count 的 hunk 头（@@ -1 +1 @@ 兼容）', () => {
+  const patch = '@@ -1 +1 @@\n-x\n\\ No newline at end of file\n+y\n\\ No newline at end of file\n';
+  const hunks = parseDiffPatch(patch);
+  assert.equal(hunks.length, 1);
+  assert.equal(hunks[0].oldStart, 1);
+  assert.equal(hunks[0].newStart, 1);
+  assert.equal(hunks[0].lines.length, 2);
+  assert.equal(hunks[0].lines[0].kind, 'del');
+  assert.equal(hunks[0].lines[1].kind, 'add');
 });
 
 test('parseDiffPatch hunk 内空行按上下文处理防行号错位（H3）', () => {
@@ -832,6 +850,32 @@ test('mapIssueDetail/mapPrDetail body/bodyHTML 映射（防正文恒空回归）
   assert.equal(ip.bodyHTML, '<p>body html</p>');
   assert.equal(ip.comments[0].body, 'plain');
   assert.equal(ip.comments[0].bodyHTML, '<p>rendered</p>');
+  const prData: JsonMap = {
+    'repository': { 'pullRequest': {
+      'number': 82, 'title': 'fix', 'state': 'MERGED', 'merged': true, 'isDraft': false,
+      'body': 'pb', 'bodyHTML': '<p>pr html</p>', 'createdAt': '2026-08-01T00:00:00Z',
+      'mergedAt': '2026-08-02T00:00:00Z', 'additions': 1, 'deletions': 1, 'author': author,
+      'headRefName': 'fix/1', 'baseRefName': 'main', 'comments': { 'totalCount': 0, 'nodes': [] }
+    } }
+  };
+  assert.equal(mapPrDetail(prData).bodyHTML, '<p>pr html</p>');
+});
+
+test('mapRepoReleasesPage body=description 兜底 + formatBytes 单位', () => {
+  const author: JsonMap = { 'login': 'zm_bad' };
+  const relNode: JsonMap = {
+    'id': 'R1', 'tagName': '1.0', 'isLatest': true, 'createdAt': '2026-06-30T00:00:00Z',
+    'description': 'long body', 'author': author
+  };
+  const rp = mapRepoReleasesPage({ 'repository': { 'releases': { 'nodes': [relNode] } } });
+  // Release schema 无 body 字段（2026-09-04 实测）：description 即正文
+  assert.equal(rp.releases[0].body, 'long body');
+  assert.equal(rp.releases[0].bodyHTML, '');
+  assert.equal(formatBytes(0), '0 B');
+  assert.equal(formatBytes(512), '512 B');
+  assert.equal(formatBytes(1536), '1.5 KB');
+  assert.equal(formatBytes(5 * 1024 * 1024), '5.0 MB');
+  assert.equal(formatBytes(2048 * 1024 * 1024), '2.0 GB');
 });
 
 test('parseAchievementDetail 完整/锚点/多 tier 事件解析', () => {

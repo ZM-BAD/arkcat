@@ -3,9 +3,7 @@
  * 运行于模拟器（aa test），与主代码同一编译单元，可直接 import main ets。
  */
 import { describe, it, expect } from '@ohos/hypium';
-import { timeParts, compactCount, notificationTypeKey, githubShortTime, unlockDateText } from '../../../main/ets/utils/Format';
-import { Json } from '../../../main/ets/utils/Json';
-import { WorkSection, defaultWorkSections, visibleWorkSections, workSectionsToStorage, workSectionsFromStorage } from '../../../main/ets/utils/WorkConfig';
+import { unlockDateText } from '../../../main/ets/utils/Format';
 import { mapRepoPr, mapRepoPrsPage, mapRepoCommitsPage, mapRepoReleasesPage, mapIssueDetail, mapPrDetail, filterPrsByAuthor, filterPrsByAssignee, repoPrIconKey, monthDayText } from '../../../main/ets/models/RepoSubModels';
 import { repoIssueStates } from '../../../main/ets/services/IssuesService';
 import { RepoPrItem } from '../../../main/ets/models/RepoSubModels';
@@ -17,9 +15,7 @@ import { mapUserProfile, isSelfProfile } from '../../../main/ets/models/ProfileM
 import { mapRepoDetail, nextStarAction } from '../../../main/ets/models/RepoDetailModels';
 import { mapFork, mapStargazerPage, mapWatcherPage, mapContributorPage } from '../../../main/ets/models/RepoSocialModels';
 import { mapLicenseInfo, stripLicenseTitle } from '../../../main/ets/models/RepoLicenseModels';
-import { parseDiffPatch, fileBaseName, DiffLine, DiffHunk } from '../../../main/ets/utils/Diff';
-import { mapPrFiles, applyRestPatch, PrFileItem } from '../../../main/ets/models/PrDiffModels';
-import { mapReleaseDetail, formatBytes, mapReactionUsersPage } from '../../../main/ets/models/RepoSubModels';
+import { mapReleaseDetail, mapReactionUsersPage } from '../../../main/ets/models/RepoSubModels';
 import { mapIssue, mapIssuesPage, issueOrderField } from '../../../main/ets/models/IssuesModels';
 import { ReactionGroup, REACTION_META, reactionEmoji, findReactionGroup, flipReactionGroups } from '../../../main/ets/models/RepoSubModels';
 import { MarkdownEdit } from '../../../main/ets/utils/MarkdownEdit';
@@ -31,67 +27,7 @@ const NOW = Date.parse('2026-08-31T12:00:00Z');
 
 export default function logicTest(testsuiteName: string) {
   describe(testsuiteName, () => {
-    it('timeParts_justNow', 0, () => {
-      const parts = timeParts('2026-08-31T11:59:50Z', NOW);
-      expect(parts !== null).assertTrue();
-      expect(parts?.value).assertEqual(0);
-      expect(parts?.unit).assertEqual('just_now');
-    });
-    it('timeParts_minutes', 0, () => {
-      const parts = timeParts('2026-08-31T11:55:00Z', NOW);
-      expect(parts?.value).assertEqual(5);
-      expect(parts?.unit).assertEqual('minute');
-    });
-    it('timeParts_hours', 0, () => {
-      const parts = timeParts('2026-08-31T09:00:00Z', NOW);
-      expect(parts?.value).assertEqual(3);
-      expect(parts?.unit).assertEqual('hour');
-    });
-    it('githubShortTime_formats', 0, () => {
-      // GitHub 通知卡片风格：22h / 1d / 8d（无本地化后缀）
-      expect(githubShortTime({ value: 0, unit: 'just_now' })).assertEqual('now');
-      expect(githubShortTime({ value: 5, unit: 'minute' })).assertEqual('5m');
-      expect(githubShortTime({ value: 22, unit: 'hour' })).assertEqual('22h');
-      expect(githubShortTime({ value: 1, unit: 'day' })).assertEqual('1d');
-      expect(githubShortTime({ value: 8, unit: 'day' })).assertEqual('8d');
-      expect(githubShortTime({ value: 3, unit: 'month' })).assertEqual('3mo');
-      expect(githubShortTime({ value: 2, unit: 'year' })).assertEqual('2y');
-    });
-    it('timeParts_days', 0, () => {
-      const parts = timeParts('2026-08-29T12:00:00Z', NOW);
-      expect(parts?.value).assertEqual(2);
-      expect(parts?.unit).assertEqual('day');
-    });
-    it('timeParts_months', 0, () => {
-      // 6/1 → 8/31 共 91 天，floor(91/30) = 3 个月
-      const parts = timeParts('2026-06-01T12:00:00Z', NOW);
-      expect(parts?.value).assertEqual(3);
-      expect(parts?.unit).assertEqual('month');
-    });
-    it('timeParts_invalid', 0, () => {
-      expect(timeParts('not-a-date', NOW)).assertNull();
-    });
 
-    it('notificationTypeKey_mapping', 0, () => {
-      expect(notificationTypeKey('PullRequest')).assertEqual('pr');
-      expect(notificationTypeKey('Issue')).assertEqual('issue');
-      expect(notificationTypeKey('SecurityAlert')).assertEqual('security');
-      expect(notificationTypeKey('CheckSuite')).assertEqual('ci');
-      expect(notificationTypeKey('Discussion')).assertEqual('discussion');
-      // 未知类型原样返回，UI 层直接展示
-      expect(notificationTypeKey('Whatever')).assertEqual('Whatever');
-    });
-
-    it('json_helpers_missingFields', 0, () => {
-      const raw: JsonMap = { 'a': 'x', 'n': 3 };
-      expect(Json.str(raw, 'a')).assertEqual('x');
-      expect(Json.str(raw, 'missing', 'fb')).assertEqual('fb');
-      expect(Json.num(raw, 'n')).assertEqual(3);
-      expect(Json.num(raw, 'missing', 7)).assertEqual(7);
-      expect(Json.obj(raw, 'missing')).assertNull();
-      expect(Json.arr(raw, 'missing').length).assertEqual(0);
-      expect(Json.parse('not json')).assertNull();
-    });
 
     it('mapUser_basic', 0, () => {
       const followers: JsonMap = { 'totalCount': 12 };
@@ -478,40 +414,6 @@ export default function logicTest(testsuiteName: string) {
       expect(list[0].ownerAvatarUrl).assertEqual('https://avatars.example/zm');
     });
 
-    it('timeParts_years_and_compactCount', 0, () => {
-      // 2024-06 → 2026-08：26 个月 ≥ 12 → 2 年
-      const years = timeParts('2024-06-01T12:00:00Z', NOW);
-      expect(years?.unit).assertEqual('year');
-      expect(years?.value).assertEqual(2);
-      // 13 个月整仍属 month 粒度边界内
-      const months = timeParts('2026-06-01T12:00:00Z', NOW);
-      expect(months?.unit).assertEqual('month');
-      expect(compactCount(999)).assertEqual('999');
-      expect(compactCount(1000)).assertEqual('1k');
-      expect(compactCount(50500)).assertEqual('50.5k');
-      expect(compactCount(118900)).assertEqual('118.9k');
-    });
-
-    it('workConfig_visibleAndStorage', 0, () => {
-      const all = defaultWorkSections();
-      expect(all.length).assertEqual(7);
-      expect(visibleWorkSections(all).length).assertEqual(7);
-      const partial: WorkSection[] = [
-        { id: 'starred', visible: true },
-        { id: 'issues', visible: false }
-      ];
-      const shown = visibleWorkSections(partial);
-      expect(shown.length).assertEqual(1);
-      expect(shown[0].id).assertEqual('starred');
-      // 序列化往返
-      const round = workSectionsFromStorage(workSectionsToStorage(partial));
-      expect(round.length).assertEqual(2);
-      expect(round[0].id).assertEqual('starred');
-      expect(round[1].visible).assertFalse();
-      // 坏数据回退默认；重复 id 去重
-      expect(workSectionsFromStorage('not json').length).assertEqual(7);
-      expect(workSectionsFromStorage('[]').length).assertEqual(7);
-    });
 
     it('workQueries_builders', 0, () => {
       expect(buildWorkIssuesQuery('all', 'created', 'all', 'newest', [], []))
@@ -765,51 +667,6 @@ export default function logicTest(testsuiteName: string) {
     });
 
 
-    it('markdown_bodyHTML_mapping', 0, () => {
-      const author: JsonMap = { 'login': 'zm_bad' };
-      // 评论：body/bodyHTML 字段映射（顺带防回归：曾误读 description 导致正文恒空）
-      const cNode: JsonMap = { 'id': 'C1', 'body': 'plain', 'bodyHTML': '<p>rendered</p>', 'createdAt': '2026-08-02T00:00:00Z', 'author': author };
-      const issueComments: JsonMap = { 'totalCount': 1, 'nodes': [cNode] };
-      const emptyLabels: JsonMap = { 'nodes': [] };
-      const issueNode: JsonMap = {
-        'number': 1, 'title': 't', 'state': 'OPEN', 'stateReason': '', 'body': 'body text',
-        'bodyHTML': '<p>body html</p>', 'createdAt': '2026-08-01T00:00:00Z', 'author': author,
-        'labels': emptyLabels, 'comments': issueComments
-      };
-      const issueRepo: JsonMap = { 'issue': issueNode };
-      const issueData: JsonMap = { 'repository': issueRepo };
-      const ip = mapIssueDetail(issueData);
-      expect(ip.body).assertEqual('body text');
-      expect(ip.bodyHTML).assertEqual('<p>body html</p>');
-      expect(ip.comments[0].body).assertEqual('plain');
-      expect(ip.comments[0].bodyHTML).assertEqual('<p>rendered</p>');
-
-      const emptyPrComments: JsonMap = { 'totalCount': 0, 'nodes': [] };
-      const prNode: JsonMap = {
-        'number': 82, 'title': 'fix', 'state': 'MERGED', 'merged': true, 'isDraft': false,
-        'body': 'pb', 'bodyHTML': '<p>pr html</p>', 'createdAt': '2026-08-01T00:00:00Z', 'mergedAt': '2026-08-02T00:00:00Z',
-        'additions': 1, 'deletions': 1, 'author': author, 'headRefName': 'fix/1', 'baseRefName': 'main',
-        'comments': emptyPrComments
-      };
-      const prRepo: JsonMap = { 'pullRequest': prNode };
-      const prData: JsonMap = { 'repository': prRepo };
-      const pp = mapPrDetail(prData);
-      expect(pp.bodyHTML).assertEqual('<p>pr html</p>');
-
-      // Release 无 body/bodyHTML 字段（2026-09-04 实测）：description=正文原文，HTML 由 renderMarkdown 生成
-      const relNode: JsonMap = {
-        'id': 'R1', 'tagName': '1.0', 'isLatest': true, 'createdAt': '2026-06-30T00:00:00Z',
-        'description': 'long body', 'author': author
-      };
-      const relNodes: JsonMap = { 'nodes': [relNode] };
-      const relRepo: JsonMap = { 'releases': relNodes };
-      const relData: JsonMap = { 'repository': relRepo };
-      const rp = mapRepoReleasesPage(relData);
-      expect(rp.releases[0].body).assertEqual('long body');
-      expect(rp.releases[0].bodyHTML).assertEqual('');
-    });
-
-
     it('unlockDateText_valid', 0, () => {
       // 设备语言相关，仅断言非空（本地「月 日」）
       expect(unlockDateText('2026-08-31T19:09:34Z') !== '').assertTrue();
@@ -939,117 +796,9 @@ export default function logicTest(testsuiteName: string) {
       expect(stripLicenseTitle('', body)).assertEqual(body);
     });
 
-    it('parseDiffPatch_basic', 0, () => {
-      const patch = 'diff --git a/README.md b/README.md\n' +
-        'index 123..456 100644\n' +
-        '--- a/README.md\n' +
-        '+++ b/README.md\n' +
-        '@@ -1,3 +1,4 @@\n' +
-        ' # arkcat\n' +
-        '-old line\n' +
-        '+new line\n' +
-        ' context\n' +
-        '+extra\n';
-      const hunks = parseDiffPatch(patch);
-      expect(hunks.length).assertEqual(1);
-      const hunk = hunks[0] as DiffHunk;
-      expect(hunk.oldStart).assertEqual(1);
-      expect(hunk.newStart).assertEqual(1);
-      expect(hunk.lines.length).assertEqual(5);
-      const lines = hunk.lines;
-      expect((lines[0] as DiffLine).kind).assertEqual('ctx');
-      expect((lines[1] as DiffLine).kind).assertEqual('del');
-      expect((lines[1] as DiffLine).oldLine).assertEqual(2);
-      expect((lines[2] as DiffLine).kind).assertEqual('add');
-      expect((lines[2] as DiffLine).newLine).assertEqual(2);
-      expect((lines[3] as DiffLine).newLine).assertEqual(3);
-      expect((lines[0] as DiffLine).text).assertEqual('# arkcat');
-    });
-
-    it('parseDiffPatch_addOnly', 0, () => {
-      const patch = '@@ -0,0 +1,2 @@\n+Good good study\r\n+Up up day\n';
-      const hunks = parseDiffPatch(patch);
-      expect(hunks.length).assertEqual(1);
-      const lines = (hunks[0] as DiffHunk).lines;
-      expect(lines.length).assertEqual(2);
-      expect((lines[0] as DiffLine).kind).assertEqual('add');
-      expect((lines[0] as DiffLine).oldLine).assertEqual(0);
-      expect((lines[0] as DiffLine).newLine).assertEqual(1);
-      // CRLF 行尾剔除
-      expect((lines[0] as DiffLine).text).assertEqual('Good good study');
-    });
-
-    it('parseDiffPatch_multiHunk', 0, () => {
-      const patch = '@@ -1,2 +1,2 @@\n a\n b\n@@ -5,1 +5,2 @@\n c\n+d\n';
-      const hunks = parseDiffPatch(patch);
-      expect(hunks.length).assertEqual(2);
-      expect((hunks[1] as DiffHunk).newStart).assertEqual(5);
-      const lines = (hunks[1] as DiffHunk).lines;
-      expect((lines[1] as DiffLine).kind).assertEqual('add');
-      // 第二个 hunk 行号从自身 start 重新计
-      expect((lines[1] as DiffLine).newLine).assertEqual(6);
-    });
-
-    it('parseDiffPatch_noCountHeaderAndNoNewline', 0, () => {
-      const patch = '@@ -1 +1 @@\n-x\n\\ No newline at end of file\n+y\n\\ No newline at end of file\n';
-      const hunks = parseDiffPatch(patch);
-      expect(hunks.length).assertEqual(1);
-      const lines = (hunks[0] as DiffHunk).lines;
-      expect(lines.length).assertEqual(2);
-      expect((lines[0] as DiffLine).kind).assertEqual('del');
-      expect((lines[1] as DiffLine).kind).assertEqual('add');
-    });
-
-    it('parseDiffPatch_emptyOrHeaderOnly', 0, () => {
-      expect(parseDiffPatch('').length).assertEqual(0);
-      // 无 @@ 的纯文件头（非 diff 文本）→ 无 hunk
-      const hunks = parseDiffPatch('diff --git a/README.md b/README.md\n--- a/README.md\n+++ b/README.md\n');
-      expect(hunks.length).assertEqual(0);
-    });
-
-    it('mapPrFiles_basic', 0, () => {
-      const nodeA: JsonMap = { 'path': 'README.md', 'additions': 3, 'deletions': 1, 'status': 'modified' };
-      const nodeB: JsonMap = { 'path': 'src/main.ets', 'additions': 10, 'deletions': 0, 'status': 'added' };
-      const files: JsonMap = { 'totalCount': 2, 'nodes': [nodeA, nodeB] };
-      const pr: JsonMap = { 'id': 'PR_1', 'files': files };
-      const repo: JsonMap = { 'pullRequest': pr };
-      const data: JsonMap = { 'repository': repo };
-      const page = mapPrFiles(data);
-      expect(page.totalCount).assertEqual(2);
-      expect(page.pullRequestId).assertEqual('PR_1');
-      expect(page.files.length).assertEqual(2);
-      expect(page.files[0].path).assertEqual('README.md');
-      expect(page.files[0].additions).assertEqual(3);
-      expect(page.files[0].hunks.length).assertEqual(0);
-    });
-
-    it('applyRestPatch_withAndWithoutPatch', 0, () => {
-      const item: PrFileItem = { path: 'README.md', additions: 3, deletions: 1, status: 'modified', patch: '', hunks: [], diffTooLarge: false, isBinary: false, expanded: false };
-      const patchRest: JsonMap = { 'patch': '@@ -1,2 +1,2 @@\n a\n+b\n' };
-      const withPatch = applyRestPatch(item, patchRest);
-      expect(withPatch.hunks.length).assertEqual(1);
-      expect(withPatch.diffTooLarge).assertFalse();
-      // REST 无 patch（大 diff）→ tooLarge，且 additions/deletions 以 REST 为准
-      const noPatchRest: JsonMap = { 'filename': 'README.md', 'additions': 99, 'deletions': 5 };
-      const without = applyRestPatch(item, noPatchRest);
-      expect(without.diffTooLarge).assertTrue();
-      expect(without.additions).assertEqual(99);
-    });
-
-    it('fileBaseName_simple', 0, () => {
-      expect(fileBaseName('src/main/ets/Index.ets')).assertEqual('Index.ets');
-      expect(fileBaseName('README.md')).assertEqual('README.md');
-    });
 
     // ─────── Spec 047：Release 详情映射 / 字节格式化 ───────
 
-    it('formatBytes_units', 0, () => {
-      expect(formatBytes(0)).assertEqual('0 B');
-      expect(formatBytes(512)).assertEqual('512 B');
-      expect(formatBytes(1536)).assertEqual('1.5 KB');
-      expect(formatBytes(5 * 1024 * 1024)).assertEqual('5.0 MB');
-      expect(formatBytes(2048 * 1024 * 1024)).assertEqual('2.0 GB');
-    });
     it('mapReleaseDetail_full', 0, () => {
       const asset: JsonMap = {
         'id': 'a1', 'name': 'app.zip', 'size': 1048576, 'downloadCount': 9,
