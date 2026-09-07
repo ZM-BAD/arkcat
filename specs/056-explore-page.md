@@ -15,49 +15,33 @@ Explore 底栏 Tab 页，按官方 App 2026 版式重做：上部 Discover 区�
 
 ## 二、整体 UI 结构
 
-```text
-┌──────────────────────────────────────┐
-│  Explore（20fp 大标题）               │
-├──────────────────────────────────────┤
-│  Discover                            │
-│  [🔥红方块] Trending Repositories  › │
-│  [☺紫方块] Awesome Lists           › │
-├──────────────────────────────────────┤
-│  Activity（bg_page 灰带全宽）    ⚭filter │
-│  ┌─ 白卡（card_background）────────┐ │
-│  │ ◉头像+org小像  zccz14 contributed to │
-│  │     No-Trade-No-Life / Midas  18m │ │
-│  │ ⛁ No-Trade-No-Life / Midas      │ │
-│  │ ✨ Add automatic …（PR 标题）     │ │
-│  │ [⛓Merged] [分支芯片]           › │ │
-│  │ Summary ─────────────────────── │ │
-│  │ ・ bullet（超 4 行渐隐）          │ │
-│  │        ( Read more › ) 浮层      │ │
-│  │ ☺（反应按钮，8 官方 reaction）    │ │
-│  └────────────────────────────────┘ │
-└──────────────────────────────────────┘
-```
+Explore 主页（Tab 内容，自上而下）：
+
+1. 顶栏：「Explore」大标题（20fp 加粗，同 Home 头部约定）
+2. Discover 分组（节标题）：两个入口行（可点、行尾 ›）
+   - Trending Repositories：红方块图标（flame_fg 底 + oct_flame_16 白 icon）
+   - Awesome Lists：紫方块图标（oct_smiley_16 白 icon）
+3. Activity 分组（bg_page 灰带全宽，组头右侧 Filter 图标）：活动卡列表（card_background 白卡），每卡自上而下：
+   - 首行：头像（组织活动含 org 小像）+ 动作文案「zccz14 contributed to No-Trade-No-Life / Midas」+ 相对时间（18m）
+   - 仓库行：仓库名（No-Trade-No-Life / Midas）
+   - PR 卡：标题（✨ Add automatic …）+ [Merged] 芯片 + 分支芯片 + 行尾 ›
+   - Summary 折叠区：bullet 列表（超 4 行渐隐，「Read more ›」浮层可展开）
+   - 反应行：☺ 按钮（8 官方 reaction）
+   - 后续活动卡同构
 
 二级页 `exploreRepoList`（kind=trending/awesome 共用）：官方参考图到位后已收口（2026-09-07）——
 
-```text
-Trending 页（Awesome Lists 无筛选行，同构列表）
-┌──────────────────────────────────────┐
-│  ← Trending（自绘返回头）              │
-│  [Today ∨] [Language ∨] [Spoken lg ∨]│  ← 固定筛选行（不随列表滚动）
-│ ┌────────────────────────────────────┐│
-│ │  横幅图（openGraphImageUrl 按比例贴宽）││
-│ │  avatar owner（灰）                 ││
-│ │  仓库名（黑 600 + 下划线）           ││
-│ │  描述（text_primary，最多 4 行）     ││
-│ │  ⭐ 121 today  ● JavaScript        ││
-│ │  👥 89 contributors ›              ││
-│ │  [ ☆ STAR ]（未星）                 ││
-│ │  [★][+ ADD TO LIST]（已星）        ││
-│ └────────────────────────────────────┘│
-│ ┌─ 横幅+内容/contributors 行/按钮行 ──┐│  ← 兄弟节点分区点击
-└──────────────────────────────────────┘
-```
+Trending 页（Awesome Lists 无筛选行，同构列表），自上而下：
+
+1. 自绘返回头「← Trending」+ 固定筛选行（Today ∨ / Language ∨ / Spoken lg ∨，不随列表滚动）
+2. 列表卡（card_background，横幅/内容/contributors 行/按钮行为兄弟节点分别可点），自上而下：
+   - 横幅图（openGraphImageUrl 按比例贴宽；未设置 social preview 的仓库无横幅）
+   - avatar + owner（灰）
+   - 仓库名（黑 600 + 下划线）
+   - 描述（text_primary，最多 4 行）
+   - 元信息行：⭐ N today + 语言点（● JavaScript）+ 👥 N contributors ›
+   - 按钮行三态：未星 = 全宽 [☆ STAR]；已星 = [★] + [＋ ADD TO LIST]
+   - 后续仓库卡同构
 
 - Today = 下拉菜单（Today ✓ / This week / This month，FilterDropdownChip 蓝勾）
 - Language / Spoken language = 底部 sheet（✕ + 标题 + 蓝色🔍展开搜索框；语言行=色圆点+名称，口语行=纯文本；点选中项=取消筛选）
