@@ -116,13 +116,17 @@ export struct ExploreView {
                 .fontColor($r('app.color.text_primary'))
               Blank()
             Row() {
-              OctIcon({ res: $r('app.media.oct_filter_16'), iconSize: 18, iconColor: $r('app.color.text_primary') })
+              OctIcon({ res: $r('app.media.oct_filter_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
             }
-            .width(36)
-            .height(36)
+            .justifyContent(FlexAlign.End)
+            .width(28)
+            .height(28)
+            // 图标右缘与下方贡献者行时间（4m）右缘对齐：灰带 16 内距，触点框内图标顶格右侧
+            .margin({ right: 0 })
             .onClick(() => this.openActivityFilter())
             }
             .width('100%')
+            .alignItems(VerticalAlign.Top)
 
             if (this.events.length > 0) {
               Column({ space: 16 }) {

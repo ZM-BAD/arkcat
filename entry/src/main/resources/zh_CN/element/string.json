@@ -466,7 +466,7 @@
     },
     {
       "name": "explore_trending",
-      "value": "趋势仓库"
+      "value": "趋势"
     },
     {
       "name": "explore_awesome",
@@ -2243,6 +2243,14 @@
     {
       "name": "commit_deletions",
       "value": "删除 %1$d 行"
+    },
+    {
+      "name": "explore_filter_clear",
+      "value": "清除全部筛选"
+    },
+    {
+      "name": "explore_filter_no_results",
+      "value": "无匹配结果"
     }
   ]
 }

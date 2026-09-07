@@ -213,6 +213,36 @@ export struct ReactionBar {
     .height(152)
   }
 
+  /** Activity 卡 8 宫格选择面板（官方 8 种反应 2×4；外层横向可滑防窄屏溢出，2026-09-07 用户参考图） */
+  @Builder
+  activityPickerPanel() {
+    Scroll() {
+      Grid() {
+        ForEach(REACTION_META, (m: ReactionMeta) => {
+          GridItem() {
+            Text(m.emoji)
+              .fontSize(30)
+              .width(72)
+              .height(56)
+              .textAlign(TextAlign.Center)
+              .borderRadius(8)
+              .backgroundColor(findReactionGroup(this.mirror, m.content)?.viewerHasReacted === true
+                ? $r('app.color.chip_bg') : Color.Transparent)
+              .onClick(() => this.pick(m.content))
+          }
+        }, (m: ReactionMeta) => m.content)
+      }
+      .columnsTemplate('1fr 1fr 1fr 1fr')
+      .columnsGap(8)
+      .rowsGap(8)
+      .padding(16)
+      .width(344)
+      .height(136)
+    }
+    .scrollable(ScrollDirection.Horizontal)
+    .scrollBar(BarState.Off)
+  }
+
   /** 观察者是否已有任一反应（笑脸高亮，Spec 056） */
   private viewerReacted(): boolean {
     return this.mirror.some((g: ReactionGroup): boolean => g.viewerHasReacted);
@@ -220,18 +250,54 @@ export struct ReactionBar {
 
   build() {
     if (this.smileyOnly) {
-      // 精简态（Spec 056 信息流卡）：笑脸按钮，点击直达 8 reaction 选择面板
-      Row() {
-        OctIcon({
-          res: $r('app.media.oct_smiley_16'),
-          iconSize: 22,
-          iconColor: this.viewerReacted() ? $r('app.color.link_blue') : $r('app.color.text_secondary')
-        })
+      // 精简态（Spec 056 信息流卡）：整行横向可滑防溢出卡片（外层 Scroll+内层 minWidth 撑满），
+      // 笑脸钮靠左点开 8 宫格（release 同款 bindPopup）；已有反应芯片可直接点（官方语义：未反应 add +1 / 已反应 -1）
+      Scroll() {
+        Row({ space: 6 }) {
+          Row() {
+            OctIcon({
+              res: $r('app.media.oct_smiley_16'),
+              iconSize: 22,
+              iconColor: this.viewerReacted() ? $r('app.color.link_blue') : $r('app.color.text_secondary')
+            })
+          }
+          .width(36)
+          .height(36)
+          .borderRadius(18)
+          .bindPopup(this.pickerOpen, {
+            builder: (): void => this.activityPickerPanel(),
+            placement: Placement.Bottom,
+            popupColor: $r('app.color.card_background'),
+            radius: 12,
+            autoCancel: true
+          })
+          .onClick(() => {
+            this.pickerOpen = !this.pickerOpen;
+          })
+
+          ForEach(this.mirror.filter((g: ReactionGroup) => g.count > 0), (g: ReactionGroup) => {
+            Row({ space: 2 }) {
+              Text(reactionEmoji(g.content))
+                .fontSize($r('app.float.chip_font_size'))
+                .padding({ left: 6, top: 4, bottom: 4 })
+              Text(`${g.count}`)
+                .fontSize($r('app.float.caption_font_size'))
+                .fontWeight(g.viewerHasReacted ? FontWeight.Medium : FontWeight.Regular)
+                .fontColor(g.viewerHasReacted ? $r('app.color.link_blue') : $r('app.color.text_secondary'))
+                .padding({ left: 2, right: 6, top: 5, bottom: 5 })
+            }
+            .borderRadius(12)
+            .backgroundColor(g.viewerHasReacted ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
+            .border({ width: g.viewerHasReacted ? 1 : 0, color: $r('app.color.link_blue') })
+            .margin({ right: 2 })
+            .onClick(() => this.toggle(g.content))
+          }, (g: ReactionGroup) => g.content + '_' + g.count + (g.viewerHasReacted ? '_r' : ''))
+        }
+        .constraintSize({ minWidth: '100%' })
       }
-      .width(36)
-      .height(36)
-      .borderRadius(18)
-      .onClick(() => this.openAll())
+      .width('100%')
+      .scrollable(ScrollDirection.Horizontal)
+      .scrollBar(BarState.Off)
     } else {
     // 芯片行可横向滚动：外层 Scroll 限宽防溢出容器，内层行 minWidth 撑满、超宽时可滑（不能 width('100%')，否则永不溢出）
     Scroll() {

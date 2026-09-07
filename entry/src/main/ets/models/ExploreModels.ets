@@ -40,6 +40,8 @@ export interface ExploreActivityEvent {
   authorAvatar: string;
   orgAvatar: string;
   headRef: string;
+  /** target/合并目标分支（GraphQL baseRefName；空=未知） */
+  baseRef: string;
   createdAt: string;
   reactions: ReactionGroup[];
 }
@@ -133,7 +135,9 @@ export function mapActivityEventsWithDetails(refs: ActivityPrRef[], data: JsonMa
       authorLogin: authorLogin !== '' ? authorLogin : ref.actorLogin,
       authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : ref.actorAvatar,
       orgAvatar: ref.orgAvatar,
-      headRef: ref.headRef,
+      // GraphQL 别名取 head/base；head 回退 REST 事件源（老数据无 headRefName）
+      headRef: Json.str(pull, 'headRefName') !== '' ? Json.str(pull, 'headRefName') : ref.headRef,
+      baseRef: Json.str(pull, 'baseRefName'),
       createdAt: ref.createdAt,
       reactions: mapReactionGroups(Json.arr(pull, 'reactionGroups'))
     });

@@ -466,7 +466,7 @@
     },
     {
       "name": "explore_trending",
-      "value": "Trending Repositories"
+      "value": "Trending"
     },
     {
       "name": "explore_awesome",
@@ -2243,6 +2243,14 @@
     {
       "name": "commit_deletions",
       "value": "%1$d deletions"
+    },
+    {
+      "name": "explore_filter_clear",
+      "value": "Clear all filters"
+    },
+    {
+      "name": "explore_filter_no_results",
+      "value": "No results"
     }
   ]
 }

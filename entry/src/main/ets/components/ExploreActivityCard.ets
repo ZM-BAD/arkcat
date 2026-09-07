@@ -128,17 +128,16 @@ export struct ExploreActivityCard {
         .width('100%')
         .onClick(() => this.onOpenRepo())
 
-        // 标题 + 徽章行（进 PR 详情）
-        Column({ space: 8 }) {
-          Text(this.event.title)
-            .fontSize(16)
-            .fontWeight(600)
-            .fontColor($r('app.color.text_primary'))
-            .width('100%')
+          // 标题 + 徽章行（进 PR 详情）：Merged 徽章靠左，分支行 origin -> target 横向可滑
+          Column({ space: 8 }) {
+            Text(this.event.title)
+              .fontSize(16)
+              .fontWeight(600)
+              .fontColor($r('app.color.text_primary'))
+              .width('100%')
 
-          Row({ space: 8 }) {
             Scroll() {
-              Row({ space: 8 }) {
+              Row({ space: 6 }) {
                 if (this.event.merged) {
                   Row({ space: 4 }) {
                     OctIcon({ res: $r('app.media.oct_git_merge_16'), iconSize: 12, iconColor: Color.White })
@@ -158,18 +157,28 @@ export struct ExploreActivityCard {
                     .borderRadius(2)
                     .backgroundColor($r('app.color.shortcut_blue_bg'))
                 }
+                if (this.event.headRef !== '' && this.event.baseRef !== '') {
+                  Text('->')
+                    .fontSize(12)
+                    .fontColor($r('app.color.text_secondary'))
+                }
+                if (this.event.baseRef !== '') {
+                  Text(this.event.baseRef)
+                    .fontSize(12)
+                    .fontColor($r('app.color.shortcut_blue_fg'))
+                    .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                    .borderRadius(2)
+                    .backgroundColor($r('app.color.shortcut_blue_bg'))
+                }
               }
+              .constraintSize({ minWidth: '100%' })
             }
+            .width('100%')
             .scrollable(ScrollDirection.Horizontal)
             .scrollBar(BarState.Off)
-            .layoutWeight(1)
-
-            OctIcon({ res: $r('app.media.oct_arrow_right_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
           }
           .width('100%')
-        }
-        .width('100%')
-        .onClick(() => this.onOpenPr())
+          .onClick(() => this.onOpenPr())
 
         if (this.hasSummary()) {
           Divider().color($r('app.color.divider'))

@@ -8,7 +8,7 @@ import {
   ActivityPrRef, ExploreActivityEvent, mapActivityEvents, mapActivityEventsWithDetails
 } from '../models/ExploreModels';
 import { RepoSummary } from '../models/GitHubModels';
-import { programLanguageColor } from '../models/ExploreLanguages';
+import { ExploreLanguage, programLanguageColor } from '../models/ExploreLanguages';
 import { Json, JsonMap } from '../utils/Json';
 
 const VIEWER_LOGIN_QUERY = `
@@ -33,7 +33,7 @@ export function buildPrDetailsQuery(refs: ActivityPrRef[]): string {
     const owner = gqlEscape(refs[i].repoFullName.substring(0, slash));
     const name = gqlEscape(refs[i].repoFullName.substring(slash + 1));
     parts.push(`r${i}: repository(owner: "${owner}", name: "${name}") { ` +
-      `pullRequest(number: ${refs[i].number}) { id title body merged ` +
+      `pullRequest(number: ${refs[i].number}) { id title body merged headRefName baseRefName ` +
       `author { login avatarUrl } reactionGroups { content viewerHasReacted reactors { totalCount } } } }`);
   }
   return `query ExploreActivity {\n  ${parts.join('\n  ')}\n}`;
@@ -132,7 +132,8 @@ export async function fetchContributorCounts(
 
 /**
  * 列表搜索路径（kind=trending/awesome 共用）：
- * trending 用 created:>X 窗口近似（官方趋势算法无 API）；qualifier 均服务端过滤（语言/口语经实测支持）。
+ * trending 用 pushed:>X 窗口近似（官方趋势算法无 API；pushed 窗口实测对语言/口语筛选
+ * 有数据，created 窗口近 7 天新建会筛空——见 2026-09-07 用户实测 Chinese 修复）；qualifier 均服务端过滤。
  */
 export function buildRepoListPath(
   kind: string, nowMs: number, daysWindow: number, language: string, spoken: string): string {
@@ -141,7 +142,7 @@ export function buildRepoListPath(
     parts.push('topic:awesome-list');
   } else {
     const since = new Date(nowMs - daysWindow * 86400000).toISOString().substring(0, 10);
-    parts.push(`created:>${since}`);
+    parts.push(`pushed:>${since}`);
   }
   if (language !== '') {
     parts.push(`language:${language}`);
@@ -260,5 +261,23 @@ export class ExploreService {
         contributorCount: counts.get(repo.nameWithOwner) ?? 0
       };
     });
+  }
+
+  /** Filter by language 全量语言（官方接口 GET /languages：免认证 833 项；ABAP/ABAP CDS 等全覆盖） */
+  static async fetchAllLanguages(token: string): Promise<ExploreLanguage[]> {
+    const resp = await restGet('/languages', token);
+    const parsed: Object | null = JSON.parse(resp.body);
+    if (parsed === null || !Array.isArray(parsed)) {
+      throw new ApiError(resp.code, 'Unexpected /languages payload');
+    }
+    const list: ExploreLanguage[] = [];
+    for (const item of parsed as Object[]) {
+      const raw = item as JsonMap;
+      const name = Json.str(raw, 'name');
+      if (name !== '') {
+        list.push({ name: name, color: programLanguageColor(name) });
+      }
+    }
+    return list;
   }
 }

@@ -18,10 +18,10 @@ interface ActivityKindMeta {
 }
 
 const KIND_META: ActivityKindMeta[] = [
-  { key: 'announcements', labelRes: $r('app.string.explore_kind_announcements'), iconRes: $r('app.media.oct_megaphone_16'), bgRes: $r('app.color.shortcut_purple_bg') },
-  { key: 'releases', labelRes: $r('app.string.explore_kind_releases'), iconRes: $r('app.media.oct_tag_16'), bgRes: $r('app.color.shortcut_green_bg') },
+  { key: 'announcements', labelRes: $r('app.string.explore_kind_announcements'), iconRes: $r('app.media.oct_megaphone_16'), bgRes: $r('app.color.shortcut_purple_fg') },
+  { key: 'releases', labelRes: $r('app.string.explore_kind_releases'), iconRes: $r('app.media.oct_tag_16'), bgRes: $r('app.color.shortcut_green_fg') },
   { key: 'stars', labelRes: $r('app.string.explore_kind_stars'), iconRes: $r('app.media.oct_star_fill_16'), bgRes: $r('app.color.star_gold') },
-  { key: 'repositories', labelRes: $r('app.string.explore_kind_repositories'), iconRes: $r('app.media.oct_book_16'), bgRes: $r('app.color.text_secondary') },
+  { key: 'repositories', labelRes: $r('app.string.explore_kind_repositories'), iconRes: $r('app.media.oct_repo_16'), bgRes: $r('app.color.text_secondary') },
   { key: 'follows', labelRes: $r('app.string.explore_kind_follows'), iconRes: $r('app.media.oct_person_add_16'), bgRes: $r('app.color.link_blue') },
   { key: 'recommendations', labelRes: $r('app.string.explore_kind_recommendations'), iconRes: $r('app.media.oct_mark_github_16'), bgRes: $r('app.color.text_primary') }
 ];

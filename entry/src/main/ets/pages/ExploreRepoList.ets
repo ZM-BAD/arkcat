@@ -9,7 +9,7 @@
 import { promptAction } from '@kit.ArkUI';
 import { RepoSummary } from '../models/GitHubModels';
 import { WorkUserList } from '../models/WorkModels';
-import { ExploreLanguage, PROGRAM_LANGUAGES, SPOKEN_LANGUAGES } from '../models/ExploreLanguages';
+import { ExploreLanguage, PROGRAM_LANGUAGES, SPOKEN_LANGUAGES, sortLanguages, SpokenLanguage } from '../models/ExploreLanguages';
 import { ExploreService } from '../services/ExploreService';
 import { friendlyError } from '../services/GitHttpClient';
 import { WorkService } from '../services/WorkService';
@@ -20,7 +20,7 @@ import { FilterDropdownChip, FilterDropdownOption } from '../components/FilterDr
 import { TrendingRepoCard } from '../components/TrendingRepoCard';
 import { resText } from '../utils/I18n';
 
-/** 官方 Today/This week/This month → 窗口天数（created:>N 近似，Spec 056 边界） */
+/** 官方 Today/This week/This month → 窗口天数（pushed:>N 活跃近似，Spec 056 边界） */
 interface WindowOption {
   key: string;
   days: number;
@@ -50,10 +50,12 @@ export struct ExploreRepoListView {
   @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
-  /** 窗口（today/week/month，默认 week：近 7 天近似的星数质量最接近官方榜单） */
-  @Local windowKey: string = 'week';
+  /** 窗口（today/week/month，默认 today：与官方 App 默认 Today 对齐） */
+  @Local windowKey: string = 'today';
   /** 语言筛选（''=全部；qualifier language:） */
   @Local language: string = '';
+  /** Filter by language 全量列表（GET /languages，常用置顶+字典序；失败降级内置子集） */
+  @Local allLanguages: ExploreLanguage[] = [];
   /** 口语筛选（''=全部；qualifier spoken_language: 实测有效） */
   @Local spoken: string = '';
   /** 面板（'' | 'language' | 'spoken' | 'lists'）：单 bindSheet 分派 */
@@ -68,6 +70,18 @@ export struct ExploreRepoListView {
 
   aboutToAppear(): void {
     this.load();
+    this.loadLanguages();
+  }
+
+  /** 全量语言：官方接口 GET /languages（833 项，含 ABAP/ABAP CDS），失败回退内置子集 */
+  private loadLanguages(): void {
+    ExploreService.fetchAllLanguages(this.token)
+      .then((list: ExploreLanguage[]) => {
+        this.allLanguages = sortLanguages(list);
+      })
+      .catch((_e: Error): void => {
+        this.allLanguages = sortLanguages(PROGRAM_LANGUAGES);
+      });
   }
 
   private load(): void {
@@ -100,6 +114,28 @@ export struct ExploreRepoListView {
       : $r('app.string.explore_trending');
   }
 
+  private clearAllFilters(): void {
+    this.windowKey = 'today';
+    this.language = '';
+    this.spoken = '';
+    this.load();
+  }
+
+  /** 激活的筛选数（窗口非默认 + 语言 + 口语），供漏斗徽章计数 */
+  private filterCount(): number {
+    let n = 0;
+    if (this.windowKey !== 'today') {
+      n += 1;
+    }
+    if (this.language !== '') {
+      n += 1;
+    }
+    if (this.spoken !== '') {
+      n += 1;
+    }
+    return n;
+  }
+
   private windowOptions(): FilterDropdownOption[] {
     const opts: FilterDropdownOption[] = [];
     for (const opt of WINDOW_OPTIONS) {
@@ -123,17 +159,19 @@ export struct ExploreRepoListView {
   private filteredLanguages(): ExploreLanguage[] {
     const q = this.sheetSearch.trim().toLowerCase();
     if (q === '') {
-      return PROGRAM_LANGUAGES;
+      return this.allLanguages;
     }
-    return PROGRAM_LANGUAGES.filter((l: ExploreLanguage): boolean => l.name.toLowerCase().includes(q));
+    return this.allLanguages.filter((l: ExploreLanguage): boolean => l.name.toLowerCase().includes(q));
   }
 
-  private filteredSpoken(): string[] {
+  private filteredSpoken(): SpokenLanguage[] {
     const q = this.sheetSearch.trim().toLowerCase();
     if (q === '') {
       return SPOKEN_LANGUAGES;
     }
-    return SPOKEN_LANGUAGES.filter((n: string): boolean => n.toLowerCase().includes(q));
+    // 大小写不敏感模糊匹配：官方显示名或 qualifier 短名均可命中
+    return SPOKEN_LANGUAGES.filter((n: SpokenLanguage): boolean =>
+      n.name.toLowerCase().includes(q) || n.query.toLowerCase().includes(q));
   }
 
   private pickLanguage(name: string): void {
@@ -142,10 +180,22 @@ export struct ExploreRepoListView {
     this.load();
   }
 
-  private pickSpoken(name: string): void {
-    this.spoken = this.spoken === name ? '' : name;
+  private pickSpoken(query: string): void {
+    this.spoken = this.spoken === query ? '' : query;
     this.sheetKind = '';
     this.load();
+  }
+
+  /** 口语 chip 显示名（当前选中的 query → 官方列表名；找不到回退 query 本身） */
+  private spokenLabel(): string {
+    if (this.spoken !== '') {
+      for (const lang of SPOKEN_LANGUAGES) {
+        if (lang.query === this.spoken) {
+          return lang.name;
+        }
+      }
+    }
+    return this.spoken;
   }
 
   // ─── ADD TO LIST（星标列表选择，沿 StarredRepositories 定案） ───────
@@ -304,13 +354,21 @@ export struct ExploreRepoListView {
       }
       Scroll() {
         Column() {
-          ForEach(this.filteredLanguages(), (lang: ExploreLanguage) => {
-            this.sheetRow({
-              label: lang.name,
-              color: lang.color,
-              selected: this.language === lang.name
-            }, (): void => this.pickLanguage(lang.name))
-          }, (lang: ExploreLanguage) => lang.name)
+          if (this.filteredLanguages().length > 0) {
+            ForEach(this.filteredLanguages(), (lang: ExploreLanguage) => {
+              this.sheetRow({
+                label: lang.name,
+                color: lang.color,
+                selected: this.language === lang.name
+              }, (): void => this.pickLanguage(lang.name))
+            }, (lang: ExploreLanguage) => lang.name)
+          } else {
+            Text(this.stringOf($r('app.string.explore_filter_no_results')))
+              .fontSize($r('app.float.caption_font_size'))
+              .fontColor($r('app.color.text_secondary'))
+              .width('100%')
+              .padding({ left: 20, top: 16, bottom: 12 })
+          }
         }
       }
       .layoutWeight(1)
@@ -344,13 +402,21 @@ export struct ExploreRepoListView {
       }
       Scroll() {
         Column() {
-          ForEach(this.filteredSpoken(), (name: string) => {
-            this.sheetRow({
-              label: name,
-              color: '',
-              selected: this.spoken === name
-            }, (): void => this.pickSpoken(name))
-          }, (name: string) => name)
+          if (this.filteredSpoken().length > 0) {
+            ForEach(this.filteredSpoken(), (lang: SpokenLanguage) => {
+              this.sheetRow({
+                label: lang.name,
+                color: '',
+                selected: this.spoken === lang.query
+              }, (): void => this.pickSpoken(lang.query))
+            }, (lang: SpokenLanguage) => lang.query + '_' + lang.name)
+          } else {
+            Text(this.stringOf($r('app.string.explore_filter_no_results')))
+              .fontSize($r('app.float.caption_font_size'))
+              .fontColor($r('app.color.text_secondary'))
+              .width('100%')
+              .padding({ left: 20, top: 16, bottom: 12 })
+          }
         }
       }
       .layoutWeight(1)
@@ -471,19 +537,51 @@ export struct ExploreRepoListView {
         .padding({ left: 12, right: 12 })
 
         if (this.kind === 'trending') {
-          Row({ space: 8 }) {
-            FilterDropdownChip({
-              label: this.stringOf(this.windowLabelRes()),
-              active: false,
-              options: this.windowOptions(),
-              selectedKey: this.windowKey,
-              onPick: (key: string): void => {
-                if (this.windowKey !== key) {
-                  this.windowKey = key;
-                  this.load();
+          // 筛选行：横向可滑（收口批用户要求），chip 间距统一 8；激活时左侧出现漏斗+计数徽章
+          Scroll() {
+            Row({ space: 0 }) {
+              if (this.filterCount() > 0) {
+                // 漏斗徽章（沿 WorkFilterBar 官方化）：chip 底 + 描边轮廓 + 蓝图标 + 蓝圆计数
+                Row({ space: 4 }) {
+                  OctIcon({
+                    res: $r('app.media.oct_filter_16'),
+                    iconSize: 14,
+                    iconColor: $r('app.color.link_blue')
+                  })
+                  Stack() {
+                    Text(`${this.filterCount()}`)
+                      .fontSize(12)
+                      .fontColor(Color.White)
+                  }
+                  .width(18)
+                  .height(18)
+                  .borderRadius(9)
+                  .backgroundColor($r('app.color.link_blue'))
                 }
+                .height(38)
+                .responseRegion({ x: 0, y: -3, width: '100%', height: '116%' })
+                .padding({ left: 10, right: 12 })
+                .borderRadius(19)
+                .backgroundColor($r('app.color.chip_bg'))
+                .border({ width: 1, color: $r('app.color.border') })
+                .margin({ right: 8 })
+                .bindMenu([{
+                  value: this.stringOf($r('app.string.explore_filter_clear')),
+                  action: (): void => this.clearAllFilters()
+                }])
               }
-            })
+              FilterDropdownChip({
+                label: this.stringOf(this.windowLabelRes()),
+                active: false,
+                options: this.windowOptions(),
+                selectedKey: this.windowKey,
+                onPick: (key: string): void => {
+                  if (this.windowKey !== key) {
+                    this.windowKey = key;
+                    this.load();
+                  }
+                }
+              })
             // Language chip：sheet 型（点击底部面板），随筛选生效变蓝（沿筛选行官方化约定）
             Row() {
               Text(this.language !== '' ? this.language : this.stringOf($r('app.string.explore_filter_language')))
@@ -505,10 +603,11 @@ export struct ExploreRepoListView {
               color: this.language !== '' ? $r('app.color.chip_active_border') : $r('app.color.border')
             })
             .onClick(() => this.openSheet('language'))
+              .margin({ right: 8 })
 
             // Spoken language chip：同上（sheet 型）
             Row() {
-              Text(this.spoken !== '' ? this.spoken : this.stringOf($r('app.string.explore_filter_spoken')))
+              Text(this.spoken !== '' ? this.spokenLabel() : this.stringOf($r('app.string.explore_filter_spoken')))
                 .fontSize($r('app.float.chip_font_size'))
                 .fontColor(this.spoken !== '' ? $r('app.color.link_blue') : $r('app.color.text_primary'))
               OctIcon({
@@ -527,9 +626,14 @@ export struct ExploreRepoListView {
               color: this.spoken !== '' ? $r('app.color.chip_active_border') : $r('app.color.border')
             })
             .onClick(() => this.openSheet('spoken'))
+              .margin({ right: 8 })
+            }
+            .padding({ left: 16, right: 16 })
           }
           .width('100%')
-          .padding({ left: 16, right: 16, bottom: 8 })
+          .scrollable(ScrollDirection.Horizontal)
+          .scrollBar(BarState.Off)
+          .padding({ bottom: 8 })
         }
 
         PageShadowBar({ show: this.scrollShadow })

@@ -337,6 +337,8 @@ export default function logicTest(testsuiteName: string) {
       expect(q.includes('pullRequest(number: 7)')).assertTrue();
       expect(q.includes('pullRequest(number: 8)')).assertTrue();
       expect(q.includes('name: "ha\\"ck"')).assertTrue();
+      expect(q.includes('headRefName')).assertTrue();
+      expect(q.includes('baseRefName')).assertTrue();
     });
 
     it('mapActivityEventsWithDetails_merge_fallback', 0, () => {
@@ -345,6 +347,7 @@ export default function logicTest(testsuiteName: string) {
         actorLogin: 'alice', actorAvatar: 'https://a/1', orgAvatar: '', createdAt: '2026-09-05T18:51:20Z'
       }];
       const data = JSON.parse(`{"r0":{"pullRequest":{"id":"PR_1","title":"T","body":"- x","merged":true,` +
+        `"headRefName":"feature/x","baseRefName":"main",` +
         `"author":{"login":"bob","avatarUrl":"https://b/2"},` +
         `"reactionGroups":[{"content":"THUMBS_UP","viewerHasReacted":false,` +
         `"reactors":{"totalCount":3}}]}}}`) as JsonMap;
@@ -356,6 +359,8 @@ export default function logicTest(testsuiteName: string) {
       expect(out[0].subjectId).assertEqual('PR_1');
       expect(out[0].reactions.length).assertEqual(1);
       expect(out[0].reactions[0].count).assertEqual(3);
+      expect(out[0].headRef).assertEqual('feature/x');
+      expect(out[0].baseRef).assertEqual('main');
       // alias 缺失（PR 已删）→ 剔除
       expect(mapActivityEventsWithDetails(refs, { } as JsonMap).length).assertEqual(0);
       // author 空 → 回退事件 actor
@@ -400,7 +405,7 @@ export default function logicTest(testsuiteName: string) {
       const now = Date.parse('2026-09-06T12:00:00Z');
       const path = buildTrendingPath(now, 7);
       expect(path.startsWith('/search/repositories?q=')).assertTrue();
-      expect(path.includes('created%3A%3E2026-08-30')).assertTrue();
+      expect(path.includes('pushed%3A%3E2026-08-30')).assertTrue();
       expect(path.includes('sort=stars&order=desc')).assertTrue();
       expect(buildAwesomePath().includes('topic%3Aawesome-list')).assertTrue();
     });
@@ -421,7 +426,7 @@ export default function logicTest(testsuiteName: string) {
     it('buildRepoListPath_qualifiers', 0, () => {
       const now = Date.parse('2026-09-06T12:00:00Z');
       const trending = buildRepoListPath('trending', now, 7, 'Go', 'English');
-      expect(trending.includes('created%3A%3E2026-08-30')).assertTrue();
+      expect(trending.includes('pushed%3A%3E2026-08-30')).assertTrue();
       expect(trending.includes('language%3AGo')).assertTrue();
       expect(trending.includes('spoken_language%3AEnglish')).assertTrue();
       expect(trending.includes('sort=stars&order=desc')).assertTrue();
