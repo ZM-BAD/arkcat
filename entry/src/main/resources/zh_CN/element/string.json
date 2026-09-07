@@ -93,6 +93,70 @@
       "value": "保存失败，请重试"
     },
     {
+      "name": "login_choice_title",
+      "value": "登录到 ArkCat"
+    },
+    {
+      "name": "login_choice_desc",
+      "value": "ArkCat 直连 GitHub API。使用 GitHub 登录，或粘贴 Personal Access Token。"
+    },
+    {
+      "name": "login_oauth_button",
+      "value": "使用 GitHub 登录"
+    },
+    {
+      "name": "login_oauth_hint",
+      "value": "推荐 · 无需手动创建 Token"
+    },
+    {
+      "name": "login_pat_button",
+      "value": "使用 Personal Access Token"
+    },
+    {
+      "name": "oauth_wait_title",
+      "value": "在浏览器中完成授权"
+    },
+    {
+      "name": "oauth_code_hint",
+      "value": "请在 GitHub 中输入以下代码："
+    },
+    {
+      "name": "oauth_code_copy",
+      "value": "复制"
+    },
+    {
+      "name": "oauth_code_copied",
+      "value": "设备码已复制"
+    },
+    {
+      "name": "oauth_open_browser",
+      "value": "打开浏览器授权"
+    },
+    {
+      "name": "oauth_waiting",
+      "value": "等待浏览器授权完成…"
+    },
+    {
+      "name": "oauth_waiting_sub",
+      "value": "授权成功后自动登录"
+    },
+    {
+      "name": "oauth_error_expired",
+      "value": "设备码已过期，请重试获取新码"
+    },
+    {
+      "name": "oauth_error_denied",
+      "value": "授权被拒绝，请重试"
+    },
+    {
+      "name": "oauth_error_failed",
+      "value": "授权失败，请重试"
+    },
+    {
+      "name": "oauth_retry",
+      "value": "重试"
+    },
+    {
       "name": "home_search_hint",
       "value": "搜索功能将在后续版本提供"
     },
