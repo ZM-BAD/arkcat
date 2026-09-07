@@ -35,7 +35,7 @@ export struct CopilotView {
     Column({ space: 10 }) {
       Row({ space: 10 }) {
         Stack() {
-          OctIcon({ res: $r('app.media.oct_cloud_16'), iconSize: 22, iconColor: $r('app.color.text_secondary') })
+          OctIcon({ res: $r('app.media.oct_agent_16'), iconSize: 22, iconColor: $r('app.color.text_secondary') })
         }
         .width(56)
         .height(56)
@@ -44,7 +44,7 @@ export struct CopilotView {
         .border({ width: 1, color: $r('app.color.border') })
 
         Stack() {
-          OctIcon({ res: $r('app.media.oct_sync_16'), iconSize: 22, iconColor: $r('app.color.link_blue') })
+          OctIcon({ res: $r('app.media.oct_issue_opened_16'), iconSize: 22, iconColor: $r('app.color.link_blue') })
         }
         .width(56)
         .height(56)
@@ -53,7 +53,7 @@ export struct CopilotView {
         .border({ width: 1, color: $r('app.color.border') })
 
         Stack() {
-          OctIcon({ res: $r('app.media.oct_git_branch_16'), iconSize: 22, iconColor: $r('app.color.shortcut_green_fg') })
+          OctIcon({ res: $r('app.media.oct_git_pull_request_16'), iconSize: 22, iconColor: $r('app.color.shortcut_green_fg') })
         }
         .width(56)
         .height(56)
