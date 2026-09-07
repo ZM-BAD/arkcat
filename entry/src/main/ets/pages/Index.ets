@@ -248,7 +248,12 @@ struct Index {
   settingsDestination() {
     NavDestination() {
       SettingsView({
-        pathStack: this.pathStack
+        pathStack: this.pathStack,
+        // Sign Out：清 token 状态切回登录页（TokenStore 已由 Settings 删除；栈一并清空）
+        onSignedOut: (): void => {
+          this.pathStack.clear();
+          this.token = '';
+        }
       })
     }
     .hideTitleBar(true)
