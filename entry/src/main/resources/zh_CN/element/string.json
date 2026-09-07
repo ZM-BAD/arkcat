@@ -2,15 +2,15 @@
   "string": [
     {
       "name": "module_desc",
-      "value": "StarRaft 主模块"
+      "value": "ArkCat 主模块"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "StarRaft 主入口"
+      "value": "ArkCat 主入口"
     },
     {
       "name": "EntryAbility_label",
-      "value": "StarRaft"
+      "value": "ArkCat"
     },
     {
       "name": "tab_home",
@@ -46,7 +46,7 @@
     },
     {
       "name": "token_setup_desc",
-      "value": "StarRaft 直连 GitHub API，需要一个 Personal Access Token（read:user、repo、notifications 权限即可）"
+      "value": "ArkCat 直连 GitHub API，需要一个 Personal Access Token（read:user、repo、notifications 权限即可）"
     },
     {
       "name": "token_input_placeholder",
@@ -694,7 +694,7 @@
     },
     {
       "name": "settings_sign_out_confirm",
-      "value": "退出 StarRaft？"
+      "value": "退出 ArkCat？"
     },
     {
       "name": "settings_sign_out_confirm_desc",
@@ -710,7 +710,7 @@
     },
     {
       "name": "settings_version",
-      "value": "StarRaft v1.0.0"
+      "value": "ArkCat v1.0.0"
     },
     {
       "name": "search_placeholder",

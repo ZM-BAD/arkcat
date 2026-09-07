@@ -80,7 +80,7 @@ query IssueDetail($owner: String!, $name: String!, $number: Int!) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 公式 / Mermaid / 自定义注解 | 官方 GFM 渲染管线不输出这类 HTML，官方 App 同样不渲染 | 保持与官方一致，不做扩展渲染 |
 | 站内链接全量路由 | 页面路由表有限（已实现页面为主） | 维护一张正则映射表：`/o/r`、`/o/r/issues\|pulls/{n}`、`/o/r/blob/{path}` 等命中即路由；未命中交系统浏览器 |

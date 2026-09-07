@@ -68,7 +68,7 @@ REST：GET /repos/{owner}/{repo}/contributors?per_page=50&page={n}&anon=0
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | GraphQL 无 repository.contributors 字段 | 贡献者列表为 REST 专属端点 | 走 REST /contributors（官方 App 同源路径）+ GraphQL 批量补全 name/bio |
 | 批量 GraphQL 补全失败/超限 | 单请求多 alias 仍受成本限制 | 降级：仅用 REST login+avatarUrl 渲染（name/bio 空），不阻断列表 |

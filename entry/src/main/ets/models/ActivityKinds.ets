@@ -10,7 +10,7 @@ export const ACTIVITY_KIND_KEYS: string[] = [
   'announcements', 'releases', 'stars', 'repositories', 'follows', 'recommendations'
 ];
 
-const PREFS_NAME = 'starraft_settings';
+const PREFS_NAME = 'arkcat_settings';
 const KEY_ACTIVITY_KINDS = 'explore_activity_kinds';
 
 /** 读取已保存的勾选类型（未保存 / 解析失败 → 全选） */

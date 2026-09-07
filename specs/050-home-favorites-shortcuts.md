@@ -58,7 +58,7 @@ Shortcuts  = [{ id: 'starred'|'issues'|'prs'|'discussions'|'projects'|'profile'|
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | Favorites 官方云端同步 | 无公开 API 佐证（移动端观感偏本机） | 本地持久化；跨设备不保证，备注说明 |
 | 收藏对象加载失败（被删/私有） | —— | 卡片显示「不可用」+ 可删除 |

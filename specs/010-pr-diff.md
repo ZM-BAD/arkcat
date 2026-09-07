@@ -19,7 +19,7 @@ PR 的文件变更 Diff 视图，展示变更文件列表、每个文件的 diff
 2. 改动摘要：📁 changes from all commits
 3. 文件 Diff 列表：每个文件 = 文件头（三角 + 📄 路径 + 勾选框 + ⋯ 菜单，无行级 +N -N 统计）+ 展开后的 hunk diff 行
    - .harmony_backup/.idea/...zip：+4 -0，hunk `@@ -0,0 +1,2 @@`：+ Good good study（新增行，绿色）、+ Up up day（新增行）
-   - README.md：+174 -0，hunk `@@ -1,3 +1,8 @@`：# starraft（上下文行，白色）、- Some old text（删除行，红色）、+ 鸿蒙 Next 原生 GitHub 客户端（新增行，绿色）
+   - README.md：+174 -0，hunk `@@ -1,3 +1,8 @@`：# arkcat（上下文行，白色）、- Some old text（删除行，红色）、+ 鸿蒙 Next 原生 GitHub 客户端（新增行，绿色）
    - README_zh.md：+271 -0
 4. 评论输入：💬 Add a comment... + 📎 附件 + 📤 发布
 
@@ -75,7 +75,7 @@ Response:
     "status": "modified",
     "additions": 174,
     "deletions": 0,
-    "patch": "@@ -1,3 +1,8 @@\n # starraft\n+鸿蒙 Next...",
+    "patch": "@@ -1,3 +1,8 @@\n # arkcat\n+鸿蒙 Next...",
     "blob_url": "...",
     "raw_url": "..."
   }
@@ -94,7 +94,7 @@ Body: { "body": "...", "path": "src/main.ets", "line": 42, "side": "RIGHT", "com
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | Diff 内容 | GraphQL 无直接 Diff 字段 | REST `pulls/{n}/files` 兜底 |
 | 行内评论 | 需 REST API | 由 042 承接 |

@@ -47,7 +47,7 @@ export interface RepoSummary {
   ownerAvatarUrl: string;
   /** GraphQL 节点 id（Star mutation 与星标列表成员判断；REST 兜底取 node_id） */
   graphqlId: string;
-  /** 仓库社交横幅图（StarRaft Trending 卡顶部大图；无自定义预览为 ''） */
+  /** 仓库社交横幅图（ArkCat Trending 卡顶部大图；无自定义预览为 ''） */
   openGraphImageUrl: string;
   /** viewer 是否已 Star（Trending 卡三态按钮） */
   viewerHasStarred: boolean;

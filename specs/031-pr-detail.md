@@ -95,7 +95,7 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!, $after: 
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | Diff 视图（Files Changed 内页） | Spec 010 独立 | 点击进 PrFiles（010）；N commits 行点击进 PR commits 列表 |
 | Markdown/富文本 | 渲染器后续 | MarkdownView 渲染官方 HTML（040） |

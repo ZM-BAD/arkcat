@@ -16,7 +16,7 @@ Home My Work「Organizations」入口进入的组织列表页，展示 viewer �
 ## 二、整体 UI 结构
 
 1. 顶部 App Bar：← 返回、「Organizations」标题（无筛选/搜索按钮，与截图一致）
-2. 组织行（头像 + 名称）：◯ 头像 + 组织名称大字（StarRaft Org）+ 登录名灰色小字（starraft）；第二条 6tail / 6tail 同构
+2. 组织行（头像 + 名称）：◯ 头像 + 组织名称大字（ArkCat Org）+ 登录名灰色小字（arkcat）；第二条 6tail / 6tail 同构
 3. 列表底部分页：Load more
 4. 空态：纯文字居中「There aren't any organizations.」
 
@@ -59,7 +59,7 @@ query WorkOrganizations($first: Int = 50, $after: String) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 组织内仓库/成员列表 | 独立 Spec 范围 | 点击进入组织主页（orgProfile 路由）即可查看该组织仓库 |
 | 官方插画 | 该页为空态纯文字，无插图 | 无需处理（纯文字空态） |

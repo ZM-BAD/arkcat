@@ -128,7 +128,7 @@ mutation UpdateBranch($pullRequestId: ID!, $expectedHeadOid: GitObjectID!) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | Checks Tab | API 复杂 | MVP 只展示状态摘要 |
 | 附件上传 | 需 REST Asset Upload | 暂不实现 |

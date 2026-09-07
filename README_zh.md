@@ -1,4 +1,4 @@
-# StarRaft — 纯血鸿蒙版 GitHub 客户端
+# ArkCat — 纯血鸿蒙版 GitHub 客户端
 
 > 🌐 [English Version](README.md) | 简体中文
 > 一个基于 HarmonyOS NEXT（纯血鸿蒙）开发的 GitHub 客户端应用
@@ -9,8 +9,8 @@
 
 | 项目 | 说明 |
 | ------ | ------ |
-| **应用名称** | StarRaft |
-| **包名** | `me.zmbad.starraft` |
+| **应用名称** | ArkCat |
+| **包名** | `me.zmbad.arkcat` |
 | **目标平台** | HarmonyOS 7.0（API 26.0.0） |
 | **最低兼容** | HarmonyOS 5.0（API 12） |
 | **应用类型** | GitHub 第三方客户端 |
@@ -29,7 +29,7 @@
 - **复刻的**：信息架构、页面层级、导航模式、功能分区、按钮位置、交互反馈逻辑
 - **不复刻的**：平台特有控件样式（不用 iOS 毛玻璃 / Material 涟漪）、字体图标风格
 
-**核心原则**：用过 GitHub 官方 APP 的用户，打开 StarRaft 立即感受到「这就是换皮」，但底层全部使用纯血鸿蒙原生 ArkUI 组件。
+**核心原则**：用过 GitHub 官方 APP 的用户，打开 ArkCat 立即感受到「这就是换皮」，但底层全部使用纯血鸿蒙原生 ArkUI 组件。
 
 ---
 
@@ -97,14 +97,14 @@
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/zm_bad/starraft.git
-cd starraft
+git clone https://github.com/zm_bad/arkcat.git
+cd arkcat
 
 # 2. 安装 Git hooks
 bash scripts/install-hooks.sh
 
 # 3. 用 DevEco Studio 打开项目
-#    File → Open → 选择 starraft 目录
+#    File → Open → 选择 arkcat 目录
 
 # 4. 构建运行
 #    DevEco Studio → Build → Build Project (Ctrl/Cmd + F9)
@@ -115,7 +115,7 @@ bash scripts/install-hooks.sh
 
 ## 📄 许可证
 
-**StarRaft 是一款免费、开源、非商业用途的纯血鸿蒙 GitHub 客户端。它与 GitHub, Inc. 无任何关联，未获得其认可或赞助。GitHub 及 GitHub 徽标是 GitHub, Inc. 的商标。StarRaft 不包含任何 GitHub 官方素材或美术资源。**
+**ArkCat 是一款免费、开源、非商业用途的纯血鸿蒙 GitHub 客户端。它与 GitHub, Inc. 无任何关联，未获得其认可或赞助。GitHub 及 GitHub 徽标是 GitHub, Inc. 的商标。ArkCat 不包含任何 GitHub 官方素材或美术资源。**
 
 - 项目代码：[GPL-3.0](./LICENSE)
 - 图标（Octicons，位于 [`assets/octicons/`](assets/octicons/README.md)）：MIT 许可 —— 详见 [`assets/octicons/LICENSE`](assets/octicons/LICENSE)

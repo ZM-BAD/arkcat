@@ -76,7 +76,7 @@ query HomePage {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 未读通知角标 | `notificationThreads` 仅 Enterprise Server 提供，公网 GraphQL 无此字段 | 改用 REST `GET /notifications?per_page=1` 取未读数兜底 |
 

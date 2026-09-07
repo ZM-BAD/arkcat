@@ -68,7 +68,7 @@ query StarredSearch($query: String!, $first: Int = 20) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 官方个性化 Activity 流 | 官方 App 独立 API，无公开接口 | 用高星推荐仓库卡近似 |
 | Collections 精选集合 | 官方运营内容无公开 API | 隐藏（原边界） |

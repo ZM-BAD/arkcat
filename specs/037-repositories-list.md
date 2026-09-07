@@ -77,7 +77,7 @@ query UserRepositories($login: String!, $first: Int = 25, $after: String,
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 私密仓库 | 越权访问无数据 | 「Private」选项对无权限用户自然返回空 + 空态提示 |
 | 组织模式 GraphQL 失败 | read:org 缺失或接口异常 | REST `/orgs/{owner}/repos?per_page=100&sort=…` 兜底（一页 100，无翻页；客户端排序） |

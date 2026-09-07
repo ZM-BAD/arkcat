@@ -28,7 +28,7 @@
 3. General 分组：Theme（当前值 Follow system）/ Code Options / Language（当前值 English）/ Accounts / App Lock
 4. Subscriptions 分组：Copilot（当前值 Copilot Free）
 5. More Options 分组：Share Feedback / Get Help / Terms of Service / Privacy Policy & Analytics / Open Source Libraries / Sign Out
-6. 底部：StarRaft v1.0.0 版本号
+6. 底部：ArkCat v1.0.0 版本号
 
 ---
 
@@ -46,7 +46,7 @@
 | 8 | Subscriptions | Copilot 行（Copilot Free） | 纯展示 | ✅ 纯 UI | — | — |
 | 9 | More Options | Share Feedback/Get Help/Terms/Privacy/Open Source | 浏览器打开对应页 | ⚠️ | URL 打开 | 点击提示后续 |
 | 10 | More Options | Sign Out | 清除 Token → 回 TokenSetup | ✅ | `TokenStore.remove` | 真功能 |
-| 11 | 底部 | 版本号 | 纯展示 | ✅ 纯 UI | — | StarRaft v1.0.0 |
+| 11 | 底部 | 版本号 | 纯展示 | ✅ 纯 UI | — | ArkCat v1.0.0 |
 
 ---
 
@@ -70,12 +70,12 @@ await TokenStore.remove()
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | App Lock | 需要生物识别/系统能力 | 行保留，点击提示后续 |
 | 账号管理（Accounts） | 官方多账号体系超范围 | 行保留，点击提示 |
 | 反馈/帮助/法律页 | 属官网内容 | 行保留，点击提示后续 |
-| 官方版本号 | 我方版本 | 显示 StarRaft v1.0.0 |
+| 官方版本号 | 我方版本 | 显示 ArkCat v1.0.0 |
 
 ---
 

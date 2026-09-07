@@ -77,7 +77,7 @@ query RepositoryDetail($owner: String!, $name: String!) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | Actions 计数 | GraphQL 无 actions 状态公开接口 | 显示 0（保留入口） |
 | README 富文本（图片/表格） | Markdown 解析降级 | 简化渲染：标题加粗/链接/纯文本行 |

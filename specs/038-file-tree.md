@@ -67,7 +67,7 @@ query DirEntries($owner: String!, $name: String!, $expression: String!) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 超大目录（>500 条目） | GraphQL/REST 单次均有限制 | 展示已返回条目 + toast「Directory has N entries」（列表不截断）；不做懒加载（后续按 REST `/contents` 分页） |
 | 符号链接目录 | GraphQL type 为 blob/tree 之外 | 按名称展示、点击给出提示 |

@@ -13,7 +13,7 @@ import { PageShadowBar } from '../components/PageShadowBar';
 import { resText } from '../utils/I18n';
 import { applyThemeMode } from '../utils/ThemeMode';
 
-const PREFS_NAME = 'starraft_settings';
+const PREFS_NAME = 'arkcat_settings';
 const KEY_THEME = 'theme_mode';
 const KEY_LANG = 'app_language';
 

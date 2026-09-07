@@ -89,7 +89,7 @@ GET /repos/{owner}/{repo}/releases/download/{tag}/{asset_name}
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 私有仓库资产直接用浏览器直链 | browserDownloadUrl 对私有 404 | 用授权 HTTP 请求下载（token）后本地保存 |
 | 大文件下载 | 移动端网络/内存限制 | >200MB 只提供「在浏览器打开」+ 复制链接 |

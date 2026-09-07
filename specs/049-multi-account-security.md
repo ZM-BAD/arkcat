@@ -57,8 +57,8 @@ query ViewerCheck {
 
 ```text
 # 本地存储结构（TokenStore 改造，保持 AssetStoreKit 加密）
-# Key: "starraft.accounts.v2" = JSON [{login, token, alias, addedAt}]
-# Key: "starraft.activeAccount" = login
+# Key: "arkcat.accounts.v2" = JSON [{login, token, alias, addedAt}]
+# Key: "arkcat.activeAccount" = login
 # 所有旧版单 token 读取兼容：v1 → 迁移为 accounts[0]
 ```
 
@@ -66,7 +66,7 @@ query ViewerCheck {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | App Lock 生物识别 | HarmonyOS 生物特征认证 API（face/fingerprint）存在性需真机探测（系统权限/机型支持差异大） | 探测任务（Pura 90 Pro 真机）；不支持 → 提供「PIN 锁」开关（本地安全存储比较），再不行则整项关闭并说明 |
 | 多账号并发冲突 | 同时请求（切号中） | 切换期间 pending 请求统一 abort；加载中防误切换 |

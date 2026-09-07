@@ -81,7 +81,7 @@ query RepoForks($owner: String!, $name: String!, $first: Int = 50, $after: Strin
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | Stargazers/Forks 总数不展示 | 参考截图标题无计数 | 不查询/不展示 |
 | parent 可能为 null | 上游仓库被删除/不可见 | 隐藏「Forked from」行 |

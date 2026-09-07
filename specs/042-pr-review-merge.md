@@ -107,7 +107,7 @@ mutation Merge($prId: ID!, $method: MergeMethod!) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 他人审阅不可编辑 | API 限制 | 仅展示，编辑入口仅 `viewerDidAuthor` |
 | 合并分支保护 / 检查失败阻塞 | mergeable=CONFLICTING 等 | 展示官方枚举文案并禁用按钮 |

@@ -13,7 +13,7 @@ import { MarkdownRoute, MarkdownService } from '../services/MarkdownService';
 import { buildCopyJs, buildFixRelativeJs, buildMarkdownDoc, buildMeasureJs, buildSetOverflowJs, buildSetThemeJs } from '../utils/MarkdownHtml';
 import { OctIcon } from './OctIcon';
 
-const PREFS_NAME = 'starraft_settings';
+const PREFS_NAME = 'arkcat_settings';
 const KEY_THEME = 'theme_mode';
 /** 折叠时正文可视高度（vp）；内容超出此高度才显示 Read more */
 const COLLAPSE_HEIGHT = 240;
@@ -289,7 +289,7 @@ export struct MarkdownView {
           .darkMode(WebDarkMode.Off)
           .javaScriptProxy({
             object: this.bridge,
-            name: 'starraftBridge',
+            name: 'arkcatBridge',
             methodList: ['copyCode'],
             controller: this.controller
           })

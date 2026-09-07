@@ -1,4 +1,4 @@
-# StarRaft — Pure HarmonyOS GitHub Client
+# ArkCat — Pure HarmonyOS GitHub Client
 
 > 🌐 English | [简体中文](README_zh.md)
 > A GitHub client app built on HarmonyOS NEXT (Pure HarmonyOS)
@@ -9,8 +9,8 @@
 
 | Item | Description |
 | ------ | ------------- |
-| **App Name** | StarRaft |
-| **Bundle ID** | `me.zmbad.starraft` |
+| **App Name** | ArkCat |
+| **Bundle ID** | `me.zmbad.arkcat` |
 | **Target Platform** | HarmonyOS 7.0 (API 26.0.0) |
 | **Min Compatibility** | HarmonyOS 5.0 (API 12) |
 | **App Type** | GitHub Third-party Client |
@@ -29,7 +29,7 @@
 - **Recreated**: Information architecture, page hierarchy, navigation patterns, feature partitioning, button placement, interaction feedback logic
 - **Not recreated**: Platform-specific control styles (no iOS frosted glass / Material ripple), font/icon aesthetics
 
-**Core Principle**: Users who've used the official GitHub APP will open StarRaft and immediately feel "this is a reskin", but underneath it's all native Pure HarmonyOS ArkUI components.
+**Core Principle**: Users who've used the official GitHub APP will open ArkCat and immediately feel "this is a reskin", but underneath it's all native Pure HarmonyOS ArkUI components.
 
 ---
 
@@ -97,14 +97,14 @@
 
 ```bash
 # 1. Clone the project
-git clone https://github.com/zm_bad/starraft.git
-cd starraft
+git clone https://github.com/zm_bad/arkcat.git
+cd arkcat
 
 # 2. Install Git hooks
 bash scripts/install-hooks.sh
 
 # 3. Open in DevEco Studio
-#    File → Open → select starraft directory
+#    File → Open → select arkcat directory
 
 # 4. Build & Run
 #    DevEco Studio → Build → Build Project (Ctrl/Cmd + F9)
@@ -115,7 +115,7 @@ bash scripts/install-hooks.sh
 
 ## 📄 License
 
-**StarRaft is a free, open-source, non-commercial HarmonyOS client for GitHub. It is not affiliated with, endorsed by, or sponsored by GitHub, Inc. GitHub and the GitHub logo are trademarks of GitHub, Inc. StarRaft contains no official GitHub assets or artwork.**
+**ArkCat is a free, open-source, non-commercial HarmonyOS client for GitHub. It is not affiliated with, endorsed by, or sponsored by GitHub, Inc. GitHub and the GitHub logo are trademarks of GitHub, Inc. ArkCat contains no official GitHub assets or artwork.**
 
 - Project code: [GPL-3.0](./LICENSE)
 - Icons (Octicons, under [`assets/octicons/`](assets/octicons/README.md)): MIT License — see [`assets/octicons/LICENSE`](assets/octicons/LICENSE)

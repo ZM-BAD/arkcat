@@ -73,7 +73,7 @@ query WorkPullRequests($query: String!, $first: Int = 25, $after: String) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | undefined 状态的 Checks（未运行） | search 节点可能无 statusCheckRollup | 不显示胶囊，与官方一致 |
 | 审查者头像行 | 截图第三行可见头像，GraphQL 可取 `reviewers` 头像 | MVP 仅显示 👁 数字，头像行后续 Spec 补充 |

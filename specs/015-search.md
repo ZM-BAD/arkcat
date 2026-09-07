@@ -90,7 +90,7 @@ query CodeSearch($query: String!, $first: Int = 10) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | Organizations 结果（GraphQL） | GraphQL search 无 ORGANIZATION 类型 | `type:org` 限定词 + USER 搜索返回 Organization 节点；SearchRows 行组件 |
 | 代码行内容+高亮 | GraphQL CODE 无文本内容；REST code search 需单独 token scope | REST `/search/code` 承载（046）：内容级行号/高亮已实现 |

@@ -84,7 +84,7 @@ query IssuesList(
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | Label 多选筛选 | GraphQL `labels` 参数需 `[String!]`，空数组传 null 即可 | 单选传 `[name]`，多选客户端二次过滤 |
 

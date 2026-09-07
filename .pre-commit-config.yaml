@@ -1,4 +1,4 @@
-# StarRaft pre-commit hooks
+# ArkCat pre-commit hooks
 # Install hooks (commitlint runs on the commit-msg stage — both are required):
 #   pre-commit install --hook-type pre-commit --hook-type commit-msg
 # Full run: pre-commit run --all-files

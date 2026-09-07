@@ -66,7 +66,7 @@ query WorkProjects($first: Int = 30, $after: String) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 「Most/Least recently viewed」排序 | GraphQL ProjectV2 无 viewed 字段，连接无 orderBy 参数 | 客户端本地排序：本会话浏览记录 viewedAt + updatedAt/createdAt/title |
 | 官方猫插画素材 | 无官方矢量素材 | 用占位字形（🐱）替代，文案一致 |

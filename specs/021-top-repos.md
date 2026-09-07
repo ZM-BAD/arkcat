@@ -61,7 +61,7 @@ query WorkTopRepositories($first: Int = 50, $after: String) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 官方「Top Repositories」排序算法 | 官方为活跃度加权排序，无公开字段 | 用 PUSHED_AT 降序近似（备注说明） |
 | 仓库行描述/星数 | 官方该列表行无描述（仅头像+两行文字） | 不做额外信息，与截图对齐 |

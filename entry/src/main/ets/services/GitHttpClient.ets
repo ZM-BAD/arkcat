@@ -9,7 +9,7 @@ import { resText } from '../utils/I18n';
 
 const GITHUB_API = 'https://api.github.com';
 const GITHUB_GRAPHQL = 'https://api.github.com/graphql';
-const USER_AGENT = 'StarRaft';
+const USER_AGENT = 'ArkCat/1.0.0';
 const API_VERSION = 'application/vnd.github+json';
 
 /** API 调用失败异常：code 为 HTTP 状态码（0 表示网络层失败） */

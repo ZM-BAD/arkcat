@@ -67,7 +67,7 @@ query RepoPullRequests($owner: String!, $name: String!, $states: [PullRequestSta
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | Author/Assignee 服务端过滤 | GraphQL 无对应参数 | 客户端过滤 + 下拉来源=首屏数据，后续 Spec 扩展 |
 | 行内头像加载失败 | 网络异常 | 圆形底色占位 |

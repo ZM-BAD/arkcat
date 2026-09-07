@@ -4,9 +4,9 @@ import { window } from '@kit.ArkUI';
 import { preferences } from '@kit.ArkData';
 import { i18n } from '@kit.LocalizationKit';
 
-const TAG = '[StarRaft]';
+const TAG = '[ArkCat]';
 const DOMAIN = 0xFF00;
-const PREFS_NAME = 'starraft_settings';
+const PREFS_NAME = 'arkcat_settings';
 const KEY_LANG = 'app_language';
 
 export default class EntryAbility extends UIAbility {

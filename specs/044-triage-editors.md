@@ -97,7 +97,7 @@ mutation AddProjectItem($projectId: ID!, $contentId: ID!) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 新建 Label / Milestone | 桌面/web 专属，移动端无入口 | 编辑器内提示「web 端创建」；不做 mutation |
 | Duplicate 关闭 | GraphQL `IssueStateReason` 无 DUPLICATE 枚举（2026-02 官方 1.218 上线，API 探测点：若 v4 已扩枚举则直接支持） | 先探测；不可行则降级为「NOT_PLANNED 关闭 + 正文 @引用原 issue」并在边界表留记录 |

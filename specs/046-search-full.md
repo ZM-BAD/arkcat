@@ -87,7 +87,7 @@ query SearchUsers($q: String!) {
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 搜索排序 | GraphQL search 无 orderBy 参数 | 用服务端 qualifier `sort:stars` / `sort:updated` 重查；UI 标明「服务端排序」 |
 | 代码搜索限流 | CODE 搜索每次请求消耗搜索配额（低配额警告） | 防抖 + 「还有 x 次」提示（配额取自响应 header） |

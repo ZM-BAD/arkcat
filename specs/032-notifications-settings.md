@@ -47,7 +47,7 @@ Settings 页「Notification Options」行点击进入的通知设置二级页。
 
 ## 四、核心接口
 
-无 GraphQL 接口——本页为纯本地偏好设置，数据全部经 `preferences`（`starraft_settings`）持久化，键前缀 `notif_`：
+无 GraphQL 接口——本页为纯本地偏好设置，数据全部经 `preferences`（`arkcat_settings`）持久化，键前缀 `notif_`：
 
 ```text
 notif_direct_mentions / notif_review_requested / notif_assigned /
@@ -62,7 +62,7 @@ notif_left_swipe / notif_right_swipe（'done' | 'unsubscribe'，默认 'done' / 
 
 ## 五、边界 / 不可行项
 
-| 项 | 原因 | StarRaft 处理方式 |
+| 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | System Options（Android 阻塞提示 + 齿轮） | 用户指令：Android 专属文案不抄 | 整行略过，不渲染 |
 | Live notifications 的「require Android 16 or later」说明 | 用户指令：Android 专属文案不抄 | 说明行略过，保留开关行 |

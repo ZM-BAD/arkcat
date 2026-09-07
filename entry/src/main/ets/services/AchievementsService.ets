@@ -43,7 +43,7 @@ export class AchievementsService {
   private static async getHtml(url: string, xhr: string): Promise<string> {
     const req = http.createHttp();
     try {
-      const header: Record<string, string> = { 'User-Agent': 'StarRaft' };
+      const header: Record<string, string> = { 'User-Agent': 'ArkCat/1.0.0' };
       if (xhr !== '') {
         header['X-Requested-With'] = xhr;
       }
