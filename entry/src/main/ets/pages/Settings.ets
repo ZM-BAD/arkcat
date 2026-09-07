@@ -20,6 +20,8 @@ const KEY_LANG = 'app_language';
 @ComponentV2
 export struct SettingsView {
   @Param pathStack: NavPathStack = new NavPathStack();
+  /** 退出登录成功：通知 Index 清 token 状态并切回登录页 */
+  @Event onSignedOut: () => void = (): void => {};
   @Local themeMode: string = 'system';
   @Local language: string = 'zh';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
@@ -142,7 +144,7 @@ export struct SettingsView {
         if (data.index === 1) {
           TokenStore.remove()
             .then(() => {
-              this.pathStack.clear();
+              this.onSignedOut();
             })
             .catch(() => {
             });

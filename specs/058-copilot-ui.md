@@ -53,7 +53,7 @@ Copilot settings（黑 + Copilot 图标，点按跳转 settings）/ 分割线 / 
 | # | 位置 | 元素 | 功能 | 可行性 | 接口 | 备注 |
 | --- | ------ | ------ | ------ | -------- | ------ | ------ |
 | 1 | 主页 | 大标题「Copilot」+ 右上竖三点 | 展示 + 更多菜单（toast 占位） | ✅ | - | 竖三点 kebab_horizontal rotate90（Idx 页约定） |
-| 2 | 主页 | Agent Sessions 宣传卡 | 纯展示 | ✅ | - | 三圆钮：灰云 / 蓝环 / 绿分支（OctIcon 装饰）；UPGRADE TO COPILOT PRO 描边按钮点按 toast |
+| 2 | 主页 | Agent Sessions 宣传卡 | 纯展示 | ✅ | - | 三圆钮：agent / issue-opened / git-pull-request（OctIcon 装饰，官方 octicons）；UPGRADE TO COPILOT PRO 描边按钮点按 toast |
 | 3 | 主页 | Chats 列表行（mock 2 条） | 点按进详情 | ✅ | - | mock 标题 + githubShortTime 相对时间；行间细分隔线 |
 | 4 | 主页 | Chats 空态卡 | 无会话时展示 | ✅ | - | Copilot 图标圆钮 + No chats yet + 副文案 + NEW CHAT 蓝字按钮 |
 | 5 | 主页 | 右下 FAB（+） | 新建会话（进空详情页） | ✅ | - | 低栏之上悬浮；蓝底白加号，圆角约 14 |
@@ -121,5 +121,6 @@ FAB 蓝底白 icon 圆角方（官方 float button 样，不走系统按钮）�
 **后续功能批线索**：OAuth 就绪后，本页 mock 常量→真实会话列表（Copilot REST/私有 API 尚无
 公开契约，需单独调研）；Usage 环进度=服务端限额（Copilot Free 200/2000 已实测，见 057 备注）。
 
-**与官方 App 差异**：官方 UPGRADE 浅蓝底文案按钮→本批同款 Buttons 描边样式；三圆钮装饰图标
-为官方插画近似（OctIcon 云/同步环/分支重绘），非逐像素复刻。
+**与官方 App 差异**：官方 UPGRADE 浅蓝底文案按钮→本批同款 Buttons 描边样式；三圆钮用官方
+octicons 图标（agent / issue-opened / git-pull-request，2026-09-08 修正），背景配色为本地
+三色圆钮（灰/蓝/绿），非逐像素复刻。

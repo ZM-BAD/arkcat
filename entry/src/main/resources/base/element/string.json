@@ -93,6 +93,70 @@
       "value": "Save failed, please try again"
     },
     {
+      "name": "login_choice_title",
+      "value": "Sign in to ArkCat"
+    },
+    {
+      "name": "login_choice_desc",
+      "value": "ArkCat connects directly to the GitHub API. Sign in with GitHub, or paste a personal access token."
+    },
+    {
+      "name": "login_oauth_button",
+      "value": "Sign in with GitHub"
+    },
+    {
+      "name": "login_oauth_hint",
+      "value": "Recommended · No need to create a token manually"
+    },
+    {
+      "name": "login_pat_button",
+      "value": "Use a personal access token"
+    },
+    {
+      "name": "oauth_wait_title",
+      "value": "Authorize in browser"
+    },
+    {
+      "name": "oauth_code_hint",
+      "value": "Enter the following code on GitHub:"
+    },
+    {
+      "name": "oauth_code_copy",
+      "value": "Copy"
+    },
+    {
+      "name": "oauth_code_copied",
+      "value": "Code copied"
+    },
+    {
+      "name": "oauth_open_browser",
+      "value": "Open browser to authorize"
+    },
+    {
+      "name": "oauth_waiting",
+      "value": "Waiting for authorization to complete…"
+    },
+    {
+      "name": "oauth_waiting_sub",
+      "value": "You'll be signed in automatically."
+    },
+    {
+      "name": "oauth_error_expired",
+      "value": "The code expired. Start over to get a new one."
+    },
+    {
+      "name": "oauth_error_denied",
+      "value": "Authorization was denied."
+    },
+    {
+      "name": "oauth_error_failed",
+      "value": "Authorization failed. Please try again."
+    },
+    {
+      "name": "oauth_retry",
+      "value": "Retry"
+    },
+    {
       "name": "home_search_hint",
       "value": "Search will be available in a future version"
     },

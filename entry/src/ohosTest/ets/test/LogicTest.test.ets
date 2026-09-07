@@ -40,6 +40,7 @@ import { mapIssue, mapIssuesPage, issueOrderField } from '../../../main/ets/mode
 import { MarkdownService } from '../../../main/ets/services/MarkdownService';
 import { ReactionGroup, REACTION_META, reactionEmoji, findReactionGroup, flipReactionGroups } from '../../../main/ets/models/RepoSubModels';
 import { MarkdownEdit } from '../../../main/ets/utils/MarkdownEdit';
+import { parsePollResponse, OAuthPollState } from '../../../main/ets/services/OAuthService';
 
 type JsonMap = Record<string, Object>;
 
@@ -1762,6 +1763,35 @@ export default function logicTest(testsuiteName: string) {
       const page = mapPrDetail(data);
       expect(page.subjectId).assertEqual('p1');
       expect(page.comments.length).assertEqual(0);
+    });
+    it('oauthPoll_pending', 0, () => {
+      const r = parsePollResponse({ 'error': 'authorization_pending' } as JsonMap, 5);
+      expect(r.state).assertEqual(OAuthPollState.PENDING);
+      expect(r.token).assertEqual('');
+      expect(r.nextInterval).assertEqual(5);
+    });
+    it('oauthPoll_slowDown', 0, () => {
+      const r = parsePollResponse({ 'error': 'slow_down' } as JsonMap, 5);
+      expect(r.state).assertEqual(OAuthPollState.SLOW_DOWN);
+      expect(r.nextInterval).assertEqual(10);
+      expect(r.token).assertEqual('');
+    });
+    it('oauthPoll_expired', 0, () => {
+      const r = parsePollResponse({ 'error': 'expired_token' } as JsonMap, 5);
+      expect(r.state).assertEqual(OAuthPollState.EXPIRED);
+    });
+    it('oauthPoll_denied', 0, () => {
+      const r = parsePollResponse({ 'error': 'access_denied' } as JsonMap, 5);
+      expect(r.state).assertEqual(OAuthPollState.DENIED);
+    });
+    it('oauthPoll_success', 0, () => {
+      const r = parsePollResponse({ 'access_token': 'gho_test' } as JsonMap, 5);
+      expect(r.state).assertEqual(OAuthPollState.SUCCESS);
+      expect(r.token).assertEqual('gho_test');
+    });
+    it('oauthPoll_unknownError', 0, () => {
+      const r = parsePollResponse({ 'error': 'unsupported_grant_type' } as JsonMap, 5);
+      expect(r.state).assertEqual(OAuthPollState.ERROR);
     });
   });
 }
