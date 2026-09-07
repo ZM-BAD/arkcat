@@ -38,6 +38,7 @@ export struct ProfileView {
   @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  @Local isRefreshing: boolean = false;
   /** 勋章图片 URL 列表（官方 CDN，AchievementsService 抓取） */
   @Local achievements: string[] = [];
 
@@ -56,6 +57,7 @@ export struct ProfileView {
         this.profile = profile;
         this.rebuildFollowMenu();
         this.loading = false;
+        this.isRefreshing = false;
         // 组织计数独立拉取（review G8）
         ProfileService.fetchOrgCount(this.token, this.login)
           .then((count: number) => {
@@ -65,6 +67,7 @@ export struct ProfileView {
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
+        this.isRefreshing = false;
       });
     // 勋章无 GraphQL 字段：HTML 抓取独立于主查询，失败仅隐藏勋章行
     AchievementsService.fetch(this.login)
@@ -191,68 +194,74 @@ export struct ProfileView {
 
       PageShadowBar({ show: this.scrollShadow })
 
-      Scroll() {
-        Column({ space: 12 }) {
-          if (this.profile !== null) {
-            ProfileHeaderCard({
-              profile: this.profile,
-              achievements: this.achievements,
-              login: this.login,
-              pathStack: this.pathStack
-            })
+      Refresh({ refreshing: $$this.isRefreshing }) {
+        Scroll() {
+          Column({ space: 12 }) {
+            if (this.profile !== null) {
+              ProfileHeaderCard({
+                profile: this.profile,
+                achievements: this.achievements,
+                login: this.login,
+                pathStack: this.pathStack
+              })
 
-            // Pinned 横滑双列（Spec 005 官方布局）
-            Row({ space: 6 }) {
-              OctIcon({ res: $r('app.media.oct_pin_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
-              Text($r('app.string.home_pinned_section'))
-                .fontSize($r('app.float.title_font_size'))
-                .fontWeight(600)
-                .fontColor($r('app.color.text_primary'))
-            }
-            .width('100%')
-            Scroll() {
-              Row({ space: 8 }) {
-                ForEach(this.profile.pinned, (repo: RepoSummary) => {
-                  RepoCard({
-                    repo: repo,
-                    isPinned: true,
-                    onOpen: (): void => {
-                      this.pathStack.pushPathByName('repoDetail', repo.nameWithOwner);
-                    }
-                  })
-                    .width(200)
-                }, (repo: RepoSummary) => repo.id !== '' ? repo.id : repo.nameWithOwner)
+              // Pinned 横滑双列（Spec 005 官方布局）
+              Row({ space: 6 }) {
+                OctIcon({ res: $r('app.media.oct_pin_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
+                Text($r('app.string.home_pinned_section'))
+                  .fontSize($r('app.float.title_font_size'))
+                  .fontWeight(600)
+                  .fontColor($r('app.color.text_primary'))
               }
-              .alignItems(VerticalAlign.Top)
-            }
-            .scrollable(ScrollDirection.Horizontal)
-            .width('100%')
-            .scrollBar(BarState.Off)
+              .width('100%')
+              Scroll() {
+                Row({ space: 8 }) {
+                  ForEach(this.profile.pinned, (repo: RepoSummary) => {
+                    RepoCard({
+                      repo: repo,
+                      isPinned: true,
+                      onOpen: (): void => {
+                        this.pathStack.pushPathByName('repoDetail', repo.nameWithOwner);
+                      }
+                    })
+                      .width(200)
+                  }, (repo: RepoSummary) => repo.id !== '' ? repo.id : repo.nameWithOwner)
+                }
+                .alignItems(VerticalAlign.Top)
+              }
+              .scrollable(ScrollDirection.Horizontal)
+              .width('100%')
+              .scrollBar(BarState.Off)
 
-            // 三导航入口（Spec 035：单容器三行，跳独立列表页）
-            ProfileNavRows({
-              login: this.profile.user.login,
-              repositoriesCount: this.profile.repositoriesCount,
-              orgCount: this.orgCount,
-              starredCount: this.profile.starredCount,
-              pathStack: this.pathStack
-            })
-          } else {
-            StateView({
-              loading: this.loading,
-              error: this.errorMsg,
-              onRetry: () => this.refresh()
-            })
+              // 三导航入口（Spec 035：单容器三行，跳独立列表页）
+              ProfileNavRows({
+                login: this.profile.user.login,
+                repositoriesCount: this.profile.repositoriesCount,
+                orgCount: this.orgCount,
+                starredCount: this.profile.starredCount,
+                pathStack: this.pathStack
+              })
+            } else {
+              StateView({
+                loading: this.loading,
+                error: this.errorMsg,
+                onRetry: () => this.refresh()
+              })
+            }
           }
+          .padding($r('app.float.page_padding'))
+          .width('100%')
         }
-        .padding($r('app.float.page_padding'))
-        .width('100%')
+        .scrollBar(BarState.Off)
+        .align(Alignment.Top)
+        .onScroll((_x: number, y: number): void => {
+          this.scrollShadow = y > 0.001;
+        })
       }
       .layoutWeight(1)
-      .scrollBar(BarState.Off)
-      .align(Alignment.Top)
-      .onScroll((_x: number, y: number): void => {
-        this.scrollShadow = y > 0.001;
+      .onRefreshing((): void => {
+        this.isRefreshing = true;
+        this.refresh();
       })
     }
     .width('100%')

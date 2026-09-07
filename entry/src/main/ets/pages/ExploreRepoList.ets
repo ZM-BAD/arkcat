@@ -50,6 +50,7 @@ export struct ExploreRepoListView {
   @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  @Local isRefreshing: boolean = false;
   /** 窗口（today/week/month，默认 today：与官方 App 默认 Today 对齐） */
   @Local windowKey: string = 'today';
   /** 语言筛选（''=全部；qualifier language:） */
@@ -92,10 +93,12 @@ export struct ExploreRepoListView {
       .then((repos: RepoSummary[]) => {
         this.repos = repos;
         this.loading = false;
+        this.isRefreshing = false;
       })
       .catch((e: Error) => {
         this.errorMsg = friendlyError(this.getUIContext(), e);
         this.loading = false;
+        this.isRefreshing = false;
       });
   }
 
@@ -638,42 +641,48 @@ export struct ExploreRepoListView {
 
         PageShadowBar({ show: this.scrollShadow })
 
-        if (this.loading || this.errorMsg !== '' || this.repos.length === 0) {
-          StateView({
-            loading: this.loading,
-            error: this.errorMsg,
-            empty: !this.loading && this.errorMsg === '' && this.repos.length === 0,
-            onRetry: (): void => this.load()
-          })
-        } else {
+        Refresh({ refreshing: $$this.isRefreshing }) {
           Scroll() {
-            Column({ space: 10 }) {
-              ForEach(this.repos, (repo: RepoSummary) => {
-                TrendingRepoCard({
-                  repo: repo,
-                  token: this.token,
-                  onOpen: (): void => {
-                    this.pathStack.pushPathByName('repoDetail', repo.nameWithOwner);
-                  },
-                  onOpenContributors: (): void => {
-                    this.pathStack.pushPathByName('contributors', repo.nameWithOwner);
-                  },
-                  onAddToList: (target: RepoSummary): void => {
-                    this.openListSheet(target);
-                  }
-                })
-              }, (repo: RepoSummary) => repo.id !== '' ? repo.id : repo.nameWithOwner)
+            if (this.loading || this.errorMsg !== '' || this.repos.length === 0) {
+              StateView({
+                loading: this.loading,
+                error: this.errorMsg,
+                empty: !this.loading && this.errorMsg === '' && this.repos.length === 0,
+                onRetry: (): void => this.load()
+              })
+            } else {
+              Column({ space: 10 }) {
+                ForEach(this.repos, (repo: RepoSummary) => {
+                  TrendingRepoCard({
+                    repo: repo,
+                    token: this.token,
+                    onOpen: (): void => {
+                      this.pathStack.pushPathByName('repoDetail', repo.nameWithOwner);
+                    },
+                    onOpenContributors: (): void => {
+                      this.pathStack.pushPathByName('contributors', repo.nameWithOwner);
+                    },
+                    onAddToList: (target: RepoSummary): void => {
+                      this.openListSheet(target);
+                    }
+                  })
+                }, (repo: RepoSummary) => repo.id !== '' ? repo.id : repo.nameWithOwner)
+              }
+              .padding({ left: 14, right: 14, top: 8, bottom: 16 })
+              .width('100%')
             }
-            .padding({ left: 14, right: 14, top: 8, bottom: 16 })
-            .width('100%')
           }
-          .layoutWeight(1)
           .scrollBar(BarState.Off)
           .align(Alignment.Top)
           .onScroll((_x: number, y: number): void => {
             this.scrollShadow = y > 0.001;
           })
         }
+        .layoutWeight(1)
+        .onRefreshing((): void => {
+          this.isRefreshing = true;
+          this.load();
+        })
       }
       .width('100%')
       .height('100%')

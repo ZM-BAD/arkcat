@@ -30,6 +30,7 @@ export struct FileTreeView {
   @Local tooLarge: boolean = false;
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  @Local isRefreshing: boolean = false;
 
   aboutToAppear(): void {
     this.refresh();
@@ -44,6 +45,7 @@ export struct FileTreeView {
         this.entries = page.entries;
         this.tooLarge = page.entries.length >= DIR_ENTRY_LIMIT;
         this.loading = false;
+        this.isRefreshing = false;
         if (this.tooLarge) {
           // 事实性提示（review C14：列表并未截断，「目录过大」与行为不符）
           promptAction.showToast({ message: resText(this.getUIContext(), $r('app.string.file_dir_entry_count'), `${page.entries.length}`) });
@@ -52,6 +54,7 @@ export struct FileTreeView {
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
+        this.isRefreshing = false;
       });
   }
 
@@ -196,28 +199,32 @@ export struct FileTreeView {
           })
       }
 
-      if (this.loading || this.errorMsg !== '') {
-        StateView({ loading: this.loading, error: this.errorMsg, onRetry: (): void => this.refresh() })
-          .layoutWeight(1)
-      } else if (this.entries.length === 0) {
-        StateView({ loading: false, error: '', empty: true, emptyText: $r('app.string.file_empty_dir') })
-          .layoutWeight(1)
-      } else {
-        List() {
-          ForEach(this.entries.filter((e: DirEntry): boolean => {
-            const q = this.filterText.toLowerCase();
-            return q === '' || e.name.toLowerCase().indexOf(q) >= 0;
-          }), (entry: DirEntry) => {
-            ListItem() {
-              this.entryRow(entry)
-            }
-          }, (entry: DirEntry) => entry.name)
+      Refresh({ refreshing: $$this.isRefreshing }) {
+        if (this.loading || this.errorMsg !== '') {
+          StateView({ loading: this.loading, error: this.errorMsg, onRetry: (): void => this.refresh() })
+        } else if (this.entries.length === 0) {
+          StateView({ loading: false, error: '', empty: true, emptyText: $r('app.string.file_empty_dir') })
+        } else {
+          List() {
+            ForEach(this.entries.filter((e: DirEntry): boolean => {
+              const q = this.filterText.toLowerCase();
+              return q === '' || e.name.toLowerCase().indexOf(q) >= 0;
+            }), (entry: DirEntry) => {
+              ListItem() {
+                this.entryRow(entry)
+              }
+            }, (entry: DirEntry) => entry.name)
+          }
+          .width('100%')
+          .contentEndOffset(16)
+          .onScroll((scrollOffset: number, _state: number): void => { this.scrollShadow = scrollOffset > 0.001; })
         }
-        .layoutWeight(1)
-        .width('100%')
-        .contentEndOffset(16)
-        .onScroll((scrollOffset: number, _state: number): void => { this.scrollShadow = scrollOffset > 0.001; })
       }
+      .layoutWeight(1)
+      .onRefreshing((): void => {
+        this.isRefreshing = true;
+        this.refresh();
+      })
     }
     .width('100%')
     .height('100%')

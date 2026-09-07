@@ -37,6 +37,7 @@ export struct CommitDetailView {
   @Param codeOptionsTick: number = 0;
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  @Local isRefreshing: boolean = false;
 
   aboutToAppear(): void {
     this.loadLineSetting();
@@ -69,10 +70,12 @@ export struct CommitDetailView {
       .then((page: CommitDetailPage) => {
         this.detail = page;
         this.loading = false;
+        this.isRefreshing = false;
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
+        this.isRefreshing = false;
       });
   }
 
@@ -307,11 +310,11 @@ export struct CommitDetailView {
 
       PageShadowBar({ show: this.scrollShadow })
 
-      if (this.loading || this.errorMsg !== '') {
-        StateView({ loading: this.loading, error: this.errorMsg, onRetry: (): void => this.refresh() })
-          .layoutWeight(1)
-      } else if (this.detail !== null && this.tab === 0) {
+      Refresh({ refreshing: $$this.isRefreshing }) {
         Scroll() {
+          if (this.loading || this.errorMsg !== '') {
+            StateView({ loading: this.loading, error: this.errorMsg, onRetry: (): void => this.refresh() })
+          } else if (this.detail !== null && this.tab === 0) {
           Column({ space: 0 }) {
             this.authorRow()
             // 标题行：与作者行同字号；正文：diff 等宽字体同字号
@@ -344,15 +347,7 @@ export struct CommitDetailView {
           .width('100%')
           .padding({ left: 16, right: 16, top: 8, bottom: 16 })
           .alignItems(HorizontalAlign.Start)
-        }
-        .layoutWeight(1)
-        .scrollBar(BarState.Off)
-        .align(Alignment.Top)
-        .onScroll((_x: number, y: number): void => {
-          this.scrollShadow = y > 0.001;
-        })
-      } else if (this.detail !== null && this.tab === 1) {
-        Scroll() {
+        } else if (this.detail !== null && this.tab === 1) {
           Column() {
             this.sectionTitle(this.stringOf($r('app.string.commit_section_commit')))
             this.detailsRow($r('app.media.oct_git_commit_16'), this.shortOid(this.detail.oid), '', this.stringOf($r('app.string.commit_copy')),
@@ -413,13 +408,18 @@ export struct CommitDetailView {
           .padding({ left: 16, right: 16, bottom: 16 })
           .alignItems(HorizontalAlign.Start)
         }
-        .layoutWeight(1)
+        }
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
         .onScroll((_x: number, y: number): void => {
           this.scrollShadow = y > 0.001;
         })
       }
+      .layoutWeight(1)
+      .onRefreshing((): void => {
+        this.isRefreshing = true;
+        this.refresh();
+      })
     }
     .width('100%')
     .height('100%')

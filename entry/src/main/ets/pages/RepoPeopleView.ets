@@ -9,6 +9,7 @@ import { UserSummary } from '../models/GitHubModels';
 import { PeoplePage } from '../models/RepoSocialModels';
 import { RepoService } from '../services/RepoService';
 import { StateView } from '../components/StateView';
+import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -26,6 +27,9 @@ export struct RepoPeopleView {
   @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  @Local isRefreshing: boolean = false;
+  /** 触底加载更多（底部转圈指示） */
+  @Local loadingMore: boolean = false;
 
   aboutToAppear(): void {
     this.refresh();
@@ -43,28 +47,35 @@ export struct RepoPeopleView {
         this.cursor = page.endCursor;
         this.hasNextPage = page.hasNextPage;
         this.loading = false;
+        this.isRefreshing = false;
+        this.loadingMore = false;
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
+        this.isRefreshing = false;
+        this.loadingMore = false;
       });
   }
 
   private loadMore(): void {
-    if (!this.hasNextPage || this.loading) {
+    if (!this.hasNextPage || this.loading || this.loadingMore) {
       return;
     }
     this.loading = true;
+    this.loadingMore = true;
     this.fetchPage(this.cursor)
       .then((page: PeoplePage) => {
         this.users = this.users.concat(page.users);
         this.cursor = page.endCursor;
         this.hasNextPage = page.hasNextPage;
         this.loading = false;
+        this.loadingMore = false;
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
+        this.loadingMore = false;
       });
   }
 
@@ -176,43 +187,48 @@ export struct RepoPeopleView {
 
       PageShadowBar({ show: this.scrollShadow })
 
-      if (this.users.length > 0) {
+      Refresh({ refreshing: $$this.isRefreshing }) {
         Scroll() {
           Column() {
-            ForEach(this.users, (user: UserSummary) => {
-              this.userRow(user)
-            }, (user: UserSummary) => user.login)
-            if (this.hasNextPage) {
-              Text($r('app.string.issues_load_more'))
-                .fontSize($r('app.float.body_font_size'))
-                .fontColor($r('app.color.link_blue'))
-                .padding(12)
-                .onClick(() => this.loadMore())
+            if (this.users.length > 0) {
+              ForEach(this.users, (user: UserSummary) => {
+                this.userRow(user)
+              }, (user: UserSummary) => user.login)
+              if (this.hasNextPage) {
+                ListLoadingFooter({ show: this.loadingMore })
+              }
+            } else {
+              StateView({
+                loading: this.loading,
+                error: this.errorMsg,
+                onRetry: () => this.refresh()
+              })
+              if (!this.loading && this.errorMsg === '') {
+                Column() {
+                  Text(this.stringOf(this.emptyRes()))
+                    .fontSize($r('app.float.body_font_size'))
+                    .fontColor($r('app.color.text_secondary'))
+                }
+                .layoutWeight(1)
+                .justifyContent(FlexAlign.Center)
+              }
             }
           }
           .padding({ left: 0, right: 0 })
           .width('100%')
         }
-        .layoutWeight(1)
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
-        .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
-      } else {
-        StateView({
-          loading: this.loading,
-          error: this.errorMsg,
-          onRetry: () => this.refresh()
+        .onReachEnd((): void => {
+          this.loadMore();
         })
-        if (!this.loading && this.errorMsg === '') {
-          Column() {
-            Text(this.stringOf(this.emptyRes()))
-              .fontSize($r('app.float.body_font_size'))
-              .fontColor($r('app.color.text_secondary'))
-          }
-          .layoutWeight(1)
-          .justifyContent(FlexAlign.Center)
-        }
+        .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
       }
+      .layoutWeight(1)
+      .onRefreshing((): void => {
+        this.isRefreshing = true;
+        this.refresh();
+      })
     }
     .width('100%')
     .height('100%')

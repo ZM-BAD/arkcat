@@ -26,6 +26,7 @@ export struct OrgProfileView {
   @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  @Local isRefreshing: boolean = false;
 
   aboutToAppear(): void {
     this.refresh();
@@ -42,11 +43,13 @@ export struct OrgProfileView {
       .then((org: OrgProfile) => {
         this.org = org;
         this.loading = false;
+        this.isRefreshing = false;
         this.loadReadme();
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
+        this.isRefreshing = false;
       });
   }
 
@@ -55,9 +58,11 @@ export struct OrgProfileView {
     MarkdownService.fetchOrgProfileReadme(this.token, this.login)
       .then((res: MarkdownFetchResult) => {
         this.readmeResult = res;
+        this.isRefreshing = false;
       })
       .catch(() => {
         this.readmeResult = { status: 'error', html: '' };
+        this.isRefreshing = false;
       });
   }
 
@@ -263,7 +268,6 @@ export struct OrgProfileView {
       .padding({ left: 16, right: 16 })
       .width('100%')
     }
-    .layoutWeight(1)
     .scrollBar(BarState.Off)
     .align(Alignment.Top)
     .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
@@ -318,15 +322,22 @@ export struct OrgProfileView {
 
       PageShadowBar({ show: this.scrollShadow })
 
-      if (this.org === null) {
-        StateView({
-          loading: this.loading,
-          error: this.errorMsg,
-          onRetry: () => this.refresh()
-        })
-      } else {
-        this.orgContent(this.org)
+      Refresh({ refreshing: $$this.isRefreshing }) {
+        if (this.org === null) {
+          StateView({
+            loading: this.loading,
+            error: this.errorMsg,
+            onRetry: () => this.refresh()
+          })
+        } else {
+          this.orgContent(this.org)
+        }
       }
+      .layoutWeight(1)
+      .onRefreshing((): void => {
+        this.isRefreshing = true;
+        this.refresh();
+      })
     }
     .width('100%')
     .height('100%')

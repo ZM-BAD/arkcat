@@ -53,10 +53,12 @@ export struct HomeView {
       .then((viewer: ViewerBasic) => {
         this.viewer = viewer;
         this.loading = false;
+        this.isRefreshing = false;
       })
       .catch((e: Error) => {
         this.errorMsg = friendlyError(this.getUIContext(), e);
         this.loading = false;
+        this.isRefreshing = false;
       });
   }
 
@@ -66,6 +68,7 @@ export struct HomeView {
 
   /** 标题栏阴影：滚动中显示、回顶部消失 */
   @Local headerShadow: boolean = false;
+  @Local isRefreshing: boolean = false;
 
   @Builder
   header() {
@@ -102,7 +105,11 @@ export struct HomeView {
 .height(44)
         .accessibilityDescription($r('app.string.a11y_refresh'))
         .focusable(true)
-        .onClick((): void => this.refresh())
+        .onClick((): void => {
+          // 与下拉刷新同效果：置位刷新动画，refresh() 完成后复位（review 用户反馈）
+          this.isRefreshing = true;
+          this.refresh();
+        })
         .padding(6)
         Stack() {
           OctIcon({
@@ -317,39 +324,45 @@ export struct HomeView {
     Column() {
       this.header()
 
-      Scroll() {
-        Column() {
-          // viewer 拉取失败仅降级此提示：My Work/Favorites/Shortcuts 为本地或容错区块照常可用（review A15）
-          if (this.viewer === null && this.errorMsg !== '') {
-            StateView({
-              loading: this.loading,
-              error: this.errorMsg,
-              onRetry: () => this.refresh()
-            })
+      Refresh({ refreshing: $$this.isRefreshing }) {
+        Scroll() {
+          Column() {
+            // viewer 拉取失败仅降级此提示：My Work/Favorites/Shortcuts 为本地或容错区块照常可用（review A15）
+            if (this.viewer === null && this.errorMsg !== '') {
+              StateView({
+                loading: this.loading,
+                error: this.errorMsg,
+                onRetry: () => this.refresh()
+              })
+            }
+
+            this.myWorkSection()
+
+            Divider()
+              .color($r('app.color.divider'))
+              .margin({ top: 8 })
+
+            this.favoritesSection()
+
+            Divider()
+              .color($r('app.color.divider'))
+              .margin({ top: 8 })
+
+            this.shortcutsSection()
           }
-
-          this.myWorkSection()
-
-          Divider()
-            .color($r('app.color.divider'))
-            .margin({ top: 8 })
-
-          this.favoritesSection()
-
-          Divider()
-            .color($r('app.color.divider'))
-            .margin({ top: 8 })
-
-          this.shortcutsSection()
+          .padding({ left: 16, right: 16 })
+          .width('100%')
         }
-        .padding({ left: 16, right: 16 })
-        .width('100%')
+        .scrollBar(BarState.Off)
+        .align(Alignment.Top)
+        .onScroll((_x: number, y: number): void => {
+          this.headerShadow = y > 0.001;
+        })
       }
       .layoutWeight(1)
-      .scrollBar(BarState.Off)
-      .align(Alignment.Top)
-      .onScroll((_x: number, y: number): void => {
-        this.headerShadow = y > 0.001;
+      .onRefreshing((): void => {
+        this.isRefreshing = true;
+        this.refresh();
       })
     }
     .width('100%')

@@ -59,6 +59,7 @@
 | 049 | [multi-account-security.md](049-multi-account-security.md) | 多账号与安全（账号管理器 + App Lock 探测） | Level 3 | draft |
 | 050 | [home-favorites-shortcuts.md](050-home-favorites-shortcuts.md) | Home 个性化（Favorites 收藏 + Shortcuts 快捷入口） | Level 3 | draft |
 | 051 | [accessibility-multidevice.md](051-accessibility-multidevice.md) | 无障碍与多设备适配（横向规范） | Level 4 | draft |
+| 057 | [oauth-login.md](057-oauth-login.md) | OAuth 登录（Device Flow，与 PAT 并存） | Level 0 | draft |
 | 012 | [i18n.md](012-i18n.md) | 国际化（英/简中，默认英语） | Level 4 | ✅ |
 | 013 | [home-official.md](013-home-official.md) | Home Tab 官方布局（My Work/Favorites/Shortcuts） | Level 1 | ✅ |
 | 014 | [settings.md](014-settings.md) | Settings 设置页 | Level 3 | ✅ implemented |

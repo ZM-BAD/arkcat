@@ -53,6 +53,7 @@ export struct CodeViewerView {
   @Local settingsLoaded: boolean = false;
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  @Local isRefreshing: boolean = false;
 
   aboutToAppear(): void {
     this.loadSettings();
@@ -99,11 +100,13 @@ export struct CodeViewerView {
         this.isTruncated = fc.isTruncated;
         this.contentLoaded = true;
         this.loading = false;
+        this.isRefreshing = false;
         this.tryRender();
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
+        this.isRefreshing = false;
       });
   }
 
@@ -282,35 +285,40 @@ export struct CodeViewerView {
           .padding({ left: 16, right: 16, top: 6, bottom: 6 })
       }
 
-      if (this.loading || this.errorMsg !== '') {
-        StateView({ loading: this.loading, error: this.errorMsg, onRetry: (): void => { this.fetchContent(); } })
-          .layoutWeight(1)
-      } else if (this.isBinary) {
-        this.binaryPlaceholder()
-      } else {
-        Scroll() {
-          Column() {
-            ForEach(this.lines.slice(0, this.renderedCount), (line: CodeLine, index: number) => {
-              this.codeLine(index, line)
-            }, (line: CodeLine, index: number) => index + '_' + line.spans.length)
-            Row()
-              .height(16)
+      Refresh({ refreshing: $$this.isRefreshing }) {
+        if (this.loading || this.errorMsg !== '') {
+          StateView({ loading: this.loading, error: this.errorMsg, onRetry: (): void => { this.fetchContent(); } })
+        } else if (this.isBinary) {
+          this.binaryPlaceholder()
+        } else {
+          Scroll() {
+            Column() {
+              ForEach(this.lines.slice(0, this.renderedCount), (line: CodeLine, index: number) => {
+                this.codeLine(index, line)
+              }, (line: CodeLine, index: number) => index + '_' + line.spans.length)
+              Row()
+                .height(16)
+            }
+            .width('100%')
+            .alignItems(HorizontalAlign.Start)
+            .padding({ left: 4, top: 4 })
           }
           .width('100%')
-          .alignItems(HorizontalAlign.Start)
-          .padding({ left: 4, top: 4 })
+          .backgroundColor(this.codeBg)
+          .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
+          // 渐进渲染：滚到底部再扩一窗，防大文件一次性全量建组件树（review C9）
+          .onReachEnd((): void => {
+            if (this.renderedCount < this.lines.length) {
+              this.renderedCount = Math.min(this.renderedCount + RENDER_WINDOW, this.lines.length);
+            }
+          })
         }
-        .layoutWeight(1)
-        .width('100%')
-        .backgroundColor(this.codeBg)
-        .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
-        // 渐进渲染：滚到底部再扩一窗，防大文件一次性全量建组件树（review C9）
-        .onReachEnd((): void => {
-          if (this.renderedCount < this.lines.length) {
-            this.renderedCount = Math.min(this.renderedCount + RENDER_WINDOW, this.lines.length);
-          }
-        })
       }
+      .layoutWeight(1)
+      .onRefreshing((): void => {
+        this.isRefreshing = true;
+        this.fetchContent();
+      })
     }
     .width('100%')
     .height('100%')

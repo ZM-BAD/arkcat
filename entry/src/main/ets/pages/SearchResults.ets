@@ -39,6 +39,7 @@ export struct SearchResultsView {
   @Local loaded: boolean = false;
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  @Local isRefreshing: boolean = false;
 
   aboutToAppear(): void {
     this.query = this.keyword;
@@ -75,6 +76,7 @@ export struct SearchResultsView {
           this.codeGroups = this.groupCodes(page.files);
           this.hasNext = page.hasMore;
           this.loading = false;
+          this.isRefreshing = false;
           this.loaded = true;
           // 记入 Recent searches（review E17；捕获请求时的词，防在途改词错记）
           SearchHistoryStore.remember(this.getUIContext().getHostContext(), q);
@@ -85,6 +87,7 @@ export struct SearchResultsView {
           }
           this.errorMsg = e.message;
           this.loading = false;
+          this.isRefreshing = false;
           this.loaded = true;
         });
       return;
@@ -98,6 +101,7 @@ export struct SearchResultsView {
         this.hasNext = page.hasNextPage;
         this.cursor = page.endCursor;
         this.loading = false;
+        this.isRefreshing = false;
         this.loaded = true;
         // 记入 Recent searches（review E17）
         SearchHistoryStore.remember(this.getUIContext().getHostContext(), q);
@@ -108,6 +112,7 @@ export struct SearchResultsView {
         }
         this.errorMsg = e.message;
         this.loading = false;
+        this.isRefreshing = false;
         this.loaded = true;
       });
   }
@@ -337,8 +342,9 @@ export struct SearchResultsView {
 
       PageShadowBar({ show: this.scrollShadow })
 
-      Scroll() {
-        Column() {
+      Refresh({ refreshing: $$this.isRefreshing }) {
+        Scroll() {
+          Column() {
           if (!this.loaded) {
             StateView({ loading: this.loading, error: this.errorMsg, empty: false })
               .width('100%')
@@ -392,10 +398,15 @@ export struct SearchResultsView {
         .width('100%')
         .padding({ bottom: 16 })
       }
-      .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
       .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
+      }
+      .layoutWeight(1)
+      .onRefreshing((): void => {
+        this.isRefreshing = true;
+        this.loadFirst();
+      })
     }
     .width('100%')
     .height('100%')

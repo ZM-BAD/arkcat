@@ -2251,6 +2251,130 @@
     {
       "name": "explore_filter_no_results",
       "value": "无匹配结果"
+    },
+    {
+      "name": "copilot_agent_sessions",
+      "value": "代理会话"
+    },
+    {
+      "name": "copilot_agent_delegate",
+      "value": "委派任务给 GitHub Copilot 云端代理"
+    },
+    {
+      "name": "copilot_agent_desc",
+      "value": "让 Copilot 在后台独立完成任务，然后监控 Copilot 的进度。"
+    },
+    {
+      "name": "copilot_upgrade_pro",
+      "value": "升级至 COPILOT PRO"
+    },
+    {
+      "name": "copilot_chats",
+      "value": "对话"
+    },
+    {
+      "name": "copilot_no_chats",
+      "value": "暂无对话"
+    },
+    {
+      "name": "copilot_no_chats_hint",
+      "value": "向 Copilot 提问即可开始你的第一次对话。"
+    },
+    {
+      "name": "copilot_new_chat",
+      "value": "新建对话"
+    },
+    {
+      "name": "copilot_ask_input",
+      "value": "询问 Copilot"
+    },
+    {
+      "name": "copilot_mode_auto",
+      "value": "自动"
+    },
+    {
+      "name": "copilot_menu_new_conversation",
+      "value": "新建会话"
+    },
+    {
+      "name": "copilot_menu_view_all",
+      "value": "查看所有会话"
+    },
+    {
+      "name": "copilot_menu_settings",
+      "value": "Copilot 设置"
+    },
+    {
+      "name": "copilot_menu_delete",
+      "value": "删除会话"
+    },
+    {
+      "name": "copilot_settings_subscription",
+      "value": "订阅"
+    },
+    {
+      "name": "copilot_settings_active_for",
+      "value": "已激活：%1$s"
+    },
+    {
+      "name": "copilot_settings_usage",
+      "value": "用量"
+    },
+    {
+      "name": "copilot_settings_code_completions",
+      "value": "代码补全"
+    },
+    {
+      "name": "copilot_settings_chat_messages",
+      "value": "对话消息"
+    },
+    {
+      "name": "copilot_settings_used",
+      "value": "已用 %1$s"
+    },
+    {
+      "name": "copilot_settings_upgrade_plan",
+      "value": "升级套餐"
+    },
+    {
+      "name": "copilot_settings_upgrade_desc",
+      "value": "升级您的 Copilot 方案，解锁更高的用量上限、高级模型、AI 审查及更多功能。"
+    },
+    {
+      "name": "copilot_settings_about",
+      "value": "关于"
+    },
+    {
+      "name": "copilot_settings_copilot",
+      "value": "Copilot"
+    },
+    {
+      "name": "copilot_settings_privacy_policy",
+      "value": "隐私政策"
+    },
+    {
+      "name": "copilot_settings_terms",
+      "value": "Copilot 条款"
+    },
+    {
+      "name": "copilot_settings_footer_a",
+      "value": "Copilot Free 和 Pro 可能会"
+    },
+    {
+      "name": "copilot_settings_footer_link_match",
+      "value": "显示与公共代码匹配的代码建议"
+    },
+    {
+      "name": "copilot_settings_footer_b",
+      "value": "，且我们可能将您的数据用于产品改进。您可以随时更改这些"
+    },
+    {
+      "name": "copilot_settings_footer_link_settings",
+      "value": "设置"
+    },
+    {
+      "name": "copilot_settings_footer_c",
+      "value": "。"
     }
   ]
 }

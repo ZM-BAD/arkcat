@@ -20,6 +20,7 @@ export struct RepoLicenseView {
   @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  @Local isRefreshing: boolean = false;
 
   aboutToAppear(): void {
     this.refresh();
@@ -35,10 +36,12 @@ export struct RepoLicenseView {
       .then((info: LicenseInfo | null) => {
         this.license = info;
         this.loading = false;
+        this.isRefreshing = false;
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
+        this.isRefreshing = false;
       });
   }
 
@@ -81,35 +84,44 @@ export struct RepoLicenseView {
 
       PageShadowBar({ show: this.scrollShadow })
 
-      if (this.license !== null) {
+      Refresh({ refreshing: $$this.isRefreshing }) {
         Scroll() {
-          Text(stripLicenseTitle(this.license.name, this.license.body))
-            .fontSize($r('app.float.body_font_size'))
-            .fontColor($r('app.color.text_primary'))
-            .lineHeight(25)
+          if (this.license !== null) {
+            Text(stripLicenseTitle(this.license.name, this.license.body))
+              .fontSize($r('app.float.body_font_size'))
+              .fontColor($r('app.color.text_primary'))
+              .lineHeight(25)
+              .width('100%')
+          } else {
+            Column() {
+              StateView({
+                loading: this.loading,
+                error: this.errorMsg,
+                onRetry: () => this.refresh()
+              })
+              if (!this.loading && this.errorMsg === '') {
+                Column() {
+                  Text(this.stringOf($r('app.string.repo_license_none')))
+                    .fontSize($r('app.float.body_font_size'))
+                    .fontColor($r('app.color.text_secondary'))
+                }
+                .width('100%')
+                .padding({ top: 24 })
+              }
+            }
             .width('100%')
+          }
         }
-        .layoutWeight(1)
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
         .padding({ left: 16, right: 16 })
         .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
-      } else {
-        StateView({
-          loading: this.loading,
-          error: this.errorMsg,
-          onRetry: () => this.refresh()
-        })
-        if (!this.loading && this.errorMsg === '') {
-          Column() {
-            Text(this.stringOf($r('app.string.repo_license_none')))
-              .fontSize($r('app.float.body_font_size'))
-              .fontColor($r('app.color.text_secondary'))
-          }
-          .layoutWeight(1)
-          .justifyContent(FlexAlign.Center)
-        }
       }
+      .layoutWeight(1)
+      .onRefreshing((): void => {
+        this.isRefreshing = true;
+        this.refresh();
+      })
     }
     .width('100%')
     .height('100%')

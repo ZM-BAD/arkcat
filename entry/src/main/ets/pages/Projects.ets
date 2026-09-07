@@ -9,6 +9,7 @@ import { PageShadowBar } from '../components/PageShadowBar';
 import { WorkProjectItem, WorkProjectsPage, filterWorkProjects, sortWorkProjects } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
+import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { WorkEmptyView } from '../components/WorkEmptyView';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
@@ -34,6 +35,8 @@ export struct ProjectsView {
   @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  /** 触底加载更多（底部转圈指示） */
+  @Local loadingMore: boolean = false;
 
   aboutToAppear(): void {
     this.refresh();
@@ -50,6 +53,7 @@ export struct ProjectsView {
         this.hasNextPage = page.hasNextPage;
         this.applyFilters();
         this.loading = false;
+        this.loadingMore = false;
       })
       .catch((e: Error) => {
         // Token scope 不足时给出可操作提示（GraphQL scopes 错误）而非裸接口错误
@@ -58,14 +62,16 @@ export struct ProjectsView {
           : e.message;
         this.errorMsg = hint;
         this.loading = false;
+        this.loadingMore = false;
       });
   }
 
   private loadMore(): void {
-    if (!this.hasNextPage || this.loading) {
+    if (!this.hasNextPage || this.loading || this.loadingMore) {
       return;
     }
     this.loading = true;
+    this.loadingMore = true;
     WorkService.fetchProjects(this.token, this.cursor)
       .then((page: WorkProjectsPage) => {
         this.allProjects = this.allProjects.concat(page.projects);
@@ -73,6 +79,7 @@ export struct ProjectsView {
         this.hasNextPage = page.hasNextPage;
         this.applyFilters();
         this.loading = false;
+        this.loadingMore = false;
       })
       .catch((e: Error) => {
         // Token scope 不足时给出可操作提示（GraphQL scopes 错误）而非裸接口错误
@@ -81,6 +88,7 @@ export struct ProjectsView {
           : e.message;
         this.errorMsg = hint;
         this.loading = false;
+        this.loadingMore = false;
       });
   }
 
@@ -380,11 +388,7 @@ export struct ProjectsView {
               this.projectRow(project)
             }, (project: WorkProjectItem) => `${project.title}_${project.number}_${project.ownerLogin}`)
             if (this.hasNextPage) {
-              Text($r('app.string.issues_load_more'))
-                .fontSize($r('app.float.body_font_size'))
-                .fontColor($r('app.color.link_blue'))
-                .padding(12)
-                .onClick(() => this.loadMore())
+              ListLoadingFooter({ show: this.loadingMore })
             }
           } else if (this.loading || this.errorMsg !== '') {
             StateView({
@@ -405,6 +409,9 @@ export struct ProjectsView {
       .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
+      .onReachEnd((): void => {
+        this.loadMore();
+      })
       .onScroll((_x: number, y: number): void => { this.scrollShadow = y > 0.001; })
     }
     .width('100%')

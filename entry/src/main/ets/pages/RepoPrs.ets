@@ -10,6 +10,7 @@ import { RepoPrItem, RepoPrsPage, filterPrsByAuthor, filterPrsByAssignee, repoPr
 import { WorkLabel } from '../models/WorkModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { StateView } from '../components/StateView';
+import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { WorkEmptyView } from '../components/WorkEmptyView';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
@@ -37,6 +38,9 @@ export struct RepoPrsView {
   @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  @Local isRefreshing: boolean = false;
+  /** 触底加载更多（底部转圈指示） */
+  @Local loadingMore: boolean = false;
 
   /** 返回刷新（review B13） */
   @Monitor('returnTick')
@@ -61,18 +65,23 @@ export struct RepoPrsView {
         this.hasNextPage = page.hasNextPage;
         this.applyFilters();
         this.loading = false;
+        this.isRefreshing = false;
+        this.loadingMore = false;
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
+        this.isRefreshing = false;
+        this.loadingMore = false;
       });
   }
 
   private loadMore(): void {
-    if (!this.hasNextPage || this.loading) {
+    if (!this.hasNextPage || this.loading || this.loadingMore) {
       return;
     }
     this.loading = true;
+    this.loadingMore = true;
     RepoSubService.fetchRepoPrs(this.token, this.owner, this.name, this.state, this.label, this.cursor)
       .then((page: RepoPrsPage) => {
         this.all = this.all.concat(page.prs);
@@ -80,10 +89,12 @@ export struct RepoPrsView {
         this.hasNextPage = page.hasNextPage;
         this.applyFilters();
         this.loading = false;
+        this.loadingMore = false;
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
+        this.loadingMore = false;
       });
   }
 
@@ -327,6 +338,7 @@ export struct RepoPrsView {
 
       PageShadowBar({ show: this.scrollShadow })
 
+      Refresh({ refreshing: $$this.isRefreshing }) {
       Scroll() {
         Column() {
           Scroll() {
@@ -411,11 +423,7 @@ export struct RepoPrsView {
               this.prRow(item)
             }, (item: RepoPrItem) => item.id)
             if (this.hasNextPage) {
-              Text($r('app.string.issues_load_more'))
-                .fontSize($r('app.float.body_font_size'))
-                .fontColor($r('app.color.link_blue'))
-                .padding(12)
-                .onClick(() => this.loadMore())
+              ListLoadingFooter({ show: this.loadingMore })
             }
           } else if (this.loading || this.errorMsg !== '') {
             StateView({ loading: this.loading, error: this.errorMsg, onRetry: () => this.refresh() })
@@ -426,11 +434,19 @@ export struct RepoPrsView {
         .padding({ left: 16, right: 16, bottom: 16 })
         .width('100%')
       }
-      .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
+      .onReachEnd((): void => {
+        this.loadMore();
+      })
       .onScroll((_x: number, y: number): void => {
         this.scrollShadow = y > 0.001;
+      })
+      }
+      .layoutWeight(1)
+      .onRefreshing((): void => {
+        this.isRefreshing = true;
+        this.refresh();
       })
     }
     .width('100%')

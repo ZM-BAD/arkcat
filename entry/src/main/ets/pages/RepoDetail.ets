@@ -26,6 +26,7 @@ export struct RepoDetailView {
   @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  @Local isRefreshing: boolean = false;
   @Local busy: boolean = false;
   @Local moreExpanded: boolean = false;
   /** README 官方 HTML（REST /readme html+json；null=未加载） */
@@ -46,11 +47,13 @@ export struct RepoDetailView {
       .then((detail: RepoDetail) => {
         this.detail = detail;
         this.loading = false;
+        this.isRefreshing = false;
         this.loadReadme();
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
+        this.isRefreshing = false;
       });
   }
 
@@ -59,9 +62,11 @@ export struct RepoDetailView {
     MarkdownService.fetchReadmeHtml(this.token, this.owner, this.name)
       .then((res: MarkdownFetchResult) => {
         this.readmeResult = res;
+        this.isRefreshing = false;
       })
       .catch(() => {
         this.readmeResult = { status: 'error', html: '' };
+        this.isRefreshing = false;
       });
   }
 
@@ -556,48 +561,54 @@ export struct RepoDetailView {
 
       PageShadowBar({ show: this.scrollShadow })
 
-      Scroll() {
-        Column({ space: 10 }) {
-          if (this.detail !== null) {
-            this.headerBox()
-            this.actionBar()
+      Refresh({ refreshing: $$this.isRefreshing }) {
+        Scroll() {
+          Column({ space: 10 }) {
+            if (this.detail !== null) {
+              this.headerBox()
+              this.actionBar()
 
-            Column() {
-              this.countRow($r('app.media.oct_issue_opened_16'), $r('app.color.success_text'), $r('app.string.repo_issues_link'), this.detail.issueCount, () => this.openIssues())
-              Divider().color($r('app.color.divider')).margin({ left: 72 })
-              this.countRow($r('app.media.oct_git_pull_request_16'), $r('app.color.link_blue'), $r('app.string.repo_pr_link'), this.detail.prCount, () => this.openPrs())
-              Divider().color($r('app.color.divider')).margin({ left: 72 })
-              this.countRow($r('app.media.oct_play_16'), $r('app.color.star_gold'), $r('app.string.repo_actions'), 0, () => this.comingSoon())
-              Divider().color($r('app.color.divider')).margin({ left: 72 })
-              this.countRow($r('app.media.oct_tag_16'), $r('app.color.work_dark_bg'), $r('app.string.repo_releases'), this.detail.releaseCount, () => this.openReleases())
+              Column() {
+                this.countRow($r('app.media.oct_issue_opened_16'), $r('app.color.success_text'), $r('app.string.repo_issues_link'), this.detail.issueCount, () => this.openIssues())
+                Divider().color($r('app.color.divider')).margin({ left: 72 })
+                this.countRow($r('app.media.oct_git_pull_request_16'), $r('app.color.link_blue'), $r('app.string.repo_pr_link'), this.detail.prCount, () => this.openPrs())
+                Divider().color($r('app.color.divider')).margin({ left: 72 })
+                this.countRow($r('app.media.oct_play_16'), $r('app.color.star_gold'), $r('app.string.repo_actions'), 0, () => this.comingSoon())
+                Divider().color($r('app.color.divider')).margin({ left: 72 })
+                this.countRow($r('app.media.oct_tag_16'), $r('app.color.work_dark_bg'), $r('app.string.repo_releases'), this.detail.releaseCount, () => this.openReleases())
+              }
+              .width('100%')
+              .backgroundColor($r('app.color.card_background'))
+              .borderRadius(12)
+
+              this.moreSection()
+
+              this.branchSection()
+
+              if (this.readmeResult !== null) {
+                this.readmeCard()
+              }
+            } else {
+              StateView({
+                loading: this.loading,
+                error: this.errorMsg,
+                onRetry: () => this.refresh()
+              })
             }
-            .width('100%')
-            .backgroundColor($r('app.color.card_background'))
-            .borderRadius(12)
-
-            this.moreSection()
-
-            this.branchSection()
-
-            if (this.readmeResult !== null) {
-              this.readmeCard()
-            }
-          } else {
-            StateView({
-              loading: this.loading,
-              error: this.errorMsg,
-              onRetry: () => this.refresh()
-            })
           }
+          .padding({ left: 16, right: 16 })
+          .width('100%')
         }
-        .padding({ left: 16, right: 16 })
-        .width('100%')
+        .scrollBar(BarState.Off)
+        .align(Alignment.Top)
+        .onScroll((_x: number, y: number): void => {
+          this.scrollShadow = y > 0.001;
+        })
       }
       .layoutWeight(1)
-      .scrollBar(BarState.Off)
-      .align(Alignment.Top)
-      .onScroll((_x: number, y: number): void => {
-        this.scrollShadow = y > 0.001;
+      .onRefreshing((): void => {
+        this.isRefreshing = true;
+        this.refresh();
       })
     }
     .width('100%')
