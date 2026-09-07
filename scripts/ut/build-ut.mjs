@@ -12,7 +12,10 @@ const ROOT = resolve(HERE, '..', '..');
 const KIT_STUBS = {
   '@kit.LocalizationKit': resolve(HERE, 'stubs/localization-kit.js'),
   '@kit.ArkData': resolve(HERE, 'stubs/ark-data.js'),
-  '@kit.AbilityKit': resolve(HERE, 'stubs/ability-kit.js')
+  '@kit.AbilityKit': resolve(HERE, 'stubs/ability-kit.js'),
+  '@kit.NetworkKit': resolve(HERE, 'stubs/network-kit.js'),
+  '@kit.ArkTS': resolve(HERE, 'stubs/arkts-util.js'),
+  '@kit.ArkUI': resolve(HERE, 'stubs/ark-ui.js')
 };
 
 try {
