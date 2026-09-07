@@ -131,10 +131,13 @@ jobs:
   # ──────────────────────────────────────────
   # Job 4: HarmonyOS 构建（macOS；签名材料在本机 ~/.ohos/config 不进 CI →
   # ci-build.sh 剥除 signingConfigs，产出可装模拟器的 unsigned HAP）
+  # ⚠️ 禁用中：私有仓库 macOS runner 计费 ×10（2000 分钟/月免费额度≈30 次 push）；
+  #    仓库 public 后恢复（删掉 job 顶部 if:false 即可）——恢复点见 handoff.md
   # ──────────────────────────────────────────
   harmony-build:
     name: HarmonyOS Build (debug HAP)
     runs-on: macos-latest
+    if: false  # 私仓计费暂停；public 后恢复（handoff.md 2026-09-08 有记录）
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -223,10 +226,12 @@ jobs:
   # ──────────────────────────────────────────
   # Job 8: 官方 Local Test（macOS 专属：hvigorw test 暂不支持 Linux）
   # Hypium + 真实 ArkTS 语义，产出可按文件统计的覆盖率报告
+  # ⚠️ 禁用中：私仓计费 ×10（同 Job 4）；仓库 public 后恢复（handoff.md 2026-09-08）
   # ──────────────────────────────────────────
   official-local-test:
     name: Official Local Test (macOS)
     runs-on: macos-latest
+    if: false  # 私仓计费暂停；public 后恢复（handoff.md 2026-09-08 有记录）
     steps:
       - name: Checkout
         uses: actions/checkout@v7
