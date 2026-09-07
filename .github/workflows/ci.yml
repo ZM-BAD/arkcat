@@ -204,3 +204,46 @@ jobs:
 
       - name: Run unit tests
         run: bash scripts/ut/run-local-tests.sh
+
+  # ──────────────────────────────────────────
+  # Job 8: 官方 Local Test（macOS 专属：hvigorw test 暂不支持 Linux）
+  # Hypium + 真实 ArkTS 语义，产出可按文件统计的覆盖率报告
+  # ──────────────────────────────────────────
+  official-local-test:
+    name: Official Local Test (macOS)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Setup HarmonyOS CLI tools (API 26)
+        uses: ErBWs/setup-ohos@v2
+        with:
+          version: 26.0.0.821
+          cache: true
+
+      - name: Install dependencies
+        run: ohpm install --all
+
+      - name: Run official local test
+        run: |
+          export DEVECO_SDK_HOME=$HOS_SDK_HOME
+          hvigorw test -p module=entry -p coverage=true --no-daemon
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: local-test-coverage
+          path: entry/.test/default/outputs/test/reports
+          if-no-files-found: warn
