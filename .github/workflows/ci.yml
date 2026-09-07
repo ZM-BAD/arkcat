@@ -129,30 +129,45 @@ jobs:
           echo "✅ Spec numbering continuous (1..$((EXPECTED - 1)))"
 
   # ──────────────────────────────────────────
-  # Job 4: HarmonyOS 构建（仅 macOS runner）
+  # Job 4: HarmonyOS 构建（macOS；签名材料在本机 ~/.ohos/config 不进 CI →
+  # ci-build.sh 剥除 signingConfigs，产出可装模拟器的 unsigned HAP）
   # ──────────────────────────────────────────
   harmony-build:
-    name: HarmonyOS Build
-    runs-on: macos-15
-    if: false  # 需要 DevEco Studio 许可证，暂时禁用；本地构建即可
+    name: HarmonyOS Build (debug HAP)
+    runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Setup Node
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Node 22
         uses: actions/setup-node@v7
         with:
           node-version: "22"
 
-      - name: Install dependencies
-        run: |
-          # 这里可以添加 ohpm install 等
-          echo "Build check placeholder"
+      - name: Setup HarmonyOS CLI tools (API 26)
+        uses: ErBWs/setup-ohos@v2
+        with:
+          version: 26.0.0.821
+          cache: true
 
-      - name: Build (placeholder)
-        run: |
-          echo "HarmonyOS build requires DevEco Studio"
-          echo "Run locally: hvigor assembleHap --mode debug"
+      - name: Install dependencies
+        run: ohpm install --all
+
+      - name: Build debug HAP
+        run: bash scripts/ci-build.sh
+
+      - name: Upload HAP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: arkcat-debug-hap
+          path: entry/build/default/outputs/**/*.hap
+          if-no-files-found: error
 
   # ──────────────────────────────────────────
   # Job 5: 样式门禁——禁止 UI 硬编码颜色（与 pre-commit 对齐）
