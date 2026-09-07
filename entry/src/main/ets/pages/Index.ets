@@ -13,6 +13,8 @@ import { HomeView } from './Home';
 import { InboxView } from './Inbox';
 import { ExploreView } from './Explore';
 import { CopilotView } from './Copilot';
+import { CopilotChatView } from './CopilotChat';
+import { CopilotSettingsView } from './CopilotSettings';
 import { ProfileView } from './Profile';
 import { RepoDetailView } from './RepoDetail';
 import { IssuesListView } from './IssuesList';
@@ -81,6 +83,8 @@ struct Index {
   /** Spec 052：成就详情参数（login|startIndex） */
   @State achLogin: string = '';
   @State achStart: number = 0;
+  /** Spec 058：Copilot 会话标题（路由参数：标题字符串，空=新建会话） */
+  @State chatTitle: string = '';
   @State orgLogin: string = '';
   @State reposOwner: string = '';
   @State reposMode: string = 'org';
@@ -933,6 +937,18 @@ struct Index {
     .hideTitleBar(true)
   }
 
+  /** Spec 058：Copilot 聊天详情页（路由参数：会话标题，空=新建会话） */
+  @Builder
+  copilotChatDestination() {
+    NavDestination() {
+      CopilotChatView({ title: this.chatTitle, pathStack: this.pathStack })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.chatTitle = context.pathInfo.param as string;
+    })
+    .hideTitleBar(true)
+  }
+
   /** Spec 056 收口：Explore Activity 类型筛选页（Filter Activity，六类勾选 + SAVE） */
   @Builder
   exploreActivityFilterDestination() {
@@ -941,6 +957,15 @@ struct Index {
         token: this.token,
         pathStack: this.pathStack
       })
+    }
+    .hideTitleBar(true)
+  }
+
+  /** Spec 058：Copilot settings 页 */
+  @Builder
+  copilotSettingsDestination() {
+    NavDestination() {
+      CopilotSettingsView({ pathStack: this.pathStack })
     }
     .hideTitleBar(true)
   }
@@ -1031,6 +1056,10 @@ struct Index {
       this.exploreRepoListDestination()
     } else if (name === 'exploreActivityFilter') {
       this.exploreActivityFilterDestination()
+    } else if (name === 'copilotChat') {
+      this.copilotChatDestination()
+    } else if (name === 'copilotSettings') {
+      this.copilotSettingsDestination()
     }
   }
 
@@ -1050,7 +1079,7 @@ struct Index {
       }
 
       TabContent() {
-        CopilotView()
+        CopilotView({ token: this.token, pathStack: this.pathStack })
       }
     }
     .onChange((index: number) => {
@@ -1143,7 +1172,7 @@ struct Index {
               this.tabItem($r('app.media.oct_home_16'), $r('app.media.oct_home_fill_16'), $r('app.string.tab_home'), 0)
               this.tabItem($r('app.media.oct_inbox_16'), $r('app.media.oct_inbox_fill_16'), $r('app.string.tab_inbox'), 1)
               this.tabItem($r('app.media.oct_telescope_16'), $r('app.media.oct_telescope_fill_16'), $r('app.string.tab_explore'), 2)
-              this.tabItem($r('app.media.oct_copilot_16'), $r('app.media.oct_copilot_16'), $r('app.string.tab_copilot'), 3)
+              this.tabItem($r('app.media.oct_copilot_16'), $r('app.media.oct_copilot_fill_16'), $r('app.string.tab_copilot'), 3)
             }
             .width('100%')
             .height(56)
