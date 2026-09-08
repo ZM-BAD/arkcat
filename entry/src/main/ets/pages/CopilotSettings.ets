@@ -4,7 +4,7 @@
  * Usage 环=服务端真实用量（copilot_internal/user 的 quota_snapshots，实测 200），
  * 端点不可用时降级为本地记账近似；套餐名保持静态文案（无公开套餐 API）。
  */
-import { promptAction } from '@kit.ArkUI';
+import { promptAction, LengthMetrics } from '@kit.ArkUI';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
@@ -22,6 +22,10 @@ const DOC_PRIVACY =
   'https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement';
 const DOC_TERMS =
   'https://docs.github.com/en/site-policy/github-terms/github-terms-for-additional-products-and-features';
+/** 页脚说明里的两处链接（matching=公开代码匹配说明；settings=GitHub 网页版 Copilot 设置） */
+const DOC_FOOTER_MATCHING =
+  'https://docs.github.com/en/copilot/how-tos/get-code-suggestions/find-matching-code';
+const DOC_FOOTER_SETTINGS = 'https://github.com/settings/copilot/features';
 
 @ComponentV2
 export struct CopilotSettingsView {
@@ -37,10 +41,69 @@ export struct CopilotSettingsView {
   @Local quota: CopilotQuota | null = null;
   /** 套餐名：无公开 API 可查（见 059 边界），保持静态 */
   private readonly planName: string = 'Copilot Free';
+  /** 页脚富文本控制器（两处链接可点，见 buildFooter） */
+  private footerController: TextController = new TextController();
 
   aboutToAppear(): void {
     this.resolveLogin();
     this.loadQuota();
+    this.buildFooter();
+  }
+
+  /**
+   * 页脚富文本：灰字整段 + 两处蓝色下划线链接（StyledString 的 GESTURE 样式挂点击）。
+   * Span 不支持 onClick，故用 StyledString；字号取 body_font_size 令牌。
+   */
+  private buildFooter(): void {
+    const ui = this.getUIContext();
+    const partA = resText(ui, $r('app.string.copilot_settings_footer_a'));
+    const linkMatch = resText(ui, $r('app.string.copilot_settings_footer_link_match'));
+    const partB = resText(ui, $r('app.string.copilot_settings_footer_b'));
+    const linkSettings = resText(ui, $r('app.string.copilot_settings_footer_link_settings'));
+    const partC = resText(ui, $r('app.string.copilot_settings_footer_c'));
+    const body = partA + linkMatch + partB + linkSettings + partC;
+    const matchStart = partA.length;
+    const settingsStart = matchStart + linkMatch.length + partB.length;
+
+    const styles: StyleOptions[] = [
+      {
+        start: 0, length: body.length, styledKey: StyledStringKey.FONT,
+        styledValue: new TextStyle({
+          fontSize: LengthMetrics.resource($r('app.float.body_font_size')),
+          fontColor: $r('app.color.text_secondary')
+        })
+      }
+    ];
+    this.pushLinkStyles(styles, matchStart, linkMatch.length, linkMatch, DOC_FOOTER_MATCHING);
+    this.pushLinkStyles(styles, settingsStart, linkSettings.length, linkSettings, DOC_FOOTER_SETTINGS);
+    this.footerController.setStyledString(new StyledString(body, styles));
+  }
+
+  /** 追加一段链接样式（蓝色 + 下划线 + 点击打开应用内浏览器） */
+  private pushLinkStyles(styles: StyleOptions[], start: number, length: number,
+    title: string, url: string): void {
+    styles.push({
+      start: start, length: length, styledKey: StyledStringKey.FONT,
+      styledValue: new TextStyle({ fontColor: $r('app.color.link_blue') })
+    });
+    styles.push({
+      start: start, length: length, styledKey: StyledStringKey.DECORATION,
+      styledValue: new DecorationStyle({
+        type: TextDecorationType.Underline,
+        color: $r('app.color.link_blue')
+      })
+    });
+    styles.push({
+      start: start, length: length, styledKey: StyledStringKey.GESTURE,
+      styledValue: new GestureStyle({
+        onClick: (): void => this.openDoc(title, url)
+      })
+    });
+  }
+
+  /** 应用内浏览器打开（路由参数=标题|URL） */
+  private openDoc(title: string, url: string): void {
+    this.pathStack.pushPathByName('inAppBrowser', `${title}|${url}`);
   }
 
   @Monitor('login')
@@ -130,32 +193,17 @@ export struct CopilotSettingsView {
           this.comingSoon();
           return;
         }
-        // 路由参数=标题|URL（标题取行文案的本地化结果，浏览器页 AppBar 显示）
-        this.pathStack.pushPathByName('inAppBrowser',
-          `${resText(this.getUIContext(), label)}|${url}`);
+        // 标题取行文案的本地化结果，浏览器页 AppBar 显示
+        this.openDoc(resText(this.getUIContext(), label), url);
       })
   }
 
-  /** 页脚：灰底说明 + 蓝色链接文本（Span 多色） */
+  /** 页脚说明：StyledString 富文本（两处链接可点，见 buildFooter），随内容滚动 */
   @Builder
   footerNote() {
-    Text() {
-      Span($r('app.string.copilot_settings_footer_a'))
-        .fontColor($r('app.color.text_secondary'))
-      Span($r('app.string.copilot_settings_footer_link_match'))
-        .fontColor($r('app.color.link_blue'))
-        .decoration({ type: TextDecorationType.Underline, color: $r('app.color.link_blue') })
-      Span($r('app.string.copilot_settings_footer_b'))
-        .fontColor($r('app.color.text_secondary'))
-      Span($r('app.string.copilot_settings_footer_link_settings'))
-        .fontColor($r('app.color.link_blue'))
-        .decoration({ type: TextDecorationType.Underline, color: $r('app.color.link_blue') })
-      Span($r('app.string.copilot_settings_footer_c'))
-        .fontColor($r('app.color.text_secondary'))
-    }
-    .fontSize($r('app.float.body_font_size'))
-    .lineHeight(22)
-    .width('100%')
+    Text(undefined, { controller: this.footerController })
+      .lineHeight(22)
+      .width('100%')
     .padding({ top: 8, bottom: 4 })
   }
 
