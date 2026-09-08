@@ -46,6 +46,9 @@
      Are you sure you want to delete this conversation? + 蓝 DISMISS / 红 DELETE，
      对齐官方）后真删本地会话；View all conversations 回主页（pop）。
 3. **Settings 页**：
+   - 版面：Subscription / Usage / About 三组各为一张白卡（card_background + card_radius +
+     card_padding），卡间 8vp 露出灰底画布形成分隔带——原实现是「白底上铺 8vp 灰条」，
+     灰条与底色同色导致三组连成一片（用户走查定案改卡片式）。
    - `Active for <login>`：login 取当前账号（Index 透传 `currentLogin`，事实源=Spec 049a
      的 AccountStore）；仅账号 login 为空占位（v1 迁移 viewer 查询失败）时兜底拉取 viewer
      供本页展示，不回写存储。

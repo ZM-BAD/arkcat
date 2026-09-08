@@ -88,15 +88,6 @@ export struct CopilotSettingsView {
     promptAction.showToast({ message: $r('app.string.home_feature_coming') });
   }
 
-  /** 分组间 8vp 灰粗分隔条（官方分组样式） */
-  @Builder
-  groupGap() {
-    Row()
-      .width('100%')
-      .height(8)
-      .backgroundColor($r('app.color.bg_page'))
-  }
-
   /** Usage 统计行：名称 + N% used + 蓝色环形进度 */
   @Builder
   usageRow(label: ResourceStr, percent: number) {
@@ -180,94 +171,106 @@ export struct CopilotSettingsView {
       PageShadowBar({ show: this.scrollShadow })
 
       Scroll() {
-        Column() {
+        // 三个分组各为一张白卡，卡间 8vp 露出灰底画布（区域感/分隔带）
+        Column({ space: 8 }) {
           // Subscription 分组
-          Text($r('app.string.copilot_settings_subscription'))
-            .fontSize($r('app.float.body_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-            .width('100%')
-            .margin({ top: 8, bottom: 4 })
-
-          Text(this.planName)
-            .fontSize(28)
-            .fontWeight(600)
-            .fontColor($r('app.color.text_primary'))
-            .width('100%')
-
-          if (this.displayLogin !== '') {
-            Text(resText(this.getUIContext(), $r('app.string.copilot_settings_active_for'), this.displayLogin))
+          Column() {
+            Text($r('app.string.copilot_settings_subscription'))
               .fontSize($r('app.float.body_font_size'))
-              .fontColor($r('app.color.text_secondary'))
-              .width('100%')
-              .margin({ bottom: 16 })
-          } else {
-            Text($r('app.string.copilot_settings_plan_unknown'))
-              .fontSize($r('app.float.body_font_size'))
-              .fontColor($r('app.color.text_secondary'))
-              .width('100%')
-              .margin({ bottom: 16 })
-          }
-
-          this.groupGap()
-
-          // Usage 分组
-          Text($r('app.string.copilot_settings_usage'))
-            .fontSize($r('app.float.body_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-            .width('100%')
-            .margin({ top: 8, bottom: 4 })
-
-          this.usageRow($r('app.string.copilot_settings_code_completions'),
-            this.quota !== null ? this.quota.completionsUsedPercent : 0)
-          this.usageRow($r('app.string.copilot_settings_chat_messages'),
-            this.quota !== null ? this.quota.chatUsedPercent : this.localChatPercent())
-
-          if (this.quota === null) {
-            // 服务端用量未取到（离线/端点变更）：明示此行数据为本地估算
-            Text($r('app.string.copilot_usage_local_hint'))
-              .fontSize($r('app.float.caption_font_size'))
               .fontColor($r('app.color.text_secondary'))
               .width('100%')
               .margin({ bottom: 4 })
+
+            Text(this.planName)
+              .fontSize(28)
+              .fontWeight(600)
+              .fontColor($r('app.color.text_primary'))
+              .width('100%')
+
+            if (this.displayLogin !== '') {
+              Text(resText(this.getUIContext(), $r('app.string.copilot_settings_active_for'), this.displayLogin))
+                .fontSize($r('app.float.body_font_size'))
+                .fontColor($r('app.color.text_secondary'))
+                .width('100%')
+            } else {
+              Text($r('app.string.copilot_settings_plan_unknown'))
+                .fontSize($r('app.float.body_font_size'))
+                .fontColor($r('app.color.text_secondary'))
+                .width('100%')
+            }
           }
+          .width('100%')
+          .padding($r('app.float.card_padding'))
+          .backgroundColor($r('app.color.card_background'))
+          .borderRadius($r('app.float.card_radius'))
 
-          Button($r('app.string.copilot_settings_upgrade_plan'))
-            .fontSize($r('app.float.body_font_size'))
-            .fontWeight(600)
-            .fontColor($r('app.color.link_blue'))
-            .backgroundColor($r('app.color.tab_active_bg'))
-            .width('100%')
-            .height(44)
-            .borderRadius(6)
-            .margin({ top: 10 })
-            .onClick(() => this.comingSoon())
+          // Usage 分组
+          Column() {
+            Text($r('app.string.copilot_settings_usage'))
+              .fontSize($r('app.float.body_font_size'))
+              .fontColor($r('app.color.text_secondary'))
+              .width('100%')
+              .margin({ bottom: 4 })
 
-          Text($r('app.string.copilot_settings_upgrade_desc'))
-            .fontSize($r('app.float.body_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-            .lineHeight(22)
-            .width('100%')
-            .margin({ top: 10, bottom: 16 })
+            this.usageRow($r('app.string.copilot_settings_code_completions'),
+              this.quota !== null ? this.quota.completionsUsedPercent : 0)
+            this.usageRow($r('app.string.copilot_settings_chat_messages'),
+              this.quota !== null ? this.quota.chatUsedPercent : this.localChatPercent())
 
-          this.groupGap()
+            if (this.quota === null) {
+              // 服务端用量未取到（离线/端点变更）：明示此行数据为本地估算
+              Text($r('app.string.copilot_usage_local_hint'))
+                .fontSize($r('app.float.caption_font_size'))
+                .fontColor($r('app.color.text_secondary'))
+                .width('100%')
+            }
+
+            Button($r('app.string.copilot_settings_upgrade_plan'))
+              .fontSize($r('app.float.body_font_size'))
+              .fontWeight(600)
+              .fontColor($r('app.color.link_blue'))
+              .backgroundColor($r('app.color.tab_active_bg'))
+              .width('100%')
+              .height(44)
+              .borderRadius(6)
+              .margin({ top: 10 })
+              .onClick(() => this.comingSoon())
+
+            Text($r('app.string.copilot_settings_upgrade_desc'))
+              .fontSize($r('app.float.body_font_size'))
+              .fontColor($r('app.color.text_secondary'))
+              .lineHeight(22)
+              .width('100%')
+              .margin({ top: 10 })
+          }
+          .width('100%')
+          .padding($r('app.float.card_padding'))
+          .backgroundColor($r('app.color.card_background'))
+          .borderRadius($r('app.float.card_radius'))
 
           // About 分组
-          Text($r('app.string.copilot_settings_about'))
-            .fontSize($r('app.float.body_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-            .width('100%')
-            .margin({ top: 8, bottom: 4 })
+          Column() {
+            Text($r('app.string.copilot_settings_about'))
+              .fontSize($r('app.float.body_font_size'))
+              .fontColor($r('app.color.text_secondary'))
+              .width('100%')
+              .padding({ top: 4, bottom: 2 })
 
-          this.aboutRow($r('app.string.settings_copilot_free'))
-          Divider().strokeWidth(0.5).color($r('app.color.divider'))
-          this.aboutRow($r('app.string.copilot_settings_copilot'))
-          Divider().strokeWidth(0.5).color($r('app.color.divider'))
-          this.aboutRow($r('app.string.copilot_settings_privacy_policy'))
-          Divider().strokeWidth(0.5).color($r('app.color.divider'))
-          this.aboutRow($r('app.string.copilot_settings_terms'))
+            this.aboutRow($r('app.string.settings_copilot_free'))
+            Divider().strokeWidth(0.5).color($r('app.color.divider'))
+            this.aboutRow($r('app.string.copilot_settings_copilot'))
+            Divider().strokeWidth(0.5).color($r('app.color.divider'))
+            this.aboutRow($r('app.string.copilot_settings_privacy_policy'))
+            Divider().strokeWidth(0.5).color($r('app.color.divider'))
+            this.aboutRow($r('app.string.copilot_settings_terms'))
+          }
+          .width('100%')
+          .padding({ left: 16, right: 16, top: 8, bottom: 0 })
+          .backgroundColor($r('app.color.card_background'))
+          .borderRadius($r('app.float.card_radius'))
         }
-        .padding({ left: 16, right: 16, bottom: 16 })
         .width('100%')
+        .padding({ left: 16, right: 16, top: 8, bottom: 16 })
       }
       .layoutWeight(1)
       .scrollBar(BarState.Off)
