@@ -59,9 +59,11 @@ import { FilterActivityView } from './FilterActivity';
 import { AccountsView } from './Accounts';
 import { InAppBrowserView } from './InAppBrowser';
 
-/** 隐藏底部四 Tab 栏的路由：Settings 及其下级页面（走查 09-08 定案）+ 模态全屏页（052 徽章详情） */
+/** 隐藏底部四 Tab 栏的路由：Settings 及其下级页面（走查 09-08 定案）+ 模态全屏页（052 徽章详情）
+ *  + Copilot settings / 应用内浏览器（用户 09-08 定案：这两个子页也不显示底栏） */
 const TAB_BAR_HIDDEN_ROUTES: string[] = [
-  'settings', 'notificationSettings', 'codeOptions', 'accounts', 'tokenSetup', 'achievementDetail'
+  'settings', 'notificationSettings', 'codeOptions', 'accounts', 'tokenSetup', 'achievementDetail',
+  'copilotSettings', 'inAppBrowser'
 ];
 
 @Entry

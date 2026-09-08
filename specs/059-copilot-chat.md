@@ -59,7 +59,8 @@
      Free——见五章边界）。
    - About 四行：「Copilot Free」保持 toast 占位；「Copilot」「Privacy policy」「Copilot Terms」
      经路由 `inAppBrowser` 在 **App 内浏览器**打开 GitHub Docs（ArkWeb，手机宽度即移动端
-     版式，深色跟随系统；路由参数=URL；AppBar 标题固定「Copilot」，底栏常驻）。
+     版式，深色跟随系统；路由参数=URL；AppBar 标题固定「Copilot」，底栏隐藏）。
+   - 底栏：本页与 `inAppBrowser` 均隐藏底部四 Tab（用户 09-08 定案，与 Settings 页一致）。
    - 页脚说明：随内容滚动；其中「show code suggestions that match public code」与
      「settings」为可点链接（Span 不支持 onClick → StyledString + GestureStyle），
      分别打开 find-matching-code 文档与 GitHub 网页版 Copilot 设置。
@@ -86,7 +87,7 @@
 | 14 | Settings | UPGRADE PLAN | toast 占位（红线） | ✅ | - | 不引入任何升级/账单端点 |
 | 15 | 全页 | 会话数据 | 本地 persistence | ✅ | - | preferences JSON（仿 WorkConfigStore 模式） |
 | 16 | 详情页 | 底部输入栏 | 多行自增高（11 行封顶后滚动） | ✅ | - | TextArea + lineHeight(20vp) + constraintSize 240vp + input_bg 灰底 + 投影 |
-| 17 | 全页 | 应用内浏览器 | About/页脚外链在 App 内打开 | ✅ | - | ArkWeb 加载 docs.github.com；路由 inAppBrowser（参数=URL，标题固定 Copilot），底栏常驻 |
+| 17 | 全页 | 应用内浏览器 | About/页脚外链在 App 内打开 | ✅ | - | ArkWeb 加载 docs.github.com；路由 inAppBrowser（参数=URL，标题固定 Copilot），底栏隐藏 |
 
 > 可行性图例：✅ 可直接实现 ｜ ⚠️ 部分可行/降级 ｜ ❌ 不可实现
 
