@@ -74,14 +74,13 @@ export struct CopilotSettingsView {
         })
       }
     ];
-    this.pushLinkStyles(styles, matchStart, linkMatch.length, linkMatch, DOC_FOOTER_MATCHING);
-    this.pushLinkStyles(styles, settingsStart, linkSettings.length, linkSettings, DOC_FOOTER_SETTINGS);
+    this.pushLinkStyles(styles, matchStart, linkMatch.length, DOC_FOOTER_MATCHING);
+    this.pushLinkStyles(styles, settingsStart, linkSettings.length, DOC_FOOTER_SETTINGS);
     this.footerController.setStyledString(new StyledString(body, styles));
   }
 
   /** 追加一段链接样式（蓝色 + 下划线 + 点击打开应用内浏览器） */
-  private pushLinkStyles(styles: StyleOptions[], start: number, length: number,
-    title: string, url: string): void {
+  private pushLinkStyles(styles: StyleOptions[], start: number, length: number, url: string): void {
     styles.push({
       start: start, length: length, styledKey: StyledStringKey.FONT,
       styledValue: new TextStyle({ fontColor: $r('app.color.link_blue') })
@@ -96,14 +95,14 @@ export struct CopilotSettingsView {
     styles.push({
       start: start, length: length, styledKey: StyledStringKey.GESTURE,
       styledValue: new GestureStyle({
-        onClick: (): void => this.openDoc(title, url)
+        onClick: (): void => this.openDoc(url)
       })
     });
   }
 
-  /** 应用内浏览器打开（路由参数=标题|URL） */
-  private openDoc(title: string, url: string): void {
-    this.pathStack.pushPathByName('inAppBrowser', `${title}|${url}`);
+  /** 应用内浏览器打开（路由参数=URL，AppBar 标题固定 Copilot） */
+  private openDoc(url: string): void {
+    this.pathStack.pushPathByName('inAppBrowser', url);
   }
 
   @Monitor('login')
@@ -193,8 +192,7 @@ export struct CopilotSettingsView {
           this.comingSoon();
           return;
         }
-        // 标题取行文案的本地化结果，浏览器页 AppBar 显示
-        this.openDoc(resText(this.getUIContext(), label), url);
+        this.openDoc(url);
       })
   }
 
