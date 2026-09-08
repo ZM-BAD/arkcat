@@ -37,7 +37,9 @@
    - AppBar 副标「Auto」不变；标题 = 会话标题（新建时为 New conversation）。
    - 消息列表：来源 = 会话消息数组（本地）；助手消息支持**键入中占位**（发送后、
      未响应前显示 loading 圆钮气泡）与**失败卡片**（错误文案 + 重试按钮）。
-   - 底部输入栏：发送 → 真实请求（发送中禁用），空输入禁用逻辑不变。
+   - 底部输入栏：发送 → 真实请求（发送中禁用），空输入禁用逻辑不变；输入框为多行
+     TextArea（随内容自增高，显式行高 20vp + constraintSize 封顶 11 行 ≈ 240vp，
+     超出后内部滚动并显示滚动条），圆角胶囊 + 浮动投影，发送钮底部对齐。
    - 竖三点菜单：New conversation / 历史会话切换 / Copilot settings 变真实动作；
      Delete conversation 弹确认框（showDialog：标题 Delete conversation + 小字
      Are you sure you want to delete this conversation? + 蓝 DISMISS / 红 DELETE，
@@ -73,6 +75,7 @@
 | 13 | Settings | Usage 环进度 | 服务端真实用量 | ✅ | GET copilot_internal/user | quota_snapshots 已用%；失败降级本地估算 + caption |
 | 14 | Settings | UPGRADE PLAN | toast 占位（红线） | ✅ | - | 不引入任何升级/账单端点 |
 | 15 | 全页 | 会话数据 | 本地 persistence | ✅ | - | preferences JSON（仿 WorkConfigStore 模式） |
+| 16 | 详情页 | 底部输入栏 | 多行自增高（11 行封顶后滚动） | ✅ | - | TextArea + lineHeight(20vp) + constraintSize 240vp + 投影 |
 
 > 可行性图例：✅ 可直接实现 ｜ ⚠️ 部分可行/降级 ｜ ❌ 不可实现
 

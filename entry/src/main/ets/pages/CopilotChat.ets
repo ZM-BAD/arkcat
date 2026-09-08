@@ -25,6 +25,11 @@ interface ErrorText {
   args: Array<string | number>;
 }
 
+/** 输入框最多显示行数（超出后内部滚动）、单行行高与上下内边距（vp） */
+const INPUT_MAX_LINES = 11;
+const INPUT_LINE_HEIGHT = 20;
+const INPUT_PADDING_V = 10;
+
 @ComponentV2
 export struct CopilotChatView {
   @Param token: string = '';
@@ -427,14 +432,19 @@ export struct CopilotChatView {
         this.scrollShadow = y > 0.001;
       })
 
-      // 底部输入栏：圆角灰输入框 + 纸飞机发送钮（空输入/发送中禁用）
+      // 底部输入栏：圆角输入框（多行自增高，11 行封顶后内部滚动）+ 纸飞机发送钮（空输入/发送中禁用）
       Row({ space: 10 }) {
-        TextInput({ text: this.draft, placeholder: $r('app.string.copilot_ask_input') })
+        TextArea({ text: this.draft, placeholder: $r('app.string.copilot_ask_input') })
           .layoutWeight(1)
-          .height(40)
+          // 不设 height → 随内容增高；显式行高 + constraintSize 封顶 11 行，超出走内部滚动
+          .lineHeight(INPUT_LINE_HEIGHT)
+          .constraintSize({ maxHeight: INPUT_MAX_LINES * INPUT_LINE_HEIGHT + INPUT_PADDING_V * 2 })
+          .barState(BarState.Auto)
           .borderRadius(20)
           .backgroundColor($r('app.color.card_background'))
           .fontSize($r('app.float.body_font_size'))
+          .padding({ left: 16, right: 16, top: INPUT_PADDING_V, bottom: INPUT_PADDING_V })
+          .shadow({ radius: 8, color: $r('app.color.shadow_floating'), offsetX: 0, offsetY: 2 })
           .onChange((value: string) => {
             this.draft = value;
           })
@@ -450,6 +460,7 @@ export struct CopilotChatView {
         .onClick(() => this.send())
       }
       .width('100%')
+      .alignItems(VerticalAlign.Bottom)
       .padding({ left: 16, right: 16, top: 8, bottom: 8 })
       .backgroundColor($r('app.color.card_background'))
     }
