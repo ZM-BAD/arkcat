@@ -141,8 +141,7 @@ export struct CopilotSettingsView {
     .fontSize($r('app.float.body_font_size'))
     .lineHeight(22)
     .width('100%')
-    .padding(16)
-    .backgroundColor($r('app.color.bg_page'))
+    .padding({ top: 8, bottom: 4 })
   }
 
   build() {
@@ -268,6 +267,9 @@ export struct CopilotSettingsView {
           .padding({ left: 16, right: 16, top: 8, bottom: 0 })
           .backgroundColor($r('app.color.card_background'))
           .borderRadius($r('app.float.card_radius'))
+
+          // 页脚说明随内容滚动（不常驻底部，避免遮挡 About 区）
+          this.footerNote()
         }
         .width('100%')
         .padding({ left: 16, right: 16, top: 8, bottom: 16 })
@@ -278,8 +280,6 @@ export struct CopilotSettingsView {
       .onScroll((_x: number, y: number): void => {
         this.scrollShadow = y > 0.001;
       })
-
-      this.footerNote()
     }
     .width('100%')
     .height('100%')
