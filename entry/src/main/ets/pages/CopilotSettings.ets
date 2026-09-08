@@ -32,6 +32,8 @@ export struct CopilotSettingsView {
   @Param token: string = '';
   /** 当前账号 login（Index 的 currentLogin；v1 迁移 viewer 失败时为空串占位） */
   @Param login: string = '';
+  /** Index 在 NavDestination.onShown 时自增：从子页（应用内浏览器）返回后重绑页脚手势 */
+  @Param shownTick: number = 0;
   @Param pathStack: NavPathStack = new NavPathStack();
   /** 滚动顶部阴影 */
   @Local scrollShadow: boolean = false;
@@ -41,20 +43,29 @@ export struct CopilotSettingsView {
   @Local quota: CopilotQuota | null = null;
   /** 套餐名：无公开 API 可查（见 059 边界），保持静态 */
   private readonly planName: string = 'Copilot Free';
-  /** 页脚富文本控制器（两处链接可点，见 buildFooter） */
+  /** 页脚富文本控制器（两处链接可点，见 applyFooter） */
   private footerController: TextController = new TextController();
 
   aboutToAppear(): void {
     this.resolveLogin();
     this.loadQuota();
-    this.buildFooter();
+  }
+
+  /**
+   * 页脚重绑时机：登录名/用量是异步回填（触发本页重建）、从浏览器页返回会重新 onShown——
+   * 这些情况下 Text 若被重建，控制器里的手势不会自动跟过来（走查实测偶发点不开），
+   * 故三个时机都重绑一次（幂等，代价可忽略）。
+   */
+  @Monitor('displayLogin', 'quota', 'shownTick')
+  onFooterRefresh(): void {
+    this.applyFooter();
   }
 
   /**
    * 页脚富文本：灰字整段 + 两处蓝色下划线链接（StyledString 的 GESTURE 样式挂点击）。
    * Span 不支持 onClick，故用 StyledString；字号取 body_font_size 令牌。
    */
-  private buildFooter(): void {
+  private applyFooter(): void {
     const ui = this.getUIContext();
     const partA = resText(ui, $r('app.string.copilot_settings_footer_a'));
     const linkMatch = resText(ui, $r('app.string.copilot_settings_footer_link_match'));
@@ -74,13 +85,17 @@ export struct CopilotSettingsView {
         })
       }
     ];
-    this.pushLinkStyles(styles, matchStart, linkMatch.length, DOC_FOOTER_MATCHING);
-    this.pushLinkStyles(styles, settingsStart, linkSettings.length, DOC_FOOTER_SETTINGS);
+    this.pushLinkStyles(styles, matchStart, linkMatch.length, body.length, DOC_FOOTER_MATCHING);
+    this.pushLinkStyles(styles, settingsStart, linkSettings.length, body.length, DOC_FOOTER_SETTINGS);
     this.footerController.setStyledString(new StyledString(body, styles));
   }
 
-  /** 追加一段链接样式（蓝色 + 下划线 + 点击打开应用内浏览器） */
-  private pushLinkStyles(styles: StyleOptions[], start: number, length: number, url: string): void {
+  /**
+   * 追加一段链接样式：视觉（蓝色/下划线）用精确范围；GESTURE 命中区左右各放宽 1 字符
+   * （两侧均为空格，视觉不变）——字形级命中偏严，放宽可减少"看着点上了却没反应"。
+   */
+  private pushLinkStyles(styles: StyleOptions[], start: number, length: number,
+    bodyLength: number, url: string): void {
     styles.push({
       start: start, length: length, styledKey: StyledStringKey.FONT,
       styledValue: new TextStyle({ fontColor: $r('app.color.link_blue') })
@@ -92,8 +107,10 @@ export struct CopilotSettingsView {
         color: $r('app.color.link_blue')
       })
     });
+    const gestureStart = start > 0 ? start - 1 : 0;
+    const gestureEnd = start + length + 1 < bodyLength ? start + length + 1 : bodyLength;
     styles.push({
-      start: start, length: length, styledKey: StyledStringKey.GESTURE,
+      start: gestureStart, length: gestureEnd - gestureStart, styledKey: StyledStringKey.GESTURE,
       styledValue: new GestureStyle({
         onClick: (): void => this.openDoc(url)
       })
@@ -196,13 +213,17 @@ export struct CopilotSettingsView {
       })
   }
 
-  /** 页脚说明：StyledString 富文本（两处链接可点，见 buildFooter），随内容滚动 */
+  /** 页脚说明：StyledString 富文本（两处链接可点，见 applyFooter），随内容滚动 */
   @Builder
   footerNote() {
     Text(undefined, { controller: this.footerController })
       .lineHeight(22)
       .width('100%')
-    .padding({ top: 8, bottom: 4 })
+      .padding({ top: 8, bottom: 4 })
+      .onAppear((): void => {
+        // Text 重建后（首次出现）重绑，保证 GESTURE 命中区跟着新实例
+        this.applyFooter();
+      })
   }
 
   build() {

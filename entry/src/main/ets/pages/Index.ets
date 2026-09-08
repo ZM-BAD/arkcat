@@ -101,6 +101,8 @@ struct Index {
   @State copilotTick: number = 0;
   /** Spec 059：应用内浏览器（About / 页脚外链）路由参数：URL */
   @State browserUrl: string = '';
+  /** Spec 059：Copilot settings 页回显泵（onShown 自增，重绑页脚链接手势） */
+  @State copilotSettingsTick: number = 0;
   @State orgLogin: string = '';
   @State reposOwner: string = '';
   @State reposMode: string = 'org';
@@ -1092,8 +1094,17 @@ struct Index {
   @Builder
   copilotSettingsDestination() {
     NavDestination() {
-      CopilotSettingsView({ token: this.token, login: this.currentLogin, pathStack: this.pathStack })
+      CopilotSettingsView({
+        token: this.token,
+        login: this.currentLogin,
+        shownTick: this.copilotSettingsTick,
+        pathStack: this.pathStack
+      })
     }
+    .onShown(() => {
+      // 从应用内浏览器等子页返回时自增，触发页脚富文本重绑（走查：偶发点不开）
+      this.copilotSettingsTick += 1;
+    })
     .hideTitleBar(true)
   }
 
