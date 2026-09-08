@@ -252,8 +252,8 @@ export struct ProfileHeaderCard {
               .fontSize($r('app.float.body_font_size'))
               .fontWeight(500)
               .fontColor($r('app.color.text_primary'))
-            if (acc.alias !== '' || acc.name !== '') {
-              Text(acc.alias !== '' ? acc.alias : acc.name)
+            if (acc.name !== '') {
+              Text(acc.name)
                 .fontSize($r('app.float.caption_font_size'))
                 .fontColor($r('app.color.text_secondary'))
             }

@@ -24,7 +24,6 @@ const DOMAIN = 0xFF00;
 export interface AccountInfo {
   login: string;
   token: string;
-  alias: string;
   name: string;
   addedAt: number;
 }
@@ -69,7 +68,6 @@ export function accountsFromStorage(raw: string): AccountInfo[] {
       out.push({
         login: login,
         token: token,
-        alias: Json.str(m, 'alias'),
         name: Json.str(m, 'name'),
         addedAt: Json.num(m, 'addedAt')
       });
@@ -82,7 +80,7 @@ export function accountsFromStorage(raw: string): AccountInfo[] {
 
 /** v1 单 token → v2 账号条目（login/name 由调用方经 viewer 查询补齐，失败为空串） */
 export function legacyToAccount(token: string, login: string, name: string, addedAt: number): AccountInfo {
-  return { login: login, token: token, alias: '', name: name, addedAt: addedAt };
+  return { login: login, token: token, name: name, addedAt: addedAt };
 }
 
 /** 添加账号前的查重+上限判定（纯函数：同 login=重新授权 DUPLICATE；达到上限=LIMIT） */
@@ -138,7 +136,6 @@ export class AccountStore {
         next.push({
           login: a.login,
           token: token,
-          alias: a.alias,
           name: name === '' ? a.name : name,
           addedAt: a.addedAt
         });
@@ -154,7 +151,7 @@ export class AccountStore {
     if (result === AddAccountResult.LIMIT) {
       return AddAccountResult.LIMIT;
     }
-    next.push({ login: login, token: token, alias: '', name: name, addedAt: Date.now() });
+    next.push({ login: login, token: token, name: name, addedAt: Date.now() });
     await AccountStore.writeAccountsRaw(accountsToStorage(next));
     await AccountStore.writeActiveLogin(context, login);
     return AddAccountResult.OK;
@@ -192,20 +189,6 @@ export class AccountStore {
   static async removeAll(context: common.Context | undefined): Promise<void> {
     await AccountStore.writeAccountsRaw('[]');
     await AccountStore.writeActiveLogin(context, '');
-  }
-
-  /** 修改本地别名；账号不存在静默 */
-  static async renameAccount(context: common.Context | undefined, login: string, alias: string): Promise<void> {
-    const accounts = await AccountStore.loadAccounts(context);
-    const next: AccountInfo[] = [];
-    for (const a of accounts) {
-      if (a.login === login) {
-        next.push({ login: a.login, token: a.token, alias: alias, name: a.name, addedAt: a.addedAt });
-      } else {
-        next.push(a);
-      }
-    }
-    await AccountStore.writeAccountsRaw(accountsToStorage(next));
   }
 
   /** v1 → v2 一次性迁移：检测旧 alias，viewer 补 login（网络失败置空），写入后删旧 */

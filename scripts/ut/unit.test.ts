@@ -947,15 +947,14 @@ test('extractAchievementSlugs 去重提取', () => {
 
 // ─────────────── AccountStore（Spec 049a 纯函数） ───────────────
 
-test('accounts 序列化 roundtrip（含 alias/name/addedAt）', () => {
+test('accounts 序列化 roundtrip（含 name/addedAt）', () => {
   const accounts = [
-    { login: 'zm', token: 'tok_a', alias: '主号', name: '周铭', addedAt: 100 },
-    { login: 'bob', token: 'tok_b', alias: '', name: 'Bob', addedAt: 200 }
+    { login: 'zm', token: 'tok_a', name: '周铭', addedAt: 100 },
+    { login: 'bob', token: 'tok_b', name: 'Bob', addedAt: 200 }
   ];
   const restored = accountsFromStorage(accountsToStorage(accounts));
   assert.equal(restored.length, 2);
   assert.equal(restored[0].login, 'zm');
-  assert.equal(restored[0].alias, '主号');
   assert.equal(restored[0].name, '周铭');
   assert.equal(restored[0].addedAt, 100);
   assert.equal(restored[1].login, 'bob');
@@ -975,13 +974,12 @@ test('accountsFromStorage 残缺条目（缺 login/token）剔除', () => {
     { login: '', token: 't2' },
     { login: 'b', token: '' },
     { token: 't3' },
-    { login: 'c', token: 't4', alias: 'x', name: 'N', addedAt: 1 }
+    { login: 'c', token: 't4', name: 'N', addedAt: 1 }
   ]);
   const restored = accountsFromStorage(items);
   assert.equal(restored.length, 2);
   assert.equal(restored[0].login, 'a');
   assert.equal(restored[1].login, 'c');
-  assert.equal(restored[1].alias, 'x');
 });
 
 test('legacyToAccount v1 → v2 映射（login/name 失败为空串）', () => {
@@ -989,12 +987,11 @@ test('legacyToAccount v1 → v2 映射（login/name 失败为空串）', () => {
   assert.equal(a.login, '');
   assert.equal(a.name, '');
   assert.equal(a.token, 'tok_v1');
-  assert.equal(a.alias, '');
   assert.equal(a.addedAt, 42);
 });
 
 test('nextAddResult 查重与 5 个上限', () => {
-  const mk = (login: string) => ({ login, token: 't', alias: '', name: '', addedAt: 0 });
+  const mk = (login: string) => ({ login, token: 't', name: '', addedAt: 0 });
   assert.equal(nextAddResult([], 'a'), 0); // OK
   assert.equal(nextAddResult([mk('a'), mk('b')], 'a'), 1); // DUPLICATE
   const five = [mk('a'), mk('b'), mk('c'), mk('d'), mk('e')];

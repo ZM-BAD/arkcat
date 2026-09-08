@@ -737,18 +737,6 @@
       "value": "本设备上的全部账号将被登出。"
     },
     {
-      "name": "accounts_alias_title",
-      "value": "重命名账号"
-    },
-    {
-      "name": "accounts_alias_placeholder",
-      "value": "别名"
-    },
-    {
-      "name": "accounts_alias_save",
-      "value": "保存"
-    },
-    {
       "name": "accounts_duplicate_hint",
       "value": "账号已存在，已切换到该账号"
     },

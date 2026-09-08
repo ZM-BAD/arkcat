@@ -20,10 +20,6 @@ export struct AccountsView {
   @Event onAccountChanged: () => void = () => {};
 
   @Local editMode: boolean = false;
-  /** 别名弹层 */
-  @Local aliasSheetOpen: boolean = false;
-  @Local aliasTarget: AccountInfo | null = null;
-  @Local aliasText: string = '';
 
   build() {
     Column() {
@@ -54,15 +50,6 @@ export struct AccountsView {
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
-    .bindSheet(this.aliasSheetOpen, this.aliasSheet(), {
-      height: 200,
-      showClose: false,
-      backgroundColor: $r('app.color.card_background'),
-      dragBar: false,
-      onDisappear: () => {
-        this.aliasSheetOpen = false;
-      }
-    })
   }
 
   /** 自绘 AppBar：返回 + Accounts + 右上 EDIT/DONE 文字按钮（官方样式） */
@@ -101,7 +88,7 @@ export struct AccountsView {
     .padding({ left: 4, right: 4 })
   }
 
-  /** 账号行：头像+login/副标题+当前勾/编辑态红色登出+pencil（官方平铺行+分隔线） */
+  /** 账号行：头像+login/name 双行+当前勾（编辑态置灰）/编辑态红色登出（官方平铺行+分隔线） */
   @Builder
   accountRow(acc: AccountInfo) {
     Column() {
@@ -126,14 +113,11 @@ export struct AccountsView {
         .layoutWeight(1)
 
         if (this.editMode) {
-          Stack() {
-            OctIcon({ res: $r('app.media.oct_pencil_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+          // 编辑态当前账号勾：置灰（半透明）且不可点，仅作标识（官方编辑态样式）
+          if (acc.login === this.currentLogin) {
+            OctIcon({ res: $r('app.media.oct_check_circle_fill_16'), iconSize: 22, iconColor: $r('app.color.link_blue') })
+              .opacity(0.4)
           }
-          .width(44)
-          .height(44)
-          .onClick(() => {
-            this.openAlias(acc);
-          })
           Stack() {
             OctIcon({ res: $r('app.media.oct_sign_out_16'), iconSize: 16, iconColor: $r('app.color.badge_red') })
           }
@@ -211,69 +195,8 @@ export struct AccountsView {
     .margin({ top: 12 })
   }
 
-  /** 别名编辑弹层（本地增强，官方无）：TextInput + 保存 */
-  @Builder
-  aliasSheet() {
-    Column({ space: 12 }) {
-      Text($r('app.string.accounts_alias_title'))
-        .fontSize($r('app.float.body_font_size'))
-        .fontWeight(600)
-        .fontColor($r('app.color.text_primary'))
-        .width('100%')
-
-      TextInput({ placeholder: this.stringOf($r('app.string.accounts_alias_placeholder')), text: this.aliasText })
-        .height(44)
-        .onChange((value: string) => {
-          this.aliasText = value;
-        })
-
-      Row({ space: 12 }) {
-        Button(this.stringOf($r('app.string.settings_cancel')))
-          .layoutWeight(1)
-          .height(40)
-          .backgroundColor($r('app.color.text_secondary'))
-          .fontColor(Color.White)
-          .onClick(() => {
-            this.aliasSheetOpen = false;
-            this.aliasTarget = null;
-          })
-        Button(this.stringOf($r('app.string.accounts_alias_save')))
-          .layoutWeight(1)
-          .height(40)
-          .backgroundColor($r('app.color.link_blue'))
-          .fontColor(Color.White)
-          .enabled(this.aliasText.trim() !== '')
-          .onClick(() => {
-            this.saveAlias();
-          })
-      }
-      .width('100%')
-    }
-    .width('100%')
-    .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-    .backgroundColor($r('app.color.card_background'))
-  }
-
   private subtitle(acc: AccountInfo): string {
-    return acc.alias !== '' ? acc.alias : acc.name;
-  }
-
-  private openAlias(acc: AccountInfo): void {
-    this.aliasTarget = acc;
-    this.aliasText = acc.alias;
-    this.aliasSheetOpen = true;
-  }
-
-  private async saveAlias(): Promise<void> {
-    const target = this.aliasTarget;
-    this.aliasSheetOpen = false;
-    this.aliasTarget = null;
-    if (target === null) {
-      return;
-    }
-    const ctx = this.getUIContext().getHostContext() as common.Context | undefined;
-    await AccountStore.renameAccount(ctx, target.login, this.aliasText.trim());
-    this.onAccountChanged();
+    return acc.name;
   }
 
   /** 移除单账号确认（编辑态红色登出图标 → 官方 Sign Out = remove account 语义） */

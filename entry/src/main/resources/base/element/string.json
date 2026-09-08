@@ -737,18 +737,6 @@
       "value": "You will be signed out of all accounts on this device."
     },
     {
-      "name": "accounts_alias_title",
-      "value": "Rename account"
-    },
-    {
-      "name": "accounts_alias_placeholder",
-      "value": "Alias name"
-    },
-    {
-      "name": "accounts_alias_save",
-      "value": "Save"
-    },
-    {
       "name": "accounts_duplicate_hint",
       "value": "Account already exists, switched to it"
     },

@@ -23,7 +23,7 @@ Accounts 页（官方对齐）：
 
 1. App Bar：返回 · 标题 Accounts · 右上 **EDIT**（蓝色纯文字）→ 编辑态变 **DONE**
 2. 账号列表（**平铺行 + 分隔线**，官方设置列表样式，非项目圆角卡片行）：
-   - 行 = 56vp 圆形头像 + 双行文字（上：login 黑体；下：name 灰体；设别名时显示别名）+ 右侧当前账号**蓝底白勾**
+   - 行 = 56vp 圆形头像 + 双行文字（上：login 黑体；下：name 灰体）+ 右侧当前账号**蓝底白勾**
    - 点击**非当前**账号行 → 切换（勾移动、数据源重载）；点击当前行无操作
 3. 编辑态（EDIT → DONE）：
    - 当前勾变**浅蓝底**；每行右侧出现**红色登出图标**（方框+箭头）→ 点击 = 移除该账号（确认弹窗）
@@ -40,18 +40,17 @@ Accounts 页（官方对齐）：
 | --- | ------ | ------ | ------ | -------- | ------ | ------ |
 | 1 | Accounts | EDIT/DONE | AppBar 右上纯文字按钮切换编辑态（浏览态可切换/添加，编辑态只能管理） | ✅ | 无 | 官方样式：蓝色、等宽字距感；编辑态 ADD ACCOUNT 隐藏 |
 | 2 | Accounts | 账号行 | 头像+login/name 双行；点击非当前行=切换账号 | ✅ | 无（本地） | 平铺+hairline，行高约 64；无 ⋯ bindMenu（官方无，操作全在编辑态） |
-| 3 | Accounts | 当前账号勾 | 右侧蓝底白勾（跟 StarredListSheet 勾选同款）；编辑态浅蓝底 | ✅ | 无 | 官方两态：深蓝底 ⇄ 浅蓝底 |
+| 3 | Accounts | 当前账号勾 | 右侧蓝底白勾（跟 StarredListSheet 勾选同款）；编辑态置灰（半透明）不可点 | ✅ | 无 | 官方两态：浏览态实蓝勾；编辑态浅色勾，位于登出图标左侧（走查 09-08 定案） |
 | 4 | Accounts | ADD ACCOUNT | 蓝 `+` 图标 + 全大写蓝字行 → push TokenSetup（即官方 Sign In 页等价物） | ✅ | 无 | 保存后自动切到新账号、pop 回列表刷新；重复 login 提示 |
 | 5 | Accounts | 移除单账号 | 编辑态行内红色登出图标 → showDialog 确认 → 移除；列表仍有余号则自动切第一个 | ✅ | 无 | 官方语义 Sign Out=remove account（2026-09 调研定案）；当前账号可移除（官方不改此限制） |
 | 6 | Accounts | 全部登出 | 页尾红色行 → 确认 → 清空全部账号 + 回 TokenSetup | ✅ | 无 | 官方 Edit 态红色行 |
-| 7 | Accounts | 别名编辑 | 编辑态行追加灰 pencil（本地增强，官方无）→ 弹层改名，仅本地生效 | ✅ | 无 | 有别名时行副标题显示别名 |
-| 8 | 全局 | 账号列表/当前账号 | AssetStoreKit alias `arkcat.accounts.v2` 加密 JSON + Preferences `arkcat_accounts/active_login` | ✅ | 无（加密存储） | 下限 5 个；结构 {login, token, alias?, addedAt} |
-| 9 | 全局 | v1 迁移 | 启动读旧 alias `arkcat.github.pat` → viewer 查询补 login（失败置空占位）→ 写 v2 → 删 v1 | ✅ | `query { viewer { login name avatarUrl } }` | 纯函数可测 |
-| 10 | 全局 | 数据隔离 | 缓存 key 加 login 后缀（搜索历史 `recent_{login}`；未读 badge 切换时重算；inboxUnreadTick 内存广播） | ✅ | 无 | 设备级偏好（主题/语言/代码设置/通知设置/Explore 活动类型/My Work）不隔离 |
-| 11 | Profile | 快捷切换器 | 头像长按 → bindSheet 账号列表（当前✓/点击切换/Add account 入口） | ✅ | 无 | LongPressGesture；官方 Profile tab 长按等价（位置自定=头像） |
-| 12 | 049b | App Lock | 生物识别探测 + PIN 降级 + 冷启动/后台锁定 | ❌（本期） | 探测 | 真机依赖（模拟器无生物识别），待 049b 排期 |
+| 7 | 全局 | 账号列表/当前账号 | AssetStoreKit alias `arkcat.accounts.v2` 加密 JSON + Preferences `arkcat_accounts/active_login` | ✅ | 无（加密存储） | 上限 5 个；结构 {login, token, name?, addedAt} |
+| 8 | 全局 | v1 迁移 | 启动读旧 alias `arkcat.github.pat` → viewer 查询补 login（失败置空占位）→ 写 v2 → 删 v1 | ✅ | `query { viewer { login name avatarUrl } }` | 纯函数可测 |
+| 9 | 全局 | 数据隔离 | 缓存 key 加 login 后缀（搜索历史 `recent_{login}`；未读 badge 切换时重算；inboxUnreadTick 内存广播） | ✅ | 无 | 设备级偏好（主题/语言/代码设置/通知设置/Explore 活动类型/My Work）不隔离 |
+| 10 | Profile | 快捷切换器 | 头像长按 → bindSheet 账号列表（当前✓/点击切换/Add account 入口） | ✅ | 无 | LongPressGesture；官方 Profile tab 长按等价（位置自定=头像） |
+| 11 | 049b | App Lock | 生物识别探测 + PIN 降级 + 冷启动/后台锁定 | ❌（本期） | 探测 | 真机依赖（模拟器无生物识别），待 049b 排期 |
 
-> 可行性: 11/12 可行（App Lock 拆 049b 总挂账；049a 全部 ✅）
+> 可行性: 10/11 可行（App Lock 拆 049b 总挂账；049a 全部 ✅）
 
 ---
 
@@ -59,7 +58,7 @@ Accounts 页（官方对齐）：
 
 ```text
 # 本地存储结构（AssetStoreKit 加密，先删后写同 TokenStore 现状）
-# Alias: "arkcat.accounts.v2" = JSON [{login, token, alias?, addedAt}]（上限 5）
+# Alias: "arkcat.accounts.v2" = JSON [{login, token, name?, addedAt}]（上限 5）
 # Preferences 文件 "arkcat_accounts"，key "active_login" = login（非敏感）
 # 迁移：旧 Alias "arkcat.github.pat" 存在 → 读 token → viewer 查询补 login →
 #       写 v2 → 删 v1（纯函数 migrateV1ToV2 可三域测试）
@@ -80,7 +79,6 @@ addAccount(login, token): Promise<AddResult>    # 查重 + 上限 5
 switchAccount(login): Promise<string>           # 返回新 token
 removeAccount(login): Promise<AccountInfo[]>    # 返回剩余列表（供自动切换）
 removeAll(): Promise<void>                      # Sign out all
-renameAccount(login, alias): Promise<void>      # 本地别名
 ```
 
 ---
@@ -106,11 +104,10 @@ renameAccount(login, alias): Promise<void>      # 本地别名
 - [ ] 测试 3：切换后无 A 账号数据残留（走查口径：各常驻页以新 token 重拉）
 - [ ] 测试 4：编辑态：行内红色登出图标 → 确认弹窗 → 列表删除；单账号时移除后回 TokenSetup；余号时自动切第一个
 - [ ] 测试 5：Profile 长按头像 → 弹层切换器 → 选 B 生效（activeLogin 变更 + 当前勾移动）
-- [ ] 测试 6：别名编辑仅本地生效（有别名时行副标题显示别名；无则显示 name）
-- [ ] 测试 7：账号上限：第 6 个账号提示上限；重复 login 提示已存在
-- [ ] 测试 8：Sign out of all accounts：确认后列表清空 + 回 TokenSetup
-- [ ] 测试 9：设置页 Accounts 行存在且无「coming soon」残留（字符串检查）；Settings Sign Out 文案为「移除当前账号」语义
-- [ ] 测试 10：i18n 双份 + check-spec 通过
+- [ ] 测试 6：账号上限：第 6 个账号提示上限；重复 login 提示已存在
+- [ ] 测试 7：Sign out of all accounts：确认后列表清空 + 回 TokenSetup
+- [ ] 测试 8：设置页 Accounts 行存在且无「coming soon」残留（字符串检查）；Settings Sign Out 文案为「移除当前账号」语义
+- [ ] 测试 9：i18n 双份 + check-spec 通过
 - [ ] （049b）测试 A：App Lock 探测结果缓存、开关交互与结果一致
 
 ---
@@ -119,8 +116,9 @@ renameAccount(login, alias): Promise<void>      # 本地别名
 
 - **官方交互三图要点（2026-09-08 采集，实现依据）**：
   1. 浏览态：AppBar 右上 EDIT 纯文字蓝；账号行=头像+login/name+右侧深蓝圆底白勾；行间分隔线平铺（**非**圆角卡片）；末尾 `+ ADD ACCOUNT` 蓝字行。
-  2. 编辑态：EDIT→DONE；当前勾浅蓝底；每行右侧红色登出图标（单账号登出）；页尾红色 `SIGN OUT ALL ACCOUNTS` 行；ADD ACCOUNT 隐藏。
+  2. 编辑态：EDIT→DONE；当前勾浅色（置灰不可点）；每行右侧红色登出图标（单账号登出）；页尾红色 `SIGN OUT ALL ACCOUNTS` 行；ADD ACCOUNT 隐藏。
   3. `+ ADD ACCOUNT` → 全屏 Sign In 页（黑色 GitHub 圆标 + 黑底白字 `SIGN IN TO GITHUB.COM` + 白底黑字 Enterprise + Terms/Privacy 蓝链 + Trouble signing in?）——**我们的等价物是 TokenSetup 页**（PAT 输入/OAuth），登录落地页与添加账号复用同一页。
+- **走查 09-08 定案（App 壳）**：底栏仅在 **Settings 及其下级页面**（Accounts / Notification Options / Code Options / Add account）隐藏，其余二级页保留——`Index.ets` 用 `uiObserver.on('navDestinationSwitch')` 按目标路由名驱动 `hideTabBar`（另有 052 徽章详情模态页沿用隐藏）。编辑态行内**无铅笔**（官方无别名编辑，本地别名功能已删除）。
 - 官方 Actions（2026-08 各版本）多账号入口 = Settings → Accounts + 长按 Profile tab；我们对齐为 Settings → Accounts + **头像长按**（位置自定义见 [[starraft-replication-standard]]）。
 - 多账号是后续所有扩展（050 收藏、搜索历史）的隔离前提，建议 049a 尽早合入。
 - 影响面：`TokenStore.ets` → `AccountStore.ets`；调用点仅 4 处（TokenSetup×2 / Index / Settings）；`Index.ets @State token` 与各页 `@Param token` 透传面（46 文件）无需逐个改——切换只改 Index 层 token，@Param 单向同步自动更新。

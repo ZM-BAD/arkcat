@@ -3,7 +3,7 @@
  * Inbox/Explore/Copilot 内容由 Spec 002/003/004 分支实现，当前为占位视图。
  */
 import { AccountStore, AccountInfo } from '../services/AccountStore';
-import { window } from '@kit.ArkUI';
+import { window, uiObserver } from '@kit.ArkUI';
 import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { applyThemeMode } from '../utils/ThemeMode';
@@ -57,6 +57,11 @@ import { CodeViewerView } from './CodeViewer';
 import { ExploreRepoListView } from './ExploreRepoList';
 import { FilterActivityView } from './FilterActivity';
 import { AccountsView } from './Accounts';
+
+/** 隐藏底部四 Tab 栏的路由：Settings 及其下级页面（走查 09-08 定案）+ 模态全屏页（052 徽章详情） */
+const TAB_BAR_HIDDEN_ROUTES: string[] = [
+  'settings', 'notificationSettings', 'codeOptions', 'accounts', 'tokenSetup', 'achievementDetail'
+];
 
 @Entry
 @Component
@@ -152,6 +157,17 @@ struct Index {
     }
     // Spec 049a：多账号加载（含 v1 单 token 迁移）；无账号时 token='' 走 TokenSetup 落地页
     this.applyCurrentAccount();
+    // 底栏显隐：仅 Settings 及其下级页面隐藏（走查 09-08 定案）；全局监听页面切换，取切换后的目标页
+    uiObserver.on('navDestinationSwitch', this.getUIContext(), (info: uiObserver.NavDestinationSwitchInfo) => {
+      // 回到根页时 to 为 'navBar'（读不到 name）→ 视为根页显示底栏
+      const dest = info.to as uiObserver.NavDestinationInfo;
+      const routeName: string = dest.name !== undefined ? dest.name as string : '';
+      this.hideTabBar = TAB_BAR_HIDDEN_ROUTES.includes(routeName);
+    });
+  }
+
+  aboutToDisappear(): void {
+    uiObserver.off('navDestinationSwitch', this.getUIContext());
   }
 
   /** 加载当前账号（含 v1 迁移/active 回退）；无账号时 token='' 走落地页 */
@@ -498,13 +514,6 @@ struct Index {
       const idx = full.indexOf('|');
       this.achLogin = idx >= 0 ? full.substring(0, idx) : full;
       this.achStart = idx >= 0 ? Number(full.substring(idx + 1)) : 0;
-    })
-    // 全屏沉浸页：进入隐藏底栏，pop 回恢复（官方 App 徽章详情为模态全屏）
-    .onShown(() => {
-      this.hideTabBar = true;
-    })
-    .onHidden(() => {
-      this.hideTabBar = false;
     })
     .hideTitleBar(true)
   }
@@ -1276,7 +1285,7 @@ struct Index {
 
           // 自绘底栏：白底 + 上投影 + 选中胶囊；选中态图标用官方 fill 变体
           // 键盘弹起（搜索输入）时隐藏——键盘上方不显示 tab（用户 09-04 要求）；
-          // 徽章详情等全屏沉浸页同样隐藏（hideTabBar）
+          // Settings 及其下级页面 + 模态全屏页隐藏（hideTabBar，navDestinationSwitch 驱动）
           if (!this.keyboardOn && !this.hideTabBar) {
             Row() {
               this.tabItem($r('app.media.oct_home_16'), $r('app.media.oct_home_fill_16'), $r('app.string.tab_home'), 0)
