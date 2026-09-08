@@ -163,7 +163,7 @@ export struct CopilotView {
       .width(64)
       .height(64)
       .borderRadius(32)
-      .backgroundColor($r('app.color.tab_active_bg'))
+      .backgroundColor($r('app.color.empty_state_bg'))
       .margin({ top: 8, bottom: 6 })
 
       Text($r('app.string.copilot_no_chats'))
