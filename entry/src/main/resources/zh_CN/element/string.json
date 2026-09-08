@@ -38,7 +38,7 @@
     },
     {
       "name": "nav_issues_title",
-      "value": "Issue"
+      "value": "议题"
     },
     {
       "name": "token_setup_title",
@@ -218,7 +218,7 @@
     },
     {
       "name": "notif_type_issue",
-      "value": "Issue"
+      "value": "议题"
     },
     {
       "name": "notif_type_pr",
@@ -234,7 +234,7 @@
     },
     {
       "name": "notif_type_discussion",
-      "value": "Discussion"
+      "value": "讨论"
     },
     {
       "name": "notif_type_security",
@@ -330,7 +330,7 @@
     },
     {
       "name": "repo_issues_link",
-      "value": "Issues"
+      "value": "议题"
     },
     {
       "name": "issues_state_open",
@@ -358,7 +358,7 @@
     },
     {
       "name": "issues_count",
-      "value": "%1$d 个 Issue"
+      "value": "%1$d 个议题"
     },
     {
       "name": "issues_load_more",
@@ -366,15 +366,15 @@
     },
     {
       "name": "issues_empty",
-      "value": "暂无 Issue"
+      "value": "暂无议题"
     },
     {
       "name": "issues_detail_coming",
-      "value": "Issue 详情将在 Spec 008 提供"
+      "value": "议题详情将在 Spec 008 提供"
     },
     {
       "name": "issues_new_coming",
-      "value": "新建 Issue 将在后续 Spec 提供"
+      "value": "新建议题将在后续 Spec 提供"
     },
     {
       "name": "time_just_now",
@@ -402,15 +402,15 @@
     },
     {
       "name": "home_work_issues",
-      "value": "Issue"
+      "value": "议题"
     },
     {
       "name": "home_work_pull_requests",
-      "value": "Pull Request"
+      "value": "拉取请求"
     },
     {
       "name": "home_work_discussions",
-      "value": "Discussion"
+      "value": "讨论"
     },
     {
       "name": "home_work_projects",
@@ -450,7 +450,7 @@
     },
     {
       "name": "home_shortcuts_desc",
-      "value": "快速访问你的 Issue、Pull Request 或 Discussion 列表"
+      "value": "快速访问你的议题、拉取请求或讨论列表"
     },
     {
       "name": "home_shortcuts_get_started",
@@ -822,11 +822,11 @@
     },
     {
       "name": "page_search_issues",
-      "value": "搜索 Issue"
+      "value": "搜索议题"
     },
     {
       "name": "page_search_prs",
-      "value": "搜索 Pull Requests"
+      "value": "搜索拉取请求"
     },
     {
       "name": "page_search_discussions",
@@ -946,11 +946,11 @@
     },
     {
       "name": "search_suggestion_issues",
-      "value": "Issue 中搜索 \"%1$s\""
+      "value": "在议题中搜索 \"%1$s\""
     },
     {
       "name": "search_suggestion_prs",
-      "value": "Pull Request 中搜索 \"%1$s\""
+      "value": "在拉取请求中搜索 \"%1$s\""
     },
     {
       "name": "search_suggestion_people",
@@ -974,11 +974,11 @@
     },
     {
       "name": "search_category_issues",
-      "value": "Issues"
+      "value": "议题"
     },
     {
       "name": "search_category_prs",
-      "value": "Pull Requests"
+      "value": "拉取请求"
     },
     {
       "name": "search_category_people",
@@ -1006,11 +1006,11 @@
     },
     {
       "name": "search_see_more_issues",
-      "value": "查看更多 Issues（%1$s）"
+      "value": "查看更多议题（%1$s）"
     },
     {
       "name": "search_see_more_prs",
-      "value": "查看更多 Pull Requests（%1$s）"
+      "value": "查看更多拉取请求（%1$s）"
     },
     {
       "name": "search_see_more_people",
@@ -1110,7 +1110,7 @@
     },
     {
       "name": "repo_pr_link",
-      "value": "Pull Request"
+      "value": "拉取请求"
     },
     {
       "name": "nav_discussions_title",
@@ -1206,7 +1206,7 @@
     },
     {
       "name": "work_issues_empty",
-      "value": "暂无任何 Issue。"
+      "value": "暂无任何议题。"
     },
     {
       "name": "work_prs_empty",
@@ -1618,7 +1618,7 @@
     },
     {
       "name": "comment_error_closed_locked",
-      "value": "该 Issue 已关闭，评论已锁定。"
+      "value": "该议题已关闭，评论已锁定。"
     },
     {
       "name": "comment_error_publish",
@@ -1638,7 +1638,7 @@
     },
     {
       "name": "issue_closed_comment_disabled",
-      "value": "已关闭的 Issue 无法评论"
+      "value": "已关闭的议题无法评论"
     },
     {
       "name": "reaction_panel_title",
@@ -2479,6 +2479,46 @@
     {
       "name": "copilot_settings_footer_c",
       "value": "。"
+    },
+    {
+      "name": "copilot_settings_plan_unknown",
+      "value": "Active for account"
+    },
+    {
+      "name": "copilot_usage_local_hint",
+      "value": "离线估算（本机数据，服务端用量暂不可用）"
+    },
+    {
+      "name": "copilot_error_send",
+      "value": "Copilot 请求失败，请检查网络后重试"
+    },
+    {
+      "name": "copilot_error_quota",
+      "value": "Copilot 当前不可用（配额或权限受限），请稍后再试"
+    },
+    {
+      "name": "copilot_retry",
+      "value": "重试"
+    },
+    {
+      "name": "copilot_delete_title",
+      "value": "删除对话"
+    },
+    {
+      "name": "copilot_delete_confirm",
+      "value": "确定要删除此对话吗？"
+    },
+    {
+      "name": "copilot_delete_dismiss",
+      "value": "取消"
+    },
+    {
+      "name": "copilot_delete_action",
+      "value": "删除"
+    },
+    {
+      "name": "copilot_menu_refresh",
+      "value": "刷新"
     }
   ]
 }

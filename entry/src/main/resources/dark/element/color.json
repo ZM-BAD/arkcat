@@ -259,6 +259,10 @@
     {
       "name": "input_bg",
       "value": "#21262D"
+    },
+    {
+      "name": "empty_state_bg",
+      "value": "#21262D"
     }
   ]
 }
