@@ -47,7 +47,7 @@ import {
   accountsToStorage, accountsFromStorage, legacyToAccount, nextAddResult,
   AccountInfo
 } from '../../entry/src/main/ets/services/AccountStore';
-import { buildChatPayload, parseChatResponse, isFreeModelAllowed, FREE_CHAT_MODELS } from '../../entry/src/main/ets/services/CopilotService';
+import { buildChatPayload, parseChatResponse, isFreeModelAllowed, FREE_CHAT_MODELS, parseCopilotQuota, usedPercentOf, CopilotQuota } from '../../entry/src/main/ets/services/CopilotService';
 import { firstMessageTitle } from '../../entry/src/main/ets/models/CopilotModels';
 import { copilotSessionsToStorage, copilotSessionsFromStorage } from '../../entry/src/main/ets/utils/CopilotStore';
 
@@ -1063,4 +1063,35 @@ test('copilotSessionsFromStorage 坏输入回退空数组', () => {
   const restored = copilotSessionsFromStorage(badMsg);
   assert.equal(restored.length, 1);
   assert.equal(restored[0].messages.length, 0);
+});
+
+test('parseCopilotQuota 服务端用量快照解析', () => {
+  const body = JSON.stringify({
+    'quota_snapshots': {
+      'chat': { 'entitlement': 200, 'remaining': 197, 'percent_remaining': 98.9 },
+      'completions': { 'entitlement': 2000, 'remaining': 2000, 'percent_remaining': 100 },
+      'premium_interactions': { 'entitlement': 0, 'remaining': 0, 'percent_remaining': 0 }
+    }
+  });
+  const quota = parseCopilotQuota(body) as CopilotQuota;
+  assert.ok(quota !== null);
+  assert.equal(quota.chatUsedPercent, 1);
+  assert.equal(quota.completionsUsedPercent, 0);
+  assert.equal(quota.chatRemaining, 197);
+  assert.equal(quota.chatEntitlement, 200);
+});
+
+test('parseCopilotQuota 缺字段/坏输入回退 null', () => {
+  assert.equal(parseCopilotQuota('not json'), null);
+  assert.equal(parseCopilotQuota('{}'), null);
+  assert.equal(parseCopilotQuota(JSON.stringify({ 'quota_snapshots': {} })), null);
+});
+
+test('usedPercentOf 缺失/越界回退 0', () => {
+  assert.equal(usedPercentOf(null), 0);
+  assert.equal(usedPercentOf({}), 0);
+  assert.equal(usedPercentOf({ 'percent_remaining': -5 }), 0);
+  assert.equal(usedPercentOf({ 'percent_remaining': 120 }), 0);
+  assert.equal(usedPercentOf({ 'percent_remaining': 0 }), 100);
+  assert.equal(usedPercentOf({ 'percent_remaining': 62.5 }), 38);
 });

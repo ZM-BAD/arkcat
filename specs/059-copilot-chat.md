@@ -46,9 +46,9 @@
    - `Active for <login>`：login 取当前账号（Index 透传 `currentLogin`，事实源=Spec 049a
      的 AccountStore）；仅账号 login 为空占位（v1 迁移 viewer 查询失败）时兜底拉取 viewer
      供本页展示，不回写存储。
-   - Usage 两行：50%/60% mock → 本地记账（Chat messages=本地累计用户消息数 /
-     Copilot Free 月配额 200；Code completions=0，本 App 无补全功能），环进度随计数；
-     行下加 caption 小字「本地估算」。
+   - Usage 两行：**服务端真实用量**（`copilot_internal/user` 的 `quota_snapshots`，
+     Chat messages / Code completions 已用百分比 + 环进度）；该端点取不到时降级为
+     本地记账近似（本机用户消息数 / Free 月配额 200）并显示「离线估算」小字。
    - Subscription 行「Copilot Free」：保留静态文案（无公开 API 查询套餐；实测账号为
      Free——见五章边界）。
 
@@ -70,7 +70,7 @@
 | 10 | 详情页 | 菜单：Delete conversation | 确认框 + 真删本地会话 | ✅ | - | showDialog 标题/小字/DISMISS/DELETE 对齐官方 |
 | 11 | 详情页 | 菜单：View all conversations | pop 回主页 | ✅ | - | 主页=全部会话列表 |
 | 12 | Settings | Active for <login> | 登录名真实化 | ✅ | - | 当前账号 login（AccountStore，Index 透传） |
-| 13 | Settings | Usage 环进度 | 本地记账近似 | ✅ | - | chat=本地计数/200（Free 月配额）；completions=0；caption「本地估算」 |
+| 13 | Settings | Usage 环进度 | 服务端真实用量 | ✅ | GET copilot_internal/user | quota_snapshots 已用%；失败降级本地估算 + caption |
 | 14 | Settings | UPGRADE PLAN | toast 占位（红线） | ✅ | - | 不引入任何升级/账单端点 |
 | 15 | 全页 | 会话数据 | 本地 persistence | ✅ | - | preferences JSON（仿 WorkConfigStore 模式） |
 
@@ -99,10 +99,12 @@ Body: {
 → 401 / 403 / 429           → 授权过期 / token 无 Copilot 权限 / 限流 → friendlyError
 ```
 
-**只读探测端点**（本批不消费，仅记录可行性）：`GET /models`（200）、
-`GET /agents/tasks`（200，tasks 空）。**不存在的端点（404 实测）**：`/threads`、
-`/copilot_internal/v2/threads`、`/usage`、`/chat/usage`、`/copilot_internal/v2/usage`、
-`/copilot_internal/v2/limits`——会话与用量均无可公开的服务端契约。
+**只读探测端点**：`GET /models`（200，本批不消费）、`GET /agents/tasks`（200，tasks 空）。
+**用量端点**（undocumented 内部接口，2026-09-08 实测 200）：`GET https://api.github.com/copilot_internal/user`
+→ `quota_snapshots.{chat,completions,premium_interactions} = {entitlement, remaining, percent_remaining}`，
+已用% = 100 − percent_remaining；解析失败/请求失败回退本地估算（非公开契约，不作唯一数据源）。
+**不存在的端点（404 实测）**：`/threads`、`/copilot_internal/v2/threads`、`/usage`、`/chat/usage`、
+`/copilot_internal/v2/usage`、`/copilot_internal/v2/limits`——**会话历史**无可公开的服务端契约。
 
 ---
 
@@ -111,7 +113,7 @@ Body: {
 | 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 会话历史云端同步 | 无公开 API（/threads 等 404 实测） | 会话本地持久化（preferences）；跨设备不同步；058 的「重启还原」升级为「持久保留」 |
-| 用量服务端数值 | 无公开 API（/usage 等 404 实测，chat 响应头无 quota 字段） | 本地记账近似（本机累计/Free 月配额 200），行下标注「本地估算」；服务端数值另立批 |
+| 用量服务端数值 | 无公开 API（/usage 等 404）；`copilot_internal/user` 为内部端点（undocumented，实测稳定） | 主路径取该端点真实用量；失败降级本地记账近似并标注「离线估算」（不依赖单一非公开契约） |
 | 套餐名 | 无公开 API；Subscription 行「Copilot Free」为静态文案 | 保留静态文案（实测账号 Free；Pro 用户显示不准，备注说明） |
 | premium 模型 | Copilot Pro 付费能力；Free 用户实测 400 model_not_supported | **红线**：模型白名单常量（gpt-4o-mini-2024-07-18 实测通过），UI 无模型选择入口，杜绝 premium 请求 |
 | 订阅/升级/账单 | 无公开端点；红线强制 | 不实现任何 upgrade/billing 调用；UPGRADE 按钮保持 toast 占位 |
@@ -124,14 +126,14 @@ Body: {
 
 ## 六、TDD 验收标准
 
-- [x] 单元测试（宿主 UT）：`parseChatResponse` 正常/缺 choices/空 content 三分支；`isFreeModelAllowed` 白名单放行 + premium 拒绝；`copilotSessionsFromStorage` 坏 JSON/缺字段回退空数组
+- [x] 单元测试（宿主 UT）：`parseChatResponse` 正常/缺 choices/空 content 三分支；`isFreeModelAllowed` 白名单放行 + premium 拒绝；`copilotSessionsFromStorage` 坏 JSON/缺字段回退空数组；`parseCopilotQuota`/`usedPercentOf` 正常/缺字段/越界回退
 - [x] 主页：本地无会话时显示空态卡；新建后列表出现会话行（标题 New conversation + 相对时间），App 重启会话仍在
 - [x] FAB / NEW CHAT 点击：进入详情页，AppBar 显示 New conversation，可返回
 - [x] 发送消息：输入非空可点；点击后用户气泡立即上屏、出现键入中占位、发送钮禁用
 - [x] 响应成功：助手气泡替换占位，内容一致；会话标题变为首条消息前 40 字符
 - [ ] 响应失败：失败卡片（文案 + 重试）；重试后再次请求，成功则复现上条；不重复追加用户气泡
 - [x] 菜单：New conversation 新建并跳转；历史会话可切换（消息列表正确）；Delete 确认框→删除→回主页→列表消失；View all 回主页
-- [x] Settings：Active for <login> 显示真实登录名（OAuth 与 PAT 两路径）；Usage 环=本地计数（发送几条后对应增长）；UPGRADE 按钮仍为 toast
+- [x] Settings：Active for <login> 显示真实登录名（OAuth 与 PAT 两路径）；Usage 环=服务端真实用量（copilot_internal/user），端点不可用时降级本地估算并显示「离线估算」；UPGRADE 按钮仍为 toast
 - [x] 红线检查：全库无 `premium` 模型名落在请求体构造处；`upgrade`/`billing` 无新网络调用；grep 确认
 - [ ] 构建绿：devecocli build 无错误；ohosTest 全绿；Light 全页 + Dark 主页/详情走查
 
@@ -149,20 +151,23 @@ Body: {
 | GET /agents/tasks | 200（tasks 空） |
 | GET /threads、/copilot_internal/v2/threads | 404 |
 | GET /usage、/chat/usage、/copilot_internal/v2/usage、/copilot_internal/v2/limits | 404 |
+| GET api.github.com/copilot_internal/user | 200（quota_snapshots：chat 197/200、completions 2000/2000、premium 0/0） |
 | chat 响应头 | 无 quota/usage 字段（仅 x-copilot-service-request-id 等） |
 
 **新增/改动文件**：
 
 - 新增 `services/CopilotService.ets`：chat/completions 封装（白名单常量 + 纯函数
-  parseChatResponse/isFreeModelAllowed + 错误映射），约 120 行；独立 http（不硬编码
-  api.github.com 前缀，仿 OAuthService postForm 模式）
+  parseChatResponse/isFreeModelAllowed + 错误映射）+ 用量查询（fetchCopilotQuota +
+  纯函数 parseCopilotQuota/usedPercentOf，内部端点 copilot_internal/user）；独立 http
+  （不硬编码 api.github.com 前缀，仿 OAuthService postForm 模式）
 - 新增 `utils/CopilotStore.ets`：@ObservedV2 单例（@Trace sessions）+ preferences
   持久化（仿 WorkConfigStore）+ 纯函数 copilotSessionsFromStorage；会话模型带 messages
 - 改 `models/CopilotModels.ets`：ChatSession 增加 `messages: ChatMessage[]`；删除 mock 常量
 - 改 `pages/Copilot.ets`：数据源换 CopilotStore；FAB/NEW CHAT 真实新建
 - 改 `pages/CopilotChat.ets`：路由参数 title → sessionId；真实发送/键入中/失败重试；
   菜单真实化；token 传入
-- 改 `pages/CopilotSettings.ets`：login 改由 Index 透传（当前账号）+ Usage 本地记账 + 小字说明
+- 改 `pages/CopilotSettings.ets`：login 改由 Index 透传（当前账号）+ Usage 服务端真实用量
+  （失败降级本地估算 + 「离线估算」小字）
 - 改 `pages/Index.ets`：copilotChat 传 sessionId + token；settings 传 token + currentLogin；
   Copilot 列表刷新泵 copilotTick
 - i18n：base/zh_CN 各新增 10 key（copilot_settings_plan_unknown、copilot_usage_local_hint、

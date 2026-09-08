@@ -2486,7 +2486,7 @@
     },
     {
       "name": "copilot_usage_local_hint",
-      "value": "Local estimate from this device; GitHub-side usage is not publicly accessible."
+      "value": "Offline estimate from this device; server usage unavailable right now."
     },
     {
       "name": "copilot_error_send",

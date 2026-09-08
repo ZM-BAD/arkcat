@@ -2486,7 +2486,7 @@
     },
     {
       "name": "copilot_usage_local_hint",
-      "value": "本机本地估算；GitHub 服务器用量无公开接口"
+      "value": "离线估算（本机数据，服务端用量暂不可用）"
     },
     {
       "name": "copilot_error_send",

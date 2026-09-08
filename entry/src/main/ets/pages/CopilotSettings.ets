@@ -1,17 +1,19 @@
 /**
  * Copilot settings 页（Spec 059）：Subscription / Usage / About 三分组。
  * login 来自当前账号（Index 透传 currentLogin，账号存储为 Spec 049a 的 AccountStore）；
- * Usage 环=本地记账近似（无公开用量 API，见 059 五章）；套餐名保持静态文案（无公开套餐 API）。
+ * Usage 环=服务端真实用量（copilot_internal/user 的 quota_snapshots，实测 200），
+ * 端点不可用时降级为本地记账近似；套餐名保持静态文案（无公开套餐 API）。
  */
 import { promptAction } from '@kit.ArkUI';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { HomeService } from '../services/HomeService';
+import { CopilotQuota, fetchCopilotQuota } from '../services/CopilotService';
 import { CopilotStore } from '../utils/CopilotStore';
 import { resText } from '../utils/I18n';
 
-/** Copilot Free 月度上限（057 实测：chat 200 credits / completions 2000 / premium 0） */
+/** 本地估算回退用的 Copilot Free 月度上限（057 实测：chat 200 / completions 2000） */
 const FREE_CHAT_LIMIT = 200;
 
 @ComponentV2
@@ -24,11 +26,14 @@ export struct CopilotSettingsView {
   @Local scrollShadow: boolean = false;
   /** 渲染用登录名：@Param 快照 + 占位为空时的兜底拉取结果 */
   @Local displayLogin: string = '';
+  /** 服务端真实用量；null=未取到（网络失败/端点变更）→ Usage 行回退本地估算 */
+  @Local quota: CopilotQuota | null = null;
   /** 套餐名：无公开 API 可查（见 059 边界），保持静态 */
   private readonly planName: string = 'Copilot Free';
 
   aboutToAppear(): void {
     this.resolveLogin();
+    this.loadQuota();
   }
 
   @Monitor('login')
@@ -56,8 +61,17 @@ export struct CopilotSettingsView {
     }
   }
 
-  /** 本地累计用户消息数 → Copilot Free chat 配额近似使用率（0-100） */
-  private chatPercent(): number {
+  /** 服务端真实用量（失败静默：quota 保持 null，Usage 行自动降级本地估算） */
+  private loadQuota(): void {
+    fetchCopilotQuota(this.token).then((quota: CopilotQuota | null) => {
+      if (quota !== null) {
+        this.quota = quota;
+      }
+    });
+  }
+
+  /** 本地累计用户消息数 → chat 配额近似使用率（0-100；仅服务端用量不可用时使用） */
+  private localChatPercent(): number {
     let count = 0;
     for (const session of CopilotStore.instance.sessions) {
       for (const msg of session.messages) {
@@ -203,14 +217,19 @@ export struct CopilotSettingsView {
             .width('100%')
             .margin({ top: 8, bottom: 4 })
 
-          this.usageRow($r('app.string.copilot_settings_code_completions'), 0)
-          this.usageRow($r('app.string.copilot_settings_chat_messages'), this.chatPercent())
+          this.usageRow($r('app.string.copilot_settings_code_completions'),
+            this.quota !== null ? this.quota.completionsUsedPercent : 0)
+          this.usageRow($r('app.string.copilot_settings_chat_messages'),
+            this.quota !== null ? this.quota.chatUsedPercent : this.localChatPercent())
 
-          Text($r('app.string.copilot_usage_local_hint'))
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-            .width('100%')
-            .margin({ bottom: 4 })
+          if (this.quota === null) {
+            // 服务端用量未取到（离线/端点变更）：明示此行数据为本地估算
+            Text($r('app.string.copilot_usage_local_hint'))
+              .fontSize($r('app.float.caption_font_size'))
+              .fontColor($r('app.color.text_secondary'))
+              .width('100%')
+              .margin({ bottom: 4 })
+          }
 
           Button($r('app.string.copilot_settings_upgrade_plan'))
             .fontSize($r('app.float.body_font_size'))
