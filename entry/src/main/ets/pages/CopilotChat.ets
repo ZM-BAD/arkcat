@@ -441,7 +441,7 @@ export struct CopilotChatView {
           .constraintSize({ maxHeight: INPUT_MAX_LINES * INPUT_LINE_HEIGHT + INPUT_PADDING_V * 2 })
           .barState(BarState.Auto)
           .borderRadius(20)
-          .backgroundColor($r('app.color.card_background'))
+          .backgroundColor($r('app.color.input_bg'))
           .fontSize($r('app.float.body_font_size'))
           .padding({ left: 16, right: 16, top: INPUT_PADDING_V, bottom: INPUT_PADDING_V })
           .shadow({ radius: 8, color: $r('app.color.shadow_floating'), offsetX: 0, offsetY: 2 })
