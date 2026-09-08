@@ -705,6 +705,62 @@
       "value": "账号"
     },
     {
+      "name": "accounts_edit",
+      "value": "编辑"
+    },
+    {
+      "name": "accounts_done",
+      "value": "完成"
+    },
+    {
+      "name": "accounts_add",
+      "value": "添加账号"
+    },
+    {
+      "name": "accounts_remove_title",
+      "value": "移除账号？"
+    },
+    {
+      "name": "accounts_remove_message",
+      "value": "账号 %1$s 将从本设备移除。"
+    },
+    {
+      "name": "accounts_remove_confirm",
+      "value": "移除"
+    },
+    {
+      "name": "accounts_sign_out_all",
+      "value": "登出全部账号"
+    },
+    {
+      "name": "accounts_sign_out_all_message",
+      "value": "本设备上的全部账号将被登出。"
+    },
+    {
+      "name": "accounts_alias_title",
+      "value": "重命名账号"
+    },
+    {
+      "name": "accounts_alias_placeholder",
+      "value": "别名"
+    },
+    {
+      "name": "accounts_alias_save",
+      "value": "保存"
+    },
+    {
+      "name": "accounts_duplicate_hint",
+      "value": "账号已存在，已切换到该账号"
+    },
+    {
+      "name": "accounts_limit_hint",
+      "value": "最多支持 5 个账号。"
+    },
+    {
+      "name": "accounts_unverified",
+      "value": "未验证账号"
+    },
+    {
       "name": "settings_app_lock",
       "value": "应用锁"
     },
@@ -758,11 +814,7 @@
     },
     {
       "name": "settings_sign_out_confirm",
-      "value": "退出 ArkCat？"
-    },
-    {
-      "name": "settings_sign_out_confirm_desc",
-      "value": "重新登录时需要再次输入 GitHub Token。"
+      "value": "退出该账号？"
     },
     {
       "name": "settings_cancel",

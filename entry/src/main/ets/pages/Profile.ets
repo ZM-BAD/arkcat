@@ -17,6 +17,7 @@ import { ProfileHeaderCard } from '../components/ProfileHeaderCard';
 import { ProfileNavRows } from '../components/ProfileNavRows';
 import { RepoSummary } from '../models/GitHubModels';
 import { resText } from '../utils/I18n';
+import { AccountInfo } from '../services/AccountStore';
 
 /** ··· 菜单项（模块级 interface 供 @Local 类型化数组使用） */
 interface FollowMenuEntry {
@@ -29,6 +30,11 @@ export struct ProfileView {
   @Param login: string = '';
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
+  /** Spec 049a：账号列表与切换回调（长按头像快捷切换器） */
+  @Param accounts: AccountInfo[] = [];
+  @Param currentLogin: string = '';
+  @Event onSwitchAccount: (login: string) => void = (login: string) => {};
+  @Event onAddAccount: () => void = (): void => {};
   @Local profile: UserProfile | null = null;
   /** ··· 菜单项：bindMenu 数组不随状态刷新（V2 坑），viewerIsFollowing 变化后显式重建（review D6） */
   @Local followMenuItems: FollowMenuEntry[] = [];
@@ -43,6 +49,12 @@ export struct ProfileView {
   @Local achievements: string[] = [];
 
   aboutToAppear(): void {
+    this.refresh();
+  }
+
+  /** 切换账号后 token 更新（@Param 单向同步）→ 用新 token 重拉本页数据 */
+  @Monitor('token')
+  onTokenChanged(): void {
     this.refresh();
   }
 
@@ -202,7 +214,15 @@ export struct ProfileView {
                 profile: this.profile,
                 achievements: this.achievements,
                 login: this.login,
-                pathStack: this.pathStack
+                pathStack: this.pathStack,
+                accounts: this.accounts,
+                currentLogin: this.currentLogin,
+                onSwitchAccount: (login: string): void => {
+                  this.onSwitchAccount(login);
+                },
+                onAddAccount: (): void => {
+                  this.onAddAccount();
+                }
               })
 
               // Pinned 横滑双列（Spec 005 官方布局）

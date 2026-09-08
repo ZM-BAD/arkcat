@@ -6,6 +6,7 @@ import { promptAction } from '@kit.ArkUI';
 import { UserProfile, isSelfProfile } from '../models/ProfileModels';
 import { OctIcon } from './OctIcon';
 import { resText } from '../utils/I18n';
+import { AccountInfo } from '../services/AccountStore';
 
 @ComponentV2
 export struct ProfileHeaderCard {
@@ -14,6 +15,12 @@ export struct ProfileHeaderCard {
   @Param achievements: string[] = [];
   @Param login: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
+  /** Spec 049a：长按头像切换器（官方 Profile tab 长按等价，位置=头像） */
+  @Param accounts: AccountInfo[] = [];
+  @Param currentLogin: string = '';
+  @Event onSwitchAccount: (login: string) => void = (login: string) => {};
+  @Event onAddAccount: () => void = (): void => {};
+  @Local switcherOpen: boolean = false;
 
   /** 信息行：icon 固定在 16×16 容器保证跨行对齐；bold 时内容加粗 */
   @Builder
@@ -95,11 +102,16 @@ export struct ProfileHeaderCard {
   headerCard() {
     Column({ space: 8 }) {
       Row({ space: 12 }) {
+        // 长按头像 = 账号切换器（官方 Profile tab 长按等价，位置自定义为头像）
         Image(this.profile?.user.avatarUrl ?? '')
           .width(72)
           .height(72)
           .borderRadius(36)
           .backgroundColor($r('app.color.heat_empty'))
+          .gesture(LongPressGesture({ repeat: false })
+            .onAction(() => {
+              this.switcherOpen = true;
+            }))
         Column({ space: 4 }) {
           Text(this.profile?.user.name ?? '')
             .fontSize($r('app.float.title_font_size'))
@@ -216,7 +228,89 @@ export struct ProfileHeaderCard {
     .width('100%')
   }
 
+  /** 账号切换器（长按头像弹出，官方切换器交互）：账号行+当前勾+Add account */
+  @Builder
+  switcherSheet() {
+    Column() {
+      Text($r('app.string.settings_accounts'))
+        .fontSize($r('app.float.body_font_size'))
+        .fontWeight(600)
+        .fontColor($r('app.color.text_primary'))
+        .width('100%')
+        .padding({ left: 16, bottom: 8 })
+        .alignSelf(ItemAlign.Start)
+
+      ForEach(this.accounts, (acc: AccountInfo) => {
+        Row({ space: 12 }) {
+          Image(`https://github.com/${acc.login}.png`)
+            .width(44)
+            .height(44)
+            .borderRadius(22)
+            .backgroundColor($r('app.color.heat_empty'))
+          Column({ space: 2 }) {
+            Text(acc.login)
+              .fontSize($r('app.float.body_font_size'))
+              .fontWeight(500)
+              .fontColor($r('app.color.text_primary'))
+            if (acc.alias !== '' || acc.name !== '') {
+              Text(acc.alias !== '' ? acc.alias : acc.name)
+                .fontSize($r('app.float.caption_font_size'))
+                .fontColor($r('app.color.text_secondary'))
+            }
+          }
+          .alignItems(HorizontalAlign.Start)
+          .layoutWeight(1)
+          if (acc.login === this.currentLogin) {
+            OctIcon({ res: $r('app.media.oct_check_circle_fill_16'), iconSize: 18, iconColor: $r('app.color.link_blue') })
+          }
+        }
+        .width('100%')
+        .height(56)
+        .padding({ left: 16, right: 16 })
+        .onClick(() => {
+          if (acc.login === this.currentLogin) {
+            this.switcherOpen = false;
+            return;
+          }
+          this.switcherOpen = false;
+          this.onSwitchAccount(acc.login);
+        })
+      }, (acc: AccountInfo) => `${acc.login}_${acc.addedAt}`)
+
+      Row({ space: 8 }) {
+        OctIcon({ res: $r('app.media.oct_plus_24'), iconSize: 16, iconColor: $r('app.color.link_blue') })
+        Text($r('app.string.accounts_add'))
+          .fontSize(16)
+          .fontWeight(500)
+          .fontColor($r('app.color.link_blue'))
+      }
+      .width('100%')
+      .height(48)
+      .padding({ left: 16, right: 16 })
+      .onClick(() => {
+        this.switcherOpen = false;
+        this.onAddAccount();
+      })
+    }
+    .width('100%')
+    .padding({ top: 12, bottom: 8 })
+    .backgroundColor($r('app.color.bg_page'))
+  }
+
   build() {
-    this.headerCard()
+    Column() {
+      this.headerCard()
+    }
+    .width('100%')
+    // 切换器高度随账号数变化（单账号 ≈ 210，上限 5 ≈ 420）
+    .bindSheet(this.switcherOpen, this.switcherSheet(), {
+      height: 110 + this.accounts.length * 56,
+      showClose: false,
+      backgroundColor: $r('app.color.bg_page'),
+      dragBar: false,
+      onDisappear: () => {
+        this.switcherOpen = false;
+      }
+    })
   }
 }

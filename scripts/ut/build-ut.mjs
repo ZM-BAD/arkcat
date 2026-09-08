@@ -15,7 +15,9 @@ const KIT_STUBS = {
   '@kit.AbilityKit': resolve(HERE, 'stubs/ability-kit.js'),
   '@kit.NetworkKit': resolve(HERE, 'stubs/network-kit.js'),
   '@kit.ArkTS': resolve(HERE, 'stubs/arkts-util.js'),
-  '@kit.ArkUI': resolve(HERE, 'stubs/ark-ui.js')
+  '@kit.ArkUI': resolve(HERE, 'stubs/ark-ui.js'),
+  '@kit.AssetStoreKit': resolve(HERE, 'stubs/asset-store-kit.js'),
+  '@kit.PerformanceAnalysisKit': resolve(HERE, 'stubs/performance-analysis-kit.js')
 };
 
 try {

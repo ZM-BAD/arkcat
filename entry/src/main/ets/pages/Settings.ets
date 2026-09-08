@@ -7,7 +7,7 @@ import { promptAction } from '@kit.ArkUI';
 import { i18n } from '@kit.LocalizationKit';
 import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
-import { TokenStore } from '../services/TokenStore';
+import { AccountStore } from '../services/AccountStore';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { resText } from '../utils/I18n';
@@ -20,6 +20,8 @@ const KEY_LANG = 'app_language';
 @ComponentV2
 export struct SettingsView {
   @Param pathStack: NavPathStack = new NavPathStack();
+  /** Spec 049a：当前账号 login（Accounts 行右侧显示；Sign Out 移除的对象） */
+  @Param currentLogin: string = '';
   /** 退出登录成功：通知 Index 清 token 状态并切回登录页 */
   @Event onSignedOut: () => void = (): void => {};
   @Local themeMode: string = 'system';
@@ -119,13 +121,13 @@ export struct SettingsView {
       });
   }
 
-  /** Sign Out：确认后清 Token（真功能） */
+  /** Sign Out = 移除当前账号（官方语义，2026-09 调研定案）：确认后删除账号，余号自动切换 */
   private signOut(): void {
     const ui = this.getUIContext();
     ui.getPromptAction().showDialog(
       {
         title: $r('app.string.settings_sign_out_confirm'),
-        message: $r('app.string.settings_sign_out_confirm_desc'),
+        message: resText(ui, $r('app.string.accounts_remove_message'), this.currentLogin),
         buttons: [
           {
             text: resText(ui, $r('app.string.settings_cancel')),
@@ -142,7 +144,8 @@ export struct SettingsView {
           return;
         }
         if (data.index === 1) {
-          TokenStore.remove()
+          const ctx = this.getUIContext().getHostContext() as common.Context | undefined;
+          AccountStore.removeAccount(ctx, this.currentLogin)
             .then(() => {
               this.onSignedOut();
             })
@@ -150,6 +153,31 @@ export struct SettingsView {
             });
         }
       });
+  }
+
+  /** Accounts 行：右侧显示当前账号 login（动态值，仿 themeRow 内联——row() 的参数不随状态刷新） */
+  @Builder
+  accountsRow() {
+    Row() {
+      Text($r('app.string.settings_accounts'))
+        .fontSize($r('app.float.body_font_size'))
+        .fontColor($r('app.color.text_primary'))
+      Blank()
+      Text(this.currentLogin)
+        .fontSize($r('app.float.body_font_size'))
+        .fontColor($r('app.color.text_secondary'))
+      OctIcon({ res: $r('app.media.oct_chevron_right_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
+        .margin({ left: 6 })
+    }
+    .width('100%')
+    .height(46)
+    .padding({ left: 16, right: 16 })
+    .backgroundColor($r('app.color.card_background'))
+    .borderRadius(12)
+    .margin({ bottom: 2 })
+    .onClick(() => {
+      this.pathStack.pushPathByName('accounts', '');
+    })
   }
 
   private comingSoon(): void {
@@ -281,7 +309,8 @@ export struct SettingsView {
           this.themeRow()
           this.row($r('app.string.settings_code_options'), '', () => this.pathStack.pushPathByName('codeOptions', ''))
           this.langRow()
-          this.row($r('app.string.settings_accounts'), '', () => this.comingSoon())
+          // Spec 049a：Accounts 真入口（右侧动态显示当前 login；App Lock 行留待 049b）
+          this.accountsRow()
           this.row($r('app.string.settings_app_lock'), '', () => this.comingSoon())
 
           this.sectionTitle($r('app.string.settings_subscriptions'))

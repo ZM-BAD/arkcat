@@ -27,6 +27,8 @@ export struct SearchOverviewView {
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
   @Param keyword: string = '';
+  /** Spec 049a：搜索历史按账号分区 */
+  @Param login: string = '';
   @Local query: string = '';
   @Local data: SearchOverviewData | null = null;
   @Local codeGroups: CodeGroup[] = [];
@@ -66,7 +68,7 @@ export struct SearchOverviewView {
         this.loaded = true;
         this.isRefreshing = false;
         // 记入 Recent searches（review E17）
-        SearchHistoryStore.remember(this.getUIContext().getHostContext(), q);
+        SearchHistoryStore.remember(this.getUIContext().getHostContext(), this.login, q);
       })
       .catch((e: Error) => {
         if (mySeq !== this.seq) {

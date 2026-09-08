@@ -46,6 +46,12 @@ export struct HomeView {
     this.refresh();
   }
 
+  /** Spec 049a：切换账号后 token 更新（@Param 单向同步）→ 用新 token 重拉 */
+  @Monitor('token')
+  onTokenChanged(): void {
+    this.refresh();
+  }
+
   private refresh(): void {
     this.loading = true;
     this.errorMsg = '';

@@ -15,6 +15,9 @@ import {
   filterPrsByAuthor, filterPrsByAssignee, repoPrIconKey, RepoPrItem
 } from '../main/ets/models/RepoSubModels.ets';
 import { mapPrFiles, mapFilesCursor, applyRestPatch, PrFileItem } from '../main/ets/models/PrDiffModels.ets';
+import {
+  accountsToStorage, accountsFromStorage, legacyToAccount, nextAddResult, AccountInfo
+} from '../main/ets/services/AccountStore.ets';
 
 const NOW = Date.parse('2026-08-31T12:00:00Z');
 const MINUTE_MS = 60 * 1000;
@@ -226,6 +229,42 @@ export function UtPureLogicTest() {
       const bin = applyRestPatch(fileItem('img.png'), { 'patch': '' });
       expect(bin.isBinary).assertTrue();
       expect(bin.diffTooLarge).assertFalse();
+    });
+
+    it('AccountStore 序列化 roundtrip 与坏输入回退', 0, () => {
+      const accounts: AccountInfo[] = [
+        { login: 'zm', token: 'tok_a', alias: '主号', name: '周铭', addedAt: 100 }
+      ];
+      const restored = accountsFromStorage(accountsToStorage(accounts));
+      expect(restored.length).assertEqual(1);
+      expect(restored[0].login).assertEqual('zm');
+      expect(restored[0].alias).assertEqual('主号');
+      expect(restored[0].name).assertEqual('周铭');
+      expect(accountsFromStorage('{{bad').length).assertEqual(0);
+      expect(accountsFromStorage('{}').length).assertEqual(0);
+      expect(accountsFromStorage('[]').length).assertEqual(0);
+    });
+
+    it('AccountStore 残缺条目剔除与 legacy 映射', 0, () => {
+      const items = '[{"login":"a","token":"t1"},{"login":"","token":"t2"},{"login":"b","token":""}]';
+      expect(accountsFromStorage(items).length).assertEqual(1);
+      expect(accountsFromStorage(items)[0].login).assertEqual('a');
+      const legacy = legacyToAccount('tok_v1', '', '', 42);
+      expect(legacy.login).assertEqual('');
+      expect(legacy.token).assertEqual('tok_v1');
+      expect(legacy.addedAt).assertEqual(42);
+    });
+
+    it('nextAddResult 查重与 5 个上限', 0, () => {
+      const mk = (login: string): AccountInfo =>
+        ({ login: login, token: 't', alias: '', name: '', addedAt: 0 });
+      expect(nextAddResult([], 'a')).assertEqual(0);
+      expect(nextAddResult([mk('a'), mk('b')], 'a')).assertEqual(1);
+      const five: AccountInfo[] = [mk('a'), mk('b'), mk('c'), mk('d'), mk('e')];
+      expect(nextAddResult(five, 'f')).assertEqual(2);
+      expect(nextAddResult(five, 'a')).assertEqual(1);
+      const four: AccountInfo[] = [mk('a'), mk('b'), mk('c'), mk('d')];
+      expect(nextAddResult(four, 'e')).assertEqual(0);
     });
   });
 }

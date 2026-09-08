@@ -27,6 +27,8 @@ export struct SearchResultsView {
   @Param pathStack: NavPathStack = new NavPathStack();
   @Param kind: string = '';
   @Param keyword: string = '';
+  /** Spec 049a：搜索历史按账号分区 */
+  @Param login: string = '';
   @Local query: string = '';
   @Local items: SearchResultItem[] = [];
   @Local codeFiles: CodeFileResult[] = [];
@@ -79,7 +81,7 @@ export struct SearchResultsView {
           this.isRefreshing = false;
           this.loaded = true;
           // 记入 Recent searches（review E17；捕获请求时的词，防在途改词错记）
-          SearchHistoryStore.remember(this.getUIContext().getHostContext(), q);
+          SearchHistoryStore.remember(this.getUIContext().getHostContext(), this.login, q);
         })
         .catch((e: Error) => {
           if (mySeq !== this.seq) {
@@ -104,7 +106,7 @@ export struct SearchResultsView {
         this.isRefreshing = false;
         this.loaded = true;
         // 记入 Recent searches（review E17）
-        SearchHistoryStore.remember(this.getUIContext().getHostContext(), q);
+        SearchHistoryStore.remember(this.getUIContext().getHostContext(), this.login, q);
       })
       .catch((e: Error) => {
         if (mySeq !== this.seq) {

@@ -20,6 +20,7 @@ import { mapIssue, mapIssuesPage, issueOrderField } from '../../../main/ets/mode
 import { ReactionGroup, REACTION_META, reactionEmoji, findReactionGroup, flipReactionGroups } from '../../../main/ets/models/RepoSubModels';
 import { MarkdownEdit } from '../../../main/ets/utils/MarkdownEdit';
 import { parsePollResponse, OAuthPollState } from '../../../main/ets/services/OAuthService';
+import { accountsToStorage, accountsFromStorage, legacyToAccount, nextAddResult, AccountInfo } from '../../../main/ets/services/AccountStore';
 
 type JsonMap = Record<string, Object>;
 
@@ -1000,6 +1001,37 @@ export default function logicTest(testsuiteName: string) {
     it('oauthPoll_unknownError', 0, () => {
       const r = parsePollResponse({ 'error': 'unsupported_grant_type' } as JsonMap, 5);
       expect(r.state).assertEqual(OAuthPollState.ERROR);
+    });
+    it('accounts_roundtrip_and_bad_input', 0, () => {
+      const accounts: AccountInfo[] = [
+        { login: 'zm', token: 'tok_a', alias: '主号', name: '周铭', addedAt: 100 }
+      ];
+      const restored = accountsFromStorage(accountsToStorage(accounts));
+      expect(restored.length).assertEqual(1);
+      expect(restored[0].login).assertEqual('zm');
+      expect(restored[0].alias).assertEqual('主号');
+      expect(accountsFromStorage('{{bad').length).assertEqual(0);
+      expect(accountsFromStorage('{}').length).assertEqual(0);
+      expect(accountsFromStorage('[]').length).assertEqual(0);
+    });
+    it('accounts_missing_and_legacy', 0, () => {
+      const items = '[{"login":"a","token":"t1"},{"login":"","token":"t2"},{"login":"b","token":""}]';
+      const restored = accountsFromStorage(items);
+      expect(restored.length).assertEqual(1);
+      expect(restored[0].login).assertEqual('a');
+      const legacy = legacyToAccount('tok_v1', '', '', 42);
+      expect(legacy.login).assertEqual('');
+      expect(legacy.token).assertEqual('tok_v1');
+      expect(legacy.addedAt).assertEqual(42);
+    });
+    it('nextAddResult_dup_and_limit', 0, () => {
+      const mk = (login: string): AccountInfo =>
+        ({ login: login, token: 't', alias: '', name: '', addedAt: 0 });
+      expect(nextAddResult([], 'a')).assertEqual(0);
+      expect(nextAddResult([mk('a'), mk('b')], 'a')).assertEqual(1);
+      const five: AccountInfo[] = [mk('a'), mk('b'), mk('c'), mk('d'), mk('e')];
+      expect(nextAddResult(five, 'f')).assertEqual(2);
+      expect(nextAddResult(five, 'a')).assertEqual(1);
     });
   });
 }

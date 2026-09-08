@@ -2,7 +2,7 @@
  * 应用根页面：Token 门禁 → Navigation 壳 + 底部四 Tab（Home/Inbox/Explore/Copilot）。
  * Inbox/Explore/Copilot 内容由 Spec 002/003/004 分支实现，当前为占位视图。
  */
-import { TokenStore } from '../services/TokenStore';
+import { AccountStore, AccountInfo } from '../services/AccountStore';
 import { window } from '@kit.ArkUI';
 import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
@@ -56,12 +56,16 @@ import { FileTreeView } from './FileTree';
 import { CodeViewerView } from './CodeViewer';
 import { ExploreRepoListView } from './ExploreRepoList';
 import { FilterActivityView } from './FilterActivity';
+import { AccountsView } from './Accounts';
 
 @Entry
 @Component
 struct Index {
   @State token: string = '';
   @State checked: boolean = false;
+  /** Spec 049a：账号列表与当前账号（切号时更新，四 Tab 经 @Param token/accountSwitchTick 感知） */
+  @State accounts: AccountInfo[] = [];
+  @State currentLogin: string = '';
   @State currentTab: number = 0;
   /** 软键盘弹出时隐藏底栏（搜索输入态；窗口 keyboardHeightChange 监听） */
   @State keyboardOn: boolean = false;
@@ -146,11 +150,28 @@ struct Index {
     } catch (e) {
       // 读取失败按系统主题
     }
-    TokenStore.load().then((token: string) => {
-      this.token = token;
+    // Spec 049a：多账号加载（含 v1 单 token 迁移）；无账号时 token='' 走 TokenSetup 落地页
+    this.applyCurrentAccount();
+  }
+
+  /** 加载当前账号（含 v1 迁移/active 回退）；无账号时 token='' 走落地页 */
+  private async applyCurrentAccount(): Promise<void> {
+    const ctx = this.getUIContext().getHostContext() as common.Context | undefined;
+    const acc = await AccountStore.getCurrentAccount(ctx);
+    if (acc === null) {
+      this.accounts = [];
+      this.currentLogin = '';
+      this.token = '';
       this.checked = true;
-      this.refreshInboxUnread(token);
-    });
+      // 无账号回落地页：清空二级页栈，避免再次登录后残留页面
+      this.pathStack.clear();
+      return;
+    }
+    this.accounts = await AccountStore.loadAccounts(ctx);
+    this.currentLogin = acc.login;
+    this.token = acc.token;
+    this.checked = true;
+    this.refreshInboxUnread(acc.token);
   }
 
   /** 未读角标：REST 兜底，Inbox Tab 显示蓝点（Spec 013） */
@@ -180,7 +201,15 @@ struct Index {
       ProfileView({
         login: this.profileLogin,
         token: this.token,
-        pathStack: this.pathStack
+        pathStack: this.pathStack,
+        accounts: this.accounts,
+        currentLogin: this.currentLogin,
+        onSwitchAccount: (login: string): void => {
+          this.switchAccount(login);
+        },
+        onAddAccount: (): void => {
+          this.pathStack.pushPathByName('tokenSetup', '');
+        }
       })
     }
     .onReady((context: NavDestinationContext) => {
@@ -249,14 +278,80 @@ struct Index {
     NavDestination() {
       SettingsView({
         pathStack: this.pathStack,
-        // Sign Out：清 token 状态切回登录页（TokenStore 已由 Settings 删除；栈一并清空）
+        currentLogin: this.currentLogin,
+        // Sign Out = 移除当前账号（官方语义）：Settings 已删除该账号，此处重载剩余账号
         onSignedOut: (): void => {
           this.pathStack.clear();
-          this.token = '';
+          this.applyCurrentAccount();
         }
       })
     }
     .hideTitleBar(true)
+  }
+
+  /** Spec 049a：Accounts 账号管理页（官方样式：浏览态/EDIT 态/ADD ACCOUNT/红色登出/全部登出） */
+  @Builder
+  accountsDestination() {
+    NavDestination() {
+      AccountsView({
+        pathStack: this.pathStack,
+        accounts: this.accounts,
+        currentLogin: this.currentLogin,
+        onAddAccount: (): void => {
+          this.pathStack.pushPathByName('tokenSetup', '');
+        },
+        onSwitchAccount: (login: string): void => {
+          this.switchAccount(login);
+        },
+        onAccountChanged: (): void => {
+          // 移除/全部登出等结构变更：重载当前账号（被移则自动切第一个；无账号则回落地页）
+          this.applyCurrentAccount();
+        }
+      })
+    }
+    .hideTitleBar(true)
+  }
+
+  /** Spec 049a：添加账号复用 TokenSetup（等价官方 Sign In 页);保存后 pop 回 Accounts */
+  @Builder
+  tokenSetupDestination() {
+    NavDestination() {
+      TokenSetup({
+        embedded: true,
+        onEmbeddedPop: (): void => {
+          this.pathStack.pop();
+        },
+        onSaved: (token: string, login: string): void => {
+          this.token = token;
+          this.currentLogin = login;
+          this.refreshInboxUnread(token);
+          AppStorage.setOrCreate('accountSwitchTick', Date.now());
+          this.reloadAccounts();
+          this.pathStack.pop();
+        }
+      })
+    }
+    .hideTitleBar(true)
+  }
+
+  /** 切换账号：写 active、换 token、重算未读、广播各常驻页刷新 */
+  private async switchAccount(login: string): Promise<void> {
+    const ctx = this.getUIContext().getHostContext() as common.Context | undefined;
+    const token = await AccountStore.switchAccount(ctx, login);
+    if (token === '') {
+      return;
+    }
+    this.currentLogin = login;
+    this.token = token;
+    this.refreshInboxUnread(token);
+    AppStorage.setOrCreate('accountSwitchTick', Date.now());
+    this.reloadAccounts();
+  }
+
+  /** 账号增删/改名后同步 Index 层账号列表 */
+  private async reloadAccounts(): Promise<void> {
+    const ctx = this.getUIContext().getHostContext() as common.Context | undefined;
+    this.accounts = await AccountStore.loadAccounts(ctx);
   }
 
   /** Spec 032：Settings → Notification Options 二级页（自绘头部，不设 .title() 防双标题） */
@@ -471,6 +566,7 @@ struct Index {
     NavDestination() {
       SearchView({
         token: this.token,
+        login: this.currentLogin,
         pathStack: this.pathStack
       })
     }
@@ -485,6 +581,7 @@ struct Index {
         kind: this.searchKind,
         keyword: this.searchKeyword,
         token: this.token,
+        login: this.currentLogin,
         pathStack: this.pathStack
       })
     }
@@ -504,6 +601,7 @@ struct Index {
       SearchOverviewView({
         keyword: this.searchKeyword,
         token: this.token,
+        login: this.currentLogin,
         pathStack: this.pathStack
       })
     }
@@ -985,6 +1083,10 @@ struct Index {
       this.issuesListDestination()
     } else if (name === 'settings') {
       this.settingsDestination()
+    } else if (name === 'accounts') {
+      this.accountsDestination()
+    } else if (name === 'tokenSetup') {
+      this.tokenSetupDestination()
     } else if (name === 'notificationSettings') {
       this.notificationSettingsDestination()
     } else if (name === 'codeOptions') {
@@ -1151,10 +1253,13 @@ struct Index {
           .backgroundColor($r('app.color.start_window_background'))
       } else if (this.token === '') {
         TokenSetup({
-          onSaved: (token: string): void => {
+          onSaved: (token: string, login: string): void => {
             this.token = token;
+            this.currentLogin = login;
             // 首次配置 token 后立即拉取未读角标，不等重启（review A4）
             this.refreshInboxUnread(token);
+            AppStorage.setOrCreate('accountSwitchTick', Date.now());
+            this.reloadAccounts();
           }
         })
       } else {
