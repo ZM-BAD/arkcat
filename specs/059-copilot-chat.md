@@ -32,14 +32,16 @@
      单例@Trace 响应主页刷新），空态卡逻辑不变。
    - FAB / NEW CHAT：真实创建会话（本地生成 id + 空消息）并 push 详情页。
    - 会话行右侧时间：本地会话 `updatedAt`（新增消息时刷新）。
+   - 右上竖三点：点击弹出菜单（官方同款，仅一项 **Refresh**）→ 重读本地会话列表。
 2. **聊天详情页**：
    - AppBar 副标「Auto」不变；标题 = 会话标题（新建时为 New conversation）。
    - 消息列表：来源 = 会话消息数组（本地）；助手消息支持**键入中占位**（发送后、
      未响应前显示 loading 圆钮气泡）与**失败卡片**（错误文案 + 重试按钮）。
    - 底部输入栏：发送 → 真实请求（发送中禁用），空输入禁用逻辑不变。
    - 竖三点菜单：New conversation / 历史会话切换 / Copilot settings 变真实动作；
-     Delete conversation 弹确认框（showDialog）后真删本地会话；View all conversations
-     回主页（pop）。
+     Delete conversation 弹确认框（showDialog：标题 Delete conversation + 小字
+     Are you sure you want to delete this conversation? + 蓝 DISMISS / 红 DELETE，
+     对齐官方）后真删本地会话；View all conversations 回主页（pop）。
 3. **Settings 页**：
    - `Active for <login>`：login 取当前账号（Index 透传 `currentLogin`，事实源=Spec 049a
      的 AccountStore）；仅账号 login 为空占位（v1 迁移 viewer 查询失败）时兜底拉取 viewer
@@ -58,18 +60,19 @@
 | --- | ------ | ------ | ------ | -------- | ------ | ------ |
 | 1 | 主页 | Chats 列表/空态 | 读本地持久化会话 | ✅ | - | mock 删除；空态逻辑不变 |
 | 2 | 主页 | FAB / NEW CHAT | 本地新建会话 + 进详情 | ✅ | - | 新会话标题占位 New conversation |
-| 3 | 详情页 | 消息气泡列表 | 读会话消息数组 | ✅ | - | 本地数组，发送后追加 |
-| 4 | 详情页 | 发送 | 真实 chat/completions | ✅ | POST /chat/completions | 模型=白名单常量（免费）；发送中禁用按钮 |
-| 5 | 详情页 | 键入中占位 | 发送后未响应时显示 loading 气泡 | ✅ | - | 助手侧圆钮 + spinning，失败消失 |
-| 6 | 详情页 | 失败卡片 | 错误文案 + 重试 | ✅ | - | friendlyError 本地化；重试=重发同消息 |
-| 7 | 详情页 | 菜单：New conversation | 新建并跳转 | ✅ | - | 050 式新建会话 |
-| 8 | 详情页 | 菜单：历史会话切换 | 切换到另一本地会话 | ✅ | - | 保留当前会话置灰项 |
-| 9 | 详情页 | 菜单：Delete conversation | 确认框 + 真删本地会话 | ✅ | - | showDialog（仿 047 DELETE BRANCH） |
-| 10 | 详情页 | 菜单：View all conversations | pop 回主页 | ✅ | - | 主页=全部会话列表 |
-| 11 | Settings | Active for <login> | 登录名真实化 | ✅ | - | 当前账号 login（AccountStore，Index 透传） |
-| 12 | Settings | Usage 环进度 | 本地记账近似 | ✅ | - | chat=本地计数/200（Free 月配额）；completions=0；caption「本地估算」 |
-| 13 | Settings | UPGRADE PLAN | toast 占位（红线） | ✅ | - | 不引入任何升级/账单端点 |
-| 14 | 全页 | 会话数据 | 本地 persistence | ✅ | - | preferences JSON（仿 WorkConfigStore 模式） |
+| 3 | 主页 | 右上竖三点菜单 | Refresh 重读本地会话列表 | ✅ | - | 官方同款菜单仅一项（bindMenu） |
+| 4 | 详情页 | 消息气泡列表 | 读会话消息数组 | ✅ | - | 本地数组，发送后追加 |
+| 5 | 详情页 | 发送 | 真实 chat/completions | ✅ | POST /chat/completions | 模型=白名单常量（免费）；发送中禁用按钮 |
+| 6 | 详情页 | 键入中占位 | 发送后未响应时显示 loading 气泡 | ✅ | - | 助手侧圆钮 + spinning，失败消失 |
+| 7 | 详情页 | 失败卡片 | 错误文案 + 重试 | ✅ | - | friendlyError 本地化；重试=重发同消息 |
+| 8 | 详情页 | 菜单：New conversation | 新建并跳转 | ✅ | - | 050 式新建会话 |
+| 9 | 详情页 | 菜单：历史会话切换 | 切换到另一本地会话 | ✅ | - | 保留当前会话置灰项 |
+| 10 | 详情页 | 菜单：Delete conversation | 确认框 + 真删本地会话 | ✅ | - | showDialog 标题/小字/DISMISS/DELETE 对齐官方 |
+| 11 | 详情页 | 菜单：View all conversations | pop 回主页 | ✅ | - | 主页=全部会话列表 |
+| 12 | Settings | Active for <login> | 登录名真实化 | ✅ | - | 当前账号 login（AccountStore，Index 透传） |
+| 13 | Settings | Usage 环进度 | 本地记账近似 | ✅ | - | chat=本地计数/200（Free 月配额）；completions=0；caption「本地估算」 |
+| 14 | Settings | UPGRADE PLAN | toast 占位（红线） | ✅ | - | 不引入任何升级/账单端点 |
+| 15 | 全页 | 会话数据 | 本地 persistence | ✅ | - | preferences JSON（仿 WorkConfigStore 模式） |
 
 > 可行性图例：✅ 可直接实现 ｜ ⚠️ 部分可行/降级 ｜ ❌ 不可实现
 
@@ -162,9 +165,9 @@ Body: {
 - 改 `pages/CopilotSettings.ets`：login 改由 Index 透传（当前账号）+ Usage 本地记账 + 小字说明
 - 改 `pages/Index.ets`：copilotChat 传 sessionId + token；settings 传 token + currentLogin；
   Copilot 列表刷新泵 copilotTick
-- i18n：base/zh_CN 各新增 7 key（copilot_settings_plan_unknown、copilot_usage_local_hint、
-  copilot_error_send、copilot_error_quota、copilot_retry、copilot_delete_confirm、
-  copilot_delete_action）
+- i18n：base/zh_CN 各新增 10 key（copilot_settings_plan_unknown、copilot_usage_local_hint、
+  copilot_error_send、copilot_error_quota、copilot_retry、copilot_delete_title、
+  copilot_delete_confirm、copilot_delete_dismiss、copilot_delete_action、copilot_menu_refresh）
 
 **红线自查清单（交付前执行）**：`grep -riE 'premium|upgrade|billing|checkout' entry/src/main/ets`——
 允许命中仅限：058 的 UPGRADE 按钮文案/tag、本 spec 备注、页面注释；任何新网络调用点禁止出现。

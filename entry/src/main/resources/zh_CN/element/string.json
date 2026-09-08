@@ -2501,12 +2501,24 @@
       "value": "重试"
     },
     {
+      "name": "copilot_delete_title",
+      "value": "删除对话"
+    },
+    {
       "name": "copilot_delete_confirm",
-      "value": "要删除此会话吗？"
+      "value": "确定要删除此对话吗？"
+    },
+    {
+      "name": "copilot_delete_dismiss",
+      "value": "取消"
     },
     {
       "name": "copilot_delete_action",
       "value": "删除"
+    },
+    {
+      "name": "copilot_menu_refresh",
+      "value": "刷新"
     }
   ]
 }

@@ -112,10 +112,11 @@ export struct CopilotChatView {
     const ui = this.getUIContext();
     ui.getPromptAction().showDialog(
       {
+        title: resText(ui, $r('app.string.copilot_delete_title')),
         message: resText(ui, $r('app.string.copilot_delete_confirm')),
         buttons: [
           {
-            text: resText(ui, $r('app.string.pr_delete_branch_cancel')),
+            text: resText(ui, $r('app.string.copilot_delete_dismiss')),
             color: $r('app.color.link_blue')
           },
           {

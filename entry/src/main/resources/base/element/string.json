@@ -2501,12 +2501,24 @@
       "value": "Retry"
     },
     {
+      "name": "copilot_delete_title",
+      "value": "Delete conversation"
+    },
+    {
       "name": "copilot_delete_confirm",
-      "value": "Delete this conversation?"
+      "value": "Are you sure you want to delete this conversation?"
+    },
+    {
+      "name": "copilot_delete_dismiss",
+      "value": "DISMISS"
     },
     {
       "name": "copilot_delete_action",
-      "value": "Delete"
+      "value": "DELETE"
+    },
+    {
+      "name": "copilot_menu_refresh",
+      "value": "Refresh"
     }
   ]
 }

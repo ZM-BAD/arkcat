@@ -222,7 +222,12 @@ export struct CopilotView {
           .height(44)
           .accessibilityDescription($r('app.string.a11y_more'))
           .focusable(true)
-          .onClick(() => this.comingSoon())
+          .bindMenu([
+            {
+              value: $r('app.string.copilot_menu_refresh'),
+              action: (): void => this.reload()
+            }
+          ])
         }
         .width('100%')
         .padding($r('app.float.page_padding'))
