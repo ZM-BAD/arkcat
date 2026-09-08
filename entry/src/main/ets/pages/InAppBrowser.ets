@@ -1,7 +1,8 @@
 /**
  * 应用内浏览器页（Spec 059）：About / 页脚外链（GitHub Docs、GitHub 设置）在 App 内打开。
  * ArkWeb 加载外部页面，手机宽度即移动端版式（docs.github.com 响应式）；
- * 自绘 AppBar（返回 + 固定标题 Copilot）、加载中顶部细进度条、滚动出顶部阴影。
+ * 自绘 AppBar（返回 + 标题，标题由调用方给：About 行=行文案、页脚链接=Copilot）、
+ * 加载中顶部细进度条、滚动出顶部阴影。
  */
 import { webview } from '@kit.ArkWeb';
 import { OctIcon } from '../components/OctIcon';
@@ -9,6 +10,7 @@ import { PageShadowBar } from '../components/PageShadowBar';
 
 @ComponentV2
 export struct InAppBrowserView {
+  @Param title: string = '';
   @Param url: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
   @Local loading: boolean = true;
@@ -30,7 +32,7 @@ export struct InAppBrowserView {
           this.pathStack.pop();
         })
 
-        Text($r('app.string.tab_copilot'))
+        Text(this.title)
           .fontSize($r('app.float.title_font_size'))
           .fontWeight(600)
           .fontColor($r('app.color.text_primary'))

@@ -99,7 +99,8 @@ struct Index {
   @State chatSessionId: string = '';
   /** Spec 059：Copilot 会话列表刷新泵（详情页变更后自增，驱动主页列表重渲染） */
   @State copilotTick: number = 0;
-  /** Spec 059：应用内浏览器（About / 页脚外链）路由参数：URL */
+  /** Spec 059：应用内浏览器（About / 页脚外链）路由参数：标题 + URL */
+  @State browserTitle: string = '';
   @State browserUrl: string = '';
   /** Spec 059：Copilot settings 页回显泵（onShown 自增，重绑页脚链接手势） */
   @State copilotSettingsTick: number = 0;
@@ -1108,17 +1109,21 @@ struct Index {
     .hideTitleBar(true)
   }
 
-  /** Spec 059：应用内浏览器页（路由参数=URL；AppBar 标题固定 Copilot） */
+  /** Spec 059：应用内浏览器页（路由参数=标题|URL；标题来源见调用方） */
   @Builder
   inAppBrowserDestination() {
     NavDestination() {
       InAppBrowserView({
+        title: this.browserTitle,
         url: this.browserUrl,
         pathStack: this.pathStack
       })
     }
     .onReady((context: NavDestinationContext) => {
-      this.browserUrl = context.pathInfo.param as string;
+      const raw = context.pathInfo.param as string;
+      const idx = raw.indexOf('|');
+      this.browserTitle = idx >= 0 ? raw.substring(0, idx) : raw;
+      this.browserUrl = idx >= 0 ? raw.substring(idx + 1) : '';
     })
     .hideTitleBar(true)
   }

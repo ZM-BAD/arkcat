@@ -59,11 +59,12 @@
      Free——见五章边界）。
    - About 四行：「Copilot Free」保持 toast 占位；「Copilot」「Privacy policy」「Copilot Terms」
      经路由 `inAppBrowser` 在 **App 内浏览器**打开 GitHub Docs（ArkWeb，手机宽度即移动端
-     版式，深色跟随系统；路由参数=URL；AppBar 标题固定「Copilot」，底栏隐藏）。
+     版式，深色跟随系统；路由参数=标题|URL，标题=该行文案；底栏隐藏）。
    - 底栏：本页与 `inAppBrowser` 均隐藏底部四 Tab（用户 09-08 定案，与 Settings 页一致）。
    - 页脚说明：随内容滚动；其中「show code suggestions that match public code」与
      「settings」为可点链接（Span 不支持 onClick → StyledString + GestureStyle），
-     分别打开 find-matching-code 文档与 GitHub 网页版 Copilot 设置。
+     分别打开 find-matching-code 文档与 GitHub 网页版 Copilot 设置；**该两条的浏览器
+     标题固定为 Copilot**（About 行则用行文案）。
 
 ---
 

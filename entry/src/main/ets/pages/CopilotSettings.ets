@@ -72,6 +72,8 @@ export struct CopilotSettingsView {
     const partB = resText(ui, $r('app.string.copilot_settings_footer_b'));
     const linkSettings = resText(ui, $r('app.string.copilot_settings_footer_link_settings'));
     const partC = resText(ui, $r('app.string.copilot_settings_footer_c'));
+    // 页脚两条链接的浏览器标题固定为 Copilot（About 行则用行文案）
+    const footerTitle = resText(ui, $r('app.string.tab_copilot'));
     const body = partA + linkMatch + partB + linkSettings + partC;
     const matchStart = partA.length;
     const settingsStart = matchStart + linkMatch.length + partB.length;
@@ -85,8 +87,10 @@ export struct CopilotSettingsView {
         })
       }
     ];
-    this.pushLinkStyles(styles, matchStart, linkMatch.length, body.length, DOC_FOOTER_MATCHING);
-    this.pushLinkStyles(styles, settingsStart, linkSettings.length, body.length, DOC_FOOTER_SETTINGS);
+    this.pushLinkStyles(styles, matchStart, linkMatch.length, body.length,
+      footerTitle, DOC_FOOTER_MATCHING);
+    this.pushLinkStyles(styles, settingsStart, linkSettings.length, body.length,
+      footerTitle, DOC_FOOTER_SETTINGS);
     this.footerController.setStyledString(new StyledString(body, styles));
   }
 
@@ -95,7 +99,7 @@ export struct CopilotSettingsView {
    * （两侧均为空格，视觉不变）——字形级命中偏严，放宽可减少"看着点上了却没反应"。
    */
   private pushLinkStyles(styles: StyleOptions[], start: number, length: number,
-    bodyLength: number, url: string): void {
+    bodyLength: number, title: string, url: string): void {
     styles.push({
       start: start, length: length, styledKey: StyledStringKey.FONT,
       styledValue: new TextStyle({ fontColor: $r('app.color.link_blue') })
@@ -112,14 +116,14 @@ export struct CopilotSettingsView {
     styles.push({
       start: gestureStart, length: gestureEnd - gestureStart, styledKey: StyledStringKey.GESTURE,
       styledValue: new GestureStyle({
-        onClick: (): void => this.openDoc(url)
+        onClick: (): void => this.openDoc(title, url)
       })
     });
   }
 
-  /** 应用内浏览器打开（路由参数=URL，AppBar 标题固定 Copilot） */
-  private openDoc(url: string): void {
-    this.pathStack.pushPathByName('inAppBrowser', url);
+  /** 应用内浏览器打开（路由参数=标题|URL） */
+  private openDoc(title: string, url: string): void {
+    this.pathStack.pushPathByName('inAppBrowser', `${title}|${url}`);
   }
 
   @Monitor('login')
@@ -209,7 +213,8 @@ export struct CopilotSettingsView {
           this.comingSoon();
           return;
         }
-        this.openDoc(url);
+        // 浏览器页标题取行文案（本地化）
+        this.openDoc(resText(this.getUIContext(), label), url);
       })
   }
 
