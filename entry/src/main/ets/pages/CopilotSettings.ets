@@ -16,6 +16,13 @@ import { resText } from '../utils/I18n';
 /** 本地估算回退用的 Copilot Free 月度上限（057 实测：chat 200 / completions 2000） */
 const FREE_CHAT_LIMIT = 200;
 
+/** About 外链（Spec 059：应用内浏览器打开 GitHub Docs 对应页） */
+const DOC_COPILOT = 'https://docs.github.com/en/copilot/responsible-use/chat';
+const DOC_PRIVACY =
+  'https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement';
+const DOC_TERMS =
+  'https://docs.github.com/en/site-policy/github-terms/github-terms-for-additional-products-and-features';
+
 @ComponentV2
 export struct CopilotSettingsView {
   @Param token: string = '';
@@ -110,15 +117,23 @@ export struct CopilotSettingsView {
     .padding({ top: 14, bottom: 14 })
   }
 
-  /** About 可点行（点按 toast 占位） */
+  /** About 可点行：有 URL → 应用内浏览器打开 GitHub Docs；无 URL → toast 占位 */
   @Builder
-  aboutRow(label: ResourceStr) {
+  aboutRow(label: Resource, url: string) {
     Text(label)
       .fontSize(17)
       .fontColor($r('app.color.text_primary'))
       .width('100%')
       .padding({ top: 16, bottom: 16 })
-      .onClick(() => this.comingSoon())
+      .onClick(() => {
+        if (url === '') {
+          this.comingSoon();
+          return;
+        }
+        // 路由参数=标题|URL（标题取行文案的本地化结果，浏览器页 AppBar 显示）
+        this.pathStack.pushPathByName('inAppBrowser',
+          `${resText(this.getUIContext(), label)}|${url}`);
+      })
   }
 
   /** 页脚：灰底说明 + 蓝色链接文本（Span 多色） */
@@ -255,13 +270,13 @@ export struct CopilotSettingsView {
               .width('100%')
               .padding({ top: 4, bottom: 2 })
 
-            this.aboutRow($r('app.string.settings_copilot_free'))
+            this.aboutRow($r('app.string.settings_copilot_free'), '')
             Divider().strokeWidth(0.5).color($r('app.color.divider'))
-            this.aboutRow($r('app.string.copilot_settings_copilot'))
+            this.aboutRow($r('app.string.copilot_settings_copilot'), DOC_COPILOT)
             Divider().strokeWidth(0.5).color($r('app.color.divider'))
-            this.aboutRow($r('app.string.copilot_settings_privacy_policy'))
+            this.aboutRow($r('app.string.copilot_settings_privacy_policy'), DOC_PRIVACY)
             Divider().strokeWidth(0.5).color($r('app.color.divider'))
-            this.aboutRow($r('app.string.copilot_settings_terms'))
+            this.aboutRow($r('app.string.copilot_settings_terms'), DOC_TERMS)
           }
           .width('100%')
           .padding({ left: 16, right: 16, top: 8, bottom: 0 })

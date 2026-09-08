@@ -57,10 +57,11 @@ import { CodeViewerView } from './CodeViewer';
 import { ExploreRepoListView } from './ExploreRepoList';
 import { FilterActivityView } from './FilterActivity';
 import { AccountsView } from './Accounts';
+import { InAppBrowserView } from './InAppBrowser';
 
 /** 隐藏底部四 Tab 栏的路由：Settings 及其下级页面（走查 09-08 定案）+ 模态全屏页（052 徽章详情） */
 const TAB_BAR_HIDDEN_ROUTES: string[] = [
-  'settings', 'notificationSettings', 'codeOptions', 'accounts', 'tokenSetup', 'achievementDetail'
+  'settings', 'notificationSettings', 'codeOptions', 'accounts', 'tokenSetup', 'achievementDetail', 'inAppBrowser'
 ];
 
 @Entry
@@ -96,6 +97,9 @@ struct Index {
   @State chatSessionId: string = '';
   /** Spec 059：Copilot 会话列表刷新泵（详情页变更后自增，驱动主页列表重渲染） */
   @State copilotTick: number = 0;
+  /** Spec 059：应用内浏览器（About 外链）路由参数：标题 + URL */
+  @State browserTitle: string = '';
+  @State browserUrl: string = '';
   @State orgLogin: string = '';
   @State reposOwner: string = '';
   @State reposMode: string = 'org';
@@ -1092,6 +1096,25 @@ struct Index {
     .hideTitleBar(true)
   }
 
+  /** Spec 059：应用内浏览器页（路由参数=标题|URL；About 外链用，手机宽度即移动端版式） */
+  @Builder
+  inAppBrowserDestination() {
+    NavDestination() {
+      InAppBrowserView({
+        title: this.browserTitle,
+        url: this.browserUrl,
+        pathStack: this.pathStack
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      const raw = context.pathInfo.param as string;
+      const idx = raw.indexOf('|');
+      this.browserTitle = idx >= 0 ? raw.substring(0, idx) : raw;
+      this.browserUrl = idx >= 0 ? raw.substring(idx + 1) : '';
+    })
+    .hideTitleBar(true)
+  }
+
   @Builder
   destinationMap(name: string) {
     if (name === 'userProfile') {
@@ -1186,6 +1209,8 @@ struct Index {
       this.copilotChatDestination()
     } else if (name === 'copilotSettings') {
       this.copilotSettingsDestination()
+    } else if (name === 'inAppBrowser') {
+      this.inAppBrowserDestination()
     }
   }
 

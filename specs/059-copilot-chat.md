@@ -57,6 +57,9 @@
      本地记账近似（本机用户消息数 / Free 月配额 200）并显示「离线估算」小字。
    - Subscription 行「Copilot Free」：保留静态文案（无公开 API 查询套餐；实测账号为
      Free——见五章边界）。
+   - About 四行：「Copilot Free」保持 toast 占位；「Copilot」「Privacy policy」「Copilot Terms」
+     经路由 `inAppBrowser` 在 **App 内浏览器**打开 GitHub Docs（ArkWeb，手机宽度即移动端
+     版式，深色跟随系统；参数=标题|URL；该页隐藏底栏）。
 
 ---
 
@@ -80,6 +83,7 @@
 | 14 | Settings | UPGRADE PLAN | toast 占位（红线） | ✅ | - | 不引入任何升级/账单端点 |
 | 15 | 全页 | 会话数据 | 本地 persistence | ✅ | - | preferences JSON（仿 WorkConfigStore 模式） |
 | 16 | 详情页 | 底部输入栏 | 多行自增高（11 行封顶后滚动） | ✅ | - | TextArea + lineHeight(20vp) + constraintSize 240vp + input_bg 灰底 + 投影 |
+| 17 | 全页 | 应用内浏览器 | About 外链在 App 内打开 | ✅ | - | ArkWeb 加载 docs.github.com；路由 inAppBrowser（标题\|URL），底栏隐藏 |
 
 > 可行性图例：✅ 可直接实现 ｜ ⚠️ 部分可行/降级 ｜ ❌ 不可实现
 
