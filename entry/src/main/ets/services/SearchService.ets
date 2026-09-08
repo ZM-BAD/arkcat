@@ -450,18 +450,23 @@ export function pushSearchHistory(entries: string[], keyword: string): string[] 
 }
 
 const HISTORY_PREFS = 'arkcat.search';
-const HISTORY_KEY = 'recent';
+const HISTORY_KEY_PREFIX = 'recent';
+
+/** Spec 049a：搜索历史按账号分区（login 空则回退旧 key） */
+function historyKey(login: string): string {
+  return login !== '' ? `${HISTORY_KEY_PREFIX}_${login}` : HISTORY_KEY_PREFIX;
+}
 
 /** 搜索历史持久化（Preferences；非敏感数据不走加密存储） */
 export class SearchHistoryStore {
   /** 加载历史；异常返回空 */
-  static async load(context: common.Context | undefined): Promise<string[]> {
+  static async load(context: common.Context | undefined, login: string): Promise<string[]> {
     if (context === undefined) {
       return [];
     }
     try {
       const prefs = await preferences.getPreferences(context, HISTORY_PREFS);
-      const value = await prefs.get(HISTORY_KEY, '[]');
+      const value = await prefs.get(historyKey(login), '[]');
       if (typeof value === 'string') {
         const parsed: Object | null = JSON.parse(value);
         if (parsed !== null && Array.isArray(parsed)) {
@@ -482,13 +487,13 @@ export class SearchHistoryStore {
   }
 
   /** 保存历史；失败静默 */
-  static async save(context: common.Context | undefined, entries: string[]): Promise<void> {
+  static async save(context: common.Context | undefined, login: string, entries: string[]): Promise<void> {
     if (context === undefined) {
       return;
     }
     try {
       const prefs = await preferences.getPreferences(context, HISTORY_PREFS);
-      await prefs.put(HISTORY_KEY, JSON.stringify(entries));
+      await prefs.put(historyKey(login), JSON.stringify(entries));
       await prefs.flush();
     } catch (e) {
       // 持久化失败不阻断交互
@@ -496,19 +501,19 @@ export class SearchHistoryStore {
   }
 
   /** 追加一条历史：去重置顶、上限 10（review E17：结果页重搜/聚合页也记入历史） */
-  static async remember(context: common.Context | undefined, keyword: string): Promise<void> {
+  static async remember(context: common.Context | undefined, login: string, keyword: string): Promise<void> {
     const kw = keyword.trim();
     if (context === undefined || kw === '') {
       return;
     }
-    const old = await SearchHistoryStore.load(context);
+    const old = await SearchHistoryStore.load(context, login);
     const next: string[] = [kw];
     for (const h of old) {
       if (h !== kw && next.length < 10) {
         next.push(h);
       }
     }
-    await SearchHistoryStore.save(context, next);
+    await SearchHistoryStore.save(context, login, next);
   }
 }
 

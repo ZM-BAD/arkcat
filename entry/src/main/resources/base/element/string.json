@@ -705,6 +705,50 @@
       "value": "Accounts"
     },
     {
+      "name": "accounts_edit",
+      "value": "EDIT"
+    },
+    {
+      "name": "accounts_done",
+      "value": "DONE"
+    },
+    {
+      "name": "accounts_add",
+      "value": "ADD ACCOUNT"
+    },
+    {
+      "name": "accounts_remove_title",
+      "value": "Remove account?"
+    },
+    {
+      "name": "accounts_remove_message",
+      "value": "This account (%1$s) will be removed from this device."
+    },
+    {
+      "name": "accounts_remove_confirm",
+      "value": "Remove"
+    },
+    {
+      "name": "accounts_sign_out_all",
+      "value": "SIGN OUT ALL ACCOUNTS"
+    },
+    {
+      "name": "accounts_sign_out_all_message",
+      "value": "You will be signed out of all accounts on this device."
+    },
+    {
+      "name": "accounts_duplicate_hint",
+      "value": "Account already exists, switched to it"
+    },
+    {
+      "name": "accounts_limit_hint",
+      "value": "Up to 5 accounts are supported."
+    },
+    {
+      "name": "accounts_unverified",
+      "value": "Unverified account"
+    },
+    {
       "name": "settings_app_lock",
       "value": "App Lock"
     },
@@ -758,11 +802,7 @@
     },
     {
       "name": "settings_sign_out_confirm",
-      "value": "Sign out of ArkCat?"
-    },
-    {
-      "name": "settings_sign_out_confirm_desc",
-      "value": "You will need to enter your GitHub token again to sign in."
+      "value": "Sign out of this account?"
     },
     {
       "name": "settings_cancel",

@@ -19,6 +19,8 @@ import { resText } from '../utils/I18n';
 @ComponentV2
 export struct SearchView {
   @Param token: string = '';
+  /** Spec 049a：搜索历史按账号分区（`recent_{login}`） */
+  @Param login: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
   @Local keyword: string = '';
   @Local focused: boolean = false;
@@ -42,7 +44,7 @@ export struct SearchView {
   }
 
   private loadHistory(): void {
-    SearchHistoryStore.load(this.ctx()).then((h: string[]) => {
+    SearchHistoryStore.load(this.ctx(), this.login).then((h: string[]) => {
       // 会话内新词置顶合并，防 load 晚到覆盖本轮输入（review E12）
       const fresh = this.history.filter((x: string) => !h.includes(x));
       this.history = fresh.concat(h);
@@ -66,12 +68,12 @@ export struct SearchView {
   /** 记录历史：去重置顶、上限 10（同步内存 + 异步持久化） */
   private rememberKeyword(kw: string): void {
     this.history = pushSearchHistory(this.history, kw);
-    SearchHistoryStore.save(this.ctx(), this.history);
+    SearchHistoryStore.save(this.ctx(), this.login, this.history);
   }
 
   private clearHistory(): void {
     this.history = [];
-    SearchHistoryStore.save(this.ctx(), []);
+    SearchHistoryStore.save(this.ctx(), this.login, []);
   }
 
   /** 建议入口（六类）→ 结果页 */

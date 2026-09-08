@@ -6,7 +6,7 @@
 import { common } from '@kit.AbilityKit';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { OctIcon } from '../components/OctIcon';
-import { TokenStore } from '../services/TokenStore';
+import { AccountStore, AddAccountResult } from '../services/AccountStore';
 import { HomeService } from '../services/HomeService';
 import { friendlyError } from '../services/GitHttpClient';
 import { OAuthDeviceInfo, OAuthPollState, OAuthPollResult, requestDeviceCode, pollToken } from '../services/OAuthService';
@@ -14,8 +14,12 @@ import { resText } from '../utils/I18n';
 
 @ComponentV2
 export struct TokenSetup {
-  @Event onSaved: (token: string) => void = (token: string) => {};
+  /** onSaved(token, login)：登录成功后上抛（登录落地页/添加账号双场景共用） */
+  @Event onSaved: (token: string, login: string) => void = (token: string, login: string) => {};
   /** 视图态：'choice'=登录方式二选一 / 'pat'=PAT 表单 / 'oauth'=浏览器授权等待页 */
+  /** 作为 NavDestination（添加账号场景）嵌入时：pageBar 返回走 onEmbeddedPop；落地页时内部视图切换 */
+  @Param embedded: boolean = false;
+  @Event onEmbeddedPop: () => void = () => {};
   @Local view: string = 'choice';
   // ---- PAT（Spec 001 原逻辑零改动）----
   @Local token: string = '';
@@ -102,7 +106,11 @@ export struct TokenSetup {
   patView() {
     Column({ space: 16 }) {
       this.pageBar($r('app.string.token_setup_title'), () => {
-        this.view = 'choice';
+        if (this.embedded) {
+          this.onEmbeddedPop();
+        } else {
+          this.view = 'choice';
+        }
       })
 
       Blank().height(40)
@@ -302,9 +310,16 @@ export struct TokenSetup {
   /** token 落库前实测（与 PAT 保存口径一致）；通过后触发 onSaved 进主界面 */
   private async finishLogin(token: string): Promise<void> {
     try {
-      await HomeService.fetchViewerBasic(token);
-      await TokenStore.save(token);
-      this.onSaved(token);
+      const viewer = await HomeService.fetchViewerBasic(token);
+      const result = await this.persistAccount(viewer.login, token, viewer.name);
+      if (result === AddAccountResult.LIMIT) {
+        this.oauthError = this.stringOf($r('app.string.accounts_limit_hint'));
+        return;
+      }
+      if (result === AddAccountResult.DUPLICATE) {
+        this.getUIContext().getPromptAction().showToast({ message: $r('app.string.accounts_duplicate_hint') });
+      }
+      this.onSaved(token, viewer.login);
     } catch (e) {
       this.oauthError = friendlyError(this.getUIContext(), e as Error);
     }
@@ -321,6 +336,13 @@ export struct TokenSetup {
   }
 
   private backToChoice(): void {
+    if (this.embedded) {
+      // 添加账号场景：返回即关闭本页（NavDestination pop）
+      this.stopPolling();
+      this.polling = false;
+      this.onEmbeddedPop();
+      return;
+    }
     // 返回即取消轮询；再次发起重新申请新 device_code（TDD 第 8 条）
     this.stopPolling();
     this.polling = false;
@@ -372,15 +394,28 @@ export struct TokenSetup {
     this.saving = true;
     try {
       // 保存前实测 Token（review A13：无效 token 存下后四 Tab 全 401 且无引导）
-      await HomeService.fetchViewerBasic(trimmed);
-      await TokenStore.save(trimmed);
-      this.onSaved(trimmed);
+      const viewer = await HomeService.fetchViewerBasic(trimmed);
+      const result = await this.persistAccount(viewer.login, trimmed, viewer.name);
+      if (result === AddAccountResult.LIMIT) {
+        this.error = this.stringOf($r('app.string.accounts_limit_hint'));
+        return;
+      }
+      if (result === AddAccountResult.DUPLICATE) {
+        this.getUIContext().getPromptAction().showToast({ message: $r('app.string.accounts_duplicate_hint') });
+      }
+      this.onSaved(trimmed, viewer.login);
     } catch (e) {
       // 401/403 才是 token 无效；网络失败友好区分，不误导用户改 token（复核修正）
       this.error = friendlyError(this.getUIContext(), e as Error);
     } finally {
       this.saving = false;
     }
+  }
+
+  /** 写入账号存储（查重/上限反馈），供 PAT 与 OAuth 两条路径共用 */
+  private async persistAccount(login: string, token: string, name: string): Promise<AddAccountResult> {
+    const ctx = this.getUIContext().getHostContext() as common.Context | undefined;
+    return AccountStore.addAccount(ctx, login, token, name);
   }
 
   /** 资源 → 当前语言的纯文案 */

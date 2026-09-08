@@ -46,6 +46,12 @@ export struct InboxView {
     this.refresh();
   }
 
+  /** Spec 049a：切换账号后 token 更新 → 用新 token 重拉（未读 badge 由 Index 侧同刻重算） */
+  @Monitor('token')
+  onTokenChanged(): void {
+    this.refresh();
+  }
+
   /** 拉取后：聚合仓库候选 → 本地链式过滤（视图 → 类型 → 仓库） */
   private refresh(): void {
     this.loading = true;

@@ -43,6 +43,10 @@ import {
 import { RepoSummary } from '../../entry/src/main/ets/models/GitHubModels';
 import { MarkdownService } from '../../entry/src/main/ets/services/MarkdownService';
 import { parseAchievementDetail, extractAchievementSlugs } from '../../entry/src/main/ets/models/AchievementModels';
+import {
+  accountsToStorage, accountsFromStorage, legacyToAccount, nextAddResult,
+  AccountInfo
+} from '../../entry/src/main/ets/services/AccountStore';
 
 const NOW = Date.parse('2026-08-31T12:00:00Z');
 const MINUTE_MS = 60 * 1000;
@@ -939,4 +943,60 @@ test('extractAchievementSlugs 去重提取', () => {
   assert.equal(slugs.length, 2);
   assert.equal(slugs[0], 'yolo');
   assert.equal(slugs[1], 'quickdraw');
+});
+
+// ─────────────── AccountStore（Spec 049a 纯函数） ───────────────
+
+test('accounts 序列化 roundtrip（含 name/addedAt）', () => {
+  const accounts = [
+    { login: 'zm', token: 'tok_a', name: '周铭', addedAt: 100 },
+    { login: 'bob', token: 'tok_b', name: 'Bob', addedAt: 200 }
+  ];
+  const restored = accountsFromStorage(accountsToStorage(accounts));
+  assert.equal(restored.length, 2);
+  assert.equal(restored[0].login, 'zm');
+  assert.equal(restored[0].name, '周铭');
+  assert.equal(restored[0].addedAt, 100);
+  assert.equal(restored[1].login, 'bob');
+});
+
+test('accountsFromStorage 坏 JSON/非数组/空串回退空表', () => {
+  assert.equal(accountsFromStorage('').length, 0);
+  assert.equal(accountsFromStorage('{{bad').length, 0);
+  assert.equal(accountsFromStorage('{}').length, 0);
+  assert.equal(accountsFromStorage('null').length, 0);
+  assert.equal(accountsFromStorage('[]').length, 0);
+});
+
+test('accountsFromStorage 残缺条目（缺 login/token）剔除', () => {
+  const items = JSON.stringify([
+    { login: 'a', token: 't1' },
+    { login: '', token: 't2' },
+    { login: 'b', token: '' },
+    { token: 't3' },
+    { login: 'c', token: 't4', name: 'N', addedAt: 1 }
+  ]);
+  const restored = accountsFromStorage(items);
+  assert.equal(restored.length, 2);
+  assert.equal(restored[0].login, 'a');
+  assert.equal(restored[1].login, 'c');
+});
+
+test('legacyToAccount v1 → v2 映射（login/name 失败为空串）', () => {
+  const a = legacyToAccount('tok_v1', '', '', 42);
+  assert.equal(a.login, '');
+  assert.equal(a.name, '');
+  assert.equal(a.token, 'tok_v1');
+  assert.equal(a.addedAt, 42);
+});
+
+test('nextAddResult 查重与 5 个上限', () => {
+  const mk = (login: string) => ({ login, token: 't', name: '', addedAt: 0 });
+  assert.equal(nextAddResult([], 'a'), 0); // OK
+  assert.equal(nextAddResult([mk('a'), mk('b')], 'a'), 1); // DUPLICATE
+  const five = [mk('a'), mk('b'), mk('c'), mk('d'), mk('e')];
+  assert.equal(nextAddResult(five, 'f'), 2); // LIMIT
+  assert.equal(nextAddResult(five, 'a'), 1); // 满员时重复仍走 DUPLICATE（重新授权语义）
+  const four = [mk('a'), mk('b'), mk('c'), mk('d')];
+  assert.equal(nextAddResult(four, 'e'), 0);
 });
