@@ -158,7 +158,7 @@ export struct CopilotView {
   emptyChatsCard() {
     Column({ space: 10 }) {
       Stack() {
-        OctIcon({ res: $r('app.media.oct_copilot_fill_16'), iconSize: 30, iconColor: $r('app.color.link_blue') })
+        OctIcon({ res: $r('app.media.oct_copilot_fill_16'), iconSize: 30, iconColor: $r('app.color.text_secondary') })
       }
       .width(64)
       .height(64)
