@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo/arkcat-logo-appicon.svg" width="160" alt="ArkCat logo">
+</p>
+
 # ArkCat — 纯血鸿蒙版 GitHub 客户端
 
 > 🌐 [English Version](README.md) | 简体中文

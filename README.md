@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo/arkcat-logo-appicon.svg" width="160" alt="ArkCat logo">
+</p>
+
 # ArkCat — Pure HarmonyOS GitHub Client
 
 > 🌐 English | [简体中文](README_zh.md)
