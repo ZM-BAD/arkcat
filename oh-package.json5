@@ -5,7 +5,7 @@
   "description": "ArkCat - 纯血鸿蒙 GitHub 客户端",
   "main": "",
   "author": "zm_bad",
-  "license": "Apache-2.0",
+  "license": "GPL-3.0-only",
   "dependencies": {},
   "devDependencies": {
     "@ohos/hypium": "1.0.28"

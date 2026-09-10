@@ -4,6 +4,6 @@
   "description": "ArkCat entry module",
   "main": "",
   "author": "zm_bad",
-  "license": "Apache-2.0",
+  "license": "GPL-3.0-only",
   "dependencies": {}
 }
