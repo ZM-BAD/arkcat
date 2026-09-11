@@ -63,7 +63,7 @@ query UserOrganizations($login: String!, $first: Int = 25, $after: String) {
 | ---- | ------ | ------------------- |
 | 组织内成员数/公开成员切换 | 截图未展示 | 不实现 |
 | 组织行点击只看组织主页 | — | 后续可在组织主页详情内达仓库（Spec 037） |
-| Profile 原「内嵌仓库/星标列表」 | 已由独立列表页替代 | 删除内嵌视图；Starred 页参数化 login（WorkService 扩展） |
+| 内嵌仓库/星标列表 | 已由独立列表页替代（本 Spec 三入口导航） | 不实现内嵌视图；Starred 页参数化 login（WorkService 扩展） |
 | ContributionCalendar 组件 | 官方无日历 | 组件与查询字段一并移除（contributionsCollection 不再查询） |
 
 ---

@@ -86,7 +86,7 @@ ets/components/OctIcon.ets            # 统一样式入口
 | 非 Octicons 内容 emoji（🔥 趋势 / 📖 文档 / 📍 位置 / 🔗 链接 / 🗂 空态 / ◯ 头像占位 / ● 语言点） | 内容型符号或需定制 | 待定自研，本批次不改动 |
 | `.fillColor()` 对个别 SVG 无效 | 若资源管线着色失败 | 回退方案：脚本按色值生成着色变体（SVG 内嵌 `fill`），命名 `oct_<name>_<color>.svg` |
 | 垂直省略号 `kebab-vertical` | v19.33.0 已移除垂直变体 | 拖拽手柄改用 `grabber-16`（官方拖拽图标，样式接近） |
-| 品牌徽标（mark-github 等） | GitHub logos 品牌指南约束（原文：Do not use any GitHub logo as the icon or logo for your business/organization） | **不引入，界面不使用官方 logo 图形**。Filter Activity 页 Recommendations 行原按官方参考图用 `mark-github`，现改用中性图标 `oct_graph_stacked_area_16`（详见 spec 056 §七） |
+| 品牌徽标（mark-github 等） | GitHub logos 品牌指南约束（原文：Do not use any GitHub logo as the icon or logo for your business/organization） | **不引入，界面不使用官方 logo 图形**。Filter Activity 页 Recommendations 行用中性图标 `oct_graph_stacked_area_16`（官方该行用 mark-github，为避品牌红线有意偏离，详见 spec 056 §七） |
 
 ---
 
@@ -105,7 +105,7 @@ ets/components/OctIcon.ets            # 统一样式入口
 - 来源：<https://github.com/primer/octicons>（tag v19.33.0，2026-08-04），MIT License（Copyright (c) 2026 GitHub Inc.）；图标清单见 `assets/octicons/README.md`。
 - 生产资源放在 `entry/src/main/resources/base/media/`（命名 `oct_<name>_<size>.svg`），与原始文件保持一致，着色全部由 `OctIcon.fillColor` 完成。
 - 所有图标默认 `size=16`；头部操作类（返回/搜索/新建）用 24。
-- 本次改动不新增/修改任何 i18n key（字形原来也是代码内字面量）。
+- 不新增/修改任何 i18n key（字形为代码内字面量）。
 
 ---
 

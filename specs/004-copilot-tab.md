@@ -2,13 +2,13 @@
 
 > BFS Level: 1
 > 关联截图: 底部导航第四个 Tab
-> 状态: deprecated（2026-09-08：058 重写本页、059 以 GitHub 官方 chat/completions 实现真实对话与本地会话；原「Chat 功能均不可实现」结论已被推翻）
+> 状态: deprecated（由 Spec 058/059 取代：058 重写本页，059 以 GitHub 官方 chat/completions 实现真实对话与本地会话）
 
 ---
 
 ## 一、页面/功能概述
 
-GitHub Copilot AI 助手对话页（**已废弃**）。本 Spec 原判断「该 Tab 所有 Chat 功能均不可实现，只能展示 Empty State」已被 Spec 058/059 推翻：058 重写 `pages/Copilot.ets`，059 接入真实 chat/completions 与本地会话。
+GitHub Copilot AI 助手对话页（**已废弃**，由 Spec 058/059 取代）：058 重写 `pages/Copilot.ets`，059 接入真实 chat/completions 与本地会话。
 
 ---
 

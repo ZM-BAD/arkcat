@@ -127,7 +127,7 @@ query ExploreRepoMeta {
 | 官方个性化 Activity feed | 无公开 API | REST received_events（关注者+watch 仓库事件）近似，仅取 merged PR 事件，repo+number 去重、上限 10 条 |
 | 官方 Trending 算法 | 无公开 API | REST search 近似（pushed:>N 近 N 天活跃按星排序） |
 | 官方 Awesome Lists 精选 | 编辑内容无 API | REST search topic:awesome-list 按星近似 |
-| 「今日获星」/「本周获星」窗口 | 增量星数无公开 API | 窗口=pushed:>N 近 N 天活跃近似（created 窗口实测筛空，2026-09-07 Chinese 0 条）；★ 文案**只显示仓库总星数、不标注 today**（2026-09-11 修正：原「N today」取总数属错误表述）；默认 Today（与官方一致） |
+| 「今日获星」/「本周获星」窗口 | 增量星数无公开 API | 窗口=pushed:>N 近 N 天活跃近似（created 窗口实测筛空，2026-09-07 Chinese 0 条）；★ 文案只显示仓库总星数、不标注 today；默认 Today（与官方一致） |
 | Activity 六类（Announcements/Releases/Stars/Repositories/Follows/Recommendations） | 其余五类无公开数据源 | Filter Activity 页完整实现（勾选+SAVE 持久化）；内容侧仅 merged PR 动态（近似 Follows），关闭 Follows 后 Activity 区为空 |
 | 语言/口语筛选列表 | 官方 App 走内部端点 | 语言=GET /languages 全量 833 项（免认证）+ linguist 色表 751 项 + 常用 7 项置顶；口语=内置 184 项；选中后服务端 qualifier 过滤，非纯客户端 |
 | 横幅图 | 官方沿用仓库社交预览图 | repository.openGraphImageUrl（1200x630 social preview，按比例贴宽高自适应）；无自定义预览的仓库不显示横幅 |
