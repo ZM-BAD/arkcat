@@ -104,7 +104,7 @@ export struct TrendingRepoCard {
         Row({ space: 12 }) {
           Row({ space: 4 }) {
             OctIcon({ res: $r('app.media.oct_star_fill_16'), iconSize: 16, iconColor: $r('app.color.star_gold') })
-            Text(resText(this.getUIContext(), $r('app.string.explore_stars_today_fmt'),
+            Text(resText(this.getUIContext(), $r('app.string.explore_stars_fmt'),
               compactCount(this.repo.stargazerCount)))
               .fontSize($r('app.float.body_font_size'))
               .fontWeight(600)
@@ -133,7 +133,7 @@ export struct TrendingRepoCard {
       Row({ space: 4 }) {
         OctIcon({ res: $r('app.media.oct_people_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
         Text(resText(this.getUIContext(), $r('app.string.explore_contributors_fmt'),
-          compactCount(this.repo.contributorCount)))
+          this.repo.contributorCount))
           .fontSize($r('app.float.body_font_size'))
           .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)

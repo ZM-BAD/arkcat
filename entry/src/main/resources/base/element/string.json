@@ -461,8 +461,8 @@
       "value": "ADD TO LIST"
     },
     {
-      "name": "explore_stars_today_fmt",
-      "value": "%1$s today"
+      "name": "explore_stars_fmt",
+      "value": "%1$s"
     },
     {
       "name": "explore_contributors_fmt",
@@ -883,6 +883,10 @@
     {
       "name": "search_show_more_matches",
       "value": "Show %1$d more matches"
+    },
+    {
+      "name": "search_show_less_matches",
+      "value": "Show less"
     },
     {
       "name": "search_checks_badge",

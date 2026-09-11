@@ -461,8 +461,8 @@
       "value": "添加到列表"
     },
     {
-      "name": "explore_stars_today_fmt",
-      "value": "%1$s 今日"
+      "name": "explore_stars_fmt",
+      "value": "%1$s"
     },
     {
       "name": "explore_contributors_fmt",
@@ -883,6 +883,10 @@
     {
       "name": "search_show_more_matches",
       "value": "显示更多 %1$d 条匹配"
+    },
+    {
+      "name": "search_show_less_matches",
+      "value": "收起"
     },
     {
       "name": "search_checks_badge",

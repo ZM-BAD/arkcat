@@ -133,11 +133,17 @@ export struct CodeSearchCard {
       .width('100%')
       .onClick(() => this.onOpen())
 
-      if (this.file !== null && !this.expanded && this.file.snippet.more.length > 0) {
+      if (this.file !== null && this.file.snippet.more.length > 0) {
         Divider().color($r('app.color.divider')).strokeWidth(1)
         Row({ space: 10 }) {
-          OctIcon({ res: $r('app.media.oct_unfold_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
-          Text(resText(this.getUIContext(), $r('app.string.search_show_more_matches'), this.file.snippet.more.length))
+          OctIcon({
+            res: this.expanded ? $r('app.media.oct_fold_up_16') : $r('app.media.oct_unfold_16'),
+            iconSize: 16,
+            iconColor: $r('app.color.text_secondary')
+          })
+          Text(this.expanded
+            ? resText(this.getUIContext(), $r('app.string.search_show_less_matches'))
+            : resText(this.getUIContext(), $r('app.string.search_show_more_matches'), this.file.snippet.more.length))
             .fontSize(14)
             .fontColor($r('app.color.text_secondary'))
         }
@@ -145,7 +151,7 @@ export struct CodeSearchCard {
         .height(44)
         .padding({ left: 14, right: 14 })
         .onClick(() => {
-          this.expanded = true;
+          this.expanded = !this.expanded;
         })
       }
     }

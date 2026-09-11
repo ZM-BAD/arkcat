@@ -115,4 +115,5 @@ query SearchUsers($q: String!) {
 
 - 015 的状态与本文关系：015 是「入口与框架」（已 implemented），本文是「详情子页」（已 implemented）；015 顶部已加注指向本文。
 - 代码搜索结果高亮：CodeViewer 当前文件视图已支持行号；行高亮建议用阅读位置组件（`scrollToLine` 或锚点高亮），若实现超界则降级为「进入文件不带行」。
+- 代码结果卡的片段展开：匹配行超过初始窗口时，卡底显示「Show N more matches」展开、展开后同一行为「Show less」可收起（`CodeSearchCard.expanded` 双向切换；图标 unfold ↔ fold-up。2026-09-11 补齐收起能力，此前只能展开不能复原）。
 - 与 049 多账号：最近搜索按账号隔离（key 含 login）。

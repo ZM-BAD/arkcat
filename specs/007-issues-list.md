@@ -18,9 +18,9 @@
 1. 顶部 App Bar：← 返回 + Issues 标题 + ＋ 新建 + 🔍 搜索
 2. 排序条：🔍 Sort by... 下拉
 3. 状态 Tab：All/Open/Closed 下拉 chip（FilterDropdownChip）
-4. Issue 卡片列表：卡片 = 标题 + 元信息行（#编号 · label · @作者 · 相对时间 · 💬 评论数）
-   - 示例卡片 1：🐛 Add network error layer / #4 · bug · @zm_bad · d1 · 💬 0
-   - 示例卡片 2：📝 update UI design / #1 · documentation · @zm_bad · d3
+4. Issue 卡片列表：卡片 = 标题 + 元信息行（#编号 · label · 相对时间 · 💬 评论数）
+   - 示例卡片 1：🐛 Add network error layer / #4 · bug · d1 · 💬 0
+   - 示例卡片 2：📝 update UI design / #1 · documentation · d3
    - ...（后续卡片）
 
 ---
@@ -39,11 +39,10 @@
 | 8 | Issue 卡片 | Issue 标题 | 点击进入详情 | ✅ | `issue.title` | — |
 | 9 | Issue 卡片 | Issue 编号 `#N` | 展示 | ✅ | `issue.number` | — |
 | 10 | Issue 卡片 | Label 标签 | 点击筛选 | ✅ | `issue.labels { name color }` | — |
-| 11 | Issue 卡片 | 作者 `@user` | 进入 Profile | ✅ | `issue.author.login` | 作者单元格与标题行/meta 行为同层兄弟（ArkUI 无 stopPropagation），各自独立跳转 |
-| 12 | Issue 卡片 | 时间 | 展示 | ✅ | `issue.createdAt` | — |
-| 13 | Issue 卡片 | 评论数 💬 | 展示 | ✅ | `issue.comments.totalCount` | — |
-| 14 | Issue 卡片 | 关联 PR 图标 🔀 | 展示 | ✅ | `timelineItems(CROSS_REFERENCED_EVENT)` | — |
-| 15 | Issue 卡片 | 选中态 | 点击进入详情 | ✅ 纯 UI | — | — |
+| 11 | Issue 卡片 | 时间 | 展示 | ✅ | `issue.createdAt` | — |
+| 12 | Issue 卡片 | 评论数 💬 | 展示 | ✅ | `issue.comments.totalCount` | — |
+| 13 | Issue 卡片 | 关联 PR 图标 🔀 | 展示 | ✅ | `timelineItems(CROSS_REFERENCED_EVENT)` | — |
+| 14 | Issue 卡片 | 选中态 | 点击进入详情 | ✅ 纯 UI | — | — |
 
 ---
 
@@ -95,13 +94,13 @@ query IssuesList(
 - [x] Issue 列表能展示
 - [x] Open/Closed 筛选正确切换
 - [ ] Label 点击筛选正确
-- [x] 点击 Issue 跳转到详情页（标题行 / meta 行可点 → issueDetail，已实现）
-- [ ] Issue 卡作者行展示且点击进 Profile（实现完成，待模拟器走查）
+- [x] 点击 Issue 跳转到详情页（整卡 onClick → issueDetail）
 
 ---
 
 ## 七、备注
 
-- 15/15 全部可行
+- 14/14 全部可行
+- 作者行**不实现**（2026-09-11 定案）：本 Spec 早期版本曾列「作者 `@user` 进 Profile」，但官方 App 的 Issue 列表卡并无作者行，属本 Spec 的臆造元素，已删除；卡片保持整卡点击进详情。
 - 2026-08-31：实现合并自 feature/spec-00X 分支（--no-ff）至 develop，仪器测试 19/19 通过；真实数据类验收项需在应用内配置有效 GitHub PAT 后复核
 - 2026-08-31 真实数据验收：使用 GitHub PAT（模拟器实测）完成以上勾选项；未实测项见「备注」（详情跳转由 Spec 030/031 接管）

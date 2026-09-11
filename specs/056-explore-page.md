@@ -39,7 +39,7 @@ Trending 页（Awesome Lists 无筛选行，同构列表），自上而下：
    - avatar + owner（灰）
    - 仓库名（黑 600 + 下划线）
    - 描述（text_primary，最多 4 行）
-   - 元信息行：⭐ N today + 语言点（● JavaScript）+ 👥 N contributors ›
+   - 元信息行：⭐ N（总星数）+ 语言点（● JavaScript）+ 👥 N contributors ›
    - 按钮行三态：未星 = 全宽 [☆ STAR]；已星 = [★] + [＋ ADD TO LIST]
    - 后续仓库卡同构
 
@@ -68,7 +68,7 @@ Trending 页（Awesome Lists 无筛选行，同构列表），自上而下：
 | 17 | 二级页 | Today 下拉菜单（3 项蓝勾） | 窗口切换 | ⚠️ | - | 窗口=pushed:>N 活跃近似（非官方今日增量星） |
 | 18 | 二级页 | Language/Spoken sheet（✕+标题+🔍+搜索） | 语言/口语过滤 | ✅ | - | 语言=GET /languages 全量 833 项（免认证）+ linguist 色表 751 项 + 常用 7 项置顶；口语=内置 184 项 |
 | 19 | 列表卡 | 横幅图（openGraphImageUrl 按比例贴宽） | 展示 | ✅ | repository.openGraphImageUrl | 未设置 social preview 的仓库无横幅 |
-| 20 | 列表卡 | ⭐ N today + 语言点 + 👥 N contributors › | 展示/跳转 | ⚠️ | contributors 无 GraphQL 字段 | today=总数近似；contributors=REST Link last 页 |
+| 20 | 列表卡 | ⭐ N（总星数）+ 语言点 + 👥 N contributors › | 展示/跳转 | ⚠️ | contributors 无 GraphQL 字段 | 星数=仓库**总**星数（GitHub 无每日新增星公开接口，故不标 today）；contributors=REST Link rel=last 页数（精确总数，展示不压缩） |
 | 21 | 列表卡 | 三态按钮（全宽 STAR / ★ + ADD TO LIST） | star/列表 mutation | ✅ | addStar/removeStar/updateUserListsForItem | ADD TO LIST 未星先自动 star |
 | 22 | Filter Activity | 六类勾选行 + SAVE | 类型设置持久化 | ⚠️ | - | 勾选存 Preferences；仅 merged PR 近似 Follows；Recommendations 行图标为**有意偏离官方**（见 §七） |
 | 23 | 页面 | Dark 模式 | 双套令牌 | ✅ | - | 无新增硬编码色值 |
@@ -127,7 +127,7 @@ query ExploreRepoMeta {
 | 官方个性化 Activity feed | 无公开 API | REST received_events（关注者+watch 仓库事件）近似，仅取 merged PR 事件，repo+number 去重、上限 10 条 |
 | 官方 Trending 算法 | 无公开 API | REST search 近似（pushed:>N 近 N 天活跃按星排序） |
 | 官方 Awesome Lists 精选 | 编辑内容无 API | REST search topic:awesome-list 按星近似 |
-| 「今日获星」/「本周获星」窗口 | 增量星数无公开 API | 窗口=pushed:>N 近 N 天活跃近似（created 窗口实测筛空，2026-09-07 Chinese 0 条）；★ 文案 「N today」取总数；默认 Today（与官方一致） |
+| 「今日获星」/「本周获星」窗口 | 增量星数无公开 API | 窗口=pushed:>N 近 N 天活跃近似（created 窗口实测筛空，2026-09-07 Chinese 0 条）；★ 文案**只显示仓库总星数、不标注 today**（2026-09-11 修正：原「N today」取总数属错误表述）；默认 Today（与官方一致） |
 | Activity 六类（Announcements/Releases/Stars/Repositories/Follows/Recommendations） | 其余五类无公开数据源 | Filter Activity 页完整实现（勾选+SAVE 持久化）；内容侧仅 merged PR 动态（近似 Follows），关闭 Follows 后 Activity 区为空 |
 | 语言/口语筛选列表 | 官方 App 走内部端点 | 语言=GET /languages 全量 833 项（免认证）+ linguist 色表 751 项 + 常用 7 项置顶；口语=内置 184 项；选中后服务端 qualifier 过滤，非纯客户端 |
 | 横幅图 | 官方沿用仓库社交预览图 | repository.openGraphImageUrl（1200x630 social preview，按比例贴宽高自适应）；无自定义预览的仓库不显示横幅 |

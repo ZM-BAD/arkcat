@@ -217,15 +217,8 @@ export struct IssuesListView {
       .margin({ right: 6 })
   }
 
-  /** 打开 Issue 详情（标题行与 meta 行的可点区域共用） */
-  private openIssue(issue: IssueSummary): void {
-    this.pathStack.pushPathByName('issueDetail', `${this.owner}/${this.name}/${issue.number}`);
-  }
-
   @Builder
   issueCard(issue: IssueSummary) {
-    // 可点区域拆为同层兄弟：作者单元格 → Profile，标题行/其余 meta → 详情。
-    // 规避 ClickEvent 无 stopPropagation 的冒泡误触（沿 010 批定案拆分模式）。
     Column({ space: 6 }) {
       Row() {
         OctIcon({ res: this.issueIcon(issue), iconSize: 22, iconColor: this.issueColor(issue) })
@@ -243,57 +236,44 @@ export struct IssuesListView {
           .margin({ left: 8 })
       }
       .width('100%')
-      .onClick(() => this.openIssue(issue))
 
       // 标签数量不定：芯片组包横向 Scroll 防溢出卡片，时间锚定右侧不随滚动
       Row({ space: 8 }) {
-        if (issue.authorLogin !== '') {
-          Text(`@${issue.authorLogin}`)
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-            .onClick(() => {
-              this.pathStack.pushPathByName('userProfile', issue.authorLogin);
-            })
-        }
-        Row({ space: 8 }) {
-          Scroll() {
-            Row({ space: 8 }) {
-              ForEach(issue.labels, (label: string) => {
-                this.labelChip(label)
-              }, (label: string) => label)
-              if (issue.commentCount > 0) {
-                Row({ space: 4 }) {
-                  OctIcon({ res: $r('app.media.oct_comment_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
-                  Text(`${issue.commentCount}`)
-                    .fontSize($r('app.float.caption_font_size'))
-                    .fontColor($r('app.color.text_secondary'))
-                }
-                .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-                .borderRadius(12)
-                .backgroundColor($r('app.color.chip_bg'))
+        Scroll() {
+          Row({ space: 8 }) {
+            ForEach(issue.labels, (label: string) => {
+              this.labelChip(label)
+            }, (label: string) => label)
+            if (issue.commentCount > 0) {
+              Row({ space: 4 }) {
+                OctIcon({ res: $r('app.media.oct_comment_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
+                Text(`${issue.commentCount}`)
+                  .fontSize($r('app.float.caption_font_size'))
+                  .fontColor($r('app.color.text_secondary'))
               }
-              if (issue.linkedPrCount > 0) {
-                Row({ space: 4 }) {
-                  OctIcon({ res: $r('app.media.oct_git_pull_request_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
-                  Text(`${issue.linkedPrCount}`)
-                    .fontSize($r('app.float.caption_font_size'))
-                    .fontColor($r('app.color.text_secondary'))
-                }
-                .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-                .borderRadius(12)
-                .backgroundColor($r('app.color.chip_bg'))
-              }
+              .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+              .borderRadius(12)
+              .backgroundColor($r('app.color.chip_bg'))
             }
-            .constraintSize({ minWidth: '100%' })
+            if (issue.linkedPrCount > 0) {
+              Row({ space: 4 }) {
+                OctIcon({ res: $r('app.media.oct_git_pull_request_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
+                Text(`${issue.linkedPrCount}`)
+                  .fontSize($r('app.float.caption_font_size'))
+                  .fontColor($r('app.color.text_secondary'))
+              }
+              .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+              .borderRadius(12)
+              .backgroundColor($r('app.color.chip_bg'))
+            }
           }
-          .scrollBar(BarState.Off)
-          .layoutWeight(1)
-          Text(this.timeText(timeParts(issue.createdAt, Date.now())))
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
+          .constraintSize({ minWidth: '100%' })
         }
+        .scrollBar(BarState.Off)
         .layoutWeight(1)
-        .onClick(() => this.openIssue(issue))
+        Text(this.timeText(timeParts(issue.createdAt, Date.now())))
+          .fontSize($r('app.float.caption_font_size'))
+          .fontColor($r('app.color.text_secondary'))
       }
       .width('100%')
     }
@@ -302,6 +282,9 @@ export struct IssuesListView {
     .backgroundColor($r('app.color.card_background'))
     .width('100%')
     .margin({ bottom: 8 })
+    .onClick(() => {
+      this.pathStack.pushPathByName('issueDetail', `${this.owner}/${this.name}/${issue.number}`);
+    })
   }
 
   build() {
