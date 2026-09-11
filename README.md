@@ -59,7 +59,7 @@
 - **Home**: My Work workspace (Issues / PRs / Discussions / Projects / Top Repos / Organizations / Starred — editable order & visibility)
 - **Inbox**: notification inbox (type / repository / view filters, read state, merged-PR detection)
 - **Explore**: Trending / Awesome (language, date window, spoken-language filters)
-- **Copilot**: AI assistant (OAuth Device Flow authorization, sessions & chat UI)
+- **Profile**: account page (repositories / starred / organizations, multi-account switching; bottom-bar avatar entry)
 - **Repositories**: detail, PR / Commits / Releases lists, Contributors / Watchers / License, README & Markdown rendering, Stargazers / Forks, achievement badges
 - **Pull Requests**: detail, Files Changed (diff hunks, line numbers toggle, reviewed checkboxes, file comments), commits, Checks / Reviews
 - **Issues**: detail, comments, reactions (emoji panel / Reactees), label filters

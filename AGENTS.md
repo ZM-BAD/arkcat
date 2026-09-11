@@ -82,7 +82,8 @@ CI（GitHub Actions）：**spec-lint** / **commit-lint** / **structure-check**�
 
 ## 六、设计理念
 
-> **「体验级复刻」**——复刻官方 App 的信息架构、页面层级、导航模式、交互反馈逻辑；不复刻平台特有控件样式。底层全部原生 ArkUI。
+> **「合规优先的体验级复刻」**（用户 2026-09-11 定调）——在满足中国法律法规与上架合规要求（App 备案、内容与生成式 AI 合规、网络可达性等）的前提下，**最大程度还原**官方 App 的信息架构、页面层级、导航模式与交互反馈逻辑；不复刻平台特有控件样式。底层全部原生 ArkUI。
+> **偏离纪律**：因**合规**或平台能力差异必须偏离官方的，在对应 Spec 第七章记录理由与替代方案；**无合规理由的偏离应避免**——以「还原度」为默认，而不是以「少做事」为默认。
 > **样式红线**：页面骨架必须复用现有模式（自绘 AppBar/RepoCard/列表卡等），禁自创布局风格；图标必须走 OctIcon 组件；颜色一律官方 token（resources color.json / PrimerTokens），`entry/src/main/ets` 禁止直接写 `#RRGGBB`（`scripts/check-hardcoded-colors.py` 门禁，数据色板文件豁免）。
 > **Review 规则**：Primer 样式逐条核对清单见 [docs/primer-review-rules.md](docs/primer-review-rules.md)——〔机械〕条目下沉 `scripts/` 门禁，〔人工〕条目 code review 走查。
 

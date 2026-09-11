@@ -18,7 +18,7 @@ GitHub 客户端启动后默认展示的首页 Tab，位于底部导航最左侧
 2. 用户卡片区：头像 + 用户名 + bio + followers
 3. 贡献日历：绿色方块热力图（横向滑动全年）
 4. Activity Feed 动态流：动态卡（repo/name + PR 标题 + 状态/时间），无限滚动
-5. 底部导航：Home / Inbox / Explore / Copilot
+5. 底部导航：Home / Inbox / Explore / 我的主页 四个 Tab（tab4 图标为账号头像，见 Spec 060）
 
 ---
 

@@ -3,6 +3,7 @@
  * 头卡组件化于 ProfileHeaderCard、导航入口组组件化于 ProfileNavRows，本页保留状态与 Follow 逻辑。
  * Packages 无公开 API 不展示，Projects 按边界跳过；··· 菜单提供 Follow/Unfollow；
  * 贡献日历与内嵌切换按官方 App 对齐移除（Spec 035）。
+ * Spec 060：本页复用为底栏 tab4 根页（当前账号，showBack=false）；他人主页仍由 userProfile 路由压栈进入。
  */
 import { promptAction } from '@kit.ArkUI';
 import { UserProfile } from '../models/ProfileModels';
@@ -33,6 +34,10 @@ export struct ProfileView {
   /** Spec 049a：账号列表与切换回调（长按头像快捷切换器） */
   @Param accounts: AccountInfo[] = [];
   @Param currentLogin: string = '';
+  /** Spec 060：false = 作为底栏 tab4 根页（无上级页可返回，隐藏返回钮） */
+  @Param showBack: boolean = true;
+  /** Spec 060：重新进入 Tab / 从二级页返回的刷新泵（Index 自增，驱动静默重取） */
+  @Param refreshTick: number = 0;
   @Event onSwitchAccount: (login: string) => void = (login: string) => {};
   @Event onAddAccount: () => void = (): void => {};
   @Local profile: UserProfile | null = null;
@@ -47,25 +52,50 @@ export struct ProfileView {
   @Local isRefreshing: boolean = false;
   /** 勋章图片 URL 列表（官方 CDN，AchievementsService 抓取） */
   @Local achievements: string[] = [];
+  /** 请求代际：切号/换 login 后旧响应直接丢弃（防旧账号数据覆盖新账号） */
+  private reqSeq: number = 0;
 
   aboutToAppear(): void {
     this.refresh();
   }
 
-  /** 切换账号后 token 更新（@Param 单向同步）→ 用新 token 重拉本页数据 */
+  /** 切换账号后 token 更新（@Param 单向同步）→ 先清旧身份内容再用新 token 重拉
+   *  （Spec 060：tab4 是常驻根页，不先清空则切号瞬间会显示上一个账号的数据） */
   @Monitor('token')
   onTokenChanged(): void {
+    this.profile = null;
+    this.achievements = [];
+    this.orgCount = 0;
+    this.followMenuItems = [];
     this.refresh();
   }
 
-  private refresh(): void {
+  /** Spec 060：Tab 重新进入 / 从二级页返回的静默重取（Index 泵 refreshTick） */
+  @Monitor('refreshTick')
+  onRefreshTick(): void {
+    this.refresh(true);
+  }
+
+  /**
+   * 拉取本页数据。
+   * @param silent 静默重取（重新进入 Tab / 从二级页返回）：保留当前内容与错误态、不回退到 loading，
+   *               失败也不接管页面；首次加载、下拉刷新与重试走非静默分支。
+   */
+  private refresh(silent: boolean = false): void {
     if (this.login === '') {
       return;
     }
-    this.loading = true;
-    this.errorMsg = '';
+    this.reqSeq += 1;
+    const seq: number = this.reqSeq;
+    if (!silent) {
+      this.loading = true;
+      this.errorMsg = '';
+    }
     ProfileService.fetchProfile(this.token, this.login)
       .then((profile: UserProfile) => {
+        if (seq !== this.reqSeq) {
+          return;
+        }
         this.profile = profile;
         this.rebuildFollowMenu();
         this.loading = false;
@@ -73,20 +103,34 @@ export struct ProfileView {
         // 组织计数独立拉取（review G8）
         ProfileService.fetchOrgCount(this.token, this.login)
           .then((count: number) => {
+            if (seq !== this.reqSeq) {
+              return;
+            }
             this.orgCount = count;
           });
       })
       .catch((e: Error) => {
-        this.errorMsg = e.message;
-        this.loading = false;
+        if (seq !== this.reqSeq) {
+          return;
+        }
         this.isRefreshing = false;
+        if (!silent) {
+          this.errorMsg = e.message;
+          this.loading = false;
+        }
       });
     // 勋章无 GraphQL 字段：HTML 抓取独立于主查询，失败仅隐藏勋章行
     AchievementsService.fetch(this.login)
       .then((urls: string[]) => {
+        if (seq !== this.reqSeq) {
+          return;
+        }
         this.achievements = urls;
       })
       .catch(() => {
+        if (seq !== this.reqSeq) {
+          return;
+        }
         this.achievements = [];
       });
   }
@@ -154,20 +198,22 @@ export struct ProfileView {
   build() {
     Column() {
       Row() {
-        Stack() {
-          OctIcon({
-            res: $r('app.media.oct_arrow_left_24'),
-            iconSize: 20,
-            iconColor: $r('app.color.text_primary')
+        if (this.showBack) {
+          Stack() {
+            OctIcon({
+              res: $r('app.media.oct_arrow_left_24'),
+              iconSize: 20,
+              iconColor: $r('app.color.text_primary')
+            })
+          }
+          .width(44)
+          .height(44)
+          .accessibilityDescription($r('app.string.a11y_back'))
+          .focusable(true)
+          .onClick((): void => {
+            this.pathStack.pop();
           })
         }
-        .width(44)
-        .height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
-        .focusable(true)
-        .onClick((): void => {
-          this.pathStack.pop();
-        })
         Blank()
         // 🔗 分享：系统分享能力后续 Spec（Spec 005 边界；右侧组统一 44 触点与左侧返回对称）
         Stack() {
@@ -179,24 +225,33 @@ export struct ProfileView {
         .onClick(() => {
           promptAction.showToast({ message: $r('app.string.home_feature_coming') });
         })
-        // ⚙ 设置：进入 Settings 页（Spec 014）
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_gear_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
-        }
-        .width(44)
-        .height(44)
-        .padding(6)
-        .onClick(() => {
-          this.pathStack.pushPathByName('settings', this.login);
-        })
-        // ··· 菜单：Follow/Unfollow（自关注时隐藏，见 Spec 边界）
-        if (this.profile !== null && !isSelfProfile(this.profile.viewerLogin, this.profile.user.login)) {
+        // ⚙ 设置：进入 Settings 页（Spec 014）——仅本人主页显示（他人主页顶栏 = 分享 + ⋮，与官方一致）
+        if (this.login !== '' && this.login === this.currentLogin) {
           Stack() {
-            OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 20, iconColor: $r('app.color.text_primary') })
+            OctIcon({ res: $r('app.media.oct_gear_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
           }
           .width(44)
           .height(44)
           .padding(6)
+          .onClick(() => {
+            this.pathStack.pushPathByName('settings', this.login);
+          })
+        }
+        // ⋮ 菜单：Follow/Unfollow——仅他人主页显示；竖三点走全库惯例（kebab-horizontal + rotate 90），头部用蓝色
+        if (this.profile !== null && !isSelfProfile(this.profile.viewerLogin, this.profile.user.login)) {
+          Stack() {
+            OctIcon({
+              res: $r('app.media.oct_kebab_horizontal_16'),
+              iconSize: 18,
+              iconColor: $r('app.color.link_blue')
+            })
+            .rotate({ angle: 90 })
+          }
+          .width(44)
+          .height(44)
+          .padding(6)
+          .accessibilityDescription($r('app.string.a11y_more'))
+          .focusable(true)
           .bindMenu(this.followMenuItems)
         }
       }

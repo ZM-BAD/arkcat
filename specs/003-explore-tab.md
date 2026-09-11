@@ -23,7 +23,7 @@
 2. Discover 区：入口块（Trending Repositories、Awesome Lists）
 3. Activity 信息流：推荐仓库卡流（作者/星数/语言/STAR 按钮；无动态卡、无右上设置）
 4. Topics 区：标签 chip（harmonyos、arkts 等）
-5. 底部导航：Home / Inbox / Explore / Copilot
+5. 底部导航：Home / Inbox / Explore / 我的主页 四个 Tab（tab4 图标为账号头像，见 Spec 060）
 
 ---
 

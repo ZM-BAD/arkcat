@@ -2,7 +2,7 @@
 
 > BFS Level: 1
 > 关联截图: 底部导航第四个 Tab
-> 状态: deprecated（由 Spec 058/059 取代：058 重写本页，059 以 GitHub 官方 chat/completions 实现真实对话与本地会话）
+> 状态: deprecated（先由 058/059 重写为实现，后由 Spec 060 整体移除：Copilot 上架合规四项无解）
 
 ---
 

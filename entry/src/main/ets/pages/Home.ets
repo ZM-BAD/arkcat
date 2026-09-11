@@ -1,6 +1,6 @@
 /**
  * Home Tab（Spec 013）：对齐 GitHub 官方布局。
- * Header（Home 标题/搜索/刷新/新建/头像）+ My Work 七行入口
+ * Header（Home 标题/搜索/刷新/新建）+ My Work 七行入口
  * + Favorites 空态 + Shortcuts 引导。
  * 入口列表页与 Favorites 添加流程属后续 Spec，当前点击提示。
  */
@@ -35,6 +35,8 @@ export struct HomeView {
   @Local errorMsg: string = '';
   @Local workStore: WorkConfigStore = WorkConfigStore.instance;
   @Param workVersion: number = 0;
+  /** Spec 060：viewer 探针结果上报（底栏 tab4 头像复用同一次请求，不再单独发 viewer 查询） */
+  @Event onViewer: (avatarUrl: string) => void = (avatarUrl: string) => {};
   @Local sectionsVersion: number = 0;
 
   aboutToAppear(): void {
@@ -55,16 +57,26 @@ export struct HomeView {
   private refresh(): void {
     this.loading = true;
     this.errorMsg = '';
+    // 请求代际：切号后旧账号的响应直接丢弃（否则底栏 tab4 头像会被上一个账号回填）
+    const reqToken: string = this.token;
     HomeService.fetchViewerBasic(this.token)
       .then((viewer: ViewerBasic) => {
+        if (reqToken !== this.token) {
+          return;
+        }
         this.viewer = viewer;
         this.loading = false;
         this.isRefreshing = false;
+        this.onViewer(viewer.avatarUrl);
       })
       .catch((e: Error) => {
+        if (reqToken !== this.token) {
+          return;
+        }
         this.errorMsg = friendlyError(this.getUIContext(), e);
         this.loading = false;
         this.isRefreshing = false;
+        this.onViewer('');
       });
   }
 
@@ -132,17 +144,6 @@ export struct HomeView {
           promptAction.showToast({ message: $r('app.string.home_new_coming') });
         })
         .padding(6)
-        if (this.viewer !== null) {
-          Image(this.viewer.avatarUrl)
-            .width(20)
-            .height(20)
-            .borderRadius(12)
-            .backgroundColor($r('app.color.heat_empty'))
-            .margin({ left: 4 })
-            .onClick(() => {
-              this.pathStack.pushPathByName('userProfile', this.viewer?.login ?? '');
-            })
-        }
       }
       .width('100%')
       .height(56)

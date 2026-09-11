@@ -1,8 +1,8 @@
 /**
- * 应用内浏览器页（Spec 059）：About / 页脚外链（GitHub Docs、GitHub 设置）在 App 内打开。
+ * 应用内浏览器页：外链（GitHub Docs、GitHub 设置等）在 App 内打开。
  * ArkWeb 加载外部页面，手机宽度即移动端版式（docs.github.com 响应式）；
- * 自绘 AppBar（返回 + 标题，标题由调用方给：About 行=行文案、页脚链接=Copilot）、
- * 加载中顶部细进度条、滚动出顶部阴影。
+ * 自绘 AppBar（返回 + 标题，标题由调用方给）、加载中顶部细进度条、滚动出顶部阴影。
+ * 注：当前唯一入口（Copilot settings 页脚）随 Spec 060 移除，页面保留待 Settings 法务/About 行接入。
  */
 import { webview } from '@kit.ArkWeb';
 import { OctIcon } from '../components/OctIcon';

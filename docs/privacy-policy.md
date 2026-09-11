@@ -23,7 +23,7 @@ ArkCat 由个人开发者 **周铭** 开发与维护。如对本政策有疑问�
 | --- | --- | --- | --- |
 | GitHub 访问令牌 | 你自行创建的 Personal Access Token 或设备授权令牌 | 代表你调用 GitHub API | 设备本地，经系统 AssetStoreKit 加密存储 |
 | 账号展示信息 | 登录名、头像、显示名 | 在界面展示当前账号 | 设备本地缓存 |
-| 应用设置 | 主题、语言、Copilot 用量本地记账、工作区偏好 | 保持你的使用偏好 | 设备本地（应用私有目录） |
+| 应用设置 | 主题、语言、工作区偏好 | 保持你的使用偏好 | 设备本地（应用私有目录） |
 
 **我们不收集**：设备标识符、位置、通讯录、相册、麦克风、剪贴板内容；不进行用户画像；应用内不含任何广告、统计或行为分析。
 
@@ -46,7 +46,6 @@ ArkCat 由个人开发者 **周铭** 开发与维护。如对本政策有疑问�
 | `api.github.com`、`github.com` | 账号授权、仓库、议题、合并请求、通知等数据 |
 | `github.githubassets.com`、`raw.githubusercontent.com`、`docs.github.com` | 图标、图片与文档资源 |
 | `*.githubusercontent.com`（含 `avatars`/`camo`/`user-images`/`objects` 等子域） | 头像、正文内嵌图片、Release 资产下载资源 |
-| `api.githubcopilot.com` | 仅当你主动使用 Copilot 功能且已自行订阅时，用于发送你输入的提示词 |
 
 由于上述服务器位于境外，**使用本应用即表示你知悉并同意相关信息会被传输至境外**。若你不同意，请不要登录使用。
 
@@ -54,7 +53,7 @@ ArkCat 由个人开发者 **周铭** 开发与维护。如对本政策有疑问�
 
 ### 五、第三方 SDK
 
-本应用**未集成任何第三方 SDK**（无统计、无广告、无推送、无支付、无第三方登录 SDK）。Copilot 功能通过 GitHub 官方接口实现，不引入第三方库。
+本应用**未集成任何第三方 SDK**（无统计、无广告、无推送、无支付、无第三方登录 SDK）。
 
 ### 六、数据安全与保存期限
 
@@ -104,7 +103,7 @@ ArkCat is developed and maintained by an individual developer, **Zhou Ming**. Fo
 | --- | --- | --- | --- |
 | GitHub access token | The Personal Access Token you create yourself, or a device-flow token | To call the GitHub API on your behalf | On-device, encrypted with the system AssetStoreKit |
 | Account display info | Login name, avatar, display name | To show the current account in the UI | Cached on-device |
-| App settings | Theme, language, local Copilot usage ledger, workspace preferences | To keep your preferences | On-device, app-private directory |
+| App settings | Theme, language, workspace preferences | To keep your preferences | On-device, app-private directory |
 
 **We do not collect**: device identifiers, location, contacts, photos, microphone input or clipboard content. We do not profile users, and the app contains no advertising, analytics or behavioural tracking.
 
@@ -127,7 +126,6 @@ Your device connects directly to the following domains, all operated by GitHub, 
 | `api.github.com`, `github.com` | Account authorisation, repositories, issues, pull requests, notifications |
 | `github.githubassets.com`, `raw.githubusercontent.com`, `docs.github.com` | Icons, images and documentation assets |
 | `*.githubusercontent.com` (including the `avatars`, `camo`, `user-images` and `objects` subdomains) | Avatars, inline images in rendered content, and Release asset downloads |
-| `api.githubcopilot.com` | Only when you actively use the Copilot feature with your own subscription, to send the prompts you type |
 
 Because those servers are located outside mainland China, **by using ArkCat you acknowledge and agree that the relevant information will be transferred outside mainland China**. If you do not agree, please do not sign in.
 
@@ -135,7 +133,7 @@ Apart from GitHub, ArkCat does not share, sell or transfer your information to a
 
 ### 5. Third-party SDKs
 
-ArkCat **integrates no third-party SDKs** (no analytics, advertising, push, payment or third-party login SDK). The Copilot feature is implemented on top of GitHub's official API.
+ArkCat **integrates no third-party SDKs** (no analytics, advertising, push, payment or third-party login SDK).
 
 ### 6. Security and retention
 

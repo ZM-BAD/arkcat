@@ -34,7 +34,7 @@
    - ▤ Organizations with "q"
    - → Jump to "q"
 5. qualifier chips（键盘弹起时底部）：repo / user / org / path / symbol / language / content …（← 键盘弹起时底部 chips）
-6. 底部 Tab：Home（蓝，选中态）/ Inbox / Explore / Copilot（← 官方保留底部 Tab，见边界）
+6. 底部 Tab：Home（蓝，选中态）/ Inbox / Explore + 用户头像入口（← 官方保留底部 Tab，见边界）
 
 ---
 

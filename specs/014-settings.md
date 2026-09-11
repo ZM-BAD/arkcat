@@ -13,7 +13,6 @@
 
 - **Notifications**：Notification Options
 - **General**：Theme（Follow system）/ Code Options / Language（English）/ Accounts / App Lock
-- **Subscriptions**：Copilot（Copilot Free）
 - **More Options**：Share Feedback / Get Help / Terms of Service / Privacy Policy & Analytics / Open Source Libraries / Sign Out
 - 底部版本号
 
@@ -26,9 +25,8 @@
 1. 顶部 App Bar：← 返回 + Settings 标题（← 顶栏（返回））
 2. Notifications 分组：分组标题 + Notification Options（> 行）
 3. General 分组：Theme（当前值 Follow system）/ Code Options / Language（当前值 English）/ Accounts / App Lock
-4. Subscriptions 分组：Copilot（当前值 Copilot Free）
-5. More Options 分组：Share Feedback / Get Help / Terms of Service / Privacy Policy & Analytics / Open Source Libraries / Sign Out
-6. 底部：ArkCat v1.0.0 版本号
+4. More Options 分组：Share Feedback / Get Help / Terms of Service / Privacy Policy & Analytics / Open Source Libraries / Sign Out
+5. 底部：ArkCat v1.0.0 版本号
 
 ---
 
@@ -43,10 +41,9 @@
 | 5 | General | Language 行（English/简体中文） | 语言切换 | ✅ | `i18n.System.setAppPreferredLanguage` + preferences | 真功能（冷启动生效） |
 | 6 | General | Accounts 行 | 提示后续 | ⚠️ | — | — |
 | 7 | General | App Lock 行 | 提示后续 | ⚠️ | — | — |
-| 8 | Subscriptions | Copilot 行（Copilot Free） | 纯展示 | ✅ 纯 UI | — | — |
-| 9 | More Options | Share Feedback/Get Help/Terms/Privacy/Open Source | 浏览器打开对应页 | ⚠️ | URL 打开 | 点击提示后续 |
-| 10 | More Options | Sign Out | 清除 Token → 回 TokenSetup | ✅ | `TokenStore.remove` | 真功能 |
-| 11 | 底部 | 版本号 | 纯展示 | ✅ 纯 UI | — | ArkCat v1.0.0 |
+| 8 | More Options | Share Feedback/Get Help/Terms/Privacy/Open Source | 浏览器打开对应页 | ⚠️ | URL 打开 | 点击提示后续 |
+| 9 | More Options | Sign Out | 清除 Token → 回 TokenSetup | ✅ | `TokenStore.remove` | 真功能 |
+| 10 | 底部 | 版本号 | 纯展示 | ✅ 纯 UI | — | ArkCat v1.0.0 |
 
 ---
 

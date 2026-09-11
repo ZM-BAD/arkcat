@@ -21,9 +21,6 @@ import { ReactionGroup, REACTION_META, reactionEmoji, findReactionGroup, flipRea
 import { MarkdownEdit } from '../../../main/ets/utils/MarkdownEdit';
 import { parsePollResponse, OAuthPollState } from '../../../main/ets/services/OAuthService';
 import { accountsToStorage, accountsFromStorage, legacyToAccount, nextAddResult, AccountInfo } from '../../../main/ets/services/AccountStore';
-import { parseChatResponse, isFreeModelAllowed, buildChatPayload, CopilotTurn, parseCopilotQuota, usedPercentOf } from '../../../main/ets/services/CopilotService';
-import { copilotSessionsToStorage, copilotSessionsFromStorage } from '../../../main/ets/utils/CopilotStore';
-import { ChatMessage, ChatSession } from '../../../main/ets/models/CopilotModels';
 import { Json } from '../../../main/ets/utils/Json';
 
 type JsonMap = Record<string, Object>;
@@ -1028,53 +1025,6 @@ export default function logicTest(testsuiteName: string) {
       const five: AccountInfo[] = [mk('a'), mk('b'), mk('c'), mk('d'), mk('e')];
       expect(nextAddResult(five, 'f')).assertEqual(2);
       expect(nextAddResult(five, 'a')).assertEqual(1);
-    });
-    it('copilot_parseChatResponse', 0, () => {
-      const message: JsonMap = { 'content': 'hello' };
-      const choice: JsonMap = { 'message': message };
-      const ok = JSON.stringify({ 'choices': [choice] } as JsonMap);
-      expect(parseChatResponse(ok)).assertEqual('hello');
-      const emptyChoices: JsonMap = { 'choices': [] };
-      expect(parseChatResponse(JSON.stringify(emptyChoices))).assertEqual('');
-      expect(parseChatResponse('not json')).assertEqual('');
-    });
-    it('copilot_isFreeModelAllowed', 0, () => {
-      expect(isFreeModelAllowed('gpt-4o-mini-2024-07-18')).assertTrue();
-      expect(isFreeModelAllowed('claude-opus-4.7')).assertFalse();
-    });
-    it('copilot_buildChatPayload_whitelist', 0, () => {
-      const turn: CopilotTurn = { role: 'user', content: 'hi' };
-      const payload = JSON.parse(buildChatPayload([turn])) as JsonMap;
-      expect(Json.str(payload, 'model')).assertEqual('gpt-4o-mini-2024-07-18');
-    });
-    it('copilot_sessions_storage_roundtrip', 0, () => {
-      const message: ChatMessage = { id: 'm1', isUser: true, body: 'hi' };
-      const session: ChatSession = { id: 's1', title: 't', updatedAt: 'd', messages: [message] };
-      const restored = copilotSessionsFromStorage(copilotSessionsToStorage([session]));
-      expect(restored.length).assertEqual(1);
-      expect(restored[0].messages[0].body).assertEqual('hi');
-      expect(copilotSessionsFromStorage('bad json').length).assertEqual(0);
-    });
-    it('copilot_parseQuota', 0, () => {
-      const chat: JsonMap = { 'entitlement': 200, 'remaining': 197, 'percent_remaining': 98.9 };
-      const completions: JsonMap = { 'entitlement': 2000, 'remaining': 2000, 'percent_remaining': 100 };
-      const snapshots: JsonMap = { 'chat': chat, 'completions': completions };
-      const body: JsonMap = { 'quota_snapshots': snapshots };
-      const quota = parseCopilotQuota(JSON.stringify(body));
-      if (quota === null) {
-        expect(false).assertTrue();
-        return;
-      }
-      expect(quota.chatUsedPercent).assertEqual(1);
-      expect(quota.completionsUsedPercent).assertEqual(0);
-      expect(quota.chatRemaining).assertEqual(197);
-      expect(quota.chatEntitlement).assertEqual(200);
-      expect(parseCopilotQuota('not json')).assertEqual(null);
-      expect(usedPercentOf(null)).assertEqual(0);
-      const zeroRemaining: JsonMap = { 'percent_remaining': 0 };
-      expect(usedPercentOf(zeroRemaining)).assertEqual(100);
-      const overRange: JsonMap = { 'percent_remaining': 120 };
-      expect(usedPercentOf(overRange)).assertEqual(0);
     });
   });
 }

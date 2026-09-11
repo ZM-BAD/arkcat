@@ -35,7 +35,7 @@ MateBook Pro（2in1 窗口/触控）
 | # | 位置 | 元素 | 功能 | 可行性 | 接口 | 备注 |
 | --- | ------ | ------ | ------ | -------- | ------ | ------ |
 | 1 | 全局 | accessibility 基线 | 组件的可访问性标注（accessibilityText/description/role/selected/focused/checkable）全量补齐（特别是列表行、按钮、tab、toast） | ✅ | ArkUI a11y API | 现状 64 处 → 覆盖所有交互元素 |
-| 2 | 全局 | 大字体适配 | 系统字体缩放（设置字体倍率）下：标题/按钮/卡片行不裁切；Text 默认跟随（不强制 fixed 字号）；关键页人工走查 | ✅ | 系统字体与 layout 检查 | 验收阈值：系统字体 1.4× 下 RepoDetail/IssueDetail/Profile/Inbox/Copilot 无截断 |
+| 2 | 全局 | 大字体适配 | 系统字体缩放（设置字体倍率）下：标题/按钮/卡片行不裁切；Text 默认跟随（不强制 fixed 字号）；关键页人工走查 | ✅ | 系统字体与 layout 检查 | 验收阈值：系统字体 1.4× 下 RepoDetail/IssueDetail/Profile/Inbox 无截断 |
 | 3 | 全局 | 对比度校验 | 非 token 颜色零容忍；自定义色（labels 色、状态色）过 AA（4.5/1 文本、3/1 大字号） | ✅ | 颜色计算 util | labels 背景白/黑字自动判定（044 协作） |
 | 4 | 全局 | 状态播报 | 加载完成/内容变化/错误/写操作成功 announce（Toast 同步 announce） | ✅ | announce（ArkUI） | 列表刷新、表单提交、tabs 切换 |
 | 5 | 多设备 | 折叠屏适配 | 折叠状态/分屏：内容区最大宽限制（与官方 App 一致）；Mate X7 双屏不断行 | ⚠️ | 系统参数 | 双栏列表-详情（Master-Detail）仅平板；折叠内屏不做 |

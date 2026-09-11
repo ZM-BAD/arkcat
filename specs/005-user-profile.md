@@ -11,7 +11,7 @@
 
 用户个人主页。对照官方 App 布局：
 
-- **顶栏**：← 返回 + 分享/设置图标
+- **顶栏**：← 返回 + 分享 + 第三个操作（**本人主页 = ⚙ 设置**；**他人主页 = ⋮ 关注菜单**）
 - **Header 卡**：头像/名字/@login + 状态行（Focussing·编辑）+ bio + 元信息（位置/邮箱/链接/关注数）
 - **Pinned 区**：横滑卡片（单行）
 - **计数入口**：Repositories / Organizations / Starred 三行导航入口（含计数），点击进入独立列表页（无展开视图）
@@ -20,7 +20,7 @@
 
 ## 二、整体 UI 结构
 
-1. 顶部 App Bar：← 返回 + 用户名标题（@ZM-BAD）+ 🔗 分享 + ⚙ 设置（← 返回/分享/设置）
+1. 顶部 App Bar：← 返回 + 🔗 分享 + 第三个操作——**本人主页为 ⚙ 设置**、**他人主页为 ⋮ 关注/取关菜单**（无用户名标题，身份信息在 Header 卡内）
 2. Header 卡：头像 + 名字（🖼 周铭）+ @ZM-BAD + 状态行 + bio + 元信息行（← 状态行+编辑）
    - 状态行：⚡ Focusing + ✏ 编辑笔
    - bio：Backend developer...
@@ -36,7 +36,7 @@
 | --- | ------ | ------ | ------ | -------- | ------ | ------ |
 | 1 | 顶栏左 | ← 返回 | 回退 | ✅ 纯 UI | — | — |
 | 2 | 顶栏右 | 🔗 分享 | 分享用户主页 | ⚠️ | — | 点击提示（系统分享 API 后续） |
-| 3 | 顶栏右 | ⚙ 设置 | 进入 Settings 页 | ✅ | — | 新路由 settings |
+| 3 | 顶栏右 | ⚙ 设置 | 进入 Settings 页 | ✅ | — | 仅**本人**主页显示（新路由 settings） |
 | 4 | Header | 头像/名字/@login | 纯展示 | ✅ | `user.avatarUrl/name/login` | — |
 | 5 | Header | 状态行（emoji+message+编辑笔） | 观众可见状态 | ✅ | `user.status { emoji message }` | 编辑笔仅视图 |
 | 6 | Header | bio | 纯展示 | ✅ | `user.bio` | — |
@@ -45,7 +45,7 @@
 | 9 | Pinned 区 | 横滑仓库卡（单行） | 打开仓库 | ✅ | `user.pinnedItems` | Scroll+Row 横向滚动 |
 | 10 | 计数入口 | Repositories/Organizations/Starred + 计数 | 进入对应列表页 | ✅ | `repositories.totalCount` / `starredRepositories.totalCount` / 独立 OrgCount 查询 | 导航 repositoriesList / orgList / starred |
 | 11 | 正文区 | Pinned 区 + 三导航行 | 内容区 | ✅ | 现有查询 | 无展开视图（原 Tab/展开式已废弃） |
-| 12 | ··· 菜单 | Follow/Unfollow | 关注动作 | ✅ | `user.viewerIsFollowing` + mutation | 保留原菜单 |
+| 12 | 顶栏右 | ⋮ 关注菜单 | Follow/Unfollow | ✅ | `user.viewerIsFollowing` + mutation | 仅**他人**主页显示；竖三点走全库惯例（`oct_kebab_horizontal_16` + rotate 90），头部用 `link_blue` |
 
 ---
 
@@ -83,7 +83,7 @@ query UserProfile($login: String!) {
 
 ## 六、TDD 验收标准
 
-- [x] 顶栏 share/gear 图标渲染，gear 进入 Settings 页（截图验证）
+- [x] 顶栏 share 图标渲染；本人主页 ⚙ 进入 Settings 页、他人主页显示蓝色 ⋮ 关注菜单（截图验证）
 - [x] 状态行、X 元信息行渲染，缺失字段隐藏（邮箱空值隐藏）
 - [x] Pinned 单行横滑卡片
 - [x] Repositories/Organizations/Starred 三计数入口渲染且计数正确（8/0/93 实测）

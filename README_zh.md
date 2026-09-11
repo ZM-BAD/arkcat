@@ -59,7 +59,7 @@
 - **Home**：My Work 分区工作区（Issues / PRs / Discussions / Projects / Top Repos / Organizations / Starred，支持编辑排序与可见性）
 - **Inbox**：通知收件箱（类型 / 仓库 / 视图筛选、阅读态、合并 PR 检测）
 - **Explore**：Trending / Awesome（语言、时间窗、口语筛选）
-- **Copilot**：AI 助手（OAuth Device Flow 授权、会话与聊天界面）
+- **个人主页**：账号页（仓库 / 星标 / 组织，多账号切换；底栏头像入口）
 - **仓库**：详情、PR / Commits / Releases 列表、Contributors / Watchers / License、README 与 Markdown 渲染、Stargazers / Forks、成就徽章
 - **PR**：详情、Files Changed（diff hunk、行号开关、Reviewed 勾选、文件评论）、提交列表、Checks / Reviews
 - **Issue**：详情、评论、反应（emoji 面板 / Reactees）、标签筛选

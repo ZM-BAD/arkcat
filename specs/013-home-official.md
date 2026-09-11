@@ -11,7 +11,7 @@
 
 对照 GitHub 官方 App 的 Home Tab 截图，将 ArkCat 首页从「用户卡片 + 贡献日历 + Pinned 仓库」重构为官方布局：
 
-- **Header**：`Home` 标题 + 搜索/刷新/新建/头像 四个操作
+- **Header**：`Home` 标题 + 搜索/刷新/新建 三个操作（头像入口已迁至底栏，见 Spec 060）
 - **My Work**：Issues / Pull Requests / Discussions / Projects / Top Repositories / Organizations / Starred 七个彩色图标入口（点击进对应列表页，见 017-023）
 - **Favorites**：收藏仓库空态（说明文案 + `ADD FAVORITES` 按钮）
 - **Shortcuts**：彩色圆形图标行 + 引导文案 + `GET STARTED` 按钮
@@ -22,12 +22,12 @@
 
 ## 二、整体 UI 结构
 
-1. 顶部 Header：Home 标题 + 🔍 搜索 + 🔄 刷新 + ＋ 新建 + 🖼 头像（← Header：搜索/刷新/新建/头像）
+1. 顶部 Header：Home 标题 + 🔍 搜索 + 🔄 刷新 + ＋ 新建（← Header：搜索/刷新/新建）
 2. My Work 区块：区块标题 + ⋯ 更多菜单
    - 七个入口（44×44 圆角方块 + 主题色图标）：Issues / Pull Requests / Discussions / Projects / Top Repositories / Organizations / Starred
 3. Favorites 区块：标题 + 空态文案（Add favorite repositories ...）+ ADD FAVORITES 按钮
 4. Shortcuts 区块：标题 + 彩色图标行（⚡ ✓ ⑂ ❞ ▤ ⌂ ★ ▦）+ 引导文案（The things you need, one tap away / Fast access your lists of ...）+ GET STARTED 按钮
-5. 底部导航：Home / Inbox / Explore / Copilot 四个 Tab（🏠 🏔 🧭 🤖 图标）
+5. 底部导航：Home / Inbox / Explore / 我的主页 四个 Tab（🏠 🏔 🧭 + 头像；tab4 见 Spec 060）
 
 ---
 
@@ -39,21 +39,20 @@
 | 2 | Header 右 | 🔍 搜索 | 进入搜索页 | ✅ | —（纯 UI） | 复用 home_search_hint；路由见 015/046 |
 | 3 | Header 右 | 🔄 刷新 | 重新拉取 viewer 基础信息 | ✅ | `viewer { login name avatarUrl }` | — |
 | 4 | Header 右 | ＋ 新建 | 提示新建在后续版本提供 | ✅ | —（纯 UI） | — |
-| 5 | Header 右 | 头像 | 点击进入查看者个人主页 | ✅ | `viewer.avatarUrl/login` | 路由复用 userProfile |
-| 6 | My Work | 区块标题 + ⋯ | 打开编辑页（016） | ✅ | —（纯 UI） | 路由 editMyWork |
-| 7 | My Work | 七行彩色入口 | 点击进入对应列表（见 017-023） | ✅ | —（纯 UI） | 路由至对应列表页 |
-| 8 | Favorites | 空态文案 + ADD FAVORITES | 收藏仓库入口 | ✅ | —（纯 UI） | 添加流程后续 Spec；无数据即空态 |
-| 9 | Shortcuts | 图标行 + 文案 + GET STARTED | 快捷引导 | ✅ | —（纯 UI） | 点击提示 |
-| 10 | 底部 Tab | Inbox 未读蓝点 | 未读通知提示 | ✅ | REST `/notifications?all=false&per_page=1` | 复用 REST 兜底，从旧 Home 迁移 |
+| 5 | My Work | 区块标题 + ⋯ | 打开编辑页（016） | ✅ | —（纯 UI） | 路由 editMyWork |
+| 6 | My Work | 七行彩色入口 | 点击进入对应列表（见 017-023） | ✅ | —（纯 UI） | 路由至对应列表页 |
+| 7 | Favorites | 空态文案 + ADD FAVORITES | 收藏仓库入口 | ✅ | —（纯 UI） | 添加流程后续 Spec；无数据即空态 |
+| 8 | Shortcuts | 图标行 + 文案 + GET STARTED | 快捷引导 | ✅ | —（纯 UI） | 点击提示 |
+| 9 | 底部 Tab | Inbox 未读蓝点 | 未读通知提示 | ✅ | REST `/notifications?all=false&per_page=1` | 复用 REST 兜底，从旧 Home 迁移 |
 
-> 可行性比例声明：10/10 可行。
+> 可行性比例声明：9/9 可行。
 
 ---
 
 ## 四、核心 GraphQL 片段
 
 ```graphql
-# Header 头像/登录名（My Work 等区块为静态入口，无数据依赖）
+# Header 刷新用 viewer 基础信息（My Work 等区块为静态入口，无数据依赖）
 query ViewerBasic {
   viewer {
     login
@@ -83,7 +82,7 @@ query ViewerBasic {
 - [x] 测试 2：base 与 zh_CN 新增 string key 集合一致（脚本比对，100/100 对齐）
 - [x] 测试 3：grep 检查 Home.ets 无中文字符串字面量残留（i18n 约定）
 - [x] 测试 4：`devecocli build` 全量构建通过（含 clean 重编）
-- [x] 测试 5：模拟器实测——首页展示 My Work 七行入口、Favorites 空态、Shortcuts 引导（滚动截图验收）；头像点击进入个人主页 @ZM-BAD
+- [x] 测试 5：模拟器实测——首页展示 My Work 七行入口、Favorites 空态、Shortcuts 引导（滚动截图验收）；Header 三操作（搜索/刷新/新建）右对齐、无头像（头像入口迁至底栏，见 Spec 060）
 - [x] 测试 6：模拟器实测——Inbox Tab 蓝点逻辑接入（当前账号无未读通知，蓝点未显示，符合逻辑）
 - [x] 测试 7：`bash scripts/check-spec.sh` 通过
 

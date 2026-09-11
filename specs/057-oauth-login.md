@@ -1,7 +1,7 @@
 # Spec 057: OAuth 登录（Device Flow，与 PAT 并存）
 
 > BFS Level: 0
-> 关联截图: 无官方参考图——GitHub OAuth Device Flow 标准交互（gh CLI / Copilot CLI 同款流程）
+> 关联截图: 无官方参考图——GitHub OAuth Device Flow 标准交互（gh CLI 同款流程）
 > 上游 Spec: 无（TokenSetup 与 PAT 粘贴流程为初始脚手架既成实现，本 Spec 将其纳入范围）
 > 状态: implemented（2026-09-08 随 PR #41 合入 develop；端到端授权与 sign out 验收通过）
 
@@ -16,12 +16,11 @@ TokenSetup 登录页升级为「登录方式二选一」选择页：
   App 轮询拿到 token 自动进入主界面。
 - **兼容路径——PAT 粘贴**：既有 PAT 粘贴流程保留（本 Spec 纳入范围，非新增），折叠为次入口。
 
-背景（2026-09-06 调研定案，详见第七章）：classic PAT 无法访问 Copilot API；
-OAuth token（`gho_`）与 PAT 同 scope 体系、现有功能 100% 覆盖，且实测直通 Copilot API。
+背景（2026-09-06 调研定案，详见第七章）：OAuth token（`gho_`）与 PAT 同 scope 体系、
+现有功能 100% 覆盖，且用户无需手动去网页创建 token。
 故 OAuth 为主推登录方式；**并存期间 PAT 保留，待 OAuth 稳定后另行退役（不在本批）**。
 
-Scope 边界：本批只做鉴权层与登录 UI。不包含 Copilot 功能页（挂 Spec 004，另批）；
-不包含 PKCE web flow 浏览器回跳（二期增强，见边界）。
+Scope 边界：本批只做鉴权层与登录 UI；不包含 PKCE web flow 浏览器回跳（二期增强，见边界）。
 
 **11/11 可行**。
 
@@ -102,8 +101,7 @@ Headers: Authorization: Bearer <access_token>
 ```
 
 **Token 类型判定**：由前缀实时判定，无需新增存储——`gho_`=OAuth、
-`github_pat_`=fine-grained PAT、`ghp_`=classic PAT（后续 Copilot 批据此前缀
-判定 Copilot 可用性；本批只保证前缀信息可获取，即 token 字符串本身）。
+`github_pat_`=fine-grained PAT、`ghp_`=classic PAT（本批只保证前缀信息可获取，即 token 字符串本身）。
 
 **client_id 说明**：注册 OAuth App 为一次性管理动作（见第七章）；client_id 是公开
 标识非 secret，以常量入库 `services/OAuthService.ets`。Device Flow 全程无需
@@ -121,8 +119,7 @@ client_secret，符合纯端侧无后端架构。
 | PKCE web flow 浏览器回跳（点 Authorize 自动跳回 App） | GitHub 2025-07 起支持 PKCE，但鸿蒙浏览器对 302→自定义 scheme 的拉起行为需真机验证 | 本批不做；Device Flow 无回跳依赖、确定性最高，回跳作二期增强 |
 | PAT 退役 | 用户拍板：OAuth 稳定后再删 | 本批 PAT 与 OAuth 并存；退役另开批 |
 | 后台轮询可能被系统冻结 | 鸿蒙后台调度限制，浏览器停留期间 App 可能挂起 | 回前台不自动续跑（**未实现，提前规划中**）；等待页常驻展示状态，感知成功即自动进入。挂起期间轮询可能中断，需重新发起 |
-| Copilot 功能解锁 | 功能开发与鉴权解耦 | 本批仅落地 token（`gho_` 可被 Copilot 批复用），Copilot 页另批 |
-| 设置页展示当前登录方式 | 范围收口 | 本批不做；随 Copilot 批或设置批补充 |
+| 设置页展示当前登录方式 | 范围收口 | 本批不做；随设置批补充 |
 | 中国大陆网络访问 github.com | 既有前提 | 与 PAT 创建流程同前提，行为不变 |
 
 ---
@@ -167,14 +164,10 @@ client_secret 无法兑换 refresh_token，勾选则 token 约 8 小时过期、
 复制设备码；轮询用 setTimeout 循环（无 onShown 续跑，回前台需重新发起）；等待页返回即取消轮询。
 
 **与官方 App 差异**：官方 GitHub Mobile 用 web flow 深链回跳（一线厂商自有 client 与后端）；
-第三方无后端 App 的标准做法是 Device Flow（gh CLI / Copilot CLI 同款）。
+第三方无后端 App 的标准做法是 Device Flow（gh CLI 同款）。
 
 **调研依据（2026-09-06，已实测）**：
 
-- `gho_` token 直通 `api.githubcopilot.com`：`POST /chat/completions` 200、`GET /models` 200、
-  `GET /agents/tasks` 200——无需 `copilot_internal/v2/token` 兑换（旧兑换端点对 `gho_` 已 403，且不再必要）
-- classic PAT（`ghp_`）官方不支持 Copilot API（Copilot CLI / Copilot SDK 文档双重确认）
-- 官方 OAuth scopes 列表无 `copilot` scope；实测无该 scope 的 `gho_` 亦直通，不依赖
+- Device Flow 全程无需 client_secret、无回跳依赖，符合纯端侧架构
+- `gho_` 与 PAT 同 scope 体系，`repo read:user notifications` 覆盖现有全部功能
 - PKCE 官方支持（2025-07-14 changelog）→ 二期 web flow 回跳可行
-- 实测账号 ZM-BAD 为 Copilot Free（chat 200 credits / completions 2000 / premium 0），
-  套餐差异由服务端强制，客户端如实渲染即可

@@ -1,6 +1,6 @@
 /**
- * 应用根页面：Token 门禁 → Navigation 壳 + 底部四 Tab（Home/Inbox/Explore/Copilot）。
- * Inbox/Explore/Copilot 内容由 Spec 002/003/004 分支实现，当前为占位视图。
+ * 应用根页面：Token 门禁 → Navigation 壳 + 底部四 Tab（Home/Inbox/Explore/我的主页）。
+ * tab4 图标为当前账号头像（Spec 060）；他人个人主页仍走 userProfile 压栈路由。
  */
 import { AccountStore, AccountInfo } from '../services/AccountStore';
 import { window, uiObserver } from '@kit.ArkUI';
@@ -12,9 +12,6 @@ import { TokenSetup } from './TokenSetup';
 import { HomeView } from './Home';
 import { InboxView } from './Inbox';
 import { ExploreView } from './Explore';
-import { CopilotView } from './Copilot';
-import { CopilotChatView } from './CopilotChat';
-import { CopilotSettingsView } from './CopilotSettings';
 import { ProfileView } from './Profile';
 import { RepoDetailView } from './RepoDetail';
 import { IssuesListView } from './IssuesList';
@@ -59,11 +56,11 @@ import { FilterActivityView } from './FilterActivity';
 import { AccountsView } from './Accounts';
 import { InAppBrowserView } from './InAppBrowser';
 
-/** 隐藏底部四 Tab 栏的路由：Settings 及其下级页面（走查 09-08 定案）+ 模态全屏页（052 徽章详情）
- *  + Copilot settings / 应用内浏览器（用户 09-08 定案：这两个子页也不显示底栏） */
+/** 隐藏底部 Tab 栏的路由：Settings 及其下级页面（走查 09-08 定案）+ 模态全屏页（052 徽章详情）
+ *  + 应用内浏览器（用户 09-08 定案：该子页也不显示底栏） */
 const TAB_BAR_HIDDEN_ROUTES: string[] = [
   'settings', 'notificationSettings', 'codeOptions', 'accounts', 'tokenSetup', 'achievementDetail',
-  'copilotSettings', 'inAppBrowser'
+  'inAppBrowser'
 ];
 
 @Entry
@@ -71,13 +68,17 @@ const TAB_BAR_HIDDEN_ROUTES: string[] = [
 struct Index {
   @State token: string = '';
   @State checked: boolean = false;
-  /** Spec 049a：账号列表与当前账号（切号时更新，四 Tab 经 @Param token/accountSwitchTick 感知） */
+  /** Spec 049a：账号列表与当前账号（切号时更新；各 Tab 经 @Param token 感知并重取数据） */
   @State accounts: AccountInfo[] = [];
   @State currentLogin: string = '';
+  /** Spec 060：底栏 tab4 头像（由 HomeView 的 viewer 探针上报，不另发查询；空串=占位圆） */
+  @State viewerAvatarUrl: string = '';
+  /** Spec 060：tab4「我的主页」刷新泵（切回该 Tab / 从其二级页返回时自增 → 静默重取） */
+  @State profileTick: number = 0;
   @State currentTab: number = 0;
   /** 软键盘弹出时隐藏底栏（搜索输入态；窗口 keyboardHeightChange 监听） */
   @State keyboardOn: boolean = false;
-  /** 徽章详情等全屏沉浸页：隐藏底部四 Tab（页内 onShown/onHidden 切换） */
+  /** 徽章详情等全屏沉浸页：隐藏底部 Tab 栏（页内 onShown/onHidden 切换） */
   @State hideTabBar: boolean = false;
   @State profileLogin: string = '';
   @State repoOwner: string = '';
@@ -95,15 +96,9 @@ struct Index {
   /** Spec 052：成就详情参数（login|startIndex） */
   @State achLogin: string = '';
   @State achStart: number = 0;
-  /** Spec 059：Copilot 会话 id（路由参数；新会话先建后传，空串兜底=不存在走 pop） */
-  @State chatSessionId: string = '';
-  /** Spec 059：Copilot 会话列表刷新泵（详情页变更后自增，驱动主页列表重渲染） */
-  @State copilotTick: number = 0;
-  /** Spec 059：应用内浏览器（About / 页脚外链）路由参数：标题 + URL */
+  /** 应用内浏览器（About / 页脚外链）路由参数：标题 + URL（Spec 060：页面保留，唯一入口 CopilotSettings 已移除） */
   @State browserTitle: string = '';
   @State browserUrl: string = '';
-  /** Spec 059：Copilot settings 页回显泵（onShown 自增，重绑页脚链接手势） */
-  @State copilotSettingsTick: number = 0;
   @State orgLogin: string = '';
   @State reposOwner: string = '';
   @State reposMode: string = 'org';
@@ -147,7 +142,7 @@ struct Index {
   private pathStack: NavPathStack = new NavPathStack();
 
   aboutToAppear(): void {
-    // 软键盘高度监听：弹起时隐藏底部四 tab（官方 App 键盘态行为）
+    // 软键盘高度监听：弹起时隐藏底部 tab 栏（官方 App 键盘态行为）
     window.getLastWindow(this.getUIContext().getHostContext() as common.Context)
       .then((w: window.Window) => {
         w.on('keyboardHeightChange', (height: number) => {
@@ -173,6 +168,10 @@ struct Index {
       const dest = info.to as uiObserver.NavDestinationInfo;
       const routeName: string = dest.name !== undefined ? dest.name as string : '';
       this.hideTabBar = TAB_BAR_HIDDEN_ROUTES.includes(routeName);
+      // Spec 060：从二级页返回根页且当前停在 tab4 → 静默重取「我的主页」（本页内 star/关注等改动可见）
+      if (routeName === '' && this.currentTab === 3) {
+        this.profileTick += 1;
+      }
     });
   }
 
@@ -198,6 +197,8 @@ struct Index {
     this.token = acc.token;
     this.checked = true;
     this.refreshInboxUnread(acc.token);
+    // 切号先清旧头像，等 HomeView 的 viewer 探针回填（防底栏短暂显示上一个账号）
+    this.viewerAvatarUrl = '';
   }
 
   /** 未读角标：REST 兜底，Inbox Tab 显示蓝点（Spec 013） */
@@ -351,6 +352,7 @@ struct Index {
           this.token = token;
           this.currentLogin = login;
           this.refreshInboxUnread(token);
+          this.viewerAvatarUrl = '';
           AppStorage.setOrCreate('accountSwitchTick', Date.now());
           this.reloadAccounts();
           this.pathStack.pop();
@@ -370,6 +372,7 @@ struct Index {
     this.currentLogin = login;
     this.token = token;
     this.refreshInboxUnread(token);
+    this.viewerAvatarUrl = '';
     AppStorage.setOrCreate('accountSwitchTick', Date.now());
     this.reloadAccounts();
   }
@@ -1059,26 +1062,6 @@ struct Index {
     .hideTitleBar(true)
   }
 
-  /** Spec 059：Copilot 聊天详情页（路由参数=会话 id；新会话由主页 createSession 后携带） */
-  @Builder
-  copilotChatDestination() {
-    NavDestination() {
-      CopilotChatView({
-        token: this.token,
-        sessionId: this.chatSessionId,
-        pathStack: this.pathStack,
-        onChanged: (): void => {
-          // 详情页变更（发送/删除/切换）→ 主页列表重渲染（刷新泵，模式同 EditMyWork onSaved）
-          this.copilotTick += 1;
-        }
-      })
-    }
-    .onReady((context: NavDestinationContext) => {
-      this.chatSessionId = context.pathInfo.param as string;
-    })
-    .hideTitleBar(true)
-  }
-
   /** Spec 056 收口：Explore Activity 类型筛选页（Filter Activity，六类勾选 + SAVE） */
   @Builder
   exploreActivityFilterDestination() {
@@ -1091,25 +1074,7 @@ struct Index {
     .hideTitleBar(true)
   }
 
-  /** Spec 058：Copilot settings 页（059：token/login 传入，登录名取当前账号） */
-  @Builder
-  copilotSettingsDestination() {
-    NavDestination() {
-      CopilotSettingsView({
-        token: this.token,
-        login: this.currentLogin,
-        shownTick: this.copilotSettingsTick,
-        pathStack: this.pathStack
-      })
-    }
-    .onShown(() => {
-      // 从应用内浏览器等子页返回时自增，触发页脚富文本重绑（走查：偶发点不开）
-      this.copilotSettingsTick += 1;
-    })
-    .hideTitleBar(true)
-  }
-
-  /** Spec 059：应用内浏览器页（路由参数=标题|URL；标题来源见调用方） */
+  /** 应用内浏览器页（路由参数=标题|URL；标题来源见调用方） */
   @Builder
   inAppBrowserDestination() {
     NavDestination() {
@@ -1218,10 +1183,6 @@ struct Index {
       this.exploreRepoListDestination()
     } else if (name === 'exploreActivityFilter') {
       this.exploreActivityFilterDestination()
-    } else if (name === 'copilotChat') {
-      this.copilotChatDestination()
-    } else if (name === 'copilotSettings') {
-      this.copilotSettingsDestination()
     } else if (name === 'inAppBrowser') {
       this.inAppBrowserDestination()
     }
@@ -1231,7 +1192,15 @@ struct Index {
   mainTabs() {
     Tabs({ barPosition: BarPosition.End, controller: this.tabController }) {
       TabContent() {
-        HomeView({ token: this.token, pathStack: this.pathStack, workVersion: this.homeWorkVersion })
+        HomeView({
+          token: this.token,
+          pathStack: this.pathStack,
+          workVersion: this.homeWorkVersion,
+          onViewer: (avatarUrl: string): void => {
+            // Spec 060：底栏 tab4 头像复用 Home 的 viewer 探针结果（全应用只发一次 viewer 查询）
+            this.viewerAvatarUrl = avatarUrl;
+          }
+        })
       }
 
       TabContent() {
@@ -1242,12 +1211,32 @@ struct Index {
         ExploreView({ token: this.token, pathStack: this.pathStack })
       }
 
+      // Spec 060：tab4 = 当前账号个人主页（头像即 Tab 图标，与三 Tab 同为真 Tab）。
+      // 他人主页仍走 userProfile 压栈路由，两者语义分开：底栏进「我的」，列表进「他的」。
       TabContent() {
-        CopilotView({ token: this.token, pathStack: this.pathStack, refreshTick: this.copilotTick })
+        ProfileView({
+          login: this.currentLogin,
+          token: this.token,
+          pathStack: this.pathStack,
+          accounts: this.accounts,
+          currentLogin: this.currentLogin,
+          showBack: false,
+          refreshTick: this.profileTick,
+          onSwitchAccount: (login: string): void => {
+            this.switchAccount(login);
+          },
+          onAddAccount: (): void => {
+            this.pathStack.pushPathByName('tokenSetup', '');
+          }
+        })
       }
     }
     .onChange((index: number) => {
       this.currentTab = index;
+      // Spec 060：切回 tab4「我的主页」时静默重取（别处 star/关注后回到本页不是旧数据）
+      if (index === 3) {
+        this.profileTick += 1;
+      }
     })
     .barHeight(0)
     .width('100%')
@@ -1300,6 +1289,43 @@ struct Index {
     })
   }
 
+  /** Spec 060：底栏 tab4 = 当前账号个人主页 Tab——头像即图标，与三 Tab 同胶囊选中态。
+   *  尺寸对齐兄弟图标（iconSize 20）；头像未拉到/失败时走 heat_empty 占位圆。 */
+  @Builder
+  avatarTabItem() {
+    Column({ space: 2 }) {
+      Stack({ alignContent: Alignment.Center }) {
+        if (this.currentTab === 3) {
+          // 选中态胶囊底（官方浅蓝，与三 Tab 同一容器尺寸）
+          Column()
+            .width(56)
+            .height(32)
+            .borderRadius(16)
+            .backgroundColor($r('app.color.tab_active_bg'))
+        }
+        Image(this.viewerAvatarUrl)
+          .width(20)
+          .height(20)
+          .borderRadius(10)
+          .backgroundColor($r('app.color.heat_empty'))
+      }
+      .width('100%')
+      .height(32)
+      Text($r('app.string.tab_me'))
+        .fontSize($r('app.float.caption_font_size'))
+        .fontColor(this.currentTab === 3 ? $r('app.color.link_blue') : $r('app.color.text_secondary'))
+    }
+    .width('25%')
+    .height('100%')
+    .justifyContent(FlexAlign.Center)
+    .accessibilityDescription($r('app.string.tab_me'))
+    .onClick(() => {
+      this.currentTab = 3;
+      this.pathStack.clear();
+      this.tabController.changeIndex(3);
+    })
+  }
+
   build() {
     Stack() {
       if (!this.checked) {
@@ -1315,12 +1341,13 @@ struct Index {
             this.currentLogin = login;
             // 首次配置 token 后立即拉取未读角标，不等重启（review A4）
             this.refreshInboxUnread(token);
+            this.viewerAvatarUrl = '';
             AppStorage.setOrCreate('accountSwitchTick', Date.now());
             this.reloadAccounts();
           }
         })
       } else {
-        // 全局壳：Navigation（四 Tab 内容 + 二级页栈）+ 常驻自绘底栏（官方浮层样式）
+        // 全局壳：Navigation（三 Tab 内容 + 二级页栈）+ 常驻自绘底栏（官方浮层样式）
         Column() {
           Navigation(this.pathStack) {
             this.mainTabs()
@@ -1332,6 +1359,7 @@ struct Index {
           .layoutWeight(1)
 
           // 自绘底栏：白底 + 上投影 + 选中胶囊；选中态图标用官方 fill 变体
+          // （tab4「我的主页」同规则：胶囊底 + 蓝色标签，图标为当前账号头像，见 Spec 060）
           // 键盘弹起（搜索输入）时隐藏——键盘上方不显示 tab（用户 09-04 要求）；
           // Settings 及其下级页面 + 模态全屏页隐藏（hideTabBar，navDestinationSwitch 驱动）
           if (!this.keyboardOn && !this.hideTabBar) {
@@ -1339,7 +1367,7 @@ struct Index {
               this.tabItem($r('app.media.oct_home_16'), $r('app.media.oct_home_fill_16'), $r('app.string.tab_home'), 0)
               this.tabItem($r('app.media.oct_inbox_16'), $r('app.media.oct_inbox_fill_16'), $r('app.string.tab_inbox'), 1)
               this.tabItem($r('app.media.oct_telescope_16'), $r('app.media.oct_telescope_fill_16'), $r('app.string.tab_explore'), 2)
-              this.tabItem($r('app.media.oct_copilot_16'), $r('app.media.oct_copilot_fill_16'), $r('app.string.tab_copilot'), 3)
+              this.avatarTabItem()
             }
             .width('100%')
             .height(56)

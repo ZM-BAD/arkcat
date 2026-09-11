@@ -326,9 +326,6 @@ export struct SettingsView {
           this.accountsRow()
           this.row($r('app.string.settings_app_lock'), '', () => this.comingSoon())
 
-          this.sectionTitle($r('app.string.settings_subscriptions'))
-          this.row($r('app.string.settings_copilot'), this.stringOf($r('app.string.settings_copilot_free')), () => this.comingSoon())
-
           this.sectionTitle($r('app.string.settings_more_options'))
           this.row($r('app.string.settings_share_feedback'), '', () => this.comingSoon())
           this.row($r('app.string.settings_get_help'), '', () => this.comingSoon())

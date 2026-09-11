@@ -14,7 +14,7 @@
 | 001 | [home-tab.md](001-home-tab.md) | 首页 Tab（已被 013 替换） | Level 1 | deprecated |
 | 002 | [inbox-tab.md](002-inbox-tab.md) | 通知收件箱 Tab | Level 1 | implemented |
 | 003 | [explore-tab.md](003-explore-tab.md) | 发现探索 Tab（已被 056 取代） | Level 1 | deprecated |
-| 004 | [copilot-tab.md](004-copilot-tab.md) | AI 助手 Tab（已被 058/059 取代） | Level 1 | deprecated |
+| 004 | [copilot-tab.md](004-copilot-tab.md) | AI 助手 Tab（已被 060 移除：上架合规） | Level 1 | deprecated |
 | 005 | [user-profile.md](005-user-profile.md) | 用户个人主页 | Level 3 | implemented |
 | 006 | [repo-detail.md](006-repo-detail.md) | 仓库详情页（官方布局对齐） | Level 3 | implemented |
 | 007 | [issues-list.md](007-issues-list.md) | Issue 列表页 | Level 3 | implemented |
@@ -69,7 +69,8 @@
 | 056 | [explore-page.md](056-explore-page.md) | Explore 官方化（Discover 入口 + Trending/Awesome + Activity） | Level 1 | implemented |
 | 057 | [oauth-login.md](057-oauth-login.md) | OAuth 登录（Device Flow，与 PAT 并存） | Level 0 | implemented |
 | 058 | [copilot-ui.md](058-copilot-ui.md) | Copilot UI 架子（已被 059 取代：mock 换真实 API） | Level 1 | deprecated |
-| 059 | [copilot-chat.md](059-copilot-chat.md) | Copilot 真实对话（chat/completions + 本地会话） | Level 1 | implemented |
+| 059 | [copilot-chat.md](059-copilot-chat.md) | Copilot 真实对话（已被 060 移除：上架合规，Copilot 三关无解） | Level 1 | deprecated |
+| 060 | [profile-tab-remove-copilot.md](060-profile-tab-remove-copilot.md) | 底栏结构调整（tab4 = 我的主页 Tab，图标为账号头像）+ Copilot 移除 | Level 1 | approved |
 
 ## 覆盖率
 
@@ -88,6 +89,6 @@
 | Tab/页面 | 功能 | 原因 | ArkCat 处理 |
 | --------- | ------ | ------ | -------------- |
 | Explore | Collections 精选集合 | 无公开 API | MVP 隐藏 |
-| Copilot | 全部 Chat 功能 | Copilot API 不公开 | 展示 Empty State |
+| Copilot | 全部 Chat 功能 | 上架合规不可行（模型方算法备案号 + 合作协议 + 境内可达性 + 生成内容标识，四项无解） | 功能与入口已移除（060） |
 | User Profile | Packages Tab | 无公开用户级 API | 不展示 |
 | Repo Detail | Packages/Settings Tab | 无公开 API / 无意义 | 不展示 |

@@ -4,7 +4,8 @@
 > 关联截图: 058 已收 4 张官方图（本批在 058 UI 骨架上接真实数据，不改版面）
 > 上游 Spec: 058（Copilot UI 架子）、057（OAuth 登录——已合 develop，gho_ 直通 Copilot API）、
 > 049a（多账号 AccountStore——settings 登录名的事实源）
-> 状态: implemented（2026-09-08 用户放行功能批并完成部署验收；验收见六章勾选）
+> 状态: deprecated（2026-09-11 由 Spec 060 移除：Copilot 上架合规四项无解——模型方算法备案号、双方合作协议、
+> 境内可达性、生成内容标识。实现代码、本地会话存储、i18n 文案与图标资源已随 060 一并删除）
 > 付费红线（用户强制，2026-09-08）：**涉及 Copilot Pro 的付费操作一律不执行**——本批只有
 > Copilot Free 免费额度内的 chat/completions 调用（实测 gpt-4o-mini 免费），无任何
 > premium 模型请求、无任何订阅/账单/升级端点、UPGRADE 按钮保持 058 的 toast 占位不接跳转。

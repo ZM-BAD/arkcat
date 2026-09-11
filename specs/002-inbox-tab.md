@@ -24,7 +24,7 @@
    - 示例卡片 1：ZM-BAD / DAG-chat #82 · 11h · fix(backend): use $addToSet... · ● Merged #82 into main.
    - 示例卡片 2：ZM-BAD / headroom #5 · 5d · chore(deps): update ... · ● @renovate[bot] pushed 1 commit.
    - ...（后续卡片）
-4. 底部导航：Home / Inbox / Explore / Copilot
+4. 底部导航：Home / Inbox / Explore / 我的主页 四个 Tab（tab4 图标为账号头像，见 Spec 060）
 
 ---
 
