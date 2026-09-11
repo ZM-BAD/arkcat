@@ -35,8 +35,6 @@ export struct PrFilesView {
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
   @Local isRefreshing: boolean = false;
-  @Local finderOpen: boolean = false;
-  @Local finderQuery: string = '';
   @Local commentText: string = '';
   @Local sending: boolean = false;
   /** Code Options「展示行号」开关 */
@@ -105,15 +103,6 @@ export struct PrFilesView {
     }
   }
 
-  /** Find file 过滤（大小写不敏感子串） */
-  private filteredFiles(): PrFileItem[] {
-    if (this.finderQuery === '') {
-      return this.files;
-    }
-    const q = this.finderQuery.toUpperCase();
-    return this.files.filter((f: PrFileItem): boolean => f.path.toUpperCase().indexOf(q) >= 0);
-  }
-
   /** 👁 查看完整文件：复用 038 代码查看器（owner|name|path 路由参数） */
   private openFile(item: PrFileItem): void {
     this.pathStack.pushPathByName('codeViewer', `${this.owner}|${this.name}|${item.path}`);
@@ -136,69 +125,6 @@ export struct PrFilesView {
         this.sending = false;
         promptAction.showToast({ message: $r('app.string.pr_comment_failed') });
       });
-  }
-
-  /** Find file 弹层：搜索框 + 匹配文件列表（点击=展开该文件并关闭） */
-  @Builder
-  finderSheet() {
-    Column() {
-      Row({ space: 8 }) {
-        Text(this.stringOf($r('app.string.pr_find_file')))
-          .fontSize(16)
-          .fontWeight(600)
-          .fontColor($r('app.color.text_primary'))
-          .layoutWeight(1)
-        Text('✕')
-          .fontSize($r('app.float.sub_text_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .padding(8)
-          .accessibilityDescription($r('app.string.a11y_close'))
-          .focusable(true)
-          .onClick(() => {
-            this.finderOpen = false;
-          })
-      }
-      .width('100%')
-      .padding({ left: 16, right: 16, top: 10, bottom: 6 })
-
-      TextInput({ text: this.finderQuery, placeholder: this.stringOf($r('app.string.search_placeholder')) })
-        .fontSize($r('app.float.body_font_size'))
-        .height(40)
-        .borderRadius(6)
-        .backgroundColor($r('app.color.input_bg'))
-        .margin({ left: 16, right: 16, bottom: 6 })
-        .onChange((v: string) => {
-          this.finderQuery = v;
-        })
-
-      List() {
-        ForEach(this.filteredFiles(), (item: PrFileItem) => {
-          ListItem() {
-            Row({ space: 8 }) {
-              OctIcon({ res: $r('app.media.oct_file_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
-              Text(item.path)
-                .fontFamily('monospace')
-                .fontSize(12)
-                .fontColor($r('app.color.text_primary'))
-                .maxLines(1)
-                .textOverflow({ overflow: TextOverflow.Ellipsis })
-                .layoutWeight(1)
-            }
-            .width('100%')
-            .padding({ left: 16, right: 16, top: 10, bottom: 10 })
-            .onClick(() => {
-              this.finderOpen = false;
-              this.togglePath(item.path);
-            })
-          }
-        }, (item: PrFileItem) => item.path)
-      }
-      .layoutWeight(1)
-      .width('100%')
-    }
-    .width('100%')
-    .height('100%')
-    .backgroundColor($r('app.color.bg_page'))
   }
 
   build() {
@@ -334,6 +260,5 @@ export struct PrFilesView {
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
-    .bindSheet(this.finderOpen, this.finderSheet(), { showClose: false })
   }
 }

@@ -38,10 +38,7 @@ query RepositoryDetail($owner: String!, $name: String!) {
     }
     issues { totalCount }
     pullRequests { totalCount }
-    releases(first: 5, orderBy: { field: CREATED_AT, direction: DESC }) {
-      totalCount
-      nodes { tagName publishedAt isLatest }
-    }
+    releases { totalCount }
   }
 }`;
 

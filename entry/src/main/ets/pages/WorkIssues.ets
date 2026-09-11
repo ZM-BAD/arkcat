@@ -45,6 +45,14 @@ export struct WorkIssuesView {
     this.refresh();
   }
 
+  /** 空态「RESET ALL FILTERS」：恢复默认筛选 + 退出就地搜索后重查（Spec 017 元素 14） */
+  private resetFilters(): void {
+    this.filterState = defaultWorkFilter();
+    this.inSearch = false;
+    this.searchQuery = '';
+    this.refresh();
+  }
+
   private refresh(): void {
     this.loading = true;
     this.errorMsg = '';
@@ -352,6 +360,9 @@ export struct WorkIssuesView {
             WorkEmptyView({
               iconText: '🐱',
               title: $r('app.string.work_issues_empty'),
+              subtitle: $r('app.string.work_use_fewer_filters'),
+              button: $r('app.string.work_reset_all_filters'),
+              onButton: () => this.resetFilters()
             })
           }
         }

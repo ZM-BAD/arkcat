@@ -2,7 +2,7 @@
 
 > BFS Level: 3
 > 关联截图: 官方 App Search（入口页 5 张：空态/键盘 chips/建议列表/Jump to/历史搜素）
-> 上游 Spec: 013（Home 搜索入口）
+> 上游 Spec: 013（Home 搜索入口）｜下游：046（搜索详情子页，已 implemented）
 > 状态: implemented（v1 2026-08-31 建议列表+Code 结果验收通过；v2 2026-09-03 官方入口页 5 图批次实现+模拟器走查通过）
 
 ---
@@ -51,7 +51,7 @@
 | 7 | 建议列表 | Jump to "q" | 跳转首个匹配实体 | ✅ | `search(type: REPOSITORY)` 探测 | 首个匹配仓库 → RepoDetail；无匹配 toast |
 | 8 | 空态 | Recent searches + CLEAR + 历史行(↖) | 本地历史回填/清除 | ✅ 纯 UI | — | preferences 持久化，最多 10 条 |
 | 9 | 结果页 | 六类结果列表（自绘 SearchRows 行） | 展示与翻页 | ✅ | 同 6；分页 `pageInfo` | Code 沿用 v1 结果卡 |
-| 10 | 底部导航 | 四 Tab | 导航 | ✅ 纯 UI | — | 官方保留；本实现为 Navigation 覆盖式二级页，不追（见边界） |
+| 10 | 底部导航 | 四 Tab | 导航 | ⚠️ 不追 | — | 官方保留；本实现为 Navigation 覆盖式二级页（平台导航取舍，见 §五） |
 
 ---
 
@@ -91,7 +91,7 @@ REST GET /search/code?q={query}&per_page=10
 | 底部 Tab 保留 | 官方搜索页保留底部 Tab（Home 激活）；本实现为 Navigation 覆盖式二级页，展示 Tab 需重构导航架构 | 不追此项（平台导航取舍），走查说明 |
 | qualifier chips 位置 | 官方在键盘上方（页面底部） | `setKeyboardAvoidMode(RESIZE)` 压缩页面，chips 贴键盘上方显示；失焦恢复 OFFSET |
 | qualifier chips 第 5 项 | 截图「sy…」截断，无法确认完整词 | 按 GitHub 官方 code search `symbol:` 推断；后续官方图可校准 |
-| Jump to 多实体探测 | 无法确认官方探测顺序 | 本实现先按 Repository 探测打开详情；Issue/PR 后续补充 |
+| Jump to 多实体探测 | 无法确认官方探测顺序 | 本实现按 Repository 探测打开详情（元素 7 已验收）；Issue/PR 实体探测未纳入 |
 
 ---
 

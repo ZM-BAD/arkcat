@@ -29,14 +29,6 @@
       "value": "助手"
     },
     {
-      "name": "nav_profile_title",
-      "value": "个人主页"
-    },
-    {
-      "name": "nav_repo_title",
-      "value": "仓库"
-    },
-    {
       "name": "nav_issues_title",
       "value": "议题"
     },
@@ -79,18 +71,6 @@
     {
       "name": "error_generic",
       "value": "加载失败，请稍后重试。"
-    },
-    {
-      "name": "token_error_invalid",
-      "value": "Token 无效或权限不足，请检查后重试。"
-    },
-    {
-      "name": "releases_whats_changed",
-      "value": "更新内容"
-    },
-    {
-      "name": "token_error_save",
-      "value": "保存失败，请重试"
     },
     {
       "name": "login_choice_title",
@@ -157,24 +137,12 @@
       "value": "重试"
     },
     {
-      "name": "home_search_hint",
-      "value": "搜索功能将在后续版本提供"
-    },
-    {
       "name": "home_pinned_section",
       "value": "已置顶"
     },
     {
-      "name": "home_contributions_total",
-      "value": "过去一年 %1$d 次贡献"
-    },
-    {
       "name": "state_loading",
       "value": "加载中…"
-    },
-    {
-      "name": "state_network_error",
-      "value": "网络请求失败，请检查 Token 与网络后重试"
     },
     {
       "name": "state_retry",
@@ -183,10 +151,6 @@
     {
       "name": "state_empty",
       "value": "暂无数据"
-    },
-    {
-      "name": "followers_suffix",
-      "value": "%1$d 关注者 · %2$d 关注"
     },
     {
       "name": "repo_stars_fmt",
@@ -241,18 +205,6 @@
       "value": "安全"
     },
     {
-      "name": "copilot_title",
-      "value": "Copilot Chat"
-    },
-    {
-      "name": "copilot_unsupported",
-      "value": "Copilot 功能暂不支持"
-    },
-    {
-      "name": "copilot_hint",
-      "value": "无公开 API，请使用 GitHub 官方 App"
-    },
-    {
       "name": "profile_follow",
       "value": "关注"
     },
@@ -293,42 +245,6 @@
       "value": "Fork 失败：%1$s"
     },
     {
-      "name": "repo_starred_label",
-      "value": "★ 已 Star"
-    },
-    {
-      "name": "repo_license_fmt",
-      "value": "📝 %1$s License"
-    },
-    {
-      "name": "repo_last_commit_fmt",
-      "value": "最近提交：%1$s"
-    },
-    {
-      "name": "repo_readme_title",
-      "value": "📖 README"
-    },
-    {
-      "name": "repo_code_viewer_coming",
-      "value": "完整 Code Viewer 将在 Spec 011 提供"
-    },
-    {
-      "name": "repo_code_viewer_toast",
-      "value": "Code Viewer 将在 Spec 011 提供"
-    },
-    {
-      "name": "repo_files_title",
-      "value": "📂 文件"
-    },
-    {
-      "name": "repo_browser_coming",
-      "value": "文件浏览器将在 Spec 011 提供"
-    },
-    {
-      "name": "repo_languages_title",
-      "value": "📊 Languages"
-    },
-    {
       "name": "repo_issues_link",
       "value": "议题"
     },
@@ -341,60 +257,12 @@
       "value": "已关闭"
     },
     {
-      "name": "issues_sort_label",
-      "value": "排序：%1$s"
-    },
-    {
-      "name": "issues_sort_created",
-      "value": "创建时间"
-    },
-    {
-      "name": "issues_sort_updated",
-      "value": "更新时间"
-    },
-    {
-      "name": "issues_sort_comments",
-      "value": "评论数"
-    },
-    {
-      "name": "issues_count",
-      "value": "%1$d 个议题"
-    },
-    {
-      "name": "issues_load_more",
-      "value": "加载更多…"
-    },
-    {
       "name": "issues_empty",
       "value": "暂无议题"
     },
     {
-      "name": "issues_detail_coming",
-      "value": "议题详情将在 Spec 008 提供"
-    },
-    {
       "name": "issues_new_coming",
       "value": "新建议题将在后续 Spec 提供"
-    },
-    {
-      "name": "time_just_now",
-      "value": "刚刚"
-    },
-    {
-      "name": "time_minutes_ago",
-      "value": "%1$d 分钟前"
-    },
-    {
-      "name": "time_hours_ago",
-      "value": "%1$d 小时前"
-    },
-    {
-      "name": "time_days_ago",
-      "value": "%1$d 天前"
-    },
-    {
-      "name": "time_months_ago",
-      "value": "%1$d 个月前"
     },
     {
       "name": "home_my_work",
@@ -797,10 +665,6 @@
       "value": "该功能将在后续版本提供"
     },
     {
-      "name": "settings_language_restart",
-      "value": "语言切换将在重启后生效"
-    },
-    {
       "name": "settings_sign_out_confirm",
       "value": "退出该账号？"
     },
@@ -961,10 +825,6 @@
       "value": "组织中搜索 \"%1$s\""
     },
     {
-      "name": "search_empty_query",
-      "value": "输入关键词开始搜索"
-    },
-    {
       "name": "search_category_code",
       "value": "代码"
     },
@@ -987,10 +847,6 @@
     {
       "name": "search_category_organizations",
       "value": "组织"
-    },
-    {
-      "name": "search_matches_more",
-      "value": "显示更多 %1$d 条匹配"
     },
     {
       "name": "search_no_results",
@@ -1073,10 +929,6 @@
       "value": "Markdown"
     },
     {
-      "name": "repo_action_watch",
-      "value": "关注"
-    },
-    {
       "name": "repo_more",
       "value": "更多"
     },
@@ -1087,14 +939,6 @@
     {
       "name": "repo_change",
       "value": "切换"
-    },
-    {
-      "name": "repo_edit",
-      "value": "编辑"
-    },
-    {
-      "name": "repo_latest",
-      "value": "最新"
     },
     {
       "name": "repo_commits",
@@ -1137,10 +981,6 @@
       "value": "星标仓库"
     },
     {
-      "name": "nav_edit_work_title",
-      "value": "编辑我的工作"
-    },
-    {
       "name": "edit_work_title",
       "value": "编辑我的工作"
     },
@@ -1153,28 +993,8 @@
       "value": "全部"
     },
     {
-      "name": "work_scope_created",
-      "value": "我创建的"
-    },
-    {
-      "name": "work_scope_assigned",
-      "value": "分配给我的"
-    },
-    {
-      "name": "work_scope_mentioned",
-      "value": "提及我的"
-    },
-    {
       "name": "work_visibility",
       "value": "可见性"
-    },
-    {
-      "name": "work_visibility_public",
-      "value": "公开"
-    },
-    {
-      "name": "work_visibility_private",
-      "value": "私有"
     },
     {
       "name": "work_filter_organization",
@@ -1183,30 +1003,6 @@
     {
       "name": "work_filter_repository",
       "value": "仓库"
-    },
-    {
-      "name": "work_filter_all_orgs",
-      "value": "所有组织"
-    },
-    {
-      "name": "work_filter_all_repos",
-      "value": "所有仓库"
-    },
-    {
-      "name": "work_sort_newest",
-      "value": "最新"
-    },
-    {
-      "name": "work_sort_oldest",
-      "value": "最旧"
-    },
-    {
-      "name": "work_filter_sort_newest",
-      "value": "排序：最新"
-    },
-    {
-      "name": "work_filter_sort_oldest",
-      "value": "排序：最旧"
     },
     {
       "name": "work_issues_empty",
@@ -1297,10 +1093,6 @@
       "value": "创建列表"
     },
     {
-      "name": "time_years_ago",
-      "value": "%1$d 年前"
-    },
-    {
       "name": "repo_prs_label",
       "value": "标签"
     },
@@ -1361,14 +1153,6 @@
       "value": "资产"
     },
     {
-      "name": "release_assets_empty",
-      "value": "此发布没有资产。"
-    },
-    {
-      "name": "release_asset_downloads",
-      "value": "%1$d 次下载"
-    },
-    {
       "name": "release_download_cancel",
       "value": "取消"
     },
@@ -1405,10 +1189,6 @@
       "value": "文件较大，请使用浏览器打开。"
     },
     {
-      "name": "release_404_gone",
-      "value": "资产已被删除。"
-    },
-    {
       "name": "release_show_browser",
       "value": "在浏览器中打开"
     },
@@ -1427,10 +1207,6 @@
     {
       "name": "issue_detail_comments",
       "value": "%1$d 条评论"
-    },
-    {
-      "name": "issue_detail_read_more",
-      "value": "阅读更多"
     },
     {
       "name": "pr_changes_title",
@@ -1501,10 +1277,6 @@
       "value": "没有文件变更"
     },
     {
-      "name": "pr_find_file",
-      "value": "查找文件"
-    },
-    {
       "name": "pr_comment_hint",
       "value": "添加评论…"
     },
@@ -1523,10 +1295,6 @@
     {
       "name": "a11y_collapse",
       "value": "收起"
-    },
-    {
-      "name": "a11y_view_file",
-      "value": "查看文件"
     },
     {
       "name": "a11y_send",
@@ -1551,34 +1319,6 @@
     {
       "name": "comment_edit_title",
       "value": "编辑评论"
-    },
-    {
-      "name": "comment_tool_bold",
-      "value": "粗体"
-    },
-    {
-      "name": "comment_tool_italic",
-      "value": "斜体"
-    },
-    {
-      "name": "comment_tool_quote",
-      "value": "引用"
-    },
-    {
-      "name": "comment_tool_link",
-      "value": "链接"
-    },
-    {
-      "name": "comment_tool_code",
-      "value": "行内代码"
-    },
-    {
-      "name": "comment_tool_strike",
-      "value": "删除线"
-    },
-    {
-      "name": "comment_tool_task",
-      "value": "任务列表"
     },
     {
       "name": "comment_published",
@@ -1625,24 +1365,12 @@
       "value": "该议题已关闭，评论已锁定。"
     },
     {
-      "name": "comment_error_publish",
-      "value": "评论发布失败"
-    },
-    {
-      "name": "comment_error_update",
-      "value": "评论更新失败"
-    },
-    {
       "name": "comment_error_delete",
       "value": "评论删除失败"
     },
     {
       "name": "comment_error_reaction",
       "value": "反应更新失败"
-    },
-    {
-      "name": "issue_closed_comment_disabled",
-      "value": "已关闭的议题无法评论"
     },
     {
       "name": "reaction_panel_title",
@@ -1757,20 +1485,12 @@
       "value": "预览"
     },
     {
-      "name": "profile_followers_stat",
-      "value": "%1$d 关注者"
-    },
-    {
       "name": "profile_followers_unit",
       "value": " 关注者"
     },
     {
       "name": "profile_dev_program_member",
       "value": "开发者计划成员"
-    },
-    {
-      "name": "profile_following_stat",
-      "value": "%1$d 关注"
     },
     {
       "name": "profile_following_unit",
@@ -1807,14 +1527,6 @@
     {
       "name": "org_follow_unsupported",
       "value": "组织暂不支持关注"
-    },
-    {
-      "name": "org_read_more",
-      "value": "展开更多"
-    },
-    {
-      "name": "org_read_less",
-      "value": "收起"
     },
     {
       "name": "org_repositories_row",
@@ -1905,10 +1617,6 @@
       "value": "空目录"
     },
     {
-      "name": "file_dir_too_large",
-      "value": "目录过大"
-    },
-    {
       "name": "file_binary_unsupported",
       "value": "不支持预览二进制文件"
     },
@@ -1945,28 +1653,12 @@
       "value": "新建"
     },
     {
-      "name": "a11y_menu",
-      "value": "菜单"
-    },
-    {
       "name": "a11y_close",
       "value": "关闭"
     },
     {
-      "name": "a11y_star",
-      "value": "星标"
-    },
-    {
-      "name": "a11y_starred",
-      "value": "已收藏"
-    },
-    {
       "name": "a11y_refresh",
       "value": "刷新"
-    },
-    {
-      "name": "a11y_watch",
-      "value": "关注"
     },
     {
       "name": "work_scope_hint",
@@ -2001,16 +1693,8 @@
       "value": "代码"
     },
     {
-      "name": "work_sort_updated",
-      "value": "最近更新"
-    },
-    {
       "name": "work_filter_sort_new",
       "value": "排序：新"
-    },
-    {
-      "name": "work_sort_new",
-      "value": "新"
     },
     {
       "name": "work_filter_create_shortcut",
@@ -2195,10 +1879,6 @@
     {
       "name": "md_read_more",
       "value": "阅读更多"
-    },
-    {
-      "name": "md_copy",
-      "value": "复制"
     },
     {
       "name": "md_copied",

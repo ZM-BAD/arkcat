@@ -7,7 +7,7 @@ import { unlockDateText } from '../../../main/ets/utils/Format';
 import { mapRepoPr, mapRepoPrsPage, mapRepoCommitsPage, mapRepoReleasesPage, mapIssueDetail, mapPrDetail, filterPrsByAuthor, filterPrsByAssignee, repoPrIconKey, monthDayText } from '../../../main/ets/models/RepoSubModels';
 import { repoIssueStates } from '../../../main/ets/services/IssuesService';
 import { RepoPrItem } from '../../../main/ets/models/RepoSubModels';
-import { buildWorkIssuesQuery, buildWorkPrsQuery, buildWorkDiscussionsQuery, buildTopReposPrivacy, mapWorkIssue, workIssueIconKey, mapWorkPr, workPrIconKey, mapWorkStarredPage, filterWorkProjects, sortWorkProjects, filterTopRepos, WorkTopRepoItem, WorkProjectItem, mapWorkProjectsPage, mapWorkTopReposPage, mapWorkOrgsPage } from '../../../main/ets/models/WorkModels';
+import { buildWorkIssuesQuery, buildWorkPrsQuery, buildWorkDiscussionsQuery, mapWorkIssue, workIssueIconKey, mapWorkPr, workPrIconKey, mapWorkStarredPage, filterWorkProjects, sortWorkProjects, filterTopRepos, WorkTopRepoItem, WorkProjectItem, mapWorkProjectsPage, mapWorkTopReposPage, mapWorkOrgsPage } from '../../../main/ets/models/WorkModels';
 import { mapUser, mapRepo, mapViewerBasic, mapNotifications, issueNumberFromUrl } from '../../../main/ets/models/GitHubModels';
 import { buildPrDetailsQuery } from '../../../main/ets/services/ExploreService';
 import { mapActivityEvents, mapActivityEventsWithDetails, summarizeBody, ActivityPrRef } from '../../../main/ets/models/ExploreModels';
@@ -16,7 +16,7 @@ import { mapRepoDetail, nextStarAction } from '../../../main/ets/models/RepoDeta
 import { mapFork, mapStargazerPage, mapWatcherPage, mapContributorPage } from '../../../main/ets/models/RepoSocialModels';
 import { mapLicenseInfo, stripLicenseTitle } from '../../../main/ets/models/RepoLicenseModels';
 import { mapReleaseDetail, mapReactionUsersPage } from '../../../main/ets/models/RepoSubModels';
-import { mapIssue, mapIssuesPage, issueOrderField } from '../../../main/ets/models/IssuesModels';
+import { mapIssue, mapIssuesPage } from '../../../main/ets/models/IssuesModels';
 import { ReactionGroup, REACTION_META, reactionEmoji, findReactionGroup, flipReactionGroups } from '../../../main/ets/models/RepoSubModels';
 import { MarkdownEdit } from '../../../main/ets/utils/MarkdownEdit';
 import { parsePollResponse, OAuthPollState } from '../../../main/ets/services/OAuthService';
@@ -343,7 +343,6 @@ export default function logicTest(testsuiteName: string) {
       expect(detail.issueCount).assertEqual(5);
       expect(detail.prCount).assertEqual(3);
       expect(detail.releaseCount).assertEqual(2);
-      expect(detail.latestRelease?.tagName).assertEqual('v1.0.0');
       expect(detail.ownerLogin).assertEqual('zm_bad');
       expect(detail.defaultBranchRefName).assertEqual('main');
       // Star 切换方向
@@ -351,11 +350,7 @@ export default function logicTest(testsuiteName: string) {
       expect(nextStarAction(false)).assertTrue();
     });
 
-    it('mapIssuesPage_and_orderField', 0, () => {
-      expect(issueOrderField('created')).assertEqual('CREATED_AT');
-      expect(issueOrderField('updated')).assertEqual('UPDATED_AT');
-      expect(issueOrderField('comments')).assertEqual('COMMENTS');
-      expect(issueOrderField('other')).assertEqual('CREATED_AT');
+    it('mapIssuesPage', 0, () => {
       const author: JsonMap = { 'login': 'zm_bad' };
       const labelName: JsonMap = { 'name': 'bug' };
       const labelsNodes: JsonMap[] = [labelName];
@@ -437,9 +432,6 @@ export default function logicTest(testsuiteName: string) {
         .assertEqual('is:discussion author:@me sort:created-desc');
       expect(buildWorkDiscussionsQuery('open', 'commented', true, 'top_all'))
         .assertEqual('is:discussion is:open commenter:@me is:unanswered sort:interactions-desc');
-      expect(buildTopReposPrivacy('all')).assertEqual('');
-      expect(buildTopReposPrivacy('public')).assertEqual('PUBLIC');
-      expect(buildTopReposPrivacy('private')).assertEqual('PRIVATE');
       const r1: WorkTopRepoItem = { 'id': '1', 'name': 'a', 'ownerLogin': 'me', 'ownerAvatar': '', 'isArchived': false, 'isFork': true, 'isMirror': false, 'isTemplate': false, 'visibility': 'PUBLIC' };
       const r2: WorkTopRepoItem = { 'id': '2', 'name': 'b', 'ownerLogin': 'me', 'ownerAvatar': '', 'isArchived': true, 'isFork': false, 'isMirror': false, 'isTemplate': false, 'visibility': 'PRIVATE' };
       const r3: WorkTopRepoItem = { 'id': '3', 'name': 'c', 'ownerLogin': 'me', 'ownerAvatar': '', 'isArchived': false, 'isFork': false, 'isMirror': false, 'isTemplate': true, 'visibility': 'PUBLIC' };

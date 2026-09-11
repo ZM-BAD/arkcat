@@ -38,7 +38,7 @@ COPILOT PRO 描边按钮）→ Chats 分组标题 → 会话列表行（标题�
 浅蓝圆角卡），底部常驻输入栏 = 圆角灰底输入框（Placeholder「Ask Copilot」）+ 右侧圆形纸飞机发送钮
 （空输入禁用态浅蓝、非空激活蓝）。竖三点菜单浮层（bindPopup，下拉式六项）：New conversation（蓝，+ 图标）
 / 当前会话（灰 + 眼睛图标，不可点）/ 历史会话标题（灰，点按切换）/ View all conversations（灰 + 对话图标）/
-Copilot settings（黑 + Copilot 图标，点按跳转 settings）/ 分割线 / Delete conversation（红 + 垃圾桶图标）。
+Copilot settings（黑 + Copilot 图标，点按跳转 settings）/ 分割线 / View all conversations / 分割线 / Delete conversation（红 + 垃圾桶图标）。
 
 **Copilot settings 页（NavDestination 二级页）**：自绘 AppBar = 返回 + 标题「Copilot」（20 加粗，无右钮）。
 正文分组（组间 8vp 灰粗分隔条，分组标题灰字）：Subscription（Copilot Free 24 加粗 + Active for <login>
@@ -60,7 +60,7 @@ Copilot settings（黑 + Copilot 图标，点按跳转 settings）/ 分割线 / 
 | 6 | 详情页 | 自绘 AppBar（返回 + 标题 + Auto 副标 + 竖三点） | 导航 + 打开菜单浮层 | ✅ | - | hideTitleBar(true)；两行标题（复习 047 模式） |
 | 7 | 详情页 | 消息气泡列表（mock） | 纯展示 | ✅ | - | 助手左灰卡（16 圆角）/ 用户右蓝卡；loading 圆钮装饰（第一轮为 assistant 消息） |
 | 8 | 详情页 | 底部输入栏 | 输入 + 发送（toast 占位） | ✅ | - | 空输入发送钮禁用；键盘避让（RESIZE） |
-| 9 | 详情页 | 竖三点菜单浮层 | 菜单项跳转/选择/删除 | ✅ | - | bindPopup 下拉；Delete 红字；当前会话项置灰不可点 |
+| 9 | 详情页 | 竖三点菜单浮层 | 菜单项跳转/选择/删除 | ✅ | - | bindPopup 下拉；Delete 红字；当前会话项置灰（点击仅关闭弹层，不切换） |
 | 10 | settings | 三分组页面 | 展示当前套餐/用量/链接 | ✅ | - | 用量=本地 mock（50%/60%）；环形进度 Progress Ring 蓝 |
 | 11 | 底栏 | Copilot Tab 选中态 fill 图标 | 选中视觉 | ✅ | - | 官方 octicons 无 copilot-fill → 手绘入库 oct_copilot_fill_16 |
 

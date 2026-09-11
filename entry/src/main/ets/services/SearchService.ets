@@ -91,7 +91,6 @@ export interface CodeSearchItem {
   name: string;
   isMarkdown: boolean;
 }
-
 const SEARCH_ALL_QUERY = `
 query SearchAll($query: String!, $type: SearchType!, $first: Int = 20, $after: String) {
   search(query: $query, type: $type, first: $first, after: $after) {
@@ -226,30 +225,6 @@ function mapSearchLabels(node: JsonMap, key: string): SearchLabel[] {
     }
   }
   return out;
-}
-
-/** GraphQL CODE search 响应 → CodeSearchItem[] */
-export function mapCodeSearch(data: JsonMap): CodeSearchItem[] {
-  const search = Json.obj(data, 'search') ?? ({} as JsonMap);
-  const items: CodeSearchItem[] = [];
-  for (const nodeItem of Json.arr(search, 'nodes')) {
-    const node = nodeItem as JsonMap;
-    const repo = Json.obj(node, 'repository');
-    let name = Json.str(node, 'name');
-    const path = Json.str(node, 'path');
-    // name 缺失时从 path 末段取
-    if (name === '' && path !== '') {
-      const parts = path.split('/');
-      name = parts.length > 0 ? parts[parts.length - 1] : '';
-    }
-    items.push({
-      repoFullName: repo ? Json.str(repo, 'nameWithOwner') : '',
-      path: path,
-      name: name,
-      isMarkdown: name.toLowerCase().endsWith('.md')
-    });
-  }
-  return items;
 }
 
 /** 节点 → 统一结果项（按 __typename 分诊，纯函数） */

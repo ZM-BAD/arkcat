@@ -92,14 +92,3 @@ export function mapIssuesPage(data: JsonMap): IssuesPage {
     repoLabels: repoLabels
   };
 }
-
-/** 排序参数映射（纯函数，便于单测） */
-export function issueOrderField(sort: string): string {
-  if (sort === 'updated') {
-    return 'UPDATED_AT';
-  }
-  if (sort === 'comments') {
-    return 'COMMENTS';
-  }
-  return 'CREATED_AT';
-}

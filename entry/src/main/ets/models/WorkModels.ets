@@ -295,17 +295,6 @@ export function buildWorkDiscussionsQuery(state: string, scope: string, unanswer
   return query;
 }
 
-/** Top Repositories 可见性 → RepositoryPrivacy（'' 表示 All，不传变量） */
-export function buildTopReposPrivacy(privacy: string): string {
-  if (privacy === 'public') {
-    return 'PUBLIC';
-  }
-  if (privacy === 'private') {
-    return 'PRIVATE';
-  }
-  return '';
-}
-
 // ────────────────────────── 响应映射（纯函数） ──────────────────────────
 
 /** search 响应公共分页结果 */

@@ -241,6 +241,8 @@ export struct PrDetailView {
                 .fontColor($r('app.color.text_primary'))
                 .width('100%')
                 .lineHeight(28)
+                .maxLines(2)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
 
               if (this.detail.merged || this.detail.headRefName !== '') {
                 Scroll() {

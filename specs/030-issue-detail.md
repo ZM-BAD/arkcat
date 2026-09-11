@@ -1,8 +1,8 @@
-# Spec 030: Issue 详情页（Spec 008 托管页，Issue 详情链路）
+# Spec 030: Issue 详情页（Issue 详情链路）
 
 > BFS Level: 3
 > 关联截图: GitHub 官方 App Issue 详情（deno/deno #1，用户提供 2026-08-31）
-> 上游 Spec: 007/017（列表入口）：028-011 上游 006
+> 上游 Spec: 007（仓库内 Issue 列表）/ 017（工作区 Issue 列表）
 > 状态: ✅ implemented（2026-08-31，构建通过 / 仪器测试 30/30 / 模拟器双主题验收通过）
 
 ---
@@ -26,14 +26,14 @@
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar | ← 返回 + `owner/repo #N` + 搜索/⋯ | 导航 | ✅ | —（纯 UI） | — |
-| 2 | 标题 | 大标题 | 展示 | ⚠️ 提前规划中 | `title` | 2 行省略未实现（当前无 maxLines，长标题无限换行） |
+| 2 | 标题 | 大标题（2 行省略） | 展示 | ✅ | `title` | maxLines 2 + Ellipsis |
 | 3 | 标题 | 状态圆标 + 作者 + 相对时间 | 展示 | ✅ | `state/stateReason/author/createdAt` | 与 007/017 图标一致 |
 | 4 | 正文 | MarkdownView 直渲（040） | 展示 | ✅ | `body/bodyHTML` | 折叠阈值 500 字符/240vp |
 | 5 | 评论 | 头像/登录名/时间/正文 + 反应条 + 编辑/删除菜单 | 展示 | ✅ | `comments { nodes bodyHTML/viewerDidAuthor/reactionGroups }` | 编辑/删除仅本人（viewerDidAuthor）显示 |
 | 6 | 评论区 | Load more 分页 | 翻页 | ✅ | `comments.pageInfo` | — |
 | 7 | 底部 | COMMENT + 表情按钮 | 占位 | ✅ | —（纯 UI） | 提示后续 |
 
-> 可行性比例声明：6/7 可行（元素 2 标题 2 行省略为提前规划中，未实现）。
+> 可行性比例声明：7/7 可行。
 
 ---
 
@@ -87,6 +87,7 @@ query IssueDetail($owner: String!, $name: String!, $number: Int!, $first: Int = 
 - [x] 测试 1：`mapIssueDetail` 纯函数：字段/评论分页映射正确
 - [x] 测试 2：构建 + 模拟器实测：深色下正文/评论/底部栏与截图对齐
 - [x] 测试 3：grep 页面无中文字符串字面量；check-spec.sh 通过
+- [ ] 测试 4：长标题超 2 行省略（实现完成，待模拟器走查）
 
 ---
 

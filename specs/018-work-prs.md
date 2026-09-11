@@ -2,7 +2,7 @@
 
 > BFS Level: 3
 > 关联截图: GitHub 官方 App「Pull Requests」页（Home My Work 入口，用户提供，2026-08-31）
-> 上游 Spec: 013（入口）/ 008（repo 内 PR 列表，视角不同，互不替代）
+> 上游 Spec: 013（入口）/ 027（仓库内 PR 列表，视角不同，互不替代）
 > 状态: ✅ implemented（2026-08-31，构建通过 / 仪器测试 29/29 / 模拟器验收通过）
 
 ---
@@ -41,10 +41,10 @@ Home My Work「Pull Requests」入口进入的跨仓库 PR 列表页。展示用
 | 11 | PR 行 | 标题（加粗，2 行截断） | 展示 | ✅ | `title` | — |
 | 12 | PR 行 | Checks 胶囊（✔ Checks / ✗ Checks failed / ✗ Checks pending） | CI 状态展示 | ✅ | `statusCheckRollup { state }` | Checks 非 SUCCESS 显示 ✗（oct_x_16 + warning）；pending 文案单独 |
 | 13 | PR 行 | 💬 评论数 + 👁 审查请求数 | 展示 | ✅ | `comments.totalCount / reviewRequests.totalCount` | — |
-| 14 | 空态 | 插图 + 标题 + 副文案 + RESET ALL FILTERS | 空态引导；重置筛选 | ⚠️ 提前规划中 | —（纯 UI） | 插图用占位字形；**副文案 + RESET ALL FILTERS 未实现**（WorkEmptyView 已支持 subtitle/button，页面未传参） |
+| 14 | 空态 | 插图 + 标题 + 副文案 + RESET ALL FILTERS | 空态引导；重置筛选 | ✅ | —（纯 UI） | 插图用占位字形；RESET 走 resetFilters（恢复默认筛选 + 退出就地搜索后重查） |
 | 15 | 列表底部 | Load more 分页 | 翻页 | ✅ | `search.pageInfo` | — |
 
-> 可行性比例声明：14/15 可行（元素 14 空态副文案 + RESET ALL FILTERS 为提前规划中，未实现）。
+> 可行性比例声明：15/15 可行。
 
 ---
 
@@ -89,6 +89,7 @@ query WorkPullRequests($query: String!, $first: Int = 25, $after: String) {
 - [x] 测试 5：grep 检查 WorkPrs.ets 无中文字符串字面量残留
 - [x] 测试 6：`bash scripts/check-spec.sh` 通过
 - [x] 测试 7：`devecocli build` 全量构建通过
+- [ ] 测试 8：空态副文案 + RESET ALL FILTERS 可重置（实现完成，待模拟器走查）
 
 ---
 
@@ -96,6 +97,6 @@ query WorkPullRequests($query: String!, $first: Int = 25, $after: String) {
 
 - 搜索节点必须 `... on PullRequest` 收敛类型；`statusCheckRollup.state` 取 SUCCESS/FAILURE/PENDING/ERROR，ERROR 按 FAILURE 处理。
 - 入口复用 013 的 PR 彩色图标（蓝 `#3C78D8`）。
-- 与 008 的分工：008 为「仓库内 PR 列表」（Repo Detail 进入，含 Reviewed/Mentions 快捷筛选）；018 为「跨仓库工作区列表」，两者功能互不重叠。
+- 与 027 的分工：027 为「仓库内 PR 列表」（Repo Detail 进入）；018 为「跨仓库工作区列表」，两者功能互不重叠。（008 为该能力的原始规划，已由 027 实现并 deprecated）
 
 - 模拟器实测：工作区 PR 页渲染通过；Checks 胶囊与审查数依赖真实数据，映射逻辑由单测覆盖。

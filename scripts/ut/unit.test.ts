@@ -30,7 +30,7 @@ import {
 } from '../../entry/src/main/ets/services/NotificationsService';
 import {
   buildQualifierInsert, pushSearchHistory, buildSearchQuery, formatBigCount, isLightHexColor,
-  mapSearchNode, mapSearchResults, mapSearchOverview, buildCodeQuery, mapCodeSearch
+  mapSearchNode, mapSearchResults, mapSearchOverview, buildCodeQuery
 } from '../../entry/src/main/ets/services/SearchService';
 import {
   buildCodeSnippet, splitLines, buildFragmentLines,
@@ -551,24 +551,8 @@ test('collectRepoFilters 聚合（首现顺序+计数+头像取非空）', () =>
   assert.equal(reps[1].fullName, 'o/b');
 });
 
-test('buildCodeQuery 与 mapCodeSearch（REST code 条目映射）', () => {
+test('buildCodeQuery（REST code 查询串原样透传）', () => {
   assert.equal(buildCodeQuery('claude code'), 'claude code');
-  const repo1: JsonMap = { 'nameWithOwner': 'nvidia/trit' };
-  const repo2: JsonMap = { 'nameWithOwner': 'jezwb/claude-skills' };
-  const data: JsonMap = {
-    'search': {
-      'codeCount': 2,
-      'nodes': [
-        { 'repository': repo1, 'path': 'docs/CLAUDE.md', 'name': 'CLAUDE.md' },
-        { 'repository': repo2, 'path': 'src/main.ts', 'name': 'main.ts' }
-      ]
-    }
-  };
-  const items = mapCodeSearch(data);
-  assert.equal(items.length, 2);
-  assert.equal(items[0].repoFullName, 'nvidia/trit');
-  assert.equal(items[0].isMarkdown, true);
-  assert.equal(items[1].isMarkdown, false);
 });
 
 test('buildTrendingPath 时间窗 qualifier 拼装', () => {

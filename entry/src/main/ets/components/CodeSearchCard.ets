@@ -12,6 +12,8 @@ import { resText } from '../utils/I18n';
 @ComponentV2
 export struct CodeSearchCard {
   @Param file: CodeFileResult | null = null;
+  /** 点击卡面 → CodeViewer（父级注入 pushPathByName('codeViewer', owner|name|path)） */
+  @Event onOpen: () => void = (): void => {};
   @Local expanded: boolean = false;
 
   private badgeText(): string {
@@ -87,43 +89,49 @@ export struct CodeSearchCard {
 
   build() {
     Column() {
-      Row() {
-        Row({ space: 7 }) {
-          Circle()
-            .width(10)
-            .height(10)
-            .fill($r('app.color.link_blue'))
-          Text(this.badgeText())
-            .fontSize(14)
-            .fontColor($r('app.color.text_primary'))
-        }
-        .padding({ left: 12, right: 14, top: 6, bottom: 6 })
-        .borderRadius(16)
-        .border({ width: 1, color: $r('app.color.divider') })
-      }
-      .width('100%')
-      .padding({ left: 12, right: 12, top: 11, bottom: 11 })
-
-      Divider().color($r('app.color.divider')).strokeWidth(1)
-
-      Row() {
-        Column() {
-          if (this.file !== null) {
-            ForEach(this.file.snippet.window, (line: CodeLine, idx: number) => {
-              this.codeLine(line)
-            }, (line: CodeLine, idx: number) => `${idx}-${line.no}-${line.text}`)
-            if (this.expanded) {
-              ForEach(this.file.snippet.more, (line: CodeLine, idx: number) => {
-                this.codeLine(line)
-              }, (line: CodeLine, idx: number) => `${idx}-${line.no}-${line.text}`)
-            }
+      // 头部 + 代码体为可点区（→ CodeViewer）；与「Show more matches」拆成同层兄弟，
+      // 规避 ClickEvent 无 stopPropagation 的冒泡误触（沿 010 批定案拆分模式）
+      Column() {
+        Row() {
+          Row({ space: 7 }) {
+            Circle()
+              .width(10)
+              .height(10)
+              .fill($r('app.color.link_blue'))
+            Text(this.badgeText())
+              .fontSize(14)
+              .fontColor($r('app.color.text_primary'))
           }
+          .padding({ left: 12, right: 14, top: 6, bottom: 6 })
+          .borderRadius(16)
+          .border({ width: 1, color: $r('app.color.divider') })
         }
         .width('100%')
+        .padding({ left: 12, right: 12, top: 11, bottom: 11 })
+
+        Divider().color($r('app.color.divider')).strokeWidth(1)
+
+        Row() {
+          Column() {
+            if (this.file !== null) {
+              ForEach(this.file.snippet.window, (line: CodeLine, idx: number) => {
+                this.codeLine(line)
+              }, (line: CodeLine, idx: number) => `${idx}-${line.no}-${line.text}`)
+              if (this.expanded) {
+                ForEach(this.file.snippet.more, (line: CodeLine, idx: number) => {
+                  this.codeLine(line)
+                }, (line: CodeLine, idx: number) => `${idx}-${line.no}-${line.text}`)
+              }
+            }
+          }
+          .width('100%')
+        }
+        .width('100%')
+        .padding({ top: 10, bottom: 10 })
+        .backgroundColor($r('app.color.card_background'))
       }
       .width('100%')
-      .padding({ top: 10, bottom: 10 })
-      .backgroundColor($r('app.color.card_background'))
+      .onClick(() => this.onOpen())
 
       if (this.file !== null && !this.expanded && this.file.snippet.more.length > 0) {
         Divider().color($r('app.color.divider')).strokeWidth(1)

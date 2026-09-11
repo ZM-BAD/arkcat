@@ -2,8 +2,8 @@
 
 > BFS Level: 3
 > 关联截图: 官方 PR「Files Changed」行内评论与「Review changes」面板；Merge 下拉（squash/merge/rebase）
-> 上游 Spec: 010（PR Diff，已 approved 未实现）、031（PrDetail）、041（评论基础，复用输入面板）
-> 状态: draft（2026-09-02 规划；须在 010 验收完成后排期）
+> 上游 Spec: 010（PR Diff，已 implemented）、031（PrDetail）、041（评论基础，复用输入面板）
+> 状态: draft（2026-09-02 规划；010 已于 2026-09-04 implemented，前置解除，待排期）
 
 ---
 
@@ -134,6 +134,6 @@ mutation Merge($prId: ID!, $method: MergeMethod!) {
 
 ## 七、备注
 
-- 依赖链：本 Spec 在 010（Diff 视图）完工前无法动工；010 需先行排期。若 010 延期，可将「行内评论」降为「整行文件评论」（thread.path 无 line）先行，滚动到行级。
+- 依赖链：010（Diff 视图）已于 2026-09-04 implemented，前置解除。行内评论落地时若行级 line 不可得，可将「行内评论」降为「整行文件评论」（thread.path 无 line）先行。
 - 官方参照：审阅/合并是 v1.0 就有的能力（官方最低优先级）；行内评论 2026 增强为「未变更行也可评论」（1.245）；thread 解析状态在官方移动端与 web 一致。
 - Review 里程碑、多用户提议的「建议修改」行级建议（suggestion/apply）不在本 Spec 范围（❌ 桌面专属，备注留档）。

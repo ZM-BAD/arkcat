@@ -9,20 +9,8 @@
       "value": "16fp"
     },
     {
-      "name": "hero_margin_top",
-      "value": "100vp"
-    },
-    {
-      "name": "sub_margin_top",
-      "value": "16vp"
-    },
-    {
       "name": "button_height",
       "value": "48vp"
-    },
-    {
-      "name": "button_bottom_margin",
-      "value": "50vp"
     },
     {
       "name": "page_padding",
@@ -35,10 +23,6 @@
     {
       "name": "card_radius",
       "value": "12vp"
-    },
-    {
-      "name": "card_gap",
-      "value": "8vp"
     },
     {
       "name": "title_font_size",
@@ -59,22 +43,6 @@
     {
       "name": "menu_font_size",
       "value": "17fp"
-    },
-    {
-      "name": "menu_row_height",
-      "value": "52vp"
-    },
-    {
-      "name": "avatar_size_medium",
-      "value": "56vp"
-    },
-    {
-      "name": "avatar_size_small",
-      "value": "24vp"
-    },
-    {
-      "name": "heat_cell_size",
-      "value": "12vp"
     }
   ]
 }

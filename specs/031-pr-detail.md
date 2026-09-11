@@ -16,7 +16,7 @@ PR 详情页三区块：**Changes 卡片**（N files changed · +A −D · commi
 ## 二、整体 UI 结构
 
 1. 顶部 App Bar：← 返回 + `owner/repo #N` + 分享（share）+ 更多菜单（⋯）
-2. 标题区：标题 + [Merged] 徽章 + 分支胶囊 + 作者行（🀫 头像 + 登录名 + 相对时间）〔标题 2 行省略未实现，提前规划中〕
+2. 标题区：标题（2 行省略）+ [Merged] 徽章 + 分支胶囊 + 作者行（🀫 头像 + 登录名 + 相对时间）
 3. Changes 卡片：📄 文件数（3 files changed）+ 增减行数（+249 −49）+ commit 数（1 commit · 20h ago）
 4. Status 卡片：👁 Reviews · None requested + ✓ All checks have passed + ⇄ Branch merged（eb43eaa…）；点击展开内联 checks 列表（statusCheckRollup.contexts 归一化 CheckRun/StatusContext；无时长/步骤/重跑）
 5. Conversation 区块：正文/评论列表（codecov 等）+ [DELETE BRANCH] 按钮
@@ -108,6 +108,7 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!, $after: 
 - [x] 测试 1：`mapPrDetail` 纯函数：Changes/Status/评论映射正确
 - [x] 测试 2：构建 + 模拟器实测：深色三区块与截图对齐
 - [x] 测试 3：grep 页面无中文字符串字面量；check-spec.sh 通过
+- [ ] 测试 4：长标题超 2 行省略（实现完成，待模拟器走查）
 
 ---
 

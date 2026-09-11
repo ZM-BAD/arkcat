@@ -92,4 +92,4 @@ query DirEntries($owner: String!, $name: String!, $expression: String!) {
 - 目录行图标：官方 App 为蓝实心文件夹 → Octicons `file-directory-fill-16.svg`（v19.33.0 已归档 + media 副本），着色由 OctIcon.fillColor 统一（oct_ 媒体资源）。
 - 下钻实现：push 新路由实例（`repoFiles` 参数 owner\|name\|path），返回按钮与系统手势均回上一级目录，与官方 App 导航一致。
 - 符号链接目录（type 非 tree/blob）：按名称展示、点击给出提示。
-- 文件类型图标 MVP 统一灰色 file 图标（官方 App 按文件类型着彩色图标，属视觉差异，后续 Spec 024 体系扩展时再逐类型映射）。
+- 文件类型图标 MVP 统一灰色 file 图标（官方 App 按文件类型着彩色图标，属视觉差异，列为本页后续优化项；Spec 024 图标体系已 implemented）。

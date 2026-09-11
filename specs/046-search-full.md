@@ -1,4 +1,4 @@
-# Spec 046: 搜索全类型与最近搜索（Search 五类详情）
+# Spec 046: 搜索全类型与最近搜索（Search 六类详情）
 
 > BFS Level: 3
 > 关联截图: 官方 Explore 搜索页（类型 tab + 结果列表 + 最近搜索历史）
@@ -39,13 +39,13 @@
 | 5 | 结果 | 用户搜索 | `type: USER`（in:username/name/email 或 login 前缀） | ✅ | 见四 | 官方输入 @ 也可触发 |
 | 6 | 结果 | 组织搜索 | `type: USER` + `in:org` 限定组织（或 search 后过滤） | ✅ | 见四 | 与 5 结果合并展示（organizations tab） |
 | 7 | 结果 | 点击路由 | repo→RepoDetail；issue/PR→详情；user→Profile；org→OrgProfile | ✅ | 无（pushPathByName） | — |
-| 8 | 代码 | 结果增强 | 代码结果点击 → CodeViewer（owner/repo/path/ref + 高亮选定行 hunk） | ⚠️ 提前规划中 | 无 | **未实现**：CodeSearchCard 无导航（TDD 测试 5 亦未勾）；CodeViewer 已支持 path+ref |
+| 8 | 代码 | 结果增强 | 代码结果点击 → CodeViewer（owner/repo/path + 高亮选定行 hunk） | ✅ | 无 | CodeSearchCard 加 onOpen → codeViewer（三段以竖线拼接的 owner/name/path）；行级高亮仍待做（TDD 测试 5 未勾） |
 | 9 | 历史 | 最近搜索历史 | 本地 Preferences 列表（最新 10 条，按账号隔离）+ Clear all（无单条删除交互） | ✅ | 无 | — |
 | 10 | 排序 | 结果排序 | GraphQL search 无 orderBy；只能用 sort: 服务端 qualifier | ⚠️ | search + sort: | UI 提供「Stars/Recently updated」→ 追加 qualifier 重查 |
 | 11 | 过滤 | 高级过滤面板 | 更多 qualifier（label:、author:、org:…）自由输入 | ⚠️ | 同 2-6 | 保留「语法提示」浮层，不做复杂表单 |
 | 12 | 空态 | 无结果/错误 | 空态文案 + 错误重试；显式提交型（无防抖） | ✅ | 无 | 回车/点击入口才发起请求 |
 
-> 可行性: 9/12 可行（排序、高级过滤面板、代码结果点击三项 ⚠️）
+> 可行性: 10/12 可行（排序、高级过滤面板两项 ⚠️）
 
 ---
 
@@ -103,7 +103,7 @@ query SearchUsers($q: String!) {
 - [x] 测试 2：切换 Issue/PR 类型后请求参数含 is:issue / is:pr（断言 query 串）
 - [x] 测试 3：用户/组织类型结果点击 → Profile/OrgProfile 且参数正确
 - [x] 测试 4：issue/PR 结果点击 → IssueDetail/PrDetail
-- [ ] 测试 5：代码结果点击 → CodeViewer 带 path/ref；高亮行参数生效（存在该行时）
+- [ ] 测试 5：代码结果点击 → CodeViewer 打开对应文件（实现完成，待模拟器走查）；行级高亮参数待做
 - [x] 测试 6：最近搜索：搜索 3 次后本地列表 3 条；Clear all 清空；再次进入搜索页显示历史
 - [x] 测试 7：输入不触发请求，回车/点击入口才发起（显式提交型，无需防抖）
 - [ ] 测试 8：代码搜索配额不足时提示且结果区不变白
@@ -113,6 +113,6 @@ query SearchUsers($q: String!) {
 
 ## 七、备注
 
-- 015 的状态与本文关系：015 是「入口与框架」，本文是「详情子页」；实现后 015 转 implemented（由 046 承接），015 顶部备注更新指向 046。
+- 015 的状态与本文关系：015 是「入口与框架」（已 implemented），本文是「详情子页」（已 implemented）；015 顶部已加注指向本文。
 - 代码搜索结果高亮：CodeViewer 当前文件视图已支持行号；行高亮建议用阅读位置组件（`scrollToLine` 或锚点高亮），若实现超界则降级为「进入文件不带行」。
 - 与 049 多账号：最近搜索按账号隔离（key 含 login）。

@@ -3,7 +3,7 @@
  * Label 筛选按 Spec 边界：GraphQL labels 参数为单选 [name]，多选客户端二次过滤。
  */
 import { graphql } from './GitHttpClient';
-import { IssuesPage, issueOrderField, mapIssuesPage } from '../models/IssuesModels';
+import { IssuesPage, mapIssuesPage } from '../models/IssuesModels';
 
 const ISSUES_QUERY = `
 query IssuesList(
@@ -59,27 +59,6 @@ export class IssuesService {
       'states': repoIssueStates(state),
       'orderBy': order,
       'first': 50
-    };
-    if (cursor !== '') {
-      variables['after'] = cursor;
-    }
-    if (label !== '') {
-      variables['label'] = [label];
-    }
-    const data = await graphql(ISSUES_QUERY, variables, token);
-    return mapIssuesPage(data);
-  }
-
-  /** 拉取 Issue 列表页 */
-  static async fetchIssues(token: string, owner: string, name: string, closed: boolean,
-    sort: string, label: string, cursor: string): Promise<IssuesPage> {
-    const order: IssueOrderInput = { 'field': issueOrderField(sort), 'direction': 'DESC' };
-    const variables: Record<string, Object> = {
-      'owner': owner,
-      'name': name,
-      'states': closed ? ['CLOSED'] : ['OPEN'],
-      'orderBy': order,
-      'first': 25
     };
     if (cursor !== '') {
       variables['after'] = cursor;

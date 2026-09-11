@@ -102,7 +102,6 @@ export struct RepoDetailView {
           issueCount: detail.issueCount,
           prCount: detail.prCount,
           releaseCount: detail.releaseCount,
-          latestRelease: detail.latestRelease,
           defaultBranchRefName: detail.defaultBranchRefName
         };
         this.detail = updated;

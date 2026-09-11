@@ -78,9 +78,9 @@
 | 4 | 详情页 | 消息气泡列表 | 读会话消息数组 | ✅ | - | 本地数组，发送后追加 |
 | 5 | 详情页 | 发送 | 真实 chat/completions | ✅ | POST /chat/completions | 模型=白名单常量（免费）；发送中禁用按钮 |
 | 6 | 详情页 | 键入中占位 | 发送后未响应时显示 loading 气泡 | ✅ | - | 助手侧圆钮 + spinning，失败消失 |
-| 7 | 详情页 | 失败卡片 | 错误文案 + 重试 | ✅ | - | friendlyError 本地化；重试=重发同消息 |
+| 7 | 详情页 | 失败卡片 | 错误文案 + 重试 | ✅ | - | 错误按状态码本地映射（401→error_auth / 403·429→copilot_error_quota / 其余→copilot_error_send）；重试=重发同消息 |
 | 8 | 详情页 | 菜单：New conversation | 新建并跳转 | ✅ | - | 050 式新建会话 |
-| 9 | 详情页 | 菜单：历史会话切换 | 切换到另一本地会话 | ✅ | - | 保留当前会话置灰项 |
+| 9 | 详情页 | 菜单：历史会话切换 | 切换到另一本地会话 | ✅ | - | 保留当前会话置灰（点击仅关闭弹层，不切换） |
 | 10 | 详情页 | 菜单：Delete conversation | 确认框 + 真删本地会话 | ✅ | - | showDialog 标题/小字/DISMISS/DELETE 对齐官方 |
 | 11 | 详情页 | 菜单：View all conversations | pop 回主页 | ✅ | - | 主页=全部会话列表 |
 | 12 | Settings | Active for <login> | 登录名真实化 | ✅ | - | 当前账号 login（AccountStore，Index 透传） |
@@ -88,7 +88,7 @@
 | 14 | Settings | UPGRADE PLAN | toast 占位（红线） | ✅ | - | 不引入任何升级/账单端点 |
 | 15 | 全页 | 会话数据 | 本地 persistence | ✅ | - | preferences JSON（仿 WorkConfigStore 模式） |
 | 16 | 详情页 | 底部输入栏 | 多行自增高（11 行封顶后滚动） | ✅ | - | TextArea + lineHeight(20vp) + constraintSize 240vp + input_bg 灰底 + 投影 |
-| 17 | 全页 | 应用内浏览器 | About/页脚外链在 App 内打开 | ✅ | - | ArkWeb 加载 docs.github.com；路由 inAppBrowser（参数=URL，标题固定 Copilot），底栏隐藏 |
+| 17 | 全页 | 应用内浏览器 | About/页脚外链在 App 内打开 | ✅ | - | ArkWeb 加载 docs.github.com；路由 inAppBrowser（参数为「标题与 URL 以竖线拼接」两段；About 行用该行文案作标题，页脚两链接固定 Copilot），底栏隐藏 |
 
 > 可行性图例：✅ 可直接实现 ｜ ⚠️ 部分可行/降级 ｜ ❌ 不可实现
 
@@ -112,7 +112,7 @@ Body: {
 → 200 { "choices": [ { "message": { "content": "..." } } ] }
    → 页面追加助手气泡；body 内 usage 字段含 tokens（本地统计可留用）
 → 400 model_not_supported   → Free 配额不支持该模型（白名单下不会发生；防御分支）
-→ 401 / 403 / 429           → 授权过期 / token 无 Copilot 权限 / 限流 → friendlyError
+→ 401 / 403 / 429           → 授权过期 / token 无 Copilot 权限 / 限流 → 本地映射（error_auth / copilot_error_quota）
 ```
 
 **只读探测端点**：`GET /models`（200，本批不消费）、`GET /agents/tasks`（200，tasks 空）。
@@ -194,7 +194,7 @@ Body: {
 允许命中仅限：058 的 UPGRADE 按钮文案/tag、本 spec 备注、页面注释；任何新网络调用点禁止出现。
 
 **Token 类型判定**（057 结论）：`gho_`/`github_pat_` 可直通 Copilot API；`ghp_`（classic
-PAT）不支持——CopilotService 请求失败由 friendlyError 兜底（401/403 文案），不做额外
+PAT）不支持——CopilotService 请求失败由 CopilotChat 按状态码本地映射（401/403/429 文案），不做额外
 前缀预判（边界收口）。
 
 **与官方 App 差异**：官方会话/用量由 GitHub 服务端存储，本文档本地持久化+本地记账

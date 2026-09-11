@@ -39,7 +39,7 @@
 | 8 | Issue 卡片 | Issue 标题 | 点击进入详情 | ✅ | `issue.title` | — |
 | 9 | Issue 卡片 | Issue 编号 `#N` | 展示 | ✅ | `issue.number` | — |
 | 10 | Issue 卡片 | Label 标签 | 点击筛选 | ✅ | `issue.labels { name color }` | — |
-| 11 | Issue 卡片 | 作者 `@user` | 进入 Profile | ⚠️ 提前规划中 | `issue.author.login` | 作者行未实现（卡片无头像/登录名；整卡点击已进详情） |
+| 11 | Issue 卡片 | 作者 `@user` | 进入 Profile | ✅ | `issue.author.login` | 作者单元格与标题行/meta 行为同层兄弟（ArkUI 无 stopPropagation），各自独立跳转 |
 | 12 | Issue 卡片 | 时间 | 展示 | ✅ | `issue.createdAt` | — |
 | 13 | Issue 卡片 | 评论数 💬 | 展示 | ✅ | `issue.comments.totalCount` | — |
 | 14 | Issue 卡片 | 关联 PR 图标 🔀 | 展示 | ✅ | `timelineItems(CROSS_REFERENCED_EVENT)` | — |
@@ -95,12 +95,13 @@ query IssuesList(
 - [x] Issue 列表能展示
 - [x] Open/Closed 筛选正确切换
 - [ ] Label 点击筛选正确
-- [x] 点击 Issue 跳转到详情页（IssuesList.ets 整卡 onClick → issueDetail，已实现）
+- [x] 点击 Issue 跳转到详情页（标题行 / meta 行可点 → issueDetail，已实现）
+- [ ] Issue 卡作者行展示且点击进 Profile（实现完成，待模拟器走查）
 
 ---
 
 ## 七、备注
 
-- 14/15 全部可行（元素 11 作者行为提前规划中，未实现）
+- 15/15 全部可行
 - 2026-08-31：实现合并自 feature/spec-00X 分支（--no-ff）至 develop，仪器测试 19/19 通过；真实数据类验收项需在应用内配置有效 GitHub PAT 后复核
 - 2026-08-31 真实数据验收：使用 GitHub PAT（模拟器实测）完成以上勾选项；未实测项见「备注」（详情跳转由 Spec 030/031 接管）

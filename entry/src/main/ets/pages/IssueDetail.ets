@@ -248,6 +248,8 @@ export struct IssueDetailView {
                 .fontColor($r('app.color.text_primary'))
                 .width('100%')
                 .lineHeight(28)
+                .maxLines(2)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
 
               Row({ space: 8 }) {
                 OctIcon({ res: this.stateIcon(), iconSize: 16, iconColor: this.stateColor() })

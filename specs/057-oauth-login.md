@@ -58,13 +58,13 @@ OAuth 授权等待页（发起 OAuth 后的独立视图，NavDestination 或同�
 | 1 | 选择页 | 图标 + 标题 + 说明文案 | 纯展示 | ✅ | - | 复用现 token_setup 风格（text_primary/body 字号/bg_page） |
 | 2 | 选择页 | 主按钮「使用 GitHub 登录」 | 发起 Device Flow | ✅ | POST /login/device/code | link_blue 底白字、button_height；下方 caption 灰字「推荐 · 无需手动创建 token」 |
 | 3 | 选择页 | 次按钮「使用 Personal Access Token」 | 展开 PAT 表单 | ✅ | - | 无底色蓝字文字按钮，视觉次级 |
-| 4 | 选择页 | PAT 折叠表单 | 既有 001 流程原样保留 | ✅ | GET /user（保存前实测） | 输入框 + 保存 + 错误文案 + friendlyError，逻辑零改动 |
+| 4 | 选择页 | PAT 折叠表单 | PAT 兼容路径（本 Spec 纳入范围） | ✅ | GET /user（保存前实测） | 输入框 + 保存 + 错误文案；落库走 AccountStore.addAccount（含 049a 账号上限/查重分支） |
 | 5 | 等待页 | 自绘 AppBar（返回 + 标题） | 回到选择页 | ✅ | - | hideTitleBar(true)（全局二级页约定） |
 | 6 | 等待页 | user_code 大号展示 | 用户对照输入 | ✅ | - | 约 24fp 等宽字体，8 位含连字符（XXXX-XXXX） |
 | 7 | 等待页 | 复制按钮 | 写入剪贴板 | ✅ | - | pasteboard Kit；成功 toast |
 | 8 | 等待页 | 「打开浏览器授权」按钮 | openLink 拉起 verification_uri | ✅ | - | 进页自动拉起一次；按钮供未拉起时手动重试 |
 | 9 | 等待页 | 等待态（spinner + 文案） | 轮询反馈 | ✅ | POST /login/oauth/access_token | 按 interval 轮询；slow_down 后 interval += 5s |
-| 10 | 等待页 | 成功态 | 落库并进入主界面 | ✅ | GET /user | TokenStore.save 复用现有 alias；触发 onSaved |
+| 10 | 等待页 | 成功态 | 落库并进入主界面 | ✅ | GET /user | AccountStore.addAccount 落库；触发 onSaved |
 | 11 | 等待页 | 失败态（文案 + 重试） | expired/denied/网络失败 | ✅ | - | 复用 friendlyError 区分网络失败与授权失败；不落库 |
 
 > 可行性图例：✅ 可直接实现 ｜ ⚠️ 部分可行/降级 ｜ ❌ 不可实现
@@ -120,7 +120,7 @@ client_secret，符合纯端侧无后端架构。
 | ---- | ------ | ------------------- |
 | PKCE web flow 浏览器回跳（点 Authorize 自动跳回 App） | GitHub 2025-07 起支持 PKCE，但鸿蒙浏览器对 302→自定义 scheme 的拉起行为需真机验证 | 本批不做；Device Flow 无回跳依赖、确定性最高，回跳作二期增强 |
 | PAT 退役 | 用户拍板：OAuth 稳定后再删 | 本批 PAT 与 OAuth 并存；退役另开批 |
-| 后台轮询可能被系统冻结 | 鸿蒙后台调度限制，浏览器停留期间 App 可能挂起 | 回前台 onShown 续轮询兜底；等待页常驻展示状态，感知成功即自动进入 |
+| 后台轮询可能被系统冻结 | 鸿蒙后台调度限制，浏览器停留期间 App 可能挂起 | 回前台不自动续跑（**未实现，提前规划中**）；等待页常驻展示状态，感知成功即自动进入。挂起期间轮询可能中断，需重新发起 |
 | Copilot 功能解锁 | 功能开发与鉴权解耦 | 本批仅落地 token（`gho_` 可被 Copilot 批复用），Copilot 页另批 |
 | 设置页展示当前登录方式 | 范围收口 | 本批不做；随 Copilot 批或设置批补充 |
 | 中国大陆网络访问 github.com | 既有前提 | 与 PAT 创建流程同前提，行为不变 |
@@ -156,7 +156,7 @@ client_secret 无法兑换 refresh_token，勾选则 token 约 8 小时过期、
 
 - 新增 `services/OAuthService.ets`：Device Flow 状态机（获取设备码/轮询/五态错误映射），约 150 行
 - 改造 `pages/TokenSetup.ets`：选择视图 + PAT 折叠表单 + OAuth 等待视图（三态切换）
-- `services/TokenStore.ets`：零改动（alias 与存取 API 不变；类型由前缀实时判定）
+- 落库走 `services/AccountStore.ets`（原 `services/TokenStore.ets` 已由 Spec 049a 并入多账号结构；类型仍由前缀实时判定）
 - `services/GitHttpClient.ets`：零改动（`Bearer` 头对 `gho_` 通用）
 - 其余页面：零改动（token 消费面不变）
 - i18n：base/zh_CN string.json 新增约 10 个 key（login_oauth_button、login_pat_button、
@@ -164,7 +164,7 @@ client_secret 无法兑换 refresh_token，勾选则 token 约 8 小时过期、
   oauth_error_expired、oauth_error_denied 等）
 
 **鸿蒙适配**：openLink（@kit.AbilityKit）拉起系统浏览器；pasteboard（@kit.BasicServicesKit）
-复制设备码；轮询用 setTimeout 循环 + NavDestination onShown 续跑；等待页返回即取消轮询。
+复制设备码；轮询用 setTimeout 循环（无 onShown 续跑，回前台需重新发起）；等待页返回即取消轮询。
 
 **与官方 App 差异**：官方 GitHub Mobile 用 web flow 深链回跳（一线厂商自有 client 与后端）；
 第三方无后端 App 的标准做法是 Device Flow（gh CLI / Copilot CLI 同款）。

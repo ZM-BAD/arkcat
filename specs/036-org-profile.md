@@ -39,7 +39,7 @@
 | 4 | 信息行 | 🔗 官网 / ✉️ 邮箱 / 𝕏 X 账号 | 展示 | ✅ | `websiteUrl/twitterUsername` + REST mailbox | 邮箱直接取组织 REST 字段 |
 | 5 | 按钮 | [+ FOLLOW] 通栏描边按钮 | 真实关注 | ✅ | REST `PUT/DELETE /user/follows/{login}` | 切换关注；初始态 `GET /user/follows` 探测；失败 toast；已有 `user:follow` scope |
 | 6 | README | 标题行 `{login}/README.md` + 右侧滚动条 | 展示 | ✅ | —（纯 UI） | 固定格式文案 |
-| 7 | README | 简化富文本（标题加粗/链接/正文行） | 展示 | ✅ | REST `contents/{login}/.github/profile/README.md`（profile 优先）→ `/repos/{login}/.github/readme` 兜底 | 双 404 → 整区块隐藏；复用 RepoDetail 简化渲染 |
+| 7 | README | 官方 HTML 渲染（MarkdownView） | 展示 | ✅ | REST `contents/{login}/.github/profile/README.md`（profile 优先）→ `/repos/{login}/.github/readme` 兜底 | 双 404 → 整区块隐藏；渲染管线与 006 一致（REST /readme + MarkdownView，040） |
 | 8 | README | Read more 展开/收起 | 交互 | ✅ | —（纯 UI） | MarkdownView 折叠阈值 500 字符/240vp（040）；悬浮胶囊按钮 |
 | 9 | Pinned | 📍 标题 + 横滑卡片（RepoCard 复用） | 展示/导航 | ✅ | `pinnedItems(first:6,types:[REPOSITORY])` | 卡点击 → repoDetail |
 | 10 | Repositories | 图标 + 计数行（count 右侧 + ›） | 导航 | ✅ | REST `public_repos`（repositoriesCount） | pushPathByName('repositoriesList', login) |

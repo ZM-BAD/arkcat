@@ -100,7 +100,7 @@ query ExploreActivity {
 
 ```text
 REST GET /users/{login}/received_events?per_page=60   # 过滤 type=PullRequestEvent 且 payload.action=merged
-REST GET /search/repositories?q=pushed%3A%3E{窗口天数}天前&sort=stars&order=desc&per_page=25
+REST GET /search/repositories?q=pushed%3A%3E{窗口起点 ISO 日期}&sort=stars&order=desc&per_page=25
 REST GET /search/repositories?q=topic%3Aawesome-list&sort=stars&order=desc&per_page=25
 REST GET /search/repositories?q=...%20language%3AGo%20spoken_language%3AEnglish&...
   # 语言/口语 qualifier 服务端过滤（2026-09-07 实测有效）
@@ -128,7 +128,6 @@ query ExploreRepoMeta {
 | 官方 Trending 算法 | 无公开 API | REST search 近似（pushed:>N 近 N 天活跃按星排序） |
 | 官方 Awesome Lists 精选 | 编辑内容无 API | REST search topic:awesome-list 按星近似 |
 | 「今日获星」/「本周获星」窗口 | 增量星数无公开 API | 窗口=pushed:>N 近 N 天活跃近似（created 窗口实测筛空，2026-09-07 Chinese 0 条）；★ 文案 「N today」取总数；默认 Today（与官方一致） |
-| 官方 Activity feed | 无公开 API | REST received_events（关注者+watch 仓库事件）近似，仅取 merged PR 事件，repo+number 去重、上限 10 条 |
 | Activity 六类（Announcements/Releases/Stars/Repositories/Follows/Recommendations） | 其余五类无公开数据源 | Filter Activity 页完整实现（勾选+SAVE 持久化）；内容侧仅 merged PR 动态（近似 Follows），关闭 Follows 后 Activity 区为空 |
 | 语言/口语筛选列表 | 官方 App 走内部端点 | 语言=GET /languages 全量 833 项（免认证）+ linguist 色表 751 项 + 常用 7 项置顶；口语=内置 184 项；选中后服务端 qualifier 过滤，非纯客户端 |
 | 横幅图 | 官方沿用仓库社交预览图 | repository.openGraphImageUrl（1200x630 social preview，按比例贴宽高自适应）；无自定义预览的仓库不显示横幅 |
@@ -144,7 +143,7 @@ query ExploreRepoMeta {
 - [x] mapActivityEvents：仅保留 PullRequestEvent 且 payload.action=merged，映射 actor/org 头像/repo/number/headRef/createdAt
 - [x] mapActivityEvents：repo+number 去重（保留最新）、上限 10 条
 - [x] buildPrDetailsQuery：N 条 ref 生成 r0..rN alias，owner/name 引号转义
-- [x] mapPrDetails：事件与 GraphQL 详情合并；PR 已删（alias 为 null）的条目被剔除；author 空时 fallback actor
+- [x] mapActivityEventsWithDetails：事件与 GraphQL 详情合并；PR 已删（alias 为 null）的条目被剔除；author 空时 fallback actor
 - [x] summarizeBody：bullet 行识别、inline code 分段（code=true）、链接/图片/标题行/围栏标记剥离
 - [x] buildRepoListPath：窗口/语言/口语 qualifier 组合（trending=pushed:>N，awesome=topic；空 qualifier 不拼）
 - [x] mapSearchRepos：node_id → graphqlId；语言色走 programLanguageColor（linguist 色表 751 项）

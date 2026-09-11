@@ -41,10 +41,10 @@ Home My Work「Issues」入口进入的跨仓库 Issue 列表页（区别于 007
 | 11 | Issue 行 | 标题（加粗，2 行截断） | 展示 | ✅ | `title` | — |
 | 12 | Issue 行 | 标签胶囊 | 展示 | ✅ | `labels(first:5) { nodes { name color } }` | 标签真实色值实底+白字 |
 | 13 | Issue 行 | 评论数 💬 N | 展示 | ✅ | `comments.totalCount` | — |
-| 14 | 空态 | 插图 + 标题 + 副文案 + RESET ALL FILTERS | 空态引导；重置筛选并可重查 | ⚠️ 提前规划中 | —（纯 UI） | 插图用占位字形；**副文案 + RESET ALL FILTERS 未实现**（WorkEmptyView 已支持 subtitle/button，页面未传参） |
+| 14 | 空态 | 插图 + 标题 + 副文案 + RESET ALL FILTERS | 空态引导；重置筛选并可重查 | ✅ | —（纯 UI） | 插图用占位字形；RESET 走 resetFilters（恢复默认筛选 + 退出就地搜索后重查） |
 | 15 | 列表底部 | Load more 分页 | 翻页 | ✅ | `search.pageInfo` | — |
 
-> 可行性比例声明：14/15 可行（元素 14 空态副文案 + RESET ALL FILTERS 为提前规划中，未实现）。
+> 可行性比例声明：15/15 可行。
 
 ---
 
@@ -91,7 +91,7 @@ query WorkIssues($query: String!, $first: Int = 25, $after: String) {
 - [x] 测试 6：grep 检查 WorkIssues.ets 无中文字符串字面量残留
 - [x] 测试 7：`bash scripts/check-spec.sh` 通过
 - [x] 测试 8：`devecocli build` 全量构建通过
-- [ ] 测试 9：空态副文案 + RESET ALL FILTERS 可重置（提前规划中：未实现）
+- [ ] 测试 9：空态副文案 + RESET ALL FILTERS 可重置（实现完成，待模拟器走查）
 
 ---
 

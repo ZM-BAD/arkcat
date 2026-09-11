@@ -14,7 +14,7 @@
 | 001 | [home-tab.md](001-home-tab.md) | 首页 Tab（已被 013 替换） | Level 1 | deprecated |
 | 002 | [inbox-tab.md](002-inbox-tab.md) | 通知收件箱 Tab | Level 1 | implemented |
 | 003 | [explore-tab.md](003-explore-tab.md) | 发现探索 Tab（已被 056 取代） | Level 1 | deprecated |
-| 004 | [copilot-tab.md](004-copilot-tab.md) | AI 助手 Tab | Level 1 | implemented |
+| 004 | [copilot-tab.md](004-copilot-tab.md) | AI 助手 Tab（已被 058/059 取代） | Level 1 | deprecated |
 | 005 | [user-profile.md](005-user-profile.md) | 用户个人主页 | Level 3 | implemented |
 | 006 | [repo-detail.md](006-repo-detail.md) | 仓库详情页（官方布局对齐） | Level 3 | implemented |
 | 007 | [issues-list.md](007-issues-list.md) | Issue 列表页 | Level 3 | implemented |
@@ -56,7 +56,7 @@
 | 043 | [issue-pr-create-edit.md](043-issue-pr-create-edit.md) | Issue/PR 创建与编辑（生命周期） | Level 3 | draft |
 | 044 | [triage-editors.md](044-triage-editors.md) | Issue/PR 元数据编排（Labels/Assignees/Milestone/Projects） | Level 3 | draft |
 | 045 | [notifications-subscriptions.md](045-notifications-subscriptions.md) | 通知与订阅增强（Inbox 高级 + 仓库 Watch） | Level 3 | draft |
-| 046 | [search-full.md](046-search-full.md) | 搜索全类型与最近搜索（Search 五类详情） | Level 3 | implemented |
+| 046 | [search-full.md](046-search-full.md) | 搜索全类型与最近搜索（Search 六类详情） | Level 3 | implemented |
 | 047 | [releases-detail-download.md](047-releases-detail-download.md) | Release 详情与资产下载 | Level 3 | implemented |
 | 048 | [actions-checks.md](048-actions-checks.md) | Actions/Checks 状态检查（Check runs 详情 + 一键重跑） | Level 3 | draft |
 | 049 | [multi-account-security.md](049-multi-account-security.md) | 多账号与安全（049a 账号管理器已实现；049b App Lock 未做） | Level 3 | draft |

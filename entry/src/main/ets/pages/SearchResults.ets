@@ -219,6 +219,17 @@ export struct SearchResultsView {
     return resText(this.getUIContext(), res, ...args);
   }
 
+  /** 代码结果卡点击 → CodeViewer（路由参数 owner|name|path；repoFullName 为 owner/repo） */
+  private openCodeFile(file: CodeFileResult): void {
+    const slash = file.repoFullName.indexOf('/');
+    if (slash <= 0) {
+      return;
+    }
+    const owner = file.repoFullName.substring(0, slash);
+    const name = file.repoFullName.substring(slash + 1);
+    this.pathStack.pushPathByName('codeViewer', `${owner}|${name}|${file.path}`);
+  }
+
   /** 行内分隔线（repositories/issues/prs；people/orgs 无分隔线） */
   @Builder
   rowDivider() {
@@ -257,7 +268,10 @@ export struct SearchResultsView {
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .width('100%')
             .padding({ left: 16, right: 16, top: 4, bottom: 8 })
-          CodeSearchCard({ file: f })
+          CodeSearchCard({
+            file: f,
+            onOpen: () => this.openCodeFile(f)
+          })
             .padding({ left: 16, right: 16 })
             .margin({ bottom: 8 })
         }

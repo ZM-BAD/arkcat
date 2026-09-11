@@ -43,7 +43,7 @@
 | 9 | 卡片行3 | 类型图标+摘要 | 类型展示 | ⚠️ | `subject.type` | 官方摘要(操作者)无公开 API，降级为类型+reason |
 | 10 | 卡片右 | 相对时间 | 纯展示 | ✅ | `updated_at` | timeParts |
 | 11 | 卡片左 | 未读状态（标题加粗） | 未读标识 | ✅ | `unread` | 未读由标题加粗表达（无绿圈） |
-| 12 | 点击卡片 | 标记已读 | 标记已读 | ⚠️ | REST `PATCH /notifications/threads/{id}` | 详情跳转待后续 Spec |
+| 12 | 点击卡片 | 标记已读 | 标记已读 | ⚠️ | REST `PATCH /notifications/threads/{id}` | 仅标记已读；详情页见 030/031（卡片点击未接入跳转） |
 
 ---
 

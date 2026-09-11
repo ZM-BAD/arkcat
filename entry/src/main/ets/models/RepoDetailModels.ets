@@ -16,13 +16,6 @@ export interface LanguageSlice {
   percent: number;
 }
 
-/** 最新 Release 摘要 */
-export interface ReleaseEntry {
-  tagName: string;
-  publishedAt: string;
-  isLatest: boolean;
-}
-
 /** 仓库详情聚合 */
 export interface RepoDetail {
   repoId: string;
@@ -44,7 +37,6 @@ export interface RepoDetail {
   issueCount: number;
   prCount: number;
   releaseCount: number;
-  latestRelease: ReleaseEntry | null;
   defaultBranchRefName: string;
 }
 
@@ -111,22 +103,7 @@ export function mapRepoDetail(data: JsonMap): RepoDetail {
   const issues = Json.obj(repo, 'issues');
   const prs = Json.obj(repo, 'pullRequests');
   const releasesRaw = Json.obj(repo, 'releases');
-  let releaseCount = 0;
-  let latestRelease: ReleaseEntry | null = null;
-  if (releasesRaw !== null) {
-    releaseCount = Json.num(releasesRaw, 'totalCount');
-    const releaseNodes = Json.arr(releasesRaw, 'nodes');
-    for (const nodeItem of releaseNodes) {
-      const node = nodeItem as JsonMap;
-      if (latestRelease === null || Json.bool(node, 'isLatest')) {
-        latestRelease = {
-          tagName: Json.str(node, 'tagName'),
-          publishedAt: Json.str(node, 'publishedAt'),
-          isLatest: Json.bool(node, 'isLatest')
-        };
-      }
-    }
-  }
+  const releaseCount = releasesRaw !== null ? Json.num(releasesRaw, 'totalCount') : 0;
   return {
     repoId: Json.str(repo, 'id'),
     name: Json.str(repo, 'name'),
@@ -147,7 +124,6 @@ export function mapRepoDetail(data: JsonMap): RepoDetail {
     issueCount: issues ? Json.num(issues, 'totalCount') : 0,
     prCount: prs ? Json.num(prs, 'totalCount') : 0,
     releaseCount: releaseCount,
-    latestRelease: latestRelease,
     defaultBranchRefName: branch ? Json.str(branch, 'name') : 'main'
   };
 }
