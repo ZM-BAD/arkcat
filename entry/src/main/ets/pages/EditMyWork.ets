@@ -52,7 +52,8 @@ export struct EditMyWorkView {
       case 'projects':
         return { iconRes: $r('app.media.oct_table_16'), color: $r('app.color.text_secondary'), label: $r('app.string.home_work_projects') };
       case 'topRepos':
-        return { iconRes: $r('app.media.oct_repo_16'), color: $r('app.color.text_primary'), label: $r('app.string.home_work_top_repos') };
+        // 与 Home 同一入口保持同色（白图标需深底；浅底上不可见）
+        return { iconRes: $r('app.media.oct_repo_16'), color: $r('app.color.work_dark_bg'), label: $r('app.string.home_work_top_repos') };
       case 'orgs':
         return { iconRes: $r('app.media.oct_organization_16'), color: $r('app.color.shortcut_orange_fg'), label: $r('app.string.home_work_organizations') };
       case 'starred':

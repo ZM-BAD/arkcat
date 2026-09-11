@@ -5,9 +5,10 @@
 颜色必须走 resources/base + dark/element/color.json（$r）或 PrimerTokens.ets 常量。
 
 豁免（数据色板文件，非 UI 样式，允许集中定义；其余一律禁止）：
-- utils/CodeTheme.ets          GitHub 官方代码高亮明/暗两套配色
-- models/LanguageColors.ets    GitHub linguist 常用语言色（REST 兜底字段缺失时）
-- utils/MarkdownPalette.ets    GitHub Markdown 官方明/暗配色（Spec 040，MarkdownView 引用）
+- utils/CodeTheme.ets            GitHub 官方代码高亮明/暗两套配色
+- models/LanguageColors.ets      GitHub linguist 常用语言色（REST 兜底字段缺失时）
+- utils/MarkdownPalette.ets      GitHub Markdown 官方明/暗配色（Spec 040，MarkdownView 引用）
+- models/ExploreLanguages.ets   Explore 语言筛选全量表（GET /languages 全量 + linguist 色表）
 
 注释（// 与 /* */）中的色值不报；行号保留，便于定位。
 用法：python3 scripts/check-hardcoded-colors.py

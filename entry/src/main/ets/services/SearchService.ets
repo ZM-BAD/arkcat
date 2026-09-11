@@ -25,6 +25,9 @@ export const QUALIFIER_CHIPS: string[] = [
   'repo', 'user', 'org', 'path', 'symbol', 'language', 'content', '/regex/', 'AND', 'OR', 'NOT'
 ];
 
+/** Jump to 无匹配的哨兵 code：非 HTTP 状态码，供调用方区分「无匹配」与网络失败（两者都以 code 0 表达） */
+export const JUMP_TO_NO_MATCH = -1;
+
 /** 标签（labelled pill） */
 export interface SearchLabel {
   name: string;
@@ -643,6 +646,6 @@ export class SearchService {
     if (page.items.length > 0 && page.items[0].kind === 'repository') {
       return page.items[0].title;
     }
-    throw new ApiError(0, 'no match');
+    throw new ApiError(JUMP_TO_NO_MATCH, 'no match');
   }
 }

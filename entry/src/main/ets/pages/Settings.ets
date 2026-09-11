@@ -6,7 +6,7 @@
 import { promptAction } from '@kit.ArkUI';
 import { i18n } from '@kit.LocalizationKit';
 import { preferences } from '@kit.ArkData';
-import { common } from '@kit.AbilityKit';
+import { common, bundleManager } from '@kit.AbilityKit';
 import { AccountStore } from '../services/AccountStore';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
@@ -25,12 +25,25 @@ export struct SettingsView {
   /** 退出登录成功：通知 Index 清 token 状态并切回登录页 */
   @Event onSignedOut: () => void = (): void => {};
   @Local themeMode: string = 'system';
-  @Local language: string = 'zh';
+  @Local language: string = 'en';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  /** 版本号：运行时读 bundle 清单的 versionName，避免与 AppScope/app.json5 手工同步（review 2026-09-10） */
+  @Local versionText: ResourceStr = $r('app.string.settings_version');
 
   aboutToAppear(): void {
     this.loadSettings();
+    this.loadVersion();
+  }
+
+  /** 版本号取自 bundle 清单；取不到时保留静态回退串 */
+  private loadVersion(): void {
+    try {
+      const info = bundleManager.getBundleInfoForSelfSync(bundleManager.BundleFlag.GET_BUNDLE_INFO_DEFAULT);
+      this.versionText = `ArkCat v${info.versionName}`;
+    } catch (e) {
+      // 保持回退串
+    }
   }
 
   private loadSettings(): void {
@@ -42,7 +55,7 @@ export struct SettingsView {
       // 同步读取：避免异步未返回时页面停在初始默认值（语言/主题行显示错误）
       const pref = preferences.getPreferencesSync(ctx, { name: PREFS_NAME });
       this.themeMode = pref.getSync(KEY_THEME, 'system') as string;
-      this.language = pref.getSync(KEY_LANG, 'zh') as string;
+      this.language = pref.getSync(KEY_LANG, 'en') as string;
     } catch (e) {
       // 读取失败保持默认
     }
@@ -324,7 +337,7 @@ export struct SettingsView {
           this.row($r('app.string.settings_open_source'), '', () => this.comingSoon())
           this.row($r('app.string.settings_sign_out'), '', () => this.signOut())
 
-          Text($r('app.string.settings_version'))
+          Text(this.versionText)
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))
             .width('100%')

@@ -594,11 +594,11 @@
     },
     {
       "name": "explore_stars_today_fmt",
-      "value": "%1$d today"
+      "value": "%1$s today"
     },
     {
       "name": "explore_contributors_fmt",
-      "value": "%1$d contributors"
+      "value": "%1$s contributors"
     },
     {
       "name": "explore_lists_empty",
@@ -814,7 +814,7 @@
     },
     {
       "name": "settings_version",
-      "value": "ArkCat v1.0.0"
+      "value": "ArkCat"
     },
     {
       "name": "search_placeholder",
@@ -1063,6 +1063,10 @@
     {
       "name": "search_jump_to",
       "value": "Jump to \"%1$s\""
+    },
+    {
+      "name": "search_jump_no_match",
+      "value": "No matching repository"
     },
     {
       "name": "markdown_badge",

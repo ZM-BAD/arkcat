@@ -162,7 +162,7 @@
     },
     {
       "name": "home_pinned_section",
-      "value": "Pinned"
+      "value": "已置顶"
     },
     {
       "name": "home_contributions_total",
@@ -334,11 +334,11 @@
     },
     {
       "name": "issues_state_open",
-      "value": "Open"
+      "value": "开启"
     },
     {
       "name": "issues_state_closed",
-      "value": "Closed"
+      "value": "已关闭"
     },
     {
       "name": "issues_sort_label",
@@ -594,11 +594,11 @@
     },
     {
       "name": "explore_stars_today_fmt",
-      "value": "%1$d 今日"
+      "value": "%1$s 今日"
     },
     {
       "name": "explore_contributors_fmt",
-      "value": "%1$d 个贡献者"
+      "value": "%1$s 个贡献者"
     },
     {
       "name": "explore_lists_empty",
@@ -814,7 +814,7 @@
     },
     {
       "name": "settings_version",
-      "value": "ArkCat v1.0.0"
+      "value": "ArkCat"
     },
     {
       "name": "search_placeholder",
@@ -1063,6 +1063,10 @@
     {
       "name": "search_jump_to",
       "value": "跳转到 \"%1$s\""
+    },
+    {
+      "name": "search_jump_no_match",
+      "value": "没有匹配的仓库"
     },
     {
       "name": "markdown_badge",

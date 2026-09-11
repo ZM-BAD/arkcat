@@ -119,7 +119,11 @@ jobs:
           SPECS=$(find specs -maxdepth 1 -name "*.md" ! -name "_TEMPLATE.md" ! -name "README.md" | sort)
           EXPECTED=1
           for f in $SPECS; do
-              NUM=$(basename "$f" | grep -oE "^[0-9]+")
+              NUM=$(basename "$f" | grep -oE "^[0-9]+" || true)
+              if [ -z "$NUM" ]; then
+                  echo "❌ Spec filename has no leading number: $(basename $f)"
+                  exit 1
+              fi
               if [ "$NUM" -ne "$EXPECTED" ]; then
                   echo "❌ Spec numbering gap: expected $(printf '%03d' $EXPECTED), got $(basename $f)"
                   exit 1

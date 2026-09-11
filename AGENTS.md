@@ -13,9 +13,9 @@
 | --------- | ----- |
 | 包名 / 平台 | `me.zmbad.arkcat`；目标 HarmonyOS 7.0（API 26），最低兼容 5.0（API 12） |
 | 语言 / 构建 | ArkTS / ArkUI；hvigor（DevEco Studio 内置，CLI 经 `devecocli` 调用） |
-| 测试框架 | Hypium |
+| 测试框架 | Hypium（仪器 / ohosTest）+ node:test（宿主纯函数单测） |
 | 架构 | 纯端侧直连 GitHub GraphQL API v4（REST v3 兜底），无 BFF/后端 |
-| 认证 | GitHub Personal Access Token（用户自行生成，本地存储） |
+| 认证 | GitHub OAuth Device Flow（主路径）+ Personal Access Token（兼容路径），均本地加密存储 |
 
 ---
 
@@ -45,7 +45,7 @@
 
 - **位置/命名**：`specs/NNN-name.md`（三位数字递增）；模板见 `specs/_TEMPLATE.md`（一~七章节：概述/UI 结构/元素清单/核心 GraphQL/边界/TDD 验收/备注）
 - **状态流转**：`draft → reviewing → approved → implemented → deprecated`
-- **合规检查**：提交前/CI 自动跑 `bash scripts/check-spec.sh`（文件名、章节顺序、❌ 处理、可行性比例与 ✅ 数一致、编号连续）
+- **合规检查**：提交前/CI 自动跑 `bash scripts/check-spec.sh`（文件名、章节顺序、❌ 处理、可行性比例与 ✅ 数一致）；**该脚本不查编号连续**——编号由 CI 的 `structure-check` 校验（本地绿 ≠ CI 绿）
 
 ---
 
@@ -59,7 +59,7 @@
 遵循 [Conventional Commits](https://www.conventionalcommits.org/)，type：`feat fix docs style refactor perf test build ci chore revert`。
 
 ### 5.3 Git Hooks
-安装：`bash scripts/install-hooks.sh`。优先 pre-commit 框架（`.pre-commit-config.yaml`：check-spec.sh / markdownlint / gitleaks / trailing whitespace）；commit-msg 走 commitlint（`.commitlintrc.json`）；`.githooks/` 为无 pre-commit 环境回退。
+安装：`bash scripts/install-hooks.sh`。优先 pre-commit 框架（`.pre-commit-config.yaml`：check-spec.sh / markdownlint / 硬编码颜色 / gitleaks / trailing whitespace / 宿主单测）；commit-msg 走 commitlint（`.commitlintrc.json`）；`.githooks/` 为无 pre-commit 环境回退。
 
 ---
 
@@ -72,10 +72,11 @@
 | 文件结构 / Spec 编号 | CI | ✅ 是 |
 | Secret 泄漏（gitleaks） | pre-commit + CI | ✅ 是（CI 2026-09-01 起） |
 | UI 硬编码颜色（#RRGGBB） | pre-commit + CI | ✅ 是 |
+| 宿主单元测试（node:test） | pre-commit + CI | ✅ 是 |
 | Primer 样式 Review（[docs/primer-review-rules.md](docs/primer-review-rules.md)） | Code Review（人工走查，机械条目逐步下沉 scripts/） | ✅ 是（评审退回） |
 | HarmonyOS 构建 | 本地 | 本地阻断 |
 
-CI（GitHub Actions）：**spec-lint** / **commit-lint** / **structure-check** / **hardcoded-colors** / **gitleaks** / **harmony-build**（DevEco Studio 许可证限制，保留禁用、本地构建）。
+CI（GitHub Actions）：**spec-lint** / **commit-lint** / **structure-check**（含 Spec 编号连续）/ **hardcoded-colors** / **gitleaks** / **unit-tests**；**harmony-build** 与 **official-local-test** 当前 `if: false` 禁用（私仓 macOS runner 计费 ×10，仓库转 public 后恢复，构建暂由本地兜底）。
 
 ---
 

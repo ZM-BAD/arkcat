@@ -26,14 +26,14 @@
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar | ← 返回 + `owner/repo #N` + 搜索/⋯ | 导航 | ✅ | —（纯 UI） | — |
-| 2 | 标题 | 大标题（2 行省略） | 展示 | ✅ | `title` | — |
+| 2 | 标题 | 大标题 | 展示 | ⚠️ 提前规划中 | `title` | 2 行省略未实现（当前无 maxLines，长标题无限换行） |
 | 3 | 标题 | 状态圆标 + 作者 + 相对时间 | 展示 | ✅ | `state/stateReason/author/createdAt` | 与 007/017 图标一致 |
 | 4 | 正文 | MarkdownView 直渲（040） | 展示 | ✅ | `body/bodyHTML` | 折叠阈值 500 字符/240vp |
 | 5 | 评论 | 头像/登录名/时间/正文 + 反应条 + 编辑/删除菜单 | 展示 | ✅ | `comments { nodes bodyHTML/viewerDidAuthor/reactionGroups }` | 编辑/删除仅本人（viewerDidAuthor）显示 |
 | 6 | 评论区 | Load more 分页 | 翻页 | ✅ | `comments.pageInfo` | — |
 | 7 | 底部 | COMMENT + 表情按钮 | 占位 | ✅ | —（纯 UI） | 提示后续 |
 
-> 可行性比例声明：7/7 可行。
+> 可行性比例声明：6/7 可行（元素 2 标题 2 行省略为提前规划中，未实现）。
 
 ---
 

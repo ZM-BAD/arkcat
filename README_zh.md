@@ -101,7 +101,7 @@ bash scripts/install-hooks.sh
 ### 可选 CLI 命令（macOS）
 
 ```bash
-bash scripts/run-local-tests.sh   # 宿主单元测试（node:test，需 npm install）
+bash scripts/ut/run-local-tests.sh   # 宿主单元测试（node:test，需 npm install）
 bash scripts/run-local-test.sh    # 官方 Local Test + 覆盖率报告（需 DevEco Studio）
 bash scripts/check-graphql.sh     # GraphQL 契约检查（需 gh 已登录）
 devecocli build                   # 构建 debug HAP

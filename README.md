@@ -101,7 +101,7 @@ bash scripts/install-hooks.sh
 ### Optional CLI commands (macOS)
 
 ```bash
-bash scripts/run-local-tests.sh   # host unit tests (node:test, needs npm install)
+bash scripts/ut/run-local-tests.sh   # host unit tests (node:test, needs npm install)
 bash scripts/run-local-test.sh    # official Local Test + coverage report (needs DevEco Studio)
 bash scripts/check-graphql.sh     # GraphQL contract check (needs `gh` login)
 devecocli build                   # build debug HAP

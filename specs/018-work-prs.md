@@ -41,10 +41,10 @@ Home My Work「Pull Requests」入口进入的跨仓库 PR 列表页。展示用
 | 11 | PR 行 | 标题（加粗，2 行截断） | 展示 | ✅ | `title` | — |
 | 12 | PR 行 | Checks 胶囊（✔ Checks / ✗ Checks failed / ✗ Checks pending） | CI 状态展示 | ✅ | `statusCheckRollup { state }` | Checks 非 SUCCESS 显示 ✗（oct_x_16 + warning）；pending 文案单独 |
 | 13 | PR 行 | 💬 评论数 + 👁 审查请求数 | 展示 | ✅ | `comments.totalCount / reviewRequests.totalCount` | — |
-| 14 | 空态 | 插图 + 标题 + 副文案 + RESET ALL FILTERS | 空态引导；重置筛选 | ✅ | —（纯 UI） | 插图用占位字形 |
+| 14 | 空态 | 插图 + 标题 + 副文案 + RESET ALL FILTERS | 空态引导；重置筛选 | ⚠️ 提前规划中 | —（纯 UI） | 插图用占位字形；**副文案 + RESET ALL FILTERS 未实现**（WorkEmptyView 已支持 subtitle/button，页面未传参） |
 | 15 | 列表底部 | Load more 分页 | 翻页 | ✅ | `search.pageInfo` | — |
 
-> 可行性比例声明：15/15 可行。
+> 可行性比例声明：14/15 可行（元素 14 空态副文案 + RESET ALL FILTERS 为提前规划中，未实现）。
 
 ---
 

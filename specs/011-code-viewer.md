@@ -82,7 +82,7 @@ query FileContent($owner: String!, $name: String!, $expression: String!) {
 
 - [x] 测试 1：038 Files → 点击文件进入本页；头部对齐截图（← 文件名 + ⭮⚙⋮）；文件名截断显示
 - [x] 测试 2：内容显示 + 行号正确；Code Options 关闭行号开关后回本页行号隐藏
-- [x] 测试 3：注释/字符串/关键字/函数调用四类着色（明/暗主题各验证一次）
+- [ ] 测试 3：字符串独立着色（提前规划中：当前为注释/关键字/函数三类，字符串仍用正文色；元素 8 已标 ⚠️）
 - [x] 测试 4：⋮ 菜单 Copy contents 复制全文成功（剪贴板校验）；⚙ 齿轮进入 Code Options
 - [x] 测试 5：构建 + 模拟器实测通过；grep 无中文字符串字面量；check-spec.sh 通过
 

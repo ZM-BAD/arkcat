@@ -27,15 +27,15 @@
 
 ## 3. 合规文档
 
-- [ ] 应用内隐私说明页（本项目零第三方 SDK、仅本地加密存储用户自有 GitHub PAT；同意前不采集）
-- [ ] 线上隐私政策 HTTPS URL（可公开访问）
+- [ ] 应用内隐私说明页（本项目零第三方 SDK、仅本地加密存储用户自有凭据——OAuth 令牌或 PAT；同意前不采集）
+- [ ] 线上隐私政策 HTTPS URL（可公开访问）——**正文已就绪：[docs/privacy-policy.md](privacy-policy.md)，尚缺公开 URL**（仓库转 public 后可直接用 blob 链接，或另挂 GitHub Pages）
 - [ ] 权限说明：当前无敏感权限申请（如有变化逐项标注用途）
 
 ## 4. 技术发布
 
 - [ ] 发布证书 + 发布 Profile（AGC 生成；调试证书不可上架）
 - [ ] 正式签名 HAP
-- [ ] 审核测试说明：写明「需用户自备 GitHub Personal Access Token」配置步骤（测试登录方式说明）
+- [ ] 审核测试说明：写明登录方式（**OAuth Device Flow 为主路径**，PAT 粘贴为兼容路径）与配置步骤
 - [ ] 上架前自检：AGC 云测试 / DevEco Testing 预检 / 邀请测试版本（约 3 小时审核通道）
 
 ## 5. 文案红线（商店描述）
@@ -51,3 +51,4 @@
 | 日期 | 变更 |
 | ------ | ------ |
 | 2026-08-31 | 初版清单（伴随 Spec 025 落地） |
+| 2026-09-10 | 对齐现状：登录改以 OAuth Device Flow 为主路径；隐私政策正文就位（`docs/privacy-policy.md`），公开 URL 仍待仓库转 public |

@@ -80,7 +80,7 @@ export struct CodeViewerView {
         this.overrideFont = pref.getSync('code_override_font', true) as boolean;
         this.font = pref.getSync('code_font_size', FONT_DEFAULT) as number;
         this.wrapLines = pref.getSync('code_wrap_lines', true) as boolean;
-        this.scrollablePath = pref.getSync('code_scrollable_path', false) as boolean;
+        this.scrollablePath = pref.getSync('code_scrollable_path', true) as boolean;
         this.settingsLoaded = true;
         this.tryRender();
       })

@@ -39,7 +39,7 @@ Stargazers 行间无分隔线；Forks 行间有 Divider。两页均 Scroll + 保
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | AppBar | ← + 仓库名（粗体 20fp）+ 副标题（灰 14fp（body_font_size）） | 返回 / 标题 | ✅ | — | 参数为 nameWithOwner；副标题=Stargazers/Forks |
 | 2 | Stargazers 行 | 56vp 圆头像 + 显示名（粗体）/login（灰·无@）/bio（灰 2 行省略） | 展示 | ✅ | repository.stargazers(first:50) nodes{login name avatarUrl bio} | bio 为空隐藏；整行点击 → userProfile |
-| 3 | Stargazers | 分页（hasNextPage → 加载更多文字钮） | 翻页 | ✅ | 同上 pageInfo | 沿用 UserList 加载更多模式 |
+| 3 | Stargazers | 分页（hasNextPage → 触底自动加载） | 翻页 | ✅ | 同上 pageInfo | 列表尾部 spinner（ListLoadingFooter），非文字钮 |
 | 4 | Stargazers | 空态 / StateView | 展示 | ✅ | — | 复用现有文案模式 |
 | 5 | Forks 行 | 属主头像（20vp）+ login（灰） | 展示属主 | ✅ | repository.forks(first:50) nodes{ owner{login avatarUrl} } | — |
 | 6 | Forks 行 | 仓库名（粗体）+ 描述（2 行）+ ⑂ Forked from {上游}(灰) | 展示 | ✅ | 同上 parent{name owner{login}} | 上游可空（parent=null）→ 隐藏该行 |
@@ -95,7 +95,7 @@ query RepoForks($owner: String!, $name: String!, $first: Int = 50, $after: Strin
 
 - [x] 测试 1：mapFork：完整片段（owner/语言色/parent）→ 全字段映射正确
 - [x] 测试 2：mapFork：parent = null → parentNameWithOwner = ''（行隐藏由 UI 判空）
-- 测试 3：mapFork：primaryLanguage = null → 语言为 ''（UI 隐藏语言点）
+- [x] 测试 3：mapFork：primaryLanguage = null → 语言为 ''（UI 隐藏语言点；断言见 LogicTest.test.ets `mapFork_nullParent`）
 
 ---
 

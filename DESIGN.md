@@ -42,13 +42,13 @@
 
 | 级别 | 字号/行高 | 字重 | 用途 |
 | --- | --- | --- | --- |
-| title-large | 32 / 48 | 600 | 页面标题 |
+| title-large | 32 / 48 | 600 | Hero 大字（特例，如 Release 版本号）；**页面标题走 title-medium 20** |
 | title-medium | 20 / 32 | 600 | 区块标题（Home/Files 等） |
 | body-large | 16 / 24 | 400 | 正文（强调处 500） |
 | body-medium | 14 / 20 | 400 | **默认正文**（列表/卡片主文本） |
 | caption | 12 / 16 | 400 | 标签、辅助文字、时间 |
 
-- 现有 `resources/base/element/float.json` 的 `title/body/caption_font_size` 与此对应（18/14/12→18 略偏，评审批统一为 20/14/12）
+- 现有 `resources/base/element/float.json` 的 `title/body/caption_font_size` 与此对应（已统一为 20/14/12）
 - 字体栈：HarmonyOS 默认（`HarmonyOS Sans`），**代码/行号用等宽**（`monospace`）
 - 行高对齐 4px 网格（1.5 倍字号即可）
 
@@ -102,7 +102,7 @@
 | Button (variant) | `Button` 或自定义组件 | 参照官方 variant 语义 |
 | ActionList | `List` + `ListItem` | 注意 44px 行高、leading 图标 |
 | Dialog | `CustomDialog` | 浮层阴影 + 焦点管理 |
-| Stack | `Column`/`Row`/`Flex | 原子布局 |
+| Stack | `Column` / `Row` / `Flex` | 原子布局 |
 | Avatar | `Image` + `borderRadius(FULL)` | 圆形裁剪 |
 | Label/Badge | `Badge` 或自绘 | 语义色 + 文字双通道 |
 

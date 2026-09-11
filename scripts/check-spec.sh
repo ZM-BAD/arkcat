@@ -70,15 +70,19 @@ for file in $SPEC_FILES; do
         fi
     fi
 
-    # 6. 可行性比例声明一致性："- N/M 可行" 的 N 必须等于元素清单中 ✅ 行数
-    claim=$(grep -oE "[0-9]+/[0-9]+ 可行" "$file" | head -1 || true)
-    if [ -n "$claim" ]; then
-        claimed=$(echo "$claim" | cut -d/ -f1)
-        actual=$(awk -F'|' '/^\| [0-9]+ \|/ { c += gsub(/✅/, "", $0) } END { print c+0 }' "$file")
-        if [ "$claimed" -ne "$actual" ]; then
-            echo "  ❌ $filename — 可行性比例声明为 ${claim}，但元素清单实际 ✅=$actual 行"
-            ERRORS=$((ERRORS + 1))
-        fi
+    # 6. 可行性比例声明一致性："N/M 可行" 的 N 必须等于元素清单中 ✅ 行数
+    #    正则允许比例与「可行」之间有其他措辞（如「14/14 全部可行」），且校验文件内每一条声明
+    actual=$(awk -F'|' '/^\| [0-9]+ \|/ { c += gsub(/✅/, "", $0) } END { print c+0 }' "$file")
+    claims=$(grep -oE "[0-9]+/[0-9]+[^|]*可行" "$file" || true)
+    if [ -n "$claims" ]; then
+        while IFS= read -r claim; do
+            [ -z "$claim" ] && continue
+            claimed=${claim%%/*}
+            if [ "$claimed" -ne "$actual" ]; then
+                echo "  ❌ $filename — 可行性比例声明「${claim}」与元素清单 ✅=$actual 行不符"
+                ERRORS=$((ERRORS + 1))
+            fi
+        done <<< "$claims"
     fi
 done
 

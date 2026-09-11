@@ -11,9 +11,9 @@ import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import {
   SearchService, QUALIFIER_CHIPS, pushSearchHistory, SearchHistoryStore,
-  buildQualifierInsert
+  buildQualifierInsert, JUMP_TO_NO_MATCH
 } from '../services/SearchService';
-import { friendlyError } from '../services/GitHttpClient';
+import { friendlyError, ApiError } from '../services/GitHttpClient';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -108,8 +108,11 @@ export struct SearchView {
         this.pathStack.pushPathByName('repoDetail', full);
       })
       .catch((e: Error) => {
-        // 网络/权限失败不再伪装成「无结果」（review E16）
-        promptAction.showToast({ message: friendlyError(this.getUIContext(), e) });
+        // 无匹配与网络/权限失败分开：前者给专用文案，后者不再伪装成「无结果」（review E16）
+        const message = e instanceof ApiError && e.code === JUMP_TO_NO_MATCH
+          ? resText(this.getUIContext(), $r('app.string.search_jump_no_match'))
+          : friendlyError(this.getUIContext(), e);
+        promptAction.showToast({ message: message });
       });
   }
 

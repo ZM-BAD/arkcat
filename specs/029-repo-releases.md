@@ -18,7 +18,7 @@
 1. 顶部 App Bar：← 返回 + 副标题（DAG-chat）+ 主标题「Releases」
 2. 最新 Release 头卡：版本号（1.3.2）+「Latest release」徽章
 3. 头卡发布信息：🀫 头像 + 发布者（ZM-BAD）+ 「released this June 30」
-4. 头卡正文：「What's Changed」标题 + MarkdownView 直渲（不截断）+「View release details」链接
+4. 头卡正文：「What's Changed」标题 + MarkdownView 直渲 +「View release details」链接
 5. 版本清单分组头：「All Releases」
 6. 版本行：1.3.2 · 相对时间 2mo · 「Latest release」徽章；1.3.1 · 4mo
 7. 列表底部分页：Load more
@@ -30,7 +30,7 @@
 | 1 | App Bar | ← 返回 + 副标题 owner + Releases | 导航 | ✅ | —（纯 UI） | — |
 | 2 | 头卡 | tag + Latest release 徽章 | 展示 | ✅ | `isLatest/tagName` | 仅最近一条 |
 | 3 | 头卡 | 发布者 + 日期「released this M/D」 | 展示 | ✅ | `author/createdAt` | 月名+日格式 |
-| 4 | 头卡 | What's Changed 正文 | 展示 | ✅ | `description` | MarkdownView 直渲（040），不截断 |
+| 4 | 头卡 | What's Changed 正文 | 展示 | ✅ | `description` | MarkdownView 直渲（040）；超 500 字符折叠（未显式传 collapse:false） |
 | 5 | 头卡 | View release details | 跳转 | ✅ | —（纯 UI） | 站内跳转详情页（047） |
 | 6 | 列表 | All Releases（name 优先、tag 回退 + 时间 + Latest 徽章） | 展示 | ✅ | `releases{ nodes }` | — |
 | 7 | 列表 | Load more 分页 | 翻页 | ✅ | `releases.pageInfo` | — |
