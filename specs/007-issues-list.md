@@ -63,7 +63,7 @@ query IssuesList(
       totalCount
       pageInfo { hasNextPage endCursor }
       nodes {
-        id number title state stateReason createdAt
+        id number title state createdAt
         author { login }
         labels(first: 5) { nodes { name color } }
         comments { totalCount }
@@ -103,4 +103,4 @@ query IssuesList(
 
 - 14/14 全部可行
 - 2026-08-31：实现合并自 feature/spec-00X 分支（--no-ff）至 develop，仪器测试 19/19 通过；真实数据类验收项需在应用内配置有效 GitHub PAT 后复核
-- 2026-08-31 真实数据验收：使用 GitHub PAT（模拟器实测）完成以上勾选项；未实测项见「备注」（详情跳转由 Spec 008/011 接管）
+- 2026-08-31 真实数据验收：使用 GitHub PAT（模拟器实测）完成以上勾选项；未实测项见「备注」（详情跳转由 Spec 030/031 接管）

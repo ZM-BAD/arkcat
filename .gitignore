@@ -53,3 +53,6 @@ skills/
 
 # Code review 报告（本地工作文档，不入库；规则文件 docs/primer-review-rules.md 除外）
 /docs/code-review-*.md
+
+# 品牌草稿（Logo 设计工作稿 + 走查证据，未定稿前不入库）
+/docs/brand-draft/

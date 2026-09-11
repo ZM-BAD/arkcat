@@ -3,7 +3,7 @@
 > BFS Level: 4
 > 关联说明: 设计规范总纲——以 GitHub Primer 为单一事实来源（令牌/间距/排版/圆角/动效/阴影/无障碍）
 > 上游 Spec: 024（Octicons）/ 026（暗黑）/ 011（代码查看器）/ 038（文件树）
-> 状态: approved（2026-09-01，官方 primitives 值核对 + DESIGN.md 落地后评审）
+> 状态: implemented（2026-09-08 漂移复核：DESIGN.md + PrimerTokens.ets + 全页面合规批次（PR #25）均落地）
 
 ---
 
@@ -67,7 +67,7 @@ code review 对齐（无新增页面，改动面=全 App 视觉与交互细节�
 - [x] 测试 2：DESIGN.md 覆盖令牌模型/颜色/间距/排版/圆角/动效/阴影/响应式/无障碍/图标/映射/落地清单
 - [x] 测试 3：Spec 检查通过（check-spec.sh 0 错 0 警，编号 039 连续）
 - [x] 测试 4：README 双文与 AGENTS.md 含「Primer 设计规范」指引且指向 DESIGN.md
-- [ ] 测试 5：第二批合规批次完成后，全页面核对清单（DESIGN.md §11）逐项可勾
+- [x] 测试 5：第二批合规批次（PR #25）完成后，全页面核对清单（DESIGN.md §11）逐项可勾
 
 ---
 

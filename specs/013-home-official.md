@@ -24,7 +24,7 @@
 
 1. 顶部 Header：Home 标题 + 🔍 搜索 + 🔄 刷新 + ＋ 新建 + 🖼 头像（← Header：搜索/刷新/新建/头像）
 2. My Work 区块：区块标题 + ⋯ 更多菜单
-   - 七个彩色圆点图标入口：Issues / Pull Requests / Discussions / Projects / Top Repositories / Organizations / Starred
+   - 七个入口（44×44 圆角方块 + 主题色图标）：Issues / Pull Requests / Discussions / Projects / Top Repositories / Organizations / Starred
 3. Favorites 区块：标题 + 空态文案（Add favorite repositories ...）+ ADD FAVORITES 按钮
 4. Shortcuts 区块：标题 + 彩色图标行（⚡ ✓ ⑂ ❞ ▤ ⌂ ★ ▦）+ 引导文案（The things you need, one tap away / Fast access your lists of ...）+ GET STARTED 按钮
 5. 底部导航：Home / Inbox / Explore / Copilot 四个 Tab（🏠 🏔 🧭 🤖 图标）
@@ -44,7 +44,7 @@
 | 7 | My Work | 七行彩色入口 | 点击进入对应列表（见 017-023） | ✅ | —（纯 UI） | 路由至对应列表页 |
 | 8 | Favorites | 空态文案 + ADD FAVORITES | 收藏仓库入口 | ✅ | —（纯 UI） | 添加流程后续 Spec；无数据即空态 |
 | 9 | Shortcuts | 图标行 + 文案 + GET STARTED | 快捷引导 | ✅ | —（纯 UI） | 点击提示 |
-| 10 | 底部 Tab | Inbox 未读蓝点 | 未读通知提示 | ✅ | REST `/notifications?per_page=1` | 复用 REST 兜底，从旧 Home 迁移 |
+| 10 | 底部 Tab | Inbox 未读蓝点 | 未读通知提示 | ✅ | REST `/notifications?all=false&per_page=1` | 复用 REST 兜底，从旧 Home 迁移 |
 
 > 可行性比例声明：10/10 可行。
 
@@ -69,7 +69,7 @@ query ViewerBasic {
 
 | 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
-| My Work 各列表页（我的 Issue/PR/Discussion 等） | 列表页设计超出本 Spec 范围 | 本次只做入口 UI，点击提示「将在后续 Spec 提供」，列表页立项后接入 |
+| My Work 各列表页（我的 Issue/PR/Discussion 等） | 列表页设计超出本 Spec 范围 | 已由 017-023 实现并接入（入口直接进入对应列表页） |
 | Favorites 添加/移除流程 | 需要仓库选择器与本地持久化，独立 Spec | 本次只做空态 UI 与 ADD FAVORITES 按钮，点击提示 |
 | Shortcuts 配置化（用户可编辑） | 官方 App 有自定义配置，超出 MVP | 展示固定图标行 + GET STARTED 引导 |
 | 官方图标（Octicons 线框白描） | 未引入图标库 | 使用单色 Unicode 字形 + 彩色圆角底，色系对齐官方 |
@@ -92,5 +92,5 @@ query ViewerBasic {
 ## 七、备注
 
 - 首页移除的「用户卡片」查询（viewer followers/following/bio）不再在 Home 使用，`UserCard` 组件保留（供后续页面复用）。
-- 彩色入口色系对齐官方：Issues 绿 `#2DA44E`、PR 蓝 `#3C78D8`、Discussions 紫 `#8250DF`、Projects 灰 `#57606A`、Top Repos 黑 `#24292F`、Organizations 橙 `#E87B2E`、Starred 黄 `#E3B341`。
+- 彩色入口统一走令牌：success_text / link_blue / shortcut_purple_fg / work_dark_bg / text_primary / shortcut_orange_fg / star_gold（无硬编码色值）。
 - 未读蓝点（而非红点数字）：官方 App Inbox Tab 为蓝点样式；查询逻辑复用 HomeService.hasUnreadNotifications。

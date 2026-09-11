@@ -3,7 +3,7 @@
 > BFS Level: 1
 > 关联截图: 官方 App Copilot 页 4 张（主页空态 / 主页有会话 / 聊天详情+菜单 / Copilot settings）
 > 上游 Spec: 004（Copilot Tab 空态占位）、057（OAuth 登录——本批不依赖）
-> 状态: approved（2026-09-07 用户放行：先搭 UI 架子，不接 OAuth/API）
+> 状态: deprecated（2026-09-08 由 Spec 059 取代：mock 会话与假进度换为真实 chat/completions + 本地会话；UI 结构沿用）
 
 ---
 

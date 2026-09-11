@@ -1,6 +1,6 @@
 /**
  * Token 设置页：首次启动或未配置 Token 时展示。
- * Spec 001 前置条件（PAT 直连）+ Spec 057（OAuth Device Flow 主路径）。
+ * Spec 057：OAuth Device Flow 主路径 + PAT 粘贴兼容路径（两路径均在本 Spec 范围内）。
  * 登录方式二选一：GitHub 登录（浏览器授权，无手动 token）/ PAT 粘贴（兼容保留）。
  */
 import { common } from '@kit.AbilityKit';
@@ -21,7 +21,7 @@ export struct TokenSetup {
   @Param embedded: boolean = false;
   @Event onEmbeddedPop: () => void = () => {};
   @Local view: string = 'choice';
-  // ---- PAT（Spec 001 原逻辑零改动）----
+  // ---- PAT（兼容路径，行为零改动）----
   @Local token: string = '';
   @Local error: string = '';
   @Local saving: boolean = false;
@@ -101,7 +101,7 @@ export struct TokenSetup {
     .width('100%')
   }
 
-  /** PAT 折叠表单：原 Spec 001 流程原样保留（输入 + 保存前实测 + 错误文案） */
+  /** PAT 折叠表单：兼容路径，行为原样保留（输入 + 保存前实测 + 错误文案） */
   @Builder
   patView() {
     Column({ space: 16 }) {

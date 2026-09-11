@@ -35,7 +35,7 @@ PR 的文件变更 Diff 视图，展示变更文件列表、每个文件的 diff
 | 4 | 改动摘要 | changes from all commits | 展示 | ✅ | — | — |
 | 5 | 文件头 | 文件头（三角+图标+路径+勾选框+⋯） | 文件级折叠/已看勾选/菜单 | ✅ | GraphQL `files { path additions deletions }` | 无行级 +N -N 统计 |
 | 6 | 文件头 | 勾选框（标记已看） | 标记已看（页面内收起/展开） | ✅ 纯 UI | — | 本地勾选态（页面内收起/展开，不回传） |
-| 7 | 文件头 | ⋯ 菜单（View/Copy path/Add File Comment 等六项） | 跳转完整文件 | ⚠️ | 需额外请求 | 查看已收进 ⋯ 菜单（View） |
+| 7 | 文件头 | ⋯ 菜单（View/Copy path/Add File Comment 等六项） | 跳转完整文件 | ✅ | 无（路由 codeViewer） | 查看已收进 ⋯ 菜单（View）；Add File Comment 由 042 承接 |
 | 8 | Diff Hunk | `@@ -1,3 +1,8 @@` | 展示 | ✅ | REST patch | 纯装饰不折叠（文件级折叠用三角） |
 | 9 | Diff 内容 | 绿色（新增行） | 展示 | ✅ | REST `GET /repos/.../pulls/{n}/files` | — |
 | 10 | Diff 内容 | 红色（删除行） | 展示 | ✅ | 同上 | — |
@@ -100,6 +100,7 @@ Body: { "body": "...", "path": "src/main.ets", "line": 42, "side": "RIGHT", "com
 | 行内评论 | 需 REST API | 由 042 承接 |
 | 附件上传 | 需 REST Asset Upload | 暂不实现 |
 | Side-by-Side 视图 | 复杂度高 | MVP 只做 Inline 视图 |
+| 单文件 patch 拉取失败 | REST 失败时静默跳过该文件 | 保留其余文件正常渲染，不阻塞整页 |
 | 图片 Diff | 特殊处理 | MVP 只展示文本 Diff |
 
 ---
@@ -115,6 +116,6 @@ Body: { "body": "...", "path": "src/main.ets", "line": 42, "side": "RIGHT", "com
 
 ## 七、备注
 
-- 11/14 可行
+- 12/14 可行（View 已可跳转文件页）
 - Diff 渲染是 GraphQL 的薄弱区，需同时封装 GraphQL + REST
 - 客户端需写轻量 Diff parser（按 `@@` 分割 hunk）

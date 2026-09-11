@@ -15,7 +15,7 @@
 - **操作区**：`STAR` 大按钮 + fork/铃铛两个圆形按钮
 - **计数入口**：Issues / Pull Requests / Actions / Releases（彩块 + 计数）
 - **More 折叠区**：Contributors / Watchers / License（见 053-055）；Current branch main ✓ / Code / Commits 为独立分支区卡片
-- **README**：富文本渲染（Markdown 标题/图片/链接/列表）
+- **README**：官方 HTML 渲染（REST /readme + MarkdownView，040）
 
 ---
 
@@ -27,7 +27,7 @@
 4. 计数入口：🟩 Issues 1 / 🟦 Pull Requests 1 / 🟧 Actions 0 / ⬛ Releases 2（点击进列表，见 029）
 5. More 折叠区：··· More + ▾ 下拉（Contributors / Watchers / License，见 053-055）
    - 分支区卡（独立于 More）：⑂ Current branch main ✓ + CHANGE · ▣ Code · ▤ Commits
-6. README：📖 富文本渲染（标题/图片/链接）
+6. README：📖 官方 HTML 渲染（MarkdownView）
 
 ---
 
@@ -80,7 +80,7 @@ query RepositoryDetail($owner: String!, $name: String!) {
 | 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | Actions 计数 | GraphQL 无 actions 状态公开接口 | 显示 0（保留入口） |
-| README 富文本（图片/表格） | Markdown 解析降级 | 简化渲染：标题加粗/链接/纯文本行 |
+| README 富文本（图片/表格） | — | REST /readme 官方 HTML + MarkdownView 渲染（040） |
 | 分支切换 CHANGE | 切换分支需页面级交互 | 显示 main ✓，点击提示 |
 | 铃铛订阅 | 订阅变更 UI 复杂 | 圆钮保留，点击提示 |
 | 原文件列表/语言占比 | 官方新版布局取消（收进 Code/Commits） | 从详情页移除，保留查询供后续 |
@@ -93,7 +93,7 @@ query RepositoryDetail($owner: String!, $name: String!) {
 - [x] STAR/fork/🔔 操作区按钮组渲染
 - [x] Issues/PR/Actions/Releases 计数入口渲染（实测 10165/26942/0/782）
 - [x] More 折叠区（Contributors/Watchers/License）展开验证通过
-- [x] README 简化富文本渲染（图片/标题/正文行）
+- [x] README 官方 HTML 渲染（MarkdownView + REST /readme）
 - [x] ohosTest 22/22；模拟器截图验收
 
 ---

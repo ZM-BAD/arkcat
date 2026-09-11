@@ -4,7 +4,7 @@
  * 面板组件化于 InboxFilterSheets）：视图单选（Inbox/Saved/Done）+ 类型多选（reason 本地过滤）、
  * 仓库单选列表（头像+计数+搜索）。卡片=仓库+编号 / 标题粗体 / 类型图标+摘要 / 右侧相对时间
  * （组件化于 InboxNotifyCard）；点击标记已读。
- * 详情页为 Spec 008/009 范围，当前点击仅标记已读并提示。
+ * 详情页为 Spec 030/031 范围，当前点击仅标记已读并提示。
  */
 import { promptAction } from '@kit.ArkUI';
 import { NotificationItem } from '../models/GitHubModels';

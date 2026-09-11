@@ -2,8 +2,8 @@
 
 > BFS Level: 0
 > 关联截图: 无官方参考图——GitHub OAuth Device Flow 标准交互（gh CLI / Copilot CLI 同款流程）
-> 上游 Spec: 001（TokenSetup 登录前置）
-> 状态: approved（2026-09-07 用户放行；前置 OAuth App 已注册，client_id 见第七章）
+> 上游 Spec: 无（TokenSetup 与 PAT 粘贴流程为初始脚手架既成实现，本 Spec 将其纳入范围）
+> 状态: implemented（2026-09-08 随 PR #41 合入 develop；端到端授权与 sign out 验收通过）
 
 ---
 
@@ -14,7 +14,7 @@ TokenSetup 登录页升级为「登录方式二选一」选择页：
 - **主路径——GitHub OAuth（Device Flow）**：用户无需手动去网页创建 token；App 内一键发起，
   展示 8 位设备码并拉起系统浏览器到 `github.com/login/device`，用户输入代码点 Authorize 后，
   App 轮询拿到 token 自动进入主界面。
-- **兼容路径——PAT 粘贴**：现有 Spec 001 流程原样保留，折叠为次入口。
+- **兼容路径——PAT 粘贴**：既有 PAT 粘贴流程保留（本 Spec 纳入范围，非新增），折叠为次入口。
 
 背景（2026-09-06 调研定案，详见第七章）：classic PAT 无法访问 Copilot API；
 OAuth token（`gho_`）与 PAT 同 scope 体系、现有功能 100% 覆盖，且实测直通 Copilot API。
@@ -130,7 +130,7 @@ client_secret，符合纯端侧无后端架构。
 ## 六、TDD 验收标准
 
 - [x] 无凭证冷启动：登录选择页二选一引导可见，OAuth 主按钮视觉主次明确（蓝底主按钮 + 文字次按钮）
-- [ ] 选择 PAT 入口：粘贴/保存前 /user 实测/错误文案行为与改造前一致（Spec 001 回归）
+- [ ] 选择 PAT 入口：粘贴/保存前 /user 实测/错误文案行为与改造前一致（兼容路径回归）
 - [ ] 发起 OAuth：浏览器拉起 github.com/login/device，等待页显示 user_code 且剪贴板内容与展示一致
 - [ ] 正常授权：轮询获得 token → /user 实测通过 → TokenStore 落库 → onSaved 进入主界面；杀 App 重启不再出现登录页
 - [ ] 轮询节奏：mock 序列 authorization_pending×N → slow_down → success，interval 递增 +5s 正确

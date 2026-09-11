@@ -15,7 +15,7 @@ Profile 页「N followers · N following」计数行拆为**两个可点击片�
 
 ## 二、整体 UI 结构
 
-1. 顶部 App Bar：← 返回 + 标题 ZM-BAD（粗体 login）+ 副标题 Followers（灰）
+1. 顶部 App Bar：← 返回 + 标题 @ZM-BAD（粗体 login）+ 副标题 Followers（灰）
 2. 用户列表（头像 + 行信息，整行点击进用户主页）：
    - 头像 + 显示名 unmissable guy + 用户名 transmutat
    - 头像 + shellRaining（仅用户名行，无显示名）
@@ -31,7 +31,7 @@ Profile 页「N followers · N following」计数行拆为**两个可点击片�
 | 1 | App Bar | ← 返回 + login（粗体）+ Followers/Following（灰） | 导航 | ✅ | —（纯 UI） | 自绘头部，hideTitleBar；副标题静态 |
 | 2 | 行 | 圆头像（80 逻辑宽内） | 展示 | ✅ | `avatarUrl` | — |
 | 3 | 行 | 显示名（粗体；缺失时仅灰色用户名行） | 展示 | ✅ | `name` | 显示名空 → 单行 `@login` 灰色 |
-| 4 | 行 | 用户名（灰，@ 前缀） | 展示 | ✅ | `login` | — |
+| 4 | 行 | 用户名（灰，无 @ 前缀） | 展示 | ✅ | `login` | — |
 | 5 | 行 | 简介（灰，可选，最多 2 行省略） | 展示 | ✅ | `bio` | — |
 | 6 | 行 | 整行点击 → 用户主页 | 导航 | ✅ | —（纯 UI） | pushPathByName('userProfile', login) |
 | 7 | 列表底 | 加载更多（首次 25 条，endCursor 分页） | 请求 | ✅ | `pageInfo { hasNextPage endCursor }` | 与 WorkService 同模式 |

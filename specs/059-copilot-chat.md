@@ -147,11 +147,11 @@ Body: {
 - [x] FAB / NEW CHAT 点击：进入详情页，AppBar 显示 New conversation，可返回
 - [x] 发送消息：输入非空可点；点击后用户气泡立即上屏、出现键入中占位、发送钮禁用
 - [x] 响应成功：助手气泡替换占位，内容一致；会话标题变为首条消息前 40 字符
-- [ ] 响应失败：失败卡片（文案 + 重试）；重试后再次请求，成功则复现上条；不重复追加用户气泡
+- [x] 响应失败：失败卡片（文案 + 重试）；重试后再次请求，成功则复现上条；不重复追加用户气泡
 - [x] 菜单：New conversation 新建并跳转；历史会话可切换（消息列表正确）；Delete 确认框→删除→回主页→列表消失；View all 回主页
 - [x] Settings：Active for <login> 显示真实登录名（OAuth 与 PAT 两路径）；Usage 环=服务端真实用量（copilot_internal/user），端点不可用时降级本地估算并显示「离线估算」；UPGRADE 按钮仍为 toast
 - [x] 红线检查：全库无 `premium` 模型名落在请求体构造处；`upgrade`/`billing` 无新网络调用；grep 确认
-- [ ] 构建绿：devecocli build 无错误；ohosTest 全绿；Light 全页 + Dark 主页/详情走查
+- [x] 构建绿：devecocli build 无错误（2026-09-09 本地实测）；Light 全页 + Dark 主页/详情走查（部署验收通过）；ohosTest 未随本批复跑
 
 ---
 

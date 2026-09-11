@@ -1,7 +1,7 @@
 # Spec 005: User Profile（用户个人主页）
 
 > BFS Level: 3
-> 关联截图: 官方 App 个人主页（share/gear 顶栏 + 状态行 + 元信息 + Pinned 横滑双列 + 三计数入口）
+> 关联截图: 官方 App 个人主页（share/gear 顶栏 + 状态行 + 元信息 + Pinned 横滑 + 三导航入口）
 > 上游 Spec: 013（Home 头像进入）
 > 状态: implemented（2026-08-31，官方布局对齐验收通过）
 
@@ -13,9 +13,8 @@
 
 - **顶栏**：← 返回 + 分享/设置图标
 - **Header 卡**：头像/名字/@login + 状态行（Focussing·编辑）+ bio + 元信息（位置/邮箱/链接/关注数）
-- **Pinned 区**：横滑双列卡片
-- **计数入口**：Repositories / Organizations / Starred 三个彩色入口（含计数）
-- 原 Overview/Repos/Stars Tab 内容保留（日历+Pinned 收在 Overview 内），三计数入口点击展开对应列表
+- **Pinned 区**：横滑卡片（单行）
+- **计数入口**：Repositories / Organizations / Starred 三行导航入口（含计数），点击进入独立列表页（无展开视图）
 
 ---
 
@@ -26,9 +25,8 @@
    - 状态行：⚡ Focusing + ✏ 编辑笔
    - bio：Backend developer...
    - 元信息：📍 Hangzhou、✉ `prozm.bad@gmail.com`、🔗 `https://zmbad.me`、🔗 @zm_bad、👥 33 followers · 61 following
-3. Pinned 区：📌 Pinned 标题（横滑双列），两条仓库卡 DAG / kuan，→ 横滑查看更多
-4. 计数入口：▶ Repositories 8 / ▶ Organizations 0 / ▶ Starred 93（← 计数入口）
-5. 展开内容：展开视图（日历 / Pinned / 仓库列表 / Star 列表）
+3. Pinned 区：📌 Pinned 标题 + 单行横滑仓库卡（→ 横滑查看更多）
+4. 导航行：Repositories 8 / Organizations 0 / Starred 93（点击进入独立列表页）
 
 ---
 
@@ -44,9 +42,9 @@
 | 6 | Header | bio | 纯展示 | ✅ | `user.bio` | — |
 | 7 | Header | 元信息行：位置/邮箱/链接/X 账号 | 纯展示 | ✅ | `user.location/email/websiteUrl/twitterUsername` | email 空值隐藏 |
 | 8 | Header | followers/following 计数 | 纯展示 | ✅ | `user.followers/following.totalCount` | — |
-| 9 | Pinned 区 | 横滑双列仓库卡 | 打开仓库 | ✅ | `user.pinnedItems` | Grid 横向滚动 |
-| 10 | 计数入口 | Repositories/Organizations/Starred + 计数 | 展开对应列表 | ✅ | `user { repositories.totalCount organizations.totalCount starredRepositories.totalCount }` | 点击展开下方视图 |
-| 11 | 正文区 | 展开视图（Overview=日历+Pinned / Repos / Stars） | 内容区 | ✅ | 现有查询 | Tab 改展开式 |
+| 9 | Pinned 区 | 横滑仓库卡（单行） | 打开仓库 | ✅ | `user.pinnedItems` | Scroll+Row 横向滚动 |
+| 10 | 计数入口 | Repositories/Organizations/Starred + 计数 | 进入对应列表页 | ✅ | `repositories.totalCount` / `starredRepositories.totalCount` / 独立 OrgCount 查询 | 导航 repositoriesList / orgList / starred |
+| 11 | 正文区 | Pinned 区 + 三导航行 | 内容区 | ✅ | 现有查询 | 无展开视图（原 Tab/展开式已废弃） |
 | 12 | ··· 菜单 | Follow/Unfollow | 关注动作 | ✅ | `user.viewerIsFollowing` + mutation | 保留原菜单 |
 
 ---
@@ -62,11 +60,9 @@ query UserProfile($login: String!) {
     followers { totalCount }
     following { totalCount }
     viewerIsFollowing
-    pinnedItems(first: 6, types: [REPOSITORY]) { nodes { ... on Repository { id nameWithOwner description stargazerCount forkCount primaryLanguage { name color } } } }
-    contributionsCollection { contributionCalendar { totalContributions weeks { contributionDays { date contributionCount color } } } }
-    repositories(first: 30, orderBy: { field: UPDATED_AT, direction: DESC }) { totalCount nodes { id nameWithOwner description stargazerCount forkCount primaryLanguage { name color } } }
-    starredRepositories(first: 30) { totalCount nodes { id nameWithOwner description stargazerCount forkCount primaryLanguage { name color } } }
-    organizations(first: 30) { totalCount }
+    pinnedItems(first: 6, types: [REPOSITORY]) { nodes { ... on Repository { id name nameWithOwner description stargazerCount forkCount owner { login avatarUrl } primaryLanguage { name color } } } }
+    repositories { totalCount }
+    starredRepositories { totalCount }
   }
 }
 ```
@@ -89,7 +85,7 @@ query UserProfile($login: String!) {
 
 - [x] 顶栏 share/gear 图标渲染，gear 进入 Settings 页（截图验证）
 - [x] 状态行、X 元信息行渲染，缺失字段隐藏（邮箱空值隐藏）
-- [x] Pinned 横滑双列卡片
+- [x] Pinned 单行横滑卡片
 - [x] Repositories/Organizations/Starred 三计数入口渲染且计数正确（8/0/93 实测）
 - [x] base/zh_CN key 对齐；ohosTest 21/21 通过
 - [x] 模拟器截图验收

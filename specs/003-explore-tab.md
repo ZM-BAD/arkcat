@@ -2,7 +2,7 @@
 
 > BFS Level: 1
 > 关联截图: 官方 App Explore（Explore 标题 + Discover 区块 + Activity 流）
-> 状态: implemented（2026-08-31，官方 Discover/Activity 布局对齐验收通过）
+> 状态: deprecated（2026-09-07 由 Spec 056 整体取代：Discover 入口接通真实列表页 + Activity 合并 PR 动态流；Topics 网格与高星推荐卡已移除）
 
 ---
 

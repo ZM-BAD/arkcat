@@ -23,7 +23,8 @@ const KIND_META: ActivityKindMeta[] = [
   { key: 'stars', labelRes: $r('app.string.explore_kind_stars'), iconRes: $r('app.media.oct_star_fill_16'), bgRes: $r('app.color.star_gold') },
   { key: 'repositories', labelRes: $r('app.string.explore_kind_repositories'), iconRes: $r('app.media.oct_repo_16'), bgRes: $r('app.color.text_secondary') },
   { key: 'follows', labelRes: $r('app.string.explore_kind_follows'), iconRes: $r('app.media.oct_person_add_16'), bgRes: $r('app.color.link_blue') },
-  { key: 'recommendations', labelRes: $r('app.string.explore_kind_recommendations'), iconRes: $r('app.media.oct_mark_github_16'), bgRes: $r('app.color.text_primary') }
+  // 官方此处为 mark-github（GitHub logo）；避品牌红线改用中性图形（spec 024 §五、spec 056 §七）
+  { key: 'recommendations', labelRes: $r('app.string.explore_kind_recommendations'), iconRes: $r('app.media.oct_graph_stacked_area_16'), bgRes: $r('app.color.text_primary') }
 ];
 
 @ComponentV2

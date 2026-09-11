@@ -18,7 +18,7 @@
 
 1. 搜索页（进入即显示历史/建议）
 2. 搜索入口框（复用现有搜索框）
-3. 类型 chips：仓库 | Issue | PR | 用户 | 组织 | 代码
+3. 搜索入口行（输入后）：Code / Repositories / Issues / Pull Requests / People / Organizations（点击进入对应单类结果页）
 4. 结果列表（按类型渲染）：
    - 仓库卡：名称 / 描述 / 星数 / 语言点
    - Issue/PR 卡：标题 / 仓库 / 状态徽章
@@ -32,18 +32,18 @@
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
-| 1 | 搜索页 | 类型 chips 切换 | 五类结果类型切换（保留代码） | ✅ | search(type) 参数 | 各类型独立缓存/loading |
+| 1 | 搜索页 | 搜索入口行（六类） | 点击进入对应单类结果页 | ✅ | search(type) 参数 | 无跨类型 chips 切换；各类型独立请求 |
 | 2 | 结果 | 仓库搜索 | `type: REPOSITORY` + qualifiers（in:name/description、user/org 域、language、sort:stars 等） | ✅ | 见四 | qualifiers chips 简化为一组常用过滤（language/owner） |
 | 3 | 结果 | Issue 搜索 | `type: ISSUE`（is:issue）+ qualifier（state:open、label、is:public） | ✅ | 见四 | —— |
 | 4 | 结果 | PR 搜索 | `type: ISSUE` + `is:pr`（复用 3 的渲染组，差异显示合并状态） | ✅ | 见四 | PR 徽章（merged 紫）沿用 018 规则 |
 | 5 | 结果 | 用户搜索 | `type: USER`（in:username/name/email 或 login 前缀） | ✅ | 见四 | 官方输入 @ 也可触发 |
 | 6 | 结果 | 组织搜索 | `type: USER` + `in:org` 限定组织（或 search 后过滤） | ✅ | 见四 | 与 5 结果合并展示（organizations tab） |
-| 7 | 结果 | 点击路由 | repo→RepoDetail；issue/PR→详情；user→Profile；org→OrgProfile | ✅ | 无（LinkRouter by url） | 打通 045 的 LinkRouter |
+| 7 | 结果 | 点击路由 | repo→RepoDetail；issue/PR→详情；user→Profile；org→OrgProfile | ✅ | 无（pushPathByName） | — |
 | 8 | 代码 | 结果增强 | 代码结果点击 → CodeViewer（owner/repo/path/ref + 高亮选定行 hunk） | ✅ | 无 | 现有 CodeViewer 支持 path+ref，行号高亮为本项增量 |
-| 9 | 历史 | 最近搜索历史 | 本地 @StorageLink 列表（最新 10 条）+ Clear all（无单条删除交互） | ✅ | 无 | 官方「Clear button in recent code searches」（1.273 bugfix 提及） |
+| 9 | 历史 | 最近搜索历史 | 本地 Preferences 列表（最新 10 条，按账号隔离）+ Clear all（无单条删除交互） | ✅ | 无 | — |
 | 10 | 排序 | 结果排序 | GraphQL search 无 orderBy；只能用 sort: 服务端 qualifier | ⚠️ | search + sort: | UI 提供「Stars/Recently updated」→ 追加 qualifier 重查 |
 | 11 | 过滤 | 高级过滤面板 | 更多 qualifier（label:、author:、org:…）自由输入 | ⚠️ | 同 2-6 | 保留「语法提示」浮层，不做复杂表单 |
-| 12 | 空态 | 无结果/错误 | 空态文案 + 错误重试；搜索无输入防抖 | ✅ | 无 | 首次搜索防抖 400ms |
+| 12 | 空态 | 无结果/错误 | 空态文案 + 错误重试；显式提交型（无防抖） | ✅ | 无 | 回车/点击入口才发起请求 |
 
 > 可行性: 10/12 可行（排序、高级过滤面板两项 ⚠️）
 
@@ -90,9 +90,9 @@ query SearchUsers($q: String!) {
 | 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 搜索排序 | GraphQL search 无 orderBy 参数 | 用服务端 qualifier `sort:stars` / `sort:updated` 重查；UI 标明「服务端排序」 |
-| 代码搜索限流 | CODE 搜索每次请求消耗搜索配额（低配额警告） | 防抖 + 「还有 x 次」提示（配额取自响应 header） |
+| 代码搜索限流 | CODE 搜索每次请求消耗搜索配额（低配额警告） | 显式提交 + 结果「Show more」控制请求次数 |
 | 「在 org 中搜索」复合语法 | 支持有限 | 查询串透传（不做语法解析），用户可自写 qualifier |
-| 结果分页 | 每页 20，滚动到底加载下一页 | 已有翻页组件（WorkService 模式） |
+| 结果分页 | 每页 20，Show more 手动加载更多 | SearchResults「Show more」按钮 |
 | 无标签建议/智能纠错 | 官方移动端也无 | 不做 |
 
 ---

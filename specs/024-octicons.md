@@ -86,7 +86,7 @@ ets/components/OctIcon.ets            # 统一样式入口
 | 非 Octicons 内容 emoji（🔥 趋势 / 📖 文档 / 📍 位置 / 🔗 链接 / 🗂 空态 / ◯ 头像占位 / ● 语言点） | 内容型符号或需定制 | 待定自研，本批次不改动 |
 | `.fillColor()` 对个别 SVG 无效 | 若资源管线着色失败 | 回退方案：脚本按色值生成着色变体（SVG 内嵌 `fill`），命名 `oct_<name>_<color>.svg` |
 | 垂直省略号 `kebab-vertical` | v19.33.0 已移除垂直变体 | 拖拽手柄改用 `grabber-16`（官方拖拽图标，样式接近） |
-| 品牌徽标（mark-github 等） | GitHub logos 品牌指南约束 | 不引入，界面不使用官方 logo 图形 |
+| 品牌徽标（mark-github 等） | GitHub logos 品牌指南约束（原文：Do not use any GitHub logo as the icon or logo for your business/organization） | **不引入，界面不使用官方 logo 图形**。Filter Activity 页 Recommendations 行原按官方参考图用 `mark-github`，现改用中性图标 `oct_graph_stacked_area_16`（详见 spec 056 §七） |
 
 ---
 
@@ -114,3 +114,4 @@ ets/components/OctIcon.ets            # 统一样式入口
 - 来源：Octicons v19.33.0（全量 743 图标 2026-09-01 归档，含最初 30 个 + zap 等后续补充），原始 SVG 归档 `assets/octicons/`（含 MIT LICENSE）。
 - 交互实现约定：OctIcon 为纯视觉组件（无 onClick），可点击图标由调用侧 `Stack() { OctIcon(...) }.onClick(...)` 包装——避免组件内部 onClick 吞掉父级点击（My Work 行点击回归曾因此发生，已修复并实测）。
 - 保留项清单（待定自研）：官方彩色插画（🐱 占位）、内容 emoji（🔥📖📍🔗🗂👍 等）、语言点 ●、头像占位 ◯、RepoDetail 文件树/标签图标（▶▸◷⑂▣▤）、Profile 计数图标（▤）。
+- 品牌徽标避嫌（2026-09-09）：Filter Activity 页 Recommendations 行由 `oct_mark_github_16` 换为 `oct_graph_stacked_area_16`（官方该行用 mark-github，为避 GitHub 品牌红线有意偏离，见 spec 056 §七）；`oct_mark_github_16.svg` 已从生产资源 `media/` 移除，归档 `assets/octicons/icons/mark-github-*.svg`、`logo-github-*.svg` 仅作上游全量留存，不入 media、不入界面。
