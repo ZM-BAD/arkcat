@@ -77,7 +77,7 @@ OAuth 授权等待页（发起 OAuth 后的独立视图，NavDestination 或同�
 ```text
 ① 获取设备码
 POST https://github.com/login/device/code
-Body: client_id=<ARKCAT_CLIENT_ID>&scope=repo%20read:user%20notifications%20read:org
+Body: client_id=<ARKCAT_CLIENT_ID>&scope=repo%20read:user%20notifications%20read:org%20user
 → 200 {
     device_code, user_code, verification_uri: "https://github.com/login/device",
     verification_uri_expires_in, interval, expires_in   // 默认 interval=5s，expires_in≈900s
@@ -107,8 +107,10 @@ Headers: Authorization: Bearer <access_token>
 标识非 secret，以常量入库 `services/OAuthService.ets`。Device Flow 全程无需
 client_secret，符合纯端侧无后端架构。
 
-**scope 说明**：`repo read:user notifications` 与现 PAT 最小集对齐；追加 `read:org`
-顺带解锁组织数据 GraphQL 化前置（现存 REST 兜底保留不动）。
+**scope 说明**：`repo read:user notifications read:org user` 四项；前三项与现 PAT
+最小集对齐，`read:org` 解锁组织数据 GraphQL 化前置（现存 REST 兜底保留不动），
+`user` 档含 `user:follow`——Follow/Unfollow mutation 必需（2026-09-12 补：缺它时
+Follow 报 INSUFFICIENT_SCOPE，旧授权 token 须重新登录换新 scope）。
 
 ---
 
@@ -169,5 +171,5 @@ client_secret 无法兑换 refresh_token，勾选则 token 约 8 小时过期、
 **调研依据（2026-09-06，已实测）**：
 
 - Device Flow 全程无需 client_secret、无回跳依赖，符合纯端侧架构
-- `gho_` 与 PAT 同 scope 体系，`repo read:user notifications` 覆盖现有全部功能
+- `gho_` 与 PAT 同 scope 体系；请求 scope 为 `repo read:user notifications read:org user`（Follow 依赖 `user` 档内的 `user:follow`，2026-09-12 补）
 - PKCE 官方支持（2025-07-14 changelog）→ 二期 web flow 回跳可行
