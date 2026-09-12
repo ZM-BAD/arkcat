@@ -11,6 +11,7 @@ import { DirEntry, DirPage } from '../models/FileModels';
 import { FileService } from '../services/FileService';
 import { StateView } from '../components/StateView';
 import { resText } from '../utils/I18n';
+import { repoTreeUrl, shareLink } from '../utils/Share';
 
 const DIR_ENTRY_LIMIT = 500;
 
@@ -75,8 +76,9 @@ export struct FileTreeView {
     return this.dirPath === '' ? name : `${this.dirPath}/${name}`;
   }
 
+  /** 本目录地址（根目录 = 仓库主页；子目录带 tree/HEAD 路径） */
   private findUrl(): string {
-    return `https://github.com/${this.owner}/${this.name}`;
+    return repoTreeUrl(this.owner, this.name, this.dirPath);
   }
 
   /** 复制文本到剪贴板 + toast */
@@ -170,17 +172,22 @@ export struct FileTreeView {
               this.filterText = '';
             }
           })
-        OctIcon({ res: $r('app.media.oct_share_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
+        OctIcon({ res: $r('app.media.oct_share_android_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
           .margin({ left: 12 })
         .responseRegion({ x: -12, y: -12, width: '220%', height: '220%' })
         .accessibilityDescription($r('app.string.a11y_share'))
         .focusable(true)
           .onClick(() => {
-            this.copyText(this.findUrl(), $r('app.string.file_link_copied'));
+            const repo = `${this.owner}/${this.name}`;
+            shareLink(this.getUIContext(), this.findUrl(),
+              this.dirPath === '' ? repo : `${repo}/${this.dirPath}`);
           })
-        OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
+        OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
+          .rotate({ angle: 90 })
           .margin({ left: 12 })
           .responseRegion({ x: -12, y: -12, width: '220%', height: '220%' })
+          .accessibilityDescription($r('app.string.a11y_more'))
+          .focusable(true)
           .bindMenu(this.menuItems())
       }
       .width('100%')

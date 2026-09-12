@@ -14,6 +14,7 @@ import { StateView } from '../components/StateView';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
+import { pullPageUrl, shareLink } from '../utils/Share';
 
 @ComponentV2
 export struct PrDetailView {
@@ -208,7 +209,8 @@ export struct PrDetailView {
         .accessibilityDescription($r('app.string.a11y_share'))
         .focusable(true)
         .onClick(() => {
-          promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+          shareLink(this.getUIContext(), pullPageUrl(this.owner, this.name, this.number),
+            `${this.owner}/${this.name} #${this.number}`);
         })
         Stack() {
           OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 18, iconColor: $r('app.color.link_blue') })

@@ -28,7 +28,7 @@
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar 左 | ← 返回 | 回退 | ✅ 纯 UI | — | 回 Files 列表 |
 | 2 | App Bar 中 | 文件名 | 展示（basename，超长省略） | ✅ 纯 UI | — | — |
-| 3 | App Bar 右 | ⭮ 分享 | 复制内容 | ⚠️ 客户端部分 | — | MVP 剪贴板复制全文 + toast |
+| 3 | App Bar 右 | ⭮ 分享 | 分享文件链接 | ✅ 纯 UI | — | 拉起系统分享面板分享 `blob/HEAD/{path}`（Spec 061）；复制全文在 ⋮ Copy contents |
 | 4 | App Bar 右 | ⚙ 齿轮 | 打开 Code Options | ✅ 纯 UI | — | push `codeOptions`（Spec 033 设置页） |
 | 5 | App Bar 右 | ⋮ 更多 | Copy contents / Copy link | ✅ 纯 UI | — | bindMenu；编辑/审查等不实现 |
 | 6 | 正文 | 行号列 | 显示行号 | ✅ 纯 UI | — | 受 Code Options `code_line_numbers` 控制 |
@@ -37,7 +37,7 @@
 | 9 | 行为 | Code Options 联动 | 暗色主题/字号/换行/重叠设置生效 | ✅ 纯 UI | — | preferences `arkcat_settings`：`code_dark_theme`/`code_font_size`/`code_wrap_lines`/`code_line_numbers` |
 | 10 | 行为 | Markdown 预览 | 渲染预览 | ⚠️ | — | MVP 显示原始文本（渲染需三方库，见边界） |
 
-可行性：7/10 可行（7 ✅ + 3 ⚠️）。
+可行性：8/10 可行（8 ✅ + 2 ⚠️）。
 
 ---
 
@@ -93,5 +93,5 @@ query FileContent($owner: String!, $name: String!, $expression: String!) {
 - 主题：Code Options 固定示例已有的明/暗两套配色（`LIGHT_BG #F6F8FA` / `DARK_BG #0D1117`、关键字红/紫、函数蓝/紫、注释灰）作为本页取色表，抽到共用 `utils/CodeTheme.ets`（Code Options 与本页同源，避免双处漂移）。
 - 字号：`code_font_size`（12-20sp），用户设置即时生效。
 - 下载/复制：剪贴板经 `pasteboard`（@kit.BasicServicesKit）写入 `MIMETYPE_TEXT_PLAIN`。
-- 图标：分享 `oct_share_16`、齿轮 `oct_gear_16`（v19.33.0 新增归档）、更多 `oct_kebab_horizontal_16`。
+- 图标：分享 `oct_share_android_16`（`link_blue`）、齿轮 `oct_gear_16`（v19.33.0 新增归档）、更多 `oct_kebab_horizontal_16`（rotate 90 竖三点，`link_blue`）——顶栏图标口径见 Spec 062。
 - 本项目为第三方客户端：GitHub 官方 SDK 未使用，纯 GraphQL/REST 公开数据；文件名以路由参数传递（owner\|name\|path）。

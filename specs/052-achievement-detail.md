@@ -40,7 +40,7 @@
 | 5 | 中部 | 🏆 圆钮 + 「Unlocked 9月1日」 | 展示解锁日期 | ✅ | — | 片段 relative-time datetime（UTC → 本地「月 日」，intl 格式化） |
 | 6 | 中部 | • +「`引用` · `事件标签`」 | 展示触发事件 | ⚠️ | — | 片段 `.achievement-history-tier`；私有仓库引用为 `inaccessible` → 仅显示事件标签 |
 | 7 | 底部 | 圆点翻页（Swiper 已解锁徽章） | 左右滑切换徽章 | ✅ | — | 页数=已解锁徽章数；入口参数为起始下标 |
-| 8 | 底部 | Share 按钮 | 分享该徽章页面 URL | ⚠️ | — | ShareKit systemShare（HYPERLINK）；分享图片资源未落地，边界外 |
+| 8 | 底部 | Share 按钮 | 分享该徽章页面 URL | ⚠️ | — | 走 Spec 061 统一出口（HYPERLINK）；分享图片资源未落地，边界外 |
 
 ---
 

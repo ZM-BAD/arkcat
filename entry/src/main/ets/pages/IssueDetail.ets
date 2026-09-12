@@ -13,6 +13,7 @@ import { StateView } from '../components/StateView';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
+import { issuePageUrl, shareLink } from '../utils/Share';
 
 @ComponentV2
 export struct IssueDetailView {
@@ -220,7 +221,20 @@ export struct IssueDetailView {
           this.pathStack.pushPathByName('search', '');
         })
         Stack() {
-          OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+          OctIcon({ res: $r('app.media.oct_share_android_16'), iconSize: 18, iconColor: $r('app.color.link_blue') })
+        }
+.width(44)
+.height(44)
+        .padding(6)
+        .accessibilityDescription($r('app.string.a11y_share'))
+        .focusable(true)
+        .onClick(() => {
+          const title = this.detail !== null ? this.detail.title : '';
+          shareLink(this.getUIContext(), issuePageUrl(this.owner, this.name, this.number), title);
+        })
+        Stack() {
+          OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 18, iconColor: $r('app.color.link_blue') })
+            .rotate({ angle: 90 })
         }
 .width(44)
 .height(44)

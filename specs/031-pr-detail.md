@@ -26,7 +26,7 @@ PR 详情页三区块：**Changes 卡片**（N files changed · +A −D · commi
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
-| 1 | App Bar | ← 返回 + `owner/repo #N` + 分享（share）+ ⋯ | 导航 | ✅ | —（纯 UI） | share 占位，点击 toast |
+| 1 | App Bar | ← 返回 + `owner/repo #N` + 分享（share）+ ⋯ | 导航 | ✅ | —（纯 UI） | 分享拉起系统分享面板分享 `pull/{number}`（Spec 061） |
 | 2 | 标题 | Merged/Open 徽章 + 标题 + 分支胶囊 | 展示 | ✅ | `state/merged/headRefName` | — |
 | 3 | 作者行 | 头像/登录名/时间 | 展示 | ✅ | `author/createdAt` | — |
 | 4 | Changes | files changed + additions/deletions | 展示 | ✅ | `files.totalCount/additions/deletions` | +绿 −红；点击进 PrFiles（010） |

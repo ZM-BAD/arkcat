@@ -33,7 +33,7 @@
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
-| 1 | App Bar | ← + 🔗 分享 + ⋯ | 导航 | ✅ | —（纯 UI） | 自绘头部，hideTitleBar；分享/⋯ 提示后续 |
+| 1 | App Bar | ← + 🔗 分享 + ⋯ | 导航 | ✅ | —（纯 UI） | 自绘头部，hideTitleBar；分享拉起系统分享面板（Spec 061）；⋯ 提示后续 |
 | 2 | 头部 | logo + 组织名（粗体）+ login（灰） | 展示 | ✅ | `name/login/avatarUrl` | avatar 圆角 12 |
 | 3 | 头部 | 简介段落（灰色，多行） | 展示 | ✅ | `description` | — |
 | 4 | 信息行 | 🔗 官网 / ✉️ 邮箱 / 𝕏 X 账号 | 展示 | ✅ | `websiteUrl/twitterUsername` + REST mailbox | 邮箱直接取组织 REST 字段 |
@@ -76,7 +76,7 @@ REST：`GET /orgs/{login}`（主数据）、`GET /user/follows/{login}`（跟随
 | 组织 README 不存在 | `.github` 无 README | README 区块隐藏 |
 | Markdown 完整渲染（表格/高亮/图片） | 复用简化渲染 | 标题/加粗/链接/正文行；徽章按纯文本行展示 |
 | FOLLOW 需要 token scope | `user:follow` 缺失 | toast 提示操作失败原因 |
-| 分享/⋯ | 系统分享未接入 | 点击提示后续（与仓库详情一致） |
+| ⋯ 菜单 | 更多操作未接入 | 点击提示后续（与仓库详情一致） |
 | 组织私有仓库 | 数据依赖权限 | 仓库列表按权限自然过滤 |
 
 ---

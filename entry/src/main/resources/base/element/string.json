@@ -1645,6 +1645,10 @@
       "value": "Copy failed"
     },
     {
+      "name": "share_failed",
+      "value": "Could not open the share sheet"
+    },
+    {
       "name": "file_empty_dir",
       "value": "Empty directory"
     },
@@ -1939,10 +1943,6 @@
     {
       "name": "achievement_share",
       "value": "Share"
-    },
-    {
-      "name": "achievement_share_failed",
-      "value": "Share failed"
     },
     {
       "name": "achievement_close",

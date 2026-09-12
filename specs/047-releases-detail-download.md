@@ -24,7 +24,7 @@ RepoReleases（029，列表 + 最新卡）现有「View release details」为占
 ## 二、整体 UI 结构
 
 1. 入口：RepoReleases 列表（已有）→ 点击进入详情
-2. App Bar：share-android 图标（=复制 release URL）
+2. App Bar：share-android 图标（=系统分享面板分享 release URL，Spec 061）
 3. 版本头卡：标题 / 作者 / 时间 / 标签 / 徽章
    - 徽章：草稿 [Draft]、预发布 [Prerelease]（仅可见时显示）
    - tag / commit / 创建者信息行
@@ -46,7 +46,7 @@ RepoReleases（029，列表 + 最新卡）现有「View release details」为占
 | 5 | 详情 | 下载执行 | GET asset `url`（Accept: application/octet-stream）→ 进度回调 → 沙箱 cache 落盘 | ✅ | REST `GET /repos/{o}/{r}/releases/assets/{asset_id}` | HTTP 下载不走 GraphQL; 断点/续传不做 |
 | 6 | 下载 | 进度气泡 | 进度条/速率/可取消；多并发最多 3 个排队 | ✅ | 无 | DownloadManager 服务（任务队列） |
 | 7 | 完成 | 保存到系统下载 | SaveButton/FilePicker 保存（用户可见位置），成功后提示路径 | ✅ | 无（ArkUI 保存面板） | 避免敏感权限：只用系统保存对话框 |
-| 8 | 完成 | 分享资产 | Share Kit 分享文件（缓存 URI） | ✅ | 无 | 与「复制直链」并列 |
+| 8 | 完成 | 分享资产 | Share Kit 分享文件（缓存 URI） | ✅ | 无 | 与「复制直链」并列；实现收口于 Spec 061 统一出口 |
 | 9 | 完成 | 复制直链 | 完成态复制的是沙箱缓存 file:// 路径；浏览器直链在 ⋯ 菜单 Copy link | ✅ | 无 | 官方 App 无下载时显示“在浏览器打开” |
 | 10 | 边界 | 下载失败/权限/限流 | 404（被删）/403（私有资产 token）/中断重试提示 | ⚠️ | 无 | 私有仓库 asset 下载需要 token 头；HTTP 也要鉴权 |
 | 11 | 边界 | 大文件（>200MB） | 提示用浏览器打开（移动端不再下载） | ✅ | 无 | 上限阈值可配 |

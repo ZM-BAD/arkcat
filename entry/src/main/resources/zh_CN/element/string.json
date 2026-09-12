@@ -1613,6 +1613,10 @@
       "value": "复制失败"
     },
     {
+      "name": "share_failed",
+      "value": "无法拉起分享面板"
+    },
+    {
       "name": "file_empty_dir",
       "value": "空目录"
     },
@@ -1939,10 +1943,6 @@
     {
       "name": "achievement_share",
       "value": "分享"
-    },
-    {
-      "name": "achievement_share_failed",
-      "value": "分享失败"
     },
     {
       "name": "achievement_close",

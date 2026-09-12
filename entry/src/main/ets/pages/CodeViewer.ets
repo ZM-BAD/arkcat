@@ -13,6 +13,7 @@ import { PageShadowBar } from '../components/PageShadowBar';
 import { CodeLine, CodeSpan, CODE_DARK_BG, CODE_LIGHT_BG, codeTextColorOf } from '../utils/CodeTheme';
 import { highlightLine, extOf } from '../utils/Highlight';
 import { FileService } from '../services/FileService';
+import { blobPageUrl, shareLink } from '../utils/Share';
 import { FileContent } from '../models/FileModels';
 import { resText } from '../utils/I18n';
 
@@ -141,10 +142,6 @@ export struct CodeViewerView {
     return idx >= 0 ? this.filePath.substring(idx + 1) : this.filePath;
   }
 
-  private blobUrl(): string {
-    return `https://github.com/${this.owner}/${this.name}/blob/HEAD/${this.filePath}`;
-  }
-
   private copyText(text: string, okRes: Resource): void {
     const data = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, text);
     pasteboard.getSystemPasteboard().setData(data)
@@ -162,7 +159,7 @@ export struct CodeViewerView {
         this.copyText(this.content, $r('app.string.file_content_copied'));
       } },
       { value: this.stringOf($r('app.string.file_copy_link')), action: (): void => {
-        this.copyText(this.blobUrl(), $r('app.string.file_link_copied'));
+        this.copyText(blobPageUrl(this.owner, this.name, this.filePath), $r('app.string.file_link_copied'));
       } }
     ];
   }
@@ -249,13 +246,13 @@ export struct CodeViewerView {
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .layoutWeight(1)
         }
-        OctIcon({ res: $r('app.media.oct_share_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
+        OctIcon({ res: $r('app.media.oct_share_android_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
           .margin({ left: 12 })
         .responseRegion({ x: -12, y: -12, width: '220%', height: '220%' })
         .accessibilityDescription($r('app.string.a11y_share'))
         .focusable(true)
           .onClick(() => {
-            this.copyText(this.content, $r('app.string.file_content_copied'));
+            shareLink(this.getUIContext(), blobPageUrl(this.owner, this.name, this.filePath), this.fileName());
           })
         OctIcon({ res: $r('app.media.oct_gear_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
           .margin({ left: 12 })
@@ -265,8 +262,12 @@ export struct CodeViewerView {
           .onClick(() => {
             this.pathStack.pushPathByName('codeOptions', '');
           })
-        OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
+        OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
+          .rotate({ angle: 90 })
           .margin({ left: 12 })
+          .responseRegion({ x: -12, y: -12, width: '220%', height: '220%' })
+          .accessibilityDescription($r('app.string.a11y_more'))
+          .focusable(true)
           .bindMenu(this.menuItems())
       }
       .width('100%')

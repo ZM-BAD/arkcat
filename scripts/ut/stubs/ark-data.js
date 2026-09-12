@@ -3,3 +3,4 @@ export const preferences = {
   getPreferences: () => Promise.resolve({}),
   getPreferencesSync: () => ({ getSync: () => null })
 };
+export const uniformTypeDescriptor = { UniformDataType: { HYPERLINK: 'ohos.arkui.hyperlink' } };

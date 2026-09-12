@@ -17,6 +17,7 @@ const KIT_STUBS = {
   '@kit.ArkTS': resolve(HERE, 'stubs/arkts-util.js'),
   '@kit.ArkUI': resolve(HERE, 'stubs/ark-ui.js'),
   '@kit.AssetStoreKit': resolve(HERE, 'stubs/asset-store-kit.js'),
+  '@kit.ShareKit': resolve(HERE, 'stubs/share-kit.js'),
   '@kit.PerformanceAnalysisKit': resolve(HERE, 'stubs/performance-analysis-kit.js')
 };
 

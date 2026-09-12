@@ -32,13 +32,13 @@
 | 1 | App Bar 左 | ← 返回 | 回上一级/上一目录 | ✅ 纯 UI | — | 下钻为 push 新路由实例（参数含 path），返回天然回上一目录 |
 | 2 | App Bar 中 | 标题（Files/当前目录名） | 展示 | ✅ 纯 UI | — | 根目录固定「Files」，下钻后显示目录名 |
 | 3 | App Bar 右 | 🔍 搜索 | 本地过滤条目 | ✅ 纯 UI | — | 展开过滤行，输入时按文件名匹配 |
-| 4 | App Bar 右 | ⭮ 分享 | 复制仓库链接 | ⚠️ 客户端部分 | — | MVP 用剪贴板 + toast；系统分享面板后续 |
+| 4 | App Bar 右 | ⭮ 分享 | 分享当前目录链接 | ✅ 纯 UI | — | 系统分享面板分享当前目录地址（Spec 061）；根目录=仓库主页、子目录带 `tree/HEAD/{path}` |
 | 5 | App Bar 右 | ⋮ 更多 | 菜单（Copy link + Copy path） | ✅ 纯 UI | — | bindMenu 弹出 |
 | 6 | 列表 | 目录行 | 下钻 | ✅ | `repository.object(expression: "HEAD:path") { ... on Tree { entries } }` | 蓝实心文件夹图标（file-directory-fill） |
 | 7 | 列表 | 文件行 | 进入代码查看器 | ✅ | 同上（blob 分支见 Spec 011） | file 图标，点击 push codeViewer |
 | 8 | 列表 | 加载/错误/空态 | 反馈 | ✅ 复用组件 | — | StateView 三态 |
 
-可行性：7/8 可行（7 ✅ + 1 ⚠️）。
+可行性：8/8 可行（8 ✅ + 0 ⚠️）。
 
 ---
 
@@ -71,7 +71,6 @@ query DirEntries($owner: String!, $name: String!, $expression: String!) {
 | ---- | ------ | ------------------- |
 | 超大目录（>500 条目） | GraphQL/REST 单次均有限制 | 展示已返回条目 + toast「Directory has N entries」（列表不截断）；不做懒加载（后续按 REST `/contents` 分页） |
 | 符号链接目录 | GraphQL type 为 blob/tree 之外 | 按名称展示、点击给出提示 |
-| 系统分享面板 | ShareKit 面板样式不可控 | 剪贴板复制链接 + toast（后续评估 ShareKit） |
 | Open in browser | 浏览器跳转需 openLink 能力 | 本批不实现；菜单为 Copy link + Copy path |
 | 空目录 | — | 显示 StateView 空态（Empty directory） |
 
@@ -90,6 +89,7 @@ query DirEntries($owner: String!, $name: String!, $expression: String!) {
 ## 七、备注
 
 - 目录行图标：官方 App 为蓝实心文件夹 → Octicons `file-directory-fill-16.svg`（v19.33.0 已归档 + media 副本），着色由 OctIcon.fillColor 统一（oct_ 媒体资源）。
+- 顶栏图标：分享 `oct_share_android_16`（`link_blue`）、更多 `oct_kebab_horizontal_16` rotate 90 + `link_blue`（Spec 062）；搜索仍为次级灰。
 - 下钻实现：push 新路由实例（`repoFiles` 参数 owner\|name\|path），返回按钮与系统手势均回上一级目录，与官方 App 导航一致。
 - 符号链接目录（type 非 tree/blob）：按名称展示、点击给出提示。
 - 文件类型图标 MVP 统一灰色 file 图标（官方 App 按文件类型着彩色图标，属视觉差异，列为本页后续优化项；Spec 024 图标体系已 implemented）。

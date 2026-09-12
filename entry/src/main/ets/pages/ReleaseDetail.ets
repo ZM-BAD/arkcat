@@ -6,7 +6,6 @@ import { promptAction } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { fileIo as fs, picker } from '@kit.CoreFileKit';
-import { systemShare } from '@kit.ShareKit';
 import { OctIcon } from '../components/OctIcon';
 import { MarkdownView } from '../components/MarkdownView';
 import { DownloadRow } from '../components/DownloadRow';
@@ -17,6 +16,7 @@ import { DownloadService, DownloadTask } from '../services/DownloadService';
 import { MarkdownService } from '../services/MarkdownService';
 import { StateView } from '../components/StateView';
 import { resText } from '../utils/I18n';
+import { shareFile, shareLink } from '../utils/Share';
 
 /** 大文件阈值：超过仅提示浏览器打开（spec 边界） */
 const MAX_DOWNLOAD_BYTES = 200 * 1024 * 1024;
@@ -188,21 +188,12 @@ export struct ReleaseDetailView {
       });
   }
 
-  /** 分享缓存文件（系统分享面板；失败降级提示复制链接） */
-  private shareFile(task: DownloadTask): void {
-    const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext | undefined;
-    if (ctx === undefined || task.path === '') {
-      return;
-    }
-    try {
-      const data = new systemShare.SharedData({ utd: 'general.file', uri: `file://${task.path}` });
-      const controller = new systemShare.ShareController(data);
-      controller.show(ctx, {}).catch(() => {
-        this.copyUrl(`file://${task.path}`);
-      });
-    } catch (e) {
-      this.copyUrl(`file://${task.path}`);
-    }
+  /** 分享缓存的资产文件（Spec 061 系统面板；面板拉起失败降级复制文件链接） */
+  private shareTask(task: DownloadTask): void {
+    const path = task.path;
+    shareFile(this.getUIContext(), path, (): void => {
+      this.copyUrl(`file://${path}`);
+    });
   }
 
   @Builder
@@ -339,7 +330,7 @@ export struct ReleaseDetailView {
         .focusable(true)
         .onClick(() => {
           if (this.detail !== null) {
-            this.copyUrl(this.detail.releaseUrl);
+            shareLink(this.getUIContext(), this.detail.releaseUrl, this.detail.name);
           }
         })
       }
@@ -467,7 +458,7 @@ export struct ReleaseDetailView {
                   speed: this.speedOf(task.id),
                   onCancel: (id: string) => DownloadService.cancel(id),
                   onSave: (t: DownloadTask) => this.saveFile(t),
-                  onShare: (t: DownloadTask) => this.shareFile(t),
+                  onShare: (t: DownloadTask) => this.shareTask(t),
                   onCopy: (t: DownloadTask) => this.copyUrl(`file://${t.path}`)
                 })
               }, (task: DownloadTask) => task.id)

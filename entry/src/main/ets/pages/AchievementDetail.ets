@@ -3,15 +3,12 @@
  * 中部大徽章/名称/描述 + 奖杯解锁日期 + 触发事件；底部圆点 + Share（ShareKit 分享徽章页）。
  * 数据：AchievementsService（tab=achievements 抓 slug 列表 + 详情懒加载片段）。
  */
-import { common } from '@kit.AbilityKit';
-import { promptAction } from '@kit.ArkUI';
-import { systemShare } from '@kit.ShareKit';
-import { uniformTypeDescriptor as utd } from '@kit.ArkData';
 import { AchievementDetail, AchievementEvent } from '../models/AchievementModels';
 import { AchievementsService } from '../services/AchievementsService';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
 import { resText } from '../utils/I18n';
+import { shareLink, userPageUrl } from '../utils/Share';
 import { unlockDateText } from '../utils/Format';
 
 @ComponentV2
@@ -75,23 +72,10 @@ export struct AchievementDetailView {
     return ev.ref === '' ? ev.label : `${ev.ref} · ${ev.label}`;
   }
 
-  /** 分享该徽章页面 URL（官方 ShareKit 系统分享面板；图片资源分享为边界外） */
+  /** 分享该徽章页面 URL（系统分享面板；图片资源分享为边界外） */
   private shareDetail(item: AchievementDetail): void {
-    const url = `https://github.com/${this.login}?achievement=${item.slug}&tab=achievements`;
-    try {
-      const data = new systemShare.SharedData({
-        utd: utd.UniformDataType.HYPERLINK,
-        content: url,
-        title: item.name !== '' ? item.name : item.slug
-      });
-      const controller = new systemShare.ShareController(data);
-      controller.show(this.getUIContext().getHostContext() as common.UIAbilityContext, {
-        previewMode: systemShare.SharePreviewMode.DEFAULT,
-        selectionMode: systemShare.SelectionMode.SINGLE
-      });
-    } catch (e) {
-      promptAction.showToast({ message: this.stringOf($r('app.string.achievement_share_failed')) });
-    }
+    const url = `${userPageUrl(this.login)}?achievement=${item.slug}&tab=achievements`;
+    shareLink(this.getUIContext(), url, item.name !== '' ? item.name : item.slug);
   }
 
   /** 单页内容：徽章 + 名称/描述 + 解锁行 + 事件行 */

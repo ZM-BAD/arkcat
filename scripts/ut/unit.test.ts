@@ -47,6 +47,9 @@ import {
   accountsToStorage, accountsFromStorage, legacyToAccount, nextAddResult,
   AccountInfo
 } from '../../entry/src/main/ets/services/AccountStore';
+import {
+  userPageUrl, repoPageUrl, repoTreeUrl, blobPageUrl, pullPageUrl, issuePageUrl, commitPageUrl
+} from '../../entry/src/main/ets/utils/Share';
 
 const NOW = Date.parse('2026-08-31T12:00:00Z');
 const MINUTE_MS = 60 * 1000;
@@ -1005,4 +1008,21 @@ test('nextAddResult 查重与 5 个上限', () => {
   assert.equal(nextAddResult(five, 'a'), 1); // 满员时重复仍走 DUPLICATE（重新授权语义）
   const four = [mk('a'), mk('b'), mk('c'), mk('d')];
   assert.equal(nextAddResult(four, 'e'), 0);
+});
+
+test('Share：各页面分享地址构造（Spec 061）', () => {
+  assert.equal(userPageUrl('ZM-BAD'), 'https://github.com/ZM-BAD');
+  assert.equal(repoPageUrl('ZM-BAD', 'arkcat'), 'https://github.com/ZM-BAD/arkcat');
+  assert.equal(blobPageUrl('ZM-BAD', 'arkcat', 'entry/src/Index.ets'),
+    'https://github.com/ZM-BAD/arkcat/blob/HEAD/entry/src/Index.ets');
+  assert.equal(pullPageUrl('ZM-BAD', 'arkcat', 42), 'https://github.com/ZM-BAD/arkcat/pull/42');
+  assert.equal(issuePageUrl('deno', 'deno', 1), 'https://github.com/deno/deno/issues/1');
+  assert.equal(commitPageUrl('ZM-BAD', 'arkcat', 'a1b2c3'),
+    'https://github.com/ZM-BAD/arkcat/commit/a1b2c3');
+});
+
+test('Share：repoTreeUrl 根目录回落仓库主页、子目录带 tree/HEAD', () => {
+  assert.equal(repoTreeUrl('ZM-BAD', 'arkcat', ''), 'https://github.com/ZM-BAD/arkcat');
+  assert.equal(repoTreeUrl('ZM-BAD', 'arkcat', 'entry/src'),
+    'https://github.com/ZM-BAD/arkcat/tree/HEAD/entry/src');
 });

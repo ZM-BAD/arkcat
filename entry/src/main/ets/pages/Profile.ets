@@ -18,6 +18,7 @@ import { ProfileHeaderCard } from '../components/ProfileHeaderCard';
 import { ProfileNavRows } from '../components/ProfileNavRows';
 import { RepoSummary } from '../models/GitHubModels';
 import { resText } from '../utils/I18n';
+import { shareLink, userPageUrl } from '../utils/Share';
 import { AccountInfo } from '../services/AccountStore';
 
 /** ··· 菜单项（模块级 interface 供 @Local 类型化数组使用） */
@@ -215,15 +216,17 @@ export struct ProfileView {
           })
         }
         Blank()
-        // 🔗 分享：系统分享能力后续 Spec（Spec 005 边界；右侧组统一 44 触点与左侧返回对称）
+        // 🔗 分享：系统分享面板分享本主页（Spec 061；右侧组统一 44 触点与左侧返回对称）
         Stack() {
           OctIcon({ res: $r('app.media.oct_share_android_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
         }
         .width(44)
         .height(44)
         .padding(6)
+        .accessibilityDescription($r('app.string.a11y_share'))
+        .focusable(true)
         .onClick(() => {
-          promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+          shareLink(this.getUIContext(), userPageUrl(this.login), this.login);
         })
         // ⚙ 设置：进入 Settings 页（Spec 014）——仅本人主页显示（他人主页顶栏 = 分享 + ⋮，与官方一致）
         if (this.login !== '' && this.login === this.currentLogin) {

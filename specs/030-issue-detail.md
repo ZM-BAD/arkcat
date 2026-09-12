@@ -15,7 +15,7 @@
 
 ## 二、整体 UI 结构
 
-1. 顶部 App Bar：← 返回 + `owner/repo #N` + 搜索（🔍）+ 更多菜单（⋯）
+1. 顶部 App Bar：← 返回 + `owner/repo #N` + 搜索（🔍）+ 分享（⭮）+ 更多菜单（⋮ 竖三点）——图标口径见 Spec 062
 2. 标题区：标题（Parent-node "children" link…，2 行省略）+ 状态圆标（🟢 open / 🟣 closed）+ 作者 + 相对时间
 3. 正文：MarkdownView 直渲（040）+ 折叠阈值 500 字符/240vp
 4. 评论区：💬 N 评论标题 + 评论行（🀫 头像 + 登录名 denoland + 相对时间 2d + 正文多行 + 反应条 + 编辑/删除菜单）+ Load more 分页
@@ -25,7 +25,7 @@
 
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
-| 1 | App Bar | ← 返回 + `owner/repo #N` + 搜索/⋯ | 导航 | ✅ | —（纯 UI） | — |
+| 1 | App Bar | ← 返回 + `owner/repo #N` + 搜索/分享/⋯ | 导航 | ✅ | —（纯 UI） | 分享拉起系统分享面板分享 `issues/{number}`（Spec 061）；⋮ 为蓝色竖三点（Spec 062） |
 | 2 | 标题 | 大标题（2 行省略） | 展示 | ✅ | `title` | maxLines 2 + Ellipsis |
 | 3 | 标题 | 状态圆标 + 作者 + 相对时间 | 展示 | ✅ | `state/stateReason/author/createdAt` | 与 007/017 图标一致 |
 | 4 | 正文 | MarkdownView 直渲（040） | 展示 | ✅ | `body/bodyHTML` | 折叠阈值 500 字符/240vp |
@@ -94,3 +94,5 @@ query IssueDetail($owner: String!, $name: String!, $number: Int!, $first: Int = 
 ## 七、备注
 
 - 路由参数：`owner/name/number`（NavPath，param 字符串拼接）；工作区与仓库内入口统一。
+- 顶栏图标（Spec 061/062）：搜索 `oct_search_24` 保持原色；分享 `oct_share_android_16` + `link_blue`
+  （本批新增，分享 `issues/{number}`）；更多 `oct_kebab_horizontal_16` rotate 90 + `link_blue`（菜单仍未接入，点击提示）。

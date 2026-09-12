@@ -15,6 +15,7 @@ import { CommitDetailPage, CommitPullItem, CommitFileItem } from '../models/PrDi
 import { RepoSubService } from '../services/RepoSubService';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
+import { commitPageUrl, shareLink } from '../utils/Share';
 
 const PREFS_NAME = 'arkcat_settings';
 const KEY_LINE_NUMBERS = 'code_line_numbers';
@@ -253,7 +254,8 @@ export struct CommitDetailView {
         .accessibilityDescription($r('app.string.a11y_share'))
         .focusable(true)
         .onClick(() => {
-          promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+          const headline = this.detail !== null ? this.detail.headline : '';
+          shareLink(this.getUIContext(), commitPageUrl(this.owner, this.name, this.oid), headline);
         })
         if (this.tab === 0) {
           Stack() {

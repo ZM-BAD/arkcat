@@ -13,6 +13,7 @@ import { RepoCard } from '../components/RepoCard';
 import { StateView } from '../components/StateView';
 import { RepoSummary } from '../models/GitHubModels';
 import { resText } from '../utils/I18n';
+import { shareLink, userPageUrl } from '../utils/Share';
 
 @ComponentV2
 export struct OrgProfileView {
@@ -294,7 +295,7 @@ export struct OrgProfileView {
         })
         Blank()
         Stack() {
-          OctIcon({ res: $r('app.media.oct_share_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+          OctIcon({ res: $r('app.media.oct_share_android_16'), iconSize: 18, iconColor: $r('app.color.link_blue') })
         }
 .width(44)
 .height(44)
@@ -302,10 +303,11 @@ export struct OrgProfileView {
         .accessibilityDescription($r('app.string.a11y_share'))
         .focusable(true)
         .onClick(() => {
-          promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+          shareLink(this.getUIContext(), userPageUrl(this.login), this.login);
         })
         Stack() {
-          OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+          OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 18, iconColor: $r('app.color.link_blue') })
+            .rotate({ angle: 90 })
         }
 .width(44)
 .height(44)
