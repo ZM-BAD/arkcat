@@ -40,6 +40,7 @@ import { PrDetailView } from './PrDetail';
 import { PrFilesView } from './PrFiles';
 import { CommitDetailView } from './CommitDetail';import { NotificationSettingsView } from './NotificationSettings';
 import { CodeOptionsView } from './CodeOptions';
+import { OpenSourceLibrariesView } from './OpenSourceLibraries';
 import { UserListView } from './UserList';
 import { StargazersView } from './Stargazers';
 import { ForksView } from './Forks';
@@ -60,7 +61,7 @@ import { InAppBrowserView } from './InAppBrowser';
  *  + 应用内浏览器（用户 09-08 定案：该子页也不显示底栏） */
 const TAB_BAR_HIDDEN_ROUTES: string[] = [
   'settings', 'notificationSettings', 'codeOptions', 'accounts', 'tokenSetup', 'achievementDetail',
-  'inAppBrowser'
+  'openSourceLibraries', 'inAppBrowser', 'repoDiscussions'
 ];
 
 @Entry
@@ -68,6 +69,10 @@ const TAB_BAR_HIDDEN_ROUTES: string[] = [
 struct Index {
   @State token: string = '';
   @State checked: boolean = false;
+  /** 开屏 logo 动效（淡入 + 轻微放大；最短停留 1.5s——常用 App 开屏 1~3s，取中偏短） */
+  @State splashOpacity: number = 0;
+  @State splashScale: number = 0.92;
+  @State splashMinElapsed: boolean = false;
   /** Spec 049a：账号列表与当前账号（切号时更新；各 Tab 经 @Param token 感知并重取数据） */
   @State accounts: AccountInfo[] = [];
   @State currentLogin: string = '';
@@ -92,6 +97,8 @@ struct Index {
   /** Inbox 标记已读后经 AppStorage 通知重算未读角标（review A4） */
   @StorageProp('inboxUnreadTick') @Watch('onInboxUnreadTick') inboxUnreadTick: number = 0;
   @State listLogin: string = '';
+  /** Discussions 单仓库模式（Share Feedback）：'owner/name'，空串=全局 */
+  @State repoForDiscussions: string = '';
   @State listKind: string = 'followers';
   /** Spec 052：成就详情参数（login|startIndex） */
   @State achLogin: string = '';
@@ -142,6 +149,14 @@ struct Index {
   private pathStack: NavPathStack = new NavPathStack();
 
   aboutToAppear(): void {
+    // 开屏动效：logo 淡入 + 放大到位（350ms ease-out）；最短停留 1.5s（token 探针完成也不提前切）
+    this.getUIContext().animateTo({ duration: 350, curve: Curve.EaseOut }, () => {
+      this.splashOpacity = 1;
+      this.splashScale = 1;
+    });
+    setTimeout((): void => {
+      this.splashMinElapsed = true;
+    }, 1500);
     // 软键盘高度监听：弹起时隐藏底部 tab 栏（官方 App 键盘态行为）
     window.getLastWindow(this.getUIContext().getHostContext() as common.Context)
       .then((w: window.Window) => {
@@ -399,6 +414,17 @@ struct Index {
   codeOptionsDestination() {
     NavDestination() {
       CodeOptionsView({
+        pathStack: this.pathStack
+      })
+    }
+    .hideTitleBar(true)
+  }
+
+  /** Spec 064：Settings → Open Source Libraries 开源披露页（静态，自绘头部） */
+  @Builder
+  openSourceLibrariesDestination() {
+    NavDestination() {
+      OpenSourceLibrariesView({
         pathStack: this.pathStack
       })
     }
@@ -695,9 +721,14 @@ struct Index {
     NavDestination() {
       DiscussionsView({
         token: this.token,
-        pathStack: this.pathStack
+        pathStack: this.pathStack,
+        repo: this.repoForDiscussions
       })
     }
+    .onReady((context: NavDestinationContext) => {
+      // 参数=单仓库 'owner/name'（Share Feedback 入口）；空参=全局工作区语义
+      this.repoForDiscussions = (context.pathInfo.param as string) ?? '';
+    })
     .hideTitleBar(true)
   }
 
@@ -1111,6 +1142,8 @@ struct Index {
       this.notificationSettingsDestination()
     } else if (name === 'codeOptions') {
       this.codeOptionsDestination()
+    } else if (name === 'openSourceLibraries') {
+      this.openSourceLibrariesDestination()
     } else if (name === 'userList') {
       this.userListDestination()
     } else if (name === 'orgList') {
@@ -1132,6 +1165,9 @@ struct Index {
     } else if (name === 'workPrs') {
       this.workPrsDestination()
     } else if (name === 'discussions') {
+      this.discussionsDestination()
+    } else if (name === 'repoDiscussions') {
+      // Spec 065：Settings → Share feedback 专用名（底栏隐藏列表只挂它，不影响 My Work 的全局 discussions）
       this.discussionsDestination()
     } else if (name === 'projects') {
       this.projectsDestination()
@@ -1328,12 +1364,20 @@ struct Index {
 
   build() {
     Stack() {
-      if (!this.checked) {
-        // 避免启动瞬间闪现 Token 设置页
-        Column()
-          .width('100%')
-          .height('100%')
-          .backgroundColor($r('app.color.start_window_background'))
+      if (!this.checked || !this.splashMinElapsed) {
+        // 开屏品牌页：大 logo 居中（系统 startWindow 只出纯色底，logo 由首帧自绘放大呈现；
+        // 背景色与 bg_page 一致，系统开屏→本页无缝衔接）
+        Column() {
+          Image($r('app.media.foreground'))
+            .width(220)
+            .height(220)
+            .opacity(this.splashOpacity)
+            .scale({ x: this.splashScale, y: this.splashScale })
+        }
+        .justifyContent(FlexAlign.Center)
+        .width('100%')
+        .height('100%')
+        .backgroundColor($r('app.color.start_window_background'))
       } else if (this.token === '') {
         TokenSetup({
           onSaved: (token: string, login: string): void => {

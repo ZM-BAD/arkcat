@@ -11,7 +11,8 @@ import { http } from '@kit.NetworkKit';
 import { Json, JsonMap } from '../utils/Json';
 
 const CLIENT_ID = 'Ov23liBbyQ0Am7PNXBcj';
-const SCOPES = 'repo read:user notifications read:org';
+// user scope：含 user:follow（follow/unfollow mutation 必需）；缺它时个人页 Follow 按钮报 INSUFFICIENT_SCOPE
+const SCOPES = 'repo read:user notifications read:org user';
 const DEVICE_CODE_URL = 'https://github.com/login/device/code';
 const ACCESS_TOKEN_URL = 'https://github.com/login/oauth/access_token';
 const DEFAULT_VERIFICATION_URI = 'https://github.com/login/device';

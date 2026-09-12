@@ -141,7 +141,7 @@ export struct UserListView {
           this.pathStack.pop();
         })
         Column({ space: 2 }) {
-          Text(`@${this.headerLogin}`)
+          Text(this.headerLogin)
             .fontSize($r('app.float.title_font_size'))
             .fontWeight(600)
             .fontColor($r('app.color.text_primary'))

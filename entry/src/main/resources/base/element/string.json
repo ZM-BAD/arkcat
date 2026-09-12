@@ -213,6 +213,10 @@
       "value": "Unfollow"
     },
     {
+      "name": "profile_following",
+      "value": "Following"
+    },
+    {
       "name": "profile_followed_toast",
       "value": "Followed"
     },
@@ -2047,6 +2051,30 @@
     {
       "name": "explore_filter_no_results",
       "value": "No results"
+    },
+    {
+      "name": "open_source_intro",
+      "value": "ArkCat is built using open source software:"
+    },
+    {
+      "name": "discussions_filter_author",
+      "value": "Author"
+    },
+    {
+      "name": "discussions_filter_label",
+      "value": "Label"
+    },
+    {
+      "name": "discussions_filter_by_author",
+      "value": "Filter by author"
+    },
+    {
+      "name": "discussions_filter_by_label",
+      "value": "Filter by label"
+    },
+    {
+      "name": "discussions_filter_unlabeled",
+      "value": "Unlabeled"
     }
   ]
 }

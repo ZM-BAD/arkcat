@@ -6,9 +6,11 @@ import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { FilterDropdownChip, FilterDropdownOption } from '../components/FilterDropdownChip';
-import { WorkDiscussionItem, WorkDiscussionsPage } from '../models/WorkModels';
+import { WorkDiscussionItem, WorkDiscussionsPage, RepoLabelItem, mapRepoLabels } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
+import { WorkFilterSelectSheet, FilterSheetItem } from '../components/WorkFilterSelectSheet';
 import { StateView } from '../components/StateView';
+import { isLightHexColor } from '../services/SearchService';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { WorkEmptyView } from '../components/WorkEmptyView';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
@@ -18,11 +20,26 @@ import { resText } from '../utils/I18n';
 export struct DiscussionsView {
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
+  /** 非空 = 单仓库模式（Share Feedback 入口，如 'ZM-BAD/arkcat'）：搜索限定该仓库、隐藏归属筛选 */
+  @Param repo: string = '';
   @Local state: string = 'open';
   @Local scope: string = 'created';
   @Local unanswered: boolean = false;
   /** 'new' | 'top_all' | 'top_yesterday' | 'top_week' | 'top_month' | 'top_year' */
   @Local sortKey: string = 'new';
+  /** Author/Label 筛选（Spec 065，单仓库模式；label='none' 表示 Unlabeled） */
+  @Local authorFilter: string = '';
+  @Local labelFilter: string = '';
+  /** 弹层（'' | 'author' | 'label'）：单 bindSheet 内切换内容 */
+  @Local sheetKind: string = '';
+  @Local authorSearchShow: boolean = false;
+  @Local authorSearch: string = '';
+  @Local labelSearchShow: boolean = false;
+  @Local labelSearch: string = '';
+  /** 仓库 labels 全集（打开 Label 弹层时拉取一次） */
+  @Local repoLabels: RepoLabelItem[] = [];
+  @Local labelsLoading: boolean = false;
+  @Local labelsError: string = '';
   @Local discussions: WorkDiscussionItem[] = [];
   @Local cursor: string = '';
   @Local hasNextPage: boolean = false;
@@ -47,7 +64,8 @@ export struct DiscussionsView {
     const mySeq = ++this.seq;
     this.loading = true;
     this.errorMsg = '';
-    WorkService.fetchDiscussions(this.token, this.state, this.scope, this.unanswered, this.sortKey, '')
+    WorkService.fetchDiscussions(this.token, this.state, this.scope, this.unanswered, this.sortKey, '', this.repo,
+      this.authorFilter, this.labelFilter)
       .then((page: WorkDiscussionsPage) => {
         if (mySeq !== this.seq) {
           return;
@@ -77,7 +95,8 @@ export struct DiscussionsView {
     const mySeq = ++this.seq;
     this.loading = true;
     this.loadingMore = true;
-    WorkService.fetchDiscussions(this.token, this.state, this.scope, this.unanswered, this.sortKey, this.cursor)
+    WorkService.fetchDiscussions(this.token, this.state, this.scope, this.unanswered, this.sortKey, this.cursor,
+      this.repo, this.authorFilter, this.labelFilter)
       .then((page: WorkDiscussionsPage) => {
         if (mySeq !== this.seq) {
           return;
@@ -140,6 +159,13 @@ export struct DiscussionsView {
     if (this.scope !== 'created') {
       count++;
     }
+    // Author/Label 仅单仓库模式显示，计数同步限定
+    if (this.repo !== '' && this.authorFilter !== '') {
+      count++;
+    }
+    if (this.repo !== '' && this.labelFilter !== '') {
+      count++;
+    }
     if (this.unanswered) {
       count++;
     }
@@ -147,6 +173,91 @@ export struct DiscussionsView {
       count++;
     }
     return count;
+  }
+
+  /** repo → owner/name 拆分（labels 查询用） */
+  private repoOwnerName(): string[] {
+    const idx = this.repo.indexOf('/');
+    if (idx < 0) {
+      return [this.repo, ''];
+    }
+    return [this.repo.substring(0, idx), this.repo.substring(idx + 1)];
+  }
+
+  /** Author 弹层选项：已加载讨论的作者去重 + 客户端搜索过滤 */
+  private authorSheetItems(): FilterSheetItem[] {
+    const q = this.authorSearch.trim().toLowerCase();
+    const seen: Set<string> = new Set();
+    const items: FilterSheetItem[] = [];
+    for (const d of this.discussions) {
+      if (d.authorLogin === '' || seen.has(d.authorLogin)) {
+        continue;
+      }
+      seen.add(d.authorLogin);
+      if (q !== '' && !d.authorLogin.toLowerCase().includes(q)
+        && !d.authorName.toLowerCase().includes(q)) {
+        continue;
+      }
+      items.push({
+        key: d.authorLogin,
+        avatarUrl: d.authorAvatar,
+        mainText: d.authorLogin,
+        subText: d.authorName,
+        subOnTop: false,
+        selected: this.authorFilter === d.authorLogin
+      });
+    }
+    return items;
+  }
+
+  /** Label 弹层可见标签：客户端搜索过滤 */
+  private shownRepoLabels(): RepoLabelItem[] {
+    const q = this.labelSearch.trim().toLowerCase();
+    if (q === '') {
+      return this.repoLabels;
+    }
+    return this.repoLabels.filter((l: RepoLabelItem) => l.name.toLowerCase().includes(q));
+  }
+
+  private openAuthorSheet(): void {
+    this.authorSearchShow = false;
+    this.authorSearch = '';
+    this.sheetKind = 'author';
+  }
+
+  /** 打开 Label 弹层：labels 只在首次打开时拉取（失败可重试） */
+  private openLabelSheet(): void {
+    this.labelSearch = '';
+    this.sheetKind = 'label';
+    if (this.repoLabels.length > 0 || this.labelsLoading) {
+      return;
+    }
+    const ownerName = this.repoOwnerName();
+    this.labelsLoading = true;
+    this.labelsError = '';
+    WorkService.fetchRepoLabels(this.token, ownerName[0], ownerName[1])
+      .then((labels: RepoLabelItem[]) => {
+        this.repoLabels = labels;
+        this.labelsLoading = false;
+      })
+      .catch((e: Error) => {
+        this.labelsError = e.message;
+        this.labelsLoading = false;
+      });
+  }
+
+  /** 选作者：同键再点=取消；选后收起弹层并刷新 */
+  private pickAuthor(login: string): void {
+    this.authorFilter = this.authorFilter === login ? '' : login;
+    this.sheetKind = '';
+    this.refresh();
+  }
+
+  /** 选标签：'none'=Unlabeled；同键再点=取消 */
+  private pickLabel(key: string): void {
+    this.labelFilter = this.labelFilter === key ? '' : key;
+    this.sheetKind = '';
+    this.refresh();
   }
 
   private stateLabel(): string {
@@ -269,6 +380,140 @@ export struct DiscussionsView {
     .backgroundColor($r('app.color.card_background'))
     .width('100%')
     .margin({ bottom: 8 })
+  }
+
+  /** 弹层分派（单个 bindSheet 内切换内容，规避同组件多 bindSheet 失效） */
+  @Builder
+  overlaySheet() {
+    if (this.sheetKind === 'author') {
+      WorkFilterSelectSheet({
+        title: $r('app.string.discussions_filter_by_author'),
+        searchShow: this.authorSearchShow,
+        searchText: this.authorSearch,
+        loading: false,
+        error: '',
+        items: this.authorSheetItems(),
+        onPick: (key: string): void => this.pickAuthor(key),
+        onClose: (): void => {
+          this.sheetKind = '';
+        },
+        onRetry: (): void => this.openAuthorSheet(),
+        onSearchToggle: (): void => {
+          this.authorSearchShow = !this.authorSearchShow;
+        },
+        onSearchChange: (v: string): void => {
+          this.authorSearch = v;
+        }
+      })
+    } else if (this.sheetKind === 'label') {
+      this.labelSheet()
+    }
+  }
+
+  /** 弹层头（与 WorkFilterSelectSheet 同构）：✕ + 标题 + 放大镜 */
+  @Builder
+  sheetHeader(titleRes: Resource, searchOn: boolean, onClose: () => void, onToggle: () => void) {
+    Row() {
+      Stack() {
+        OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
+      }
+      .width(44)
+      .height(44)
+      .onClick((): void => onClose())
+      Text(titleRes)
+        .fontSize($r('app.float.title_font_size'))
+        .fontWeight(600)
+        .fontColor($r('app.color.text_primary'))
+        .layoutWeight(1)
+      Stack() {
+        OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 16, iconColor: $r('app.color.link_blue') })
+      }
+      .width(44)
+      .height(44)
+      .onClick((): void => onToggle())
+    }
+    .padding({ left: 8, right: 8 })
+  }
+
+  /** Label 弹层：Unlabeled 行 + 彩色标签行（客户端搜索过滤；选中蓝勾） */
+  @Builder
+  labelSheet() {
+    Column() {
+      this.sheetHeader($r('app.string.discussions_filter_by_label'), this.labelSearchShow,
+        (): void => {
+          this.sheetKind = '';
+        }, (): void => {
+          this.labelSearchShow = !this.labelSearchShow;
+        })
+      if (this.labelSearchShow) {
+        TextInput({ text: this.labelSearch })
+          .height(40)
+          .fontSize($r('app.float.body_font_size'))
+          .margin({ left: 16, right: 16, bottom: 4 })
+          .borderRadius(6)
+          .backgroundColor($r('app.color.chip_bg'))
+          .onChange((v: string) => {
+            this.labelSearch = v;
+          })
+      }
+      if (this.labelsLoading) {
+        StateView({ loading: true })
+      } else if (this.labelsError !== '') {
+        StateView({ error: this.labelsError, onRetry: (): void => this.openLabelSheet() })
+      } else {
+        Scroll() {
+          Column() {
+            // Unlabeled 行（官方首项：circle-slash 图标）
+            Row({ space: 12 }) {
+              Circle()
+                .width(20)
+                .height(20)
+                .fill(Color.Transparent)
+                .stroke($r('app.color.text_secondary'))
+                .strokeWidth(1.5)
+              Text($r('app.string.discussions_filter_unlabeled'))
+                .fontSize($r('app.float.body_font_size'))
+                .fontWeight(FontWeight.Medium)
+                .fontColor($r('app.color.text_primary'))
+                .layoutWeight(1)
+              if (this.labelFilter === 'none') {
+                OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
+              }
+            }
+            .width('100%')
+            .height(56)
+            .padding({ left: 16, right: 16 })
+            .onClick((): void => this.pickLabel('none'))
+
+            ForEach(this.shownRepoLabels(), (label: RepoLabelItem) => {
+              Row({ space: 12 }) {
+                // GitHub 标签 chip：仓库色底 + 按亮度取深/白字
+                Text(label.name)
+                  .fontSize($r('app.float.chip_font_size'))
+                  .fontWeight(600)
+                  .fontColor(isLightHexColor(label.color) ? $r('app.color.text_primary') : Color.White)
+                  .padding({ left: 10, right: 10, top: 3, bottom: 3 })
+                  .borderRadius(12)
+                  .backgroundColor(`#${label.color}`)
+                Blank()
+                if (this.labelFilter === label.name) {
+                  OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
+                }
+              }
+              .width('100%')
+              .height(56)
+              .padding({ left: 16, right: 16 })
+              .onClick((): void => this.pickLabel(label.name))
+            }, (label: RepoLabelItem) => label.name)
+          }
+          .width('100%')
+        }
+        .layoutWeight(1)
+        .align(Alignment.Top)
+        .scrollBar(BarState.Off)
+      }
+    }
+    .width('100%')
   }
 
   build() {
@@ -420,16 +665,72 @@ export struct DiscussionsView {
               }
             })
 
-            FilterDropdownChip({
-              label: this.scopeLabel(),
-              active: this.scope !== 'created',
-              options: this.scopeOptions(),
-              selectedKey: this.scope,
-              onPick: (key: string): void => {
-                this.scope = key;
-                this.refresh();
+            // 归属筛选：单仓库模式（Share Feedback）下无意义，隐藏
+            if (this.repo === '') {
+              FilterDropdownChip({
+                label: this.scopeLabel(),
+                active: this.scope !== 'created',
+                options: this.scopeOptions(),
+                selectedKey: this.scope,
+                onPick: (key: string): void => {
+                  this.scope = key;
+                  this.refresh();
+                }
+              })
+            }
+
+            // Author/Label 筛选（Spec 065，单仓库模式）：官方为弹层选择，位于状态与 Unanswered 之间；
+            // chip 带 chevron-down 与下拉芯片视觉一致
+            if (this.repo !== '') {
+              Row({ space: 4 }) {
+                Text(this.authorFilter !== ''
+                  ? this.authorFilter : this.stringOf($r('app.string.discussions_filter_author')))
+                  .fontSize($r('app.float.chip_font_size'))
+                  .fontColor(this.authorFilter !== '' ? $r('app.color.link_blue') : $r('app.color.text_primary'))
+                  .maxLines(1)
+                  .textOverflow({ overflow: TextOverflow.Ellipsis })
+                OctIcon({
+                  res: $r('app.media.oct_chevron_down_16'),
+                  iconSize: 12,
+                  iconColor: this.authorFilter !== '' ? $r('app.color.link_blue') : $r('app.color.text_secondary')
+                })
               }
-            })
+              .height(38)
+              .padding({ left: 12, right: 10 })
+              .borderRadius(19)
+              .backgroundColor(this.authorFilter !== '' ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
+              .border({
+                width: 1,
+                color: this.authorFilter !== '' ? $r('app.color.chip_active_border') : $r('app.color.border')
+              })
+              .margin({ right: 8 })
+              .onClick(() => this.openAuthorSheet())
+
+              Row({ space: 4 }) {
+                Text(this.labelFilter === 'none' ? this.stringOf($r('app.string.discussions_filter_unlabeled'))
+                  : (this.labelFilter !== '' ? this.labelFilter
+                    : this.stringOf($r('app.string.discussions_filter_label'))))
+                  .fontSize($r('app.float.chip_font_size'))
+                  .fontColor(this.labelFilter !== '' ? $r('app.color.link_blue') : $r('app.color.text_primary'))
+                  .maxLines(1)
+                  .textOverflow({ overflow: TextOverflow.Ellipsis })
+                OctIcon({
+                  res: $r('app.media.oct_chevron_down_16'),
+                  iconSize: 12,
+                  iconColor: this.labelFilter !== '' ? $r('app.color.link_blue') : $r('app.color.text_secondary')
+                })
+              }
+              .height(38)
+              .padding({ left: 12, right: 10 })
+              .borderRadius(19)
+              .backgroundColor(this.labelFilter !== '' ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
+              .border({
+                width: 1,
+                color: this.labelFilter !== '' ? $r('app.color.chip_active_border') : $r('app.color.border')
+              })
+              .margin({ right: 8 })
+              .onClick(() => this.openLabelSheet())
+            }
 
             // Unanswered 开关 chip（官方：只有选中/未选中两种状态，无下拉；样式与下拉芯片一致）
             Text(this.stringOf($r('app.string.work_discussions_unanswered')))
@@ -505,5 +806,13 @@ export struct DiscussionsView {
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
+    .bindSheet(this.sheetKind !== '', this.overlaySheet(), {
+      height: 560,
+      backgroundColor: $r('app.color.bg_page'),
+      showClose: false,
+      onDisappear: (): void => {
+        this.sheetKind = '';
+      }
+    })
   }
 }

@@ -56,8 +56,10 @@ export struct TokenSetup {
     Column({ space: 16 }) {
       Blank().height(80)
 
-      Text('🐙')
-        .fontSize(40)
+      // ArkCat logo（与桌面图标同源的 foreground.png），替换原 🐙 emoji
+      Image($r('app.media.foreground'))
+        .width(96)
+        .height(96)
 
       Text($r('app.string.login_choice_title'))
         .fontSize($r('app.float.page_text_font_size'))

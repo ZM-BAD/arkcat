@@ -194,6 +194,6 @@ export struct ExploreView {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.card_background'))
+    .backgroundColor($r('app.color.bg_page'))
   }
 }

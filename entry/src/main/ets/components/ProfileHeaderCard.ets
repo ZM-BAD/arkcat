@@ -3,6 +3,7 @@
  * + followers/following 可点计数 + 勋章行。纯展示组件，跳转经 pathStack 直接执行。
  */
 import { promptAction } from '@kit.ArkUI';
+import { common } from '@kit.AbilityKit';
 import { UserProfile, isSelfProfile } from '../models/ProfileModels';
 import { OctIcon } from './OctIcon';
 import { resText } from '../utils/I18n';
@@ -20,11 +21,34 @@ export struct ProfileHeaderCard {
   @Param currentLogin: string = '';
   @Event onSwitchAccount: (login: string) => void = (login: string) => {};
   @Event onAddAccount: () => void = (): void => {};
+  /** Follow 按钮点击（切换关注态；请求与 toast 在 Profile 页处理） */
+  @Event onToggleFollow: () => void = (): void => {};
   @Local switcherOpen: boolean = false;
 
-  /** 信息行：icon 固定在 16×16 容器保证跨行对齐；bold 时内容加粗 */
+  /** 拉起系统浏览器/邮件应用（MarkdownView.openExternal 同款 viewData want；mailto: 由系统分发给邮件应用） */
+  private openExternal(uri: string): void {
+    const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext | undefined;
+    if (ctx === undefined) {
+      return;
+    }
+    ctx.startAbility({
+      action: 'ohos.want.action.viewData',
+      entities: ['entity.system.browsable'],
+      uri: uri
+    }).catch(() => {
+      // 无应用接住（如模拟器无邮件应用）时静默，不打断浏览
+    });
+  }
+
+  /** 网站链接补全协议（GitHub 资料允许只填 example.com） */
+  private websiteUri(): string {
+    const raw = this.profile?.websiteUrl ?? '';
+    return raw !== '' && !raw.startsWith('http://') && !raw.startsWith('https://') ? `https://${raw}` : raw;
+  }
+
+  /** 信息行：icon 固定在 16×16 容器保证跨行对齐；bold 时内容加粗；uri 非空时整行可点（拉起系统应用） */
   @Builder
-  metaRow(iconRes: Resource, text: string, bold: boolean = false) {
+  metaRow(iconRes: Resource, text: string, bold: boolean = false, uri: string = '') {
     if (text !== '') {
       Row({ space: 8 }) {
         Stack() {
@@ -39,6 +63,11 @@ export struct ProfileHeaderCard {
           .maxLines(1)
       }
       .width('100%')
+      .onClick(() => {
+        if (uri !== '') {
+          this.openExternal(uri);
+        }
+      })
     }
   }
 
@@ -136,15 +165,15 @@ export struct ProfileHeaderCard {
       }
 
       Column({ space: 8 }) {
+        this.metaRow($r('app.media.oct_organization_16'), this.profile?.company ?? '')
         this.metaRow($r('app.media.oct_location_16'), this.profile?.location ?? '')
-        this.metaRow($r('app.media.oct_link_16'), this.profile?.websiteUrl ?? '', true)
-        this.metaRow($r('app.media.oct_mail_16'), this.profile?.email ?? '', true)
+        this.metaRow($r('app.media.oct_link_16'), this.profile?.websiteUrl ?? '', true, this.websiteUri())
+        this.metaRow($r('app.media.oct_mail_16'), this.profile?.email ?? '', true, `mailto:${this.profile?.email ?? ''}`)
         if (this.profile?.twitterUsername !== '') {
           Row({ space: 8 }) {
             Stack() {
-              Text('𝕏')
-                .fontSize(14)
-                .fontColor($r('app.color.text_secondary'))
+              // X 品牌图标（Octicon 无此 logo；与 metaRow 同为 16×16 容器对齐，替换原 𝕏 文本字符——字形偏小不齐）
+              OctIcon({ res: $r('app.media.x_logo_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
             }
             .width(16)
             .height(16)
@@ -155,6 +184,10 @@ export struct ProfileHeaderCard {
               .maxLines(1)
           }
           .width('100%')
+          .onClick(() => {
+            // X 主页：系统浏览器打开（资料里只存 handle，不存完整链接）
+            this.openExternal(`https://x.com/${this.profile?.twitterUsername ?? ''}`);
+          })
         }
       }
       .width('100%')
@@ -176,51 +209,72 @@ export struct ProfileHeaderCard {
         .width('100%')
       }
 
-      // 两段可点计数行（Spec 034）：person 图标 + N followers · M following（数字加粗）
+      // 两段可点计数行（Spec 034）：person 图标 + N followers · M following（数字加粗）。
+      // 数字与单位包成同一个可点整体，间隔一个字符宽（4vp）；两组之间用 · 分隔
       Row({ space: 8 }) {
         Stack() {
           OctIcon({ res: $r('app.media.oct_person_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
         }
         .width(16)
         .height(16)
-        Text(`${this.profile?.user.followers ?? 0}`)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontWeight(600)
-          .fontColor($r('app.color.text_primary'))
-          .responseRegion({ x: 0, y: -12, width: '100%', height: '220%' })
-          .onClick(() => {
-            this.pathStack.pushPathByName('userList', `${this.profile?.user.login ?? ''}|followers`);
-          })
-        Text(resText(this.getUIContext(), $r('app.string.profile_followers_unit')))
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .responseRegion({ x: 0, y: -12, width: '100%', height: '220%' })
-          .onClick(() => {
-            this.pathStack.pushPathByName('userList', `${this.profile?.user.login ?? ''}|followers`);
-          })
+        Row({ space: 4 }) {
+          Text(`${this.profile?.user.followers ?? 0}`)
+            .fontSize($r('app.float.caption_font_size'))
+            .fontWeight(600)
+            .fontColor($r('app.color.text_primary'))
+          Text(resText(this.getUIContext(), $r('app.string.profile_followers_unit')))
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor($r('app.color.text_secondary'))
+        }
+        .onClick(() => {
+          this.pathStack.pushPathByName('userList', `${this.profile?.user.login ?? ''}|followers`);
+        })
         Text('·')
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_secondary'))
-        Text(`${this.profile?.user.following ?? 0}`)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontWeight(600)
-          .fontColor($r('app.color.text_primary'))
-          .responseRegion({ x: 0, y: -12, width: '100%', height: '220%' })
-          .onClick(() => {
-            this.pathStack.pushPathByName('userList', `${this.profile?.user.login ?? ''}|following`);
-          })
-        Text(resText(this.getUIContext(), $r('app.string.profile_following_unit')))
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .responseRegion({ x: 0, y: -12, width: '100%', height: '220%' })
-          .onClick(() => {
-            this.pathStack.pushPathByName('userList', `${this.profile?.user.login ?? ''}|following`);
-          })
+        Row({ space: 4 }) {
+          Text(`${this.profile?.user.following ?? 0}`)
+            .fontSize($r('app.float.caption_font_size'))
+            .fontWeight(600)
+            .fontColor($r('app.color.text_primary'))
+          Text(resText(this.getUIContext(), $r('app.string.profile_following_unit')))
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor($r('app.color.text_secondary'))
+        }
+        .onClick(() => {
+          this.pathStack.pushPathByName('userList', `${this.profile?.user.login ?? ''}|following`);
+        })
         Blank()
       }
       .width('100%')
 
       this.achievementsRow()
+
+      // Follow 按钮（仅他人主页，宽度铺满）：官方为中性灰底按钮——未关注=plus+FOLLOW；已关注=绿色 check+FOLLOWING
+      if (this.profile !== null && !isSelfProfile(this.profile.viewerLogin, this.profile.user.login)) {
+        Row({ space: 6 }) {
+          OctIcon({
+            res: this.profile.viewerIsFollowing ? $r('app.media.oct_check_16') : $r('app.media.oct_plus_16'),
+            iconSize: 16,
+            iconColor: this.profile.viewerIsFollowing ? $r('app.color.success_text') : $r('app.color.text_primary')
+          })
+          Text(this.profile.viewerIsFollowing
+            ? $r('app.string.profile_following') : $r('app.string.profile_follow'))
+            .fontSize($r('app.float.body_font_size'))
+            .fontWeight(600)
+            .textCase(TextCase.UpperCase)
+            .fontColor($r('app.color.text_primary'))
+        }
+        .width('100%')
+        .height(36)
+        .justifyContent(FlexAlign.Center)
+        .borderRadius($r('app.float.button_radius'))
+        // 两态都有描边：未关注=白底；已关注=灰底（官方语义）
+        .backgroundColor(this.profile.viewerIsFollowing ? $r('app.color.chip_bg') : $r('app.color.card_background'))
+        .border({ width: 1, color: $r('app.color.border') })
+        .margin({ top: 4 })
+        .onClick(() => this.onToggleFollow())
+      }
     }
     .padding($r('app.float.card_padding'))
     .borderRadius($r('app.float.card_radius'))

@@ -21,13 +21,16 @@ export struct RepoCard {
         this.pinnedOwnerRow()
       }
       this.titleRow()
-      if (this.repo !== null && this.repo.description !== '') {
+      // 描述固定占两行高（无描述也占位）：横滑一排 Pinned 卡片等高
+      if (this.repo !== null && (this.repo.description !== '' || this.isPinned)) {
         Text(this.repo.description)
           .fontSize($r('app.float.caption_font_size'))
+          .lineHeight(17)
           .fontColor($r('app.color.text_secondary'))
           .maxLines(2)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .width('100%')
+          .constraintSize({ minHeight: this.isPinned ? 34 : 0 })
       }
       if (this.isPinned) {
         this.pinnedStatsRow()

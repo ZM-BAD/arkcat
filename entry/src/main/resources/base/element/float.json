@@ -25,6 +25,10 @@
       "value": "12vp"
     },
     {
+      "name": "button_radius",
+      "value": "6vp"
+    },
+    {
       "name": "title_font_size",
       "value": "20fp"
     },

@@ -11,7 +11,7 @@ import {
   buildWorkIssuesQuery, buildWorkPrsQuery, buildWorkDiscussionsQuery,
   mapWorkIssuesPage, mapWorkPrsPage, mapWorkDiscussionsPage,
   mapWorkProjectsPage, mapWorkOrgsPage, mapWorkTopReposPage, mapWorkStarredPage,
-  mapWorkUserLists, mapWorkListDetail
+  mapWorkUserLists, mapWorkListDetail, RepoLabelItem, mapRepoLabels
 } from '../models/WorkModels';
 
 const VIEWER_LOGIN_QUERY = `
@@ -128,8 +128,17 @@ query WorkDiscussions($query: String!, $first: Int = 25, $after: String) {
         repository { nameWithOwner }
         category { name }
         comments { totalCount }
+        author { login avatarUrl ... on User { name } }
+        labels(first: 8) { nodes { name color } }
       }
     }
+  }
+}`;
+
+const REPO_LABELS_QUERY = `
+query RepoLabels($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    labels(first: 50, orderBy: { field: NAME, direction: ASC }) { nodes { name color } }
   }
 }`;
 
@@ -238,9 +247,9 @@ export class WorkService {
 
   /** 工作区 Discussion 列表（search type: DISCUSSION；排序 Sort: New / Top 时间窗进服务端） */
   static async fetchDiscussions(token: string, state: string, scope: string, unanswered: boolean,
-    sortKey: string, cursor: string): Promise<WorkDiscussionsPage> {
+    sortKey: string, cursor: string, repo: string = '', author: string = '', label: string = ''): Promise<WorkDiscussionsPage> {
     const variables: Record<string, Object> = {
-      'query': buildWorkDiscussionsQuery(state, scope, unanswered, sortKey),
+      'query': buildWorkDiscussionsQuery(state, scope, unanswered, sortKey, repo, author, label),
       'first': 25
     };
     if (cursor !== '') {
@@ -248,6 +257,13 @@ export class WorkService {
     }
     const data = await graphql(WORK_DISCUSSIONS_QUERY, variables, token);
     return mapWorkDiscussionsPage(data);
+  }
+
+  /** 仓库 labels 全集（Spec 065：Discussions Label 弹层；公开数据无 scope 要求） */
+  static async fetchRepoLabels(token: string, owner: string, name: string): Promise<RepoLabelItem[]> {
+    const variables: Record<string, Object> = { 'owner': owner, 'name': name };
+    const data = await graphql(REPO_LABELS_QUERY, variables, token);
+    return mapRepoLabels(data);
   }
 
   /** 工作区 Projects（viewer.projectsV2；三态/范围/排序均在客户端） */

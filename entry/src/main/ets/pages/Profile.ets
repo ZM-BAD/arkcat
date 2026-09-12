@@ -4,6 +4,7 @@
  * Packages 无公开 API 不展示，Projects 按边界跳过；··· 菜单提供 Follow/Unfollow；
  * 贡献日历与内嵌切换按官方 App 对齐移除（Spec 035）。
  * Spec 060：本页复用为底栏 tab4 根页（当前账号，showBack=false）；他人主页仍由 userProfile 路由压栈进入。
+ * 顶栏两行标题（灰小字 login + 粗体 name）：下滑头卡滚出视野后出现，本人/他人主页一致。
  */
 import { promptAction } from '@kit.ArkUI';
 import { UserProfile } from '../models/ProfileModels';
@@ -17,6 +18,7 @@ import { PageShadowBar } from '../components/PageShadowBar';
 import { ProfileHeaderCard } from '../components/ProfileHeaderCard';
 import { ProfileNavRows } from '../components/ProfileNavRows';
 import { RepoSummary } from '../models/GitHubModels';
+import { UserSummary } from '../models/GitHubModels';
 import { resText } from '../utils/I18n';
 import { shareLink, userPageUrl } from '../utils/Share';
 import { AccountInfo } from '../services/AccountStore';
@@ -50,6 +52,8 @@ export struct ProfileView {
   @Local errorMsg: string = '';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
+  /** 顶栏两行标题（灰小字 login + 粗体 name）：下滑超过阈值后出现，与官方一致 */
+  @Local titleShown: boolean = false;
   @Local isRefreshing: boolean = false;
   /** 勋章图片 URL 列表（官方 CDN，AchievementsService 抓取） */
   @Local achievements: string[] = [];
@@ -159,8 +163,17 @@ export struct ProfileView {
     const next = !profile.viewerIsFollowing;
     ProfileService.setFollowing(this.token, profile.userId, next)
       .then((following: boolean) => {
+        // followers 计数同步 ±1，按钮与数字立即随关注态变化
+        const user: UserSummary = {
+          login: profile.user.login,
+          name: profile.user.name,
+          avatarUrl: profile.user.avatarUrl,
+          bio: profile.user.bio,
+          followers: profile.user.followers + (following ? 1 : -1),
+          following: profile.user.following
+        };
         const updated: UserProfile = {
-          user: profile.user,
+          user: user,
           userId: profile.userId,
           viewerLogin: profile.viewerLogin,
           company: profile.company,
@@ -179,12 +192,6 @@ export struct ProfileView {
         };
         this.profile = updated;
         this.rebuildFollowMenu();
-        const ui = this.getUIContext();
-        promptAction.showToast({
-          message: following
-            ? resText(ui, $r('app.string.profile_followed_toast'))
-            : resText(ui, $r('app.string.profile_unfollowed_toast'))
-        });
       })
       .catch((e: Error) => {
         promptAction.showToast({ message: this.fmt($r('app.string.profile_action_failed'), e.message) });
@@ -214,6 +221,25 @@ export struct ProfileView {
           .onClick((): void => {
             this.pathStack.pop();
           })
+        }
+        // 两行标题：上=灰小字 login、下=粗体 name（他人主页同款；tab4 根页 showBack=false 时补左距）
+        if (this.profile !== null && this.titleShown) {
+          Column({ space: 0 }) {
+            Text(this.profile.user.login)
+              .fontSize($r('app.float.caption_font_size'))
+              .fontColor($r('app.color.text_secondary'))
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
+            Text(this.profile.user.name !== '' ? this.profile.user.name : this.profile.user.login)
+              .fontSize($r('app.float.title_font_size'))
+              .fontWeight(600)
+              .fontColor($r('app.color.text_primary'))
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
+          }
+          .alignItems(HorizontalAlign.Start)
+          .layoutWeight(1)
+          .margin({ left: this.showBack ? 0 : 16 })
         }
         Blank()
         // 🔗 分享：系统分享面板分享本主页（Spec 061；右侧组统一 44 触点与左侧返回对称）
@@ -280,6 +306,9 @@ export struct ProfileView {
                 },
                 onAddAccount: (): void => {
                   this.onAddAccount();
+                },
+                onToggleFollow: (): void => {
+                  this.toggleFollow();
                 }
               })
 
@@ -333,7 +362,9 @@ export struct ProfileView {
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
         .onScroll((_x: number, y: number): void => {
+          // 阴影与两行标题同阀值：只要滚动就浮现——本账号内容常不足一屏（滚动余量仅十几 vp），深阈值会永远触发不了
           this.scrollShadow = y > 0.001;
+          this.titleShown = y > 0.001;
         })
       }
       .layoutWeight(1)

@@ -327,11 +327,11 @@ export struct SettingsView {
           this.row($r('app.string.settings_app_lock'), '', () => this.comingSoon())
 
           this.sectionTitle($r('app.string.settings_more_options'))
-          this.row($r('app.string.settings_share_feedback'), '', () => this.comingSoon())
+          this.row($r('app.string.settings_share_feedback'), '', () => this.pathStack.pushPathByName('repoDiscussions', 'ZM-BAD/arkcat'))
           this.row($r('app.string.settings_get_help'), '', () => this.comingSoon())
-          this.row($r('app.string.settings_terms'), '', () => this.comingSoon())
+          this.row($r('app.string.settings_terms'), '', () => this.pathStack.pushPathByName('inAppBrowser', 'Terms of Service|https://docs.github.com/en/site-policy/github-terms/github-terms-of-service'))
           this.row($r('app.string.settings_privacy'), '', () => this.comingSoon())
-          this.row($r('app.string.settings_open_source'), '', () => this.comingSoon())
+          this.row($r('app.string.settings_open_source'), '', () => this.pathStack.pushPathByName('openSourceLibraries', ''))
           this.row($r('app.string.settings_sign_out'), '', () => this.signOut())
 
           Text(this.versionText)

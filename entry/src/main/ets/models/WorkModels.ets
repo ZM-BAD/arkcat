@@ -55,6 +55,12 @@ export interface WorkPrsPage {
 }
 
 /** 工作区 Discussion 行 */
+/** Discussion 标签（name + GitHub 色，Author/Label 筛选用） */
+export interface DiscussionLabel {
+  name: string;
+  color: string;
+}
+
 export interface WorkDiscussionItem {
   id: string;
   number: number;
@@ -66,6 +72,11 @@ export interface WorkDiscussionItem {
   repoFullName: string;
   category: string;
   replyCount: number;
+  /** 作者（Label/Author 筛选与作者弹层用；搜索结果缺省为空串） */
+  authorLogin: string;
+  authorName: string;
+  authorAvatar: string;
+  labels: DiscussionLabel[];
 }
 
 export interface WorkDiscussionsPage {
@@ -278,21 +289,50 @@ export function discussionSortQualifier(sortKey: string): string {
   return 'sort:created-desc';
 }
 
-/** 工作区 Discussion 搜索串：is:discussion + 状态 + 归属 + unanswered + 排序（New/Top 时间窗） */
+/** 工作区 Discussion 搜索串：is:discussion + 状态 + 归属 + unanswered + 排序（New/Top 时间窗）。
+ * repo 非空（如 'ZM-BAD/arkcat'）时限定单仓库（Share Feedback 入口），跳过归属 qualifier——
+ * 仓库讨论不应再叠加 author:@me 之类的个人过滤。
+ * author/label：Author/Label 筛选 qualifier；label='none' 表示 Unlabeled（no:label）。 */
 export function buildWorkDiscussionsQuery(state: string, scope: string, unanswered: boolean,
-  sortKey: string): string {
+  sortKey: string, repo: string = '', author: string = '', label: string = ''): string {
   let query = 'is:discussion';
   if (state === 'open') {
     query += ' is:open';
   } else if (state === 'closed') {
     query += ' is:closed';
   }
-  query += ` ${workScopeQualifier(scope)}`;
+  if (repo !== '') {
+    query += ` repo:${repo}`;
+  } else {
+    query += ` ${workScopeQualifier(scope)}`;
+  }
+  if (author !== '') {
+    query += ` author:${author}`;
+  }
+  if (label === 'none') {
+    query += ' no:label';
+  } else if (label !== '') {
+    // 带空格/冒号的标签名需引号包裹
+    query += label.match(/[ :]/) !== null ? ` label:"${label}"` : ` label:${label}`;
+  }
   if (unanswered) {
     query += ' is:unanswered';
   }
   query += ` ${discussionSortQualifier(sortKey)}`;
   return query;
+}
+
+/** Discussion 搜索作者选项去重（纯函数）：Author 弹层选项 */
+export function collectDiscussionAuthors(items: WorkDiscussionItem[]): WorkDiscussionItem[] {
+  const seen: Set<string> = new Set();
+  const result: WorkDiscussionItem[] = [];
+  for (const item of items) {
+    if (item.authorLogin !== '' && !seen.has(item.authorLogin)) {
+      seen.add(item.authorLogin);
+      result.push(item);
+    }
+  }
+  return result;
 }
 
 // ────────────────────────── 响应映射（纯函数） ──────────────────────────
@@ -412,6 +452,15 @@ export function mapDiscussion(raw: JsonMap): WorkDiscussionItem {
   const category = Json.obj(raw, 'category');
   const comments = Json.obj(raw, 'comments');
   const state = Json.str(raw, 'state');
+  const author = Json.obj(raw, 'author');
+  const labels: DiscussionLabel[] = [];
+  const labelsWrap = Json.obj(raw, 'labels');
+  if (labelsWrap !== null) {
+    for (const nodeItem of Json.arr(labelsWrap, 'nodes')) {
+      const l = nodeItem as JsonMap;
+      labels.push({ name: Json.str(l, 'name'), color: Json.str(l, 'color') });
+    }
+  }
   return {
     id: Json.str(raw, 'id'),
     number: Json.num(raw, 'number'),
@@ -421,8 +470,32 @@ export function mapDiscussion(raw: JsonMap): WorkDiscussionItem {
     createdAt: Json.str(raw, 'createdAt'),
     repoFullName: repo !== null ? Json.str(repo, 'nameWithOwner') : '',
     category: category !== null ? Json.str(category, 'name') : '',
-    replyCount: comments !== null ? Json.num(comments, 'totalCount') : 0
+    replyCount: comments !== null ? Json.num(comments, 'totalCount') : 0,
+    authorLogin: author !== null ? Json.str(author, 'login') : '',
+    authorName: author !== null ? Json.str(author, 'name') : '',
+    authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : '',
+    labels: labels
   };
+}
+
+/** 仓库 labels（含色值，Label 弹层用） */
+export interface RepoLabelItem {
+  name: string;
+  color: string;
+}
+
+/** repository.labels 响应 → RepoLabelItem[]（纯函数） */
+export function mapRepoLabels(data: JsonMap): RepoLabelItem[] {
+  const repo = Json.obj(data, 'repository');
+  const result: RepoLabelItem[] = [];
+  const labels = repo !== null ? Json.obj(repo, 'labels') : null;
+  if (labels !== null) {
+    for (const nodeItem of Json.arr(labels, 'nodes')) {
+      const l = nodeItem as JsonMap;
+      result.push({ name: Json.str(l, 'name'), color: Json.str(l, 'color') });
+    }
+  }
+  return result;
 }
 
 /** search 响应 → WorkDiscussionsPage */

@@ -1026,3 +1026,64 @@ test('Share：repoTreeUrl 根目录回落仓库主页、子目录带 tree/HEAD',
   assert.equal(repoTreeUrl('ZM-BAD', 'arkcat', 'entry/src'),
     'https://github.com/ZM-BAD/arkcat/tree/HEAD/entry/src');
 });
+
+test('OpenSource：披露条目与许可文本（Spec 064）', async () => {
+  const { OPEN_SOURCE_ENTRIES } = await import('../../entry/src/main/ets/models/OpenSourceModels');
+  assert.equal(OPEN_SOURCE_ENTRIES.length, 2);
+  assert.equal(OPEN_SOURCE_ENTRIES[0].name, 'Octicons');
+  assert.equal(OPEN_SOURCE_ENTRIES[0].url, 'https://github.com/primer/octicons');
+  assert.equal(OPEN_SOURCE_ENTRIES[1].name, 'Primer Design Primitives');
+  assert.equal(OPEN_SOURCE_ENTRIES[1].url, 'https://github.com/primer/primitives');
+  // Octicons 许可正文须与仓库归档 LICENSE 逐字一致（防双处漂移）
+  const { readFileSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const file = readFileSync(join(process.cwd(), 'assets/octicons/LICENSE'), 'utf-8');
+  assert.equal(OPEN_SOURCE_ENTRIES[0].licenseText.trim(), file.replace(/\r\n/g, '\n').trim());
+  // 每条许可文本都包含其版权行与 license 名（渲染区块数据完整）
+  for (const entry of OPEN_SOURCE_ENTRIES) {
+    assert.ok(entry.licenseText.includes(entry.copyrightLine));
+    assert.ok(entry.licenseText.startsWith('MIT License'));
+  }
+});
+
+test('WorkDiscussions：单仓库模式（Share Feedback，Spec 065）', async () => {
+  const { buildWorkDiscussionsQuery } = await import('../../entry/src/main/ets/models/WorkModels');
+  // repo 模式：repo: 限定 + 无个人归属 qualifier
+  const q = buildWorkDiscussionsQuery('open', 'created', false, 'new', 'ZM-BAD/arkcat');
+  assert.equal(q, 'is:discussion is:open repo:ZM-BAD/arkcat sort:created-desc');
+  // 全局模式不受影响：仍走 author:@me
+  assert.equal(buildWorkDiscussionsQuery('open', 'created', false, 'new'),
+    'is:discussion is:open author:@me sort:created-desc');
+});
+
+test('WorkDiscussions：Author/Label qualifier 与映射（Spec 065）', async () => {
+  const m = await import('../../entry/src/main/ets/models/WorkModels');
+  // author + label 组合
+  assert.equal(m.buildWorkDiscussionsQuery('open', 'created', false, 'new', 'ZM-BAD/arkcat', 'zccz14', ''),
+    'is:discussion is:open repo:ZM-BAD/arkcat author:zccz14 sort:created-desc');
+  // 带空格标签名加引号；none → no:label
+  assert.equal(m.buildWorkDiscussionsQuery('all', 'created', false, 'new', 'ZM-BAD/arkcat', '', 'A Welcome'),
+    'is:discussion repo:ZM-BAD/arkcat label:"A Welcome" sort:created-desc');
+  assert.equal(m.buildWorkDiscussionsQuery('all', 'created', false, 'new', 'ZM-BAD/arkcat', '', 'none'),
+    'is:discussion repo:ZM-BAD/arkcat no:label sort:created-desc');
+  // 映射：作者 + 标签节点
+  const item = m.mapDiscussion({
+    id: 'd1', number: 3, title: 'T', state: 'OPEN', createdAt: '',
+    repository: { nameWithOwner: 'ZM-BAD/arkcat' }, category: { name: 'Ideas' },
+    comments: { totalCount: 1 },
+    author: { login: 'zccz14', name: 'CZ', avatarUrl: 'https://a/b.png' },
+    labels: { nodes: [{ name: 'Bug', color: 'D73A4A' }] }
+  });
+  assert.equal(item.authorLogin, 'zccz14');
+  assert.equal(item.authorName, 'CZ');
+  assert.equal(item.labels.length, 1);
+  assert.equal(item.labels[0].color, 'D73A4A');
+  // 作者去重
+  const dup = m.mapDiscussion(JSON.parse(JSON.stringify({
+    id: 'd2', number: 4, title: 'T2', state: 'OPEN', createdAt: '',
+    author: { login: 'zccz14', name: 'CZ', avatarUrl: '' }
+  })));
+  assert.equal(m.collectDiscussionAuthors([item, dup]).length, 1);
+  // labels 映射
+  assert.equal(m.mapRepoLabels({ repository: { labels: { nodes: [{ name: 'Bug', color: 'D73A4A' }] } } }).length, 1);
+});

@@ -213,6 +213,10 @@
       "value": "取消关注"
     },
     {
+      "name": "profile_following",
+      "value": "已关注"
+    },
+    {
       "name": "profile_followed_toast",
       "value": "已关注"
     },
@@ -2047,6 +2051,30 @@
     {
       "name": "explore_filter_no_results",
       "value": "无匹配结果"
+    },
+    {
+      "name": "open_source_intro",
+      "value": "ArkCat 由以下开源项目构建而成："
+    },
+    {
+      "name": "discussions_filter_author",
+      "value": "作者"
+    },
+    {
+      "name": "discussions_filter_label",
+      "value": "标签"
+    },
+    {
+      "name": "discussions_filter_by_author",
+      "value": "按作者筛选"
+    },
+    {
+      "name": "discussions_filter_by_label",
+      "value": "按标签筛选"
+    },
+    {
+      "name": "discussions_filter_unlabeled",
+      "value": "无标签"
     }
   ]
 }

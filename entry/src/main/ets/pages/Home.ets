@@ -242,12 +242,14 @@ export struct HomeView {
   @Builder
   outlineButton(labelRes: Resource) {
     Button(labelRes)
+      // Capsule 类型会忽略 borderRadius（曾渲染成胶囊）；Normal 才走 Primer 6vp 圆角
+      .type(ButtonType.Normal)
       .width('100%')
       .height(44)
       .fontSize($r('app.float.caption_font_size'))
       .fontColor($r('app.color.link_blue'))
       .backgroundColor(Color.Transparent)
-      .borderRadius(6)
+      .borderRadius($r('app.float.button_radius'))
       .border({ width: 1, color: $r('app.color.border') })
       .onClick(() => this.comingSoon())
   }
