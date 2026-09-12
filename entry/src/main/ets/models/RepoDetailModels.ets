@@ -34,6 +34,8 @@ export interface RepoDetail {
   lastCommitMessage: string;
   ownerAvatarUrl: string;
   ownerLogin: string;
+  /** 当前登录者 login（stargazers 入口按归属分流：仅本人仓库可见，Spec 053） */
+  viewerLogin: string;
   issueCount: number;
   prCount: number;
   releaseCount: number;
@@ -100,6 +102,8 @@ export function mapRepoDetail(data: JsonMap): RepoDetail {
   }
   const watchers = Json.obj(repo, 'watchers');
   const owner = Json.obj(repo, 'owner');
+  const viewer = Json.obj(data, 'viewer');
+  const viewerLogin = viewer ? Json.str(viewer, 'login') : '';
   const issues = Json.obj(repo, 'issues');
   const prs = Json.obj(repo, 'pullRequests');
   const releasesRaw = Json.obj(repo, 'releases');
@@ -121,6 +125,7 @@ export function mapRepoDetail(data: JsonMap): RepoDetail {
     lastCommitMessage: lastCommitMessage,
     ownerAvatarUrl: owner ? Json.str(owner, 'avatarUrl') : '',
     ownerLogin: owner ? Json.str(owner, 'login') : '',
+    viewerLogin: viewerLogin,
     issueCount: issues ? Json.num(issues, 'totalCount') : 0,
     prCount: prs ? Json.num(prs, 'totalCount') : 0,
     releaseCount: releaseCount,

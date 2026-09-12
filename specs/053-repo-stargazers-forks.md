@@ -38,7 +38,7 @@ Stargazers 行间无分隔线；Forks 行间有 Divider。两页均 Scroll + 保
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | AppBar | ← + 仓库名（粗体 20fp）+ 副标题（灰 14fp（body_font_size）） | 返回 / 标题 | ✅ | — | 参数为 nameWithOwner；副标题=Stargazers/Forks |
-| 2 | Stargazers 行 | 56vp 圆头像 + 显示名（粗体）/login（灰·无@）/bio（灰 2 行省略） | 展示 | ✅ | repository.stargazers(first:50) nodes{login name avatarUrl bio} | bio 为空隐藏；整行点击 → userProfile |
+| 2 | Stargazers 行 | 56vp 圆头像 + 显示名（粗体）/login（灰·无@）/bio（黑 2 行省略） | 展示 | ✅ | repository.stargazers(first:50) nodes{login name avatarUrl bio} | bio 为空隐藏；整行点击 → userProfile |
 | 3 | Stargazers | 分页（hasNextPage → 触底自动加载） | 翻页 | ✅ | 同上 pageInfo | 列表尾部 spinner（ListLoadingFooter），非文字钮 |
 | 4 | Stargazers | 空态 / StateView | 展示 | ✅ | — | 复用现有文案模式 |
 | 5 | Forks 行 | 属主头像（20vp）+ login（灰） | 展示属主 | ✅ | repository.forks(first:50) nodes{ owner{login avatarUrl} } | — |
@@ -105,3 +105,5 @@ query RepoForks($owner: String!, $name: String!, $first: Int = 50, $after: Strin
 - 星数用 oct_star_16（黄 星金）而非 fill（截图轮廓星）；语言点为 languageColor。
 - 「Forked from」行与 Stargazers 行的骨架复用现有 RepoCard/ListDetail 模式，不新造布局风格。
 - 两页为同批次：共用 RepoService 新增 fetchStargazers/fetchForks（GraphQL 优先，无 REST 兜底——两连接均公开可查，仅需 repo scope 只读）。
+- Stargazers 展示顺序（2026-09-13 定案）：查询显式传 `orderBy: { field: STARRED_AT, direction: DESC }`，最新 star 的用户在前。不传 `orderBy` 时 GitHub 默认返回最早 star 在前（实测 ZM-BAD/DAG-chat：前 10 条 starredAt 严格递增），且官方对默认序无文档保证、社区反馈不传时翻页不稳定，故必须显式声明。
+- Stargazers 入口归属限制（2026-09-13 定案，对齐官方 App）：仅**本人仓库**可进 Stargazers 名单，他人仓库点击 stars 计数无任何反应、不跳转。实现：`REPO_QUERY` 增查 `viewer { login }` → `RepoDetail.viewerLogin`，`ownerLogin === viewerLogin` 才放行导航。**判定取严格 owner 相等**，组织仓库（owner 为 org）一律视为他人仓库不可见。
