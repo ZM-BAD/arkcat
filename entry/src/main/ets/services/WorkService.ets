@@ -203,7 +203,8 @@ const WORK_STARRED_QUERY = `
 query WorkStarred($first: Int = 30, $after: String) {
   viewer {
     login
-    starredRepositories(first: $first, after: $after) {
+    starredRepositories(first: $first, after: $after,
+      orderBy: { field: STARRED_AT, direction: DESC }) {
       totalCount
       pageInfo { hasNextPage endCursor }
       nodes {
@@ -221,7 +222,8 @@ query UserStarred($login: String!, $first: Int = 30, $after: String) {
   viewer { login }
   user(login: $login) {
     login
-    starredRepositories(first: $first, after: $after) {
+    starredRepositories(first: $first, after: $after,
+      orderBy: { field: STARRED_AT, direction: DESC }) {
       totalCount
       pageInfo { hasNextPage endCursor }
       nodes {

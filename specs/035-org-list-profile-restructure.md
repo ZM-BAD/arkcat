@@ -81,3 +81,4 @@ query UserOrganizations($login: String!, $first: Int = 25, $after: String) {
 
 - Profile 查询瘦身：移除 `contributionsCollection`、`repositories(first:30)`、`starredRepositories(first:30)` 内嵌列表字段（改由列表页按需分页）；保留 pinned/计数/跟随状态字段。
 - i18n 新增：`org_list_title`、`profile_repositories`（已有）、`org_list_empty` 等。
+- Starred 列表展示顺序（2026-09-13 定案）：`starredRepositories` 查询显式传 `orderBy: { field: STARRED_AT, direction: DESC }`，最新加星的在前。不传 `orderBy` 时 GitHub 默认返回最早加星在前（实测：最早 star 的仓库排第一），与期望相反，故必须显式声明。
