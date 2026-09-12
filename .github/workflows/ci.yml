@@ -147,7 +147,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "17"
@@ -170,7 +170,7 @@ jobs:
         run: bash scripts/ci-build.sh
 
       - name: Upload HAP artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: arkcat-debug-hap
           path: entry/build/default/outputs/**/*.hap
@@ -239,7 +239,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "17"
@@ -264,7 +264,7 @@ jobs:
           hvigorw test -p module=entry -p coverage=true --no-daemon
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: local-test-coverage
           path: entry/.test/default/outputs/test/reports
@@ -285,7 +285,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "17"
@@ -311,7 +311,7 @@ jobs:
           hvigorw.bat test -p module=entry -p coverage=true --no-daemon
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: local-test-coverage-windows
           path: entry/.test/default/outputs/test/reports

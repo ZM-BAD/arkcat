@@ -3,6 +3,6 @@
     "test:ut": "bash scripts/ut/run-local-tests.sh"
   },
   "devDependencies": {
-    "esbuild": "^0.25.5"
+    "esbuild": "^0.28.2"
   }
 }
