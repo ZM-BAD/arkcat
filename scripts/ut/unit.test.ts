@@ -911,6 +911,8 @@ test('parseAchievementDetail 完整/锚点/多 tier 事件解析', () => {
   assert.equal(d.name, 'YOLO');
   assert.equal(d.description, 'You want it? You merge it.');
   assert.equal(d.badgeImageUrl, 'https://x/yolo-default-be0bbff04951.png');
+  // 详情头图 background-image → 主题横幅 URL（Spec 052 每徽章背景色）
+  assert.equal(d.detailBgUrl, 'https://x/yolo-detail-9511d3a21745.png');
   assert.equal(d.unlockedAt, '2026-08-31T19:09:34Z');
   // 私有仓库不可见引用 → ref 置空、标签保留
   assert.equal(d.events.length, 1);
@@ -929,6 +931,30 @@ test('parseAchievementDetail 完整/锚点/多 tier 事件解析', () => {
   assert.equal(multi.events.length, 2);
   assert.equal(multi.events[0].ref, 'ZM-BAD/arkcat #1');
   assert.equal(multi.events[1].ref, '');
+  // 无 background-image 片段 → 主题横幅为空串
+  assert.equal(multi.detailBgUrl, '');
+  // 真实嵌套标记（Pair Extraordinaire 线上片段）：label span 内含 @claude 的 user-mention 链接，
+  // 旧正则 [^<]+ 会整条丢事件
+  const nested = parseAchievementDetail(
+    `<div><h3>Pair Extraordinaire</h3></div><div class="achievement-history-tier"><div class="TimelineItem-body"><a class="Link" href="/ZM-BAD/spooner/pull/1">ZM-BAD/spooner#1</a> · <span>Coauthored with <a href="/claude" class="user-mention" hovercard-type="user">@claude</a></span></div></div>`,
+    'pair-extraordinaire', 'fb.png');
+  assert.equal(nested.events.length, 1);
+  assert.equal(nested.events[0].ref, 'ZM-BAD/spooner#1');
+  assert.equal(nested.events[0].label, 'Coauthored with @claude');
+  // Arctic Code Vault 形态②：仅仓库引用，无标签
+  const refOnly = parseAchievementDetail(
+    `<div><h3>Arctic Code Vault Contributor</h3></div><div class="achievement-history-tier"><div class="TimelineItem-body"><a class="Link" href="/atom/atom">atom/atom</a></div></div>`,
+    'arctic-code-vault-contributor', 'fb.png');
+  assert.equal(refOnly.events.length, 1);
+  assert.equal(refOnly.events[0].ref, 'atom/atom');
+  assert.equal(refOnly.events[0].label, '');
+  // Arctic Code Vault 形态③：纯文本标签尾注，无引用
+  const labelOnly = parseAchievementDetail(
+    `<div><h3>Arctic Code Vault Contributor</h3></div><div class="achievement-history-tier"><div class="TimelineItem-body"><span>these repositories, and more, were archived</span></div></div>`,
+    'arctic-code-vault-contributor', 'fb.png');
+  assert.equal(labelOnly.events.length, 1);
+  assert.equal(labelOnly.events[0].ref, '');
+  assert.equal(labelOnly.events[0].label, 'these repositories, and more, were archived');
 });
 
 test('parseAchievementDetail 非法结构抛错/无时间字段兜底', () => {

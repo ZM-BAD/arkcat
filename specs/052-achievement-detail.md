@@ -10,7 +10,7 @@
 ## 一、页面/功能概述
 
 点击 Profile 页勋章行中的某一枚成就徽章，进入全屏徽章详情页：
-官方蓝紫渐变底 + 居中大徽章 + 名称/描述 + 「Unlocked 日期」与触发事件 + 底部圆点翻页（已解锁徽章间左右滑）与 Share 按钮。
+官方蓝紫渐变底（兜底）+ 每徽章官方主题横幅铺满整页背景 + 居中大徽章 + 名称/描述 + 「Unlocked 日期」与触发事件 + 底部圆点翻页（已解锁徽章间左右滑）与 Share 按钮。
 徽章无 GraphQL/REST 字段，数据沿用 Spec 005 的官方页面 HTML 抓取方案：slug 列表取 `?tab=achievements` 页面，
 详情取 `/users/{login}/achievements/{slug}/detail` 懒加载片段（X-Requested-With: XMLHttpRequest）。
 
@@ -18,7 +18,7 @@
 
 ## 二、整体 UI 结构
 
-1. 顶部：关闭按钮（深蓝圆底）+ 渐变底 #434986 → #303788
+1. 顶部：关闭按钮（深蓝圆底）+ 整页主题背景（每徽章官方横幅，渐变兜底）
 2. 居中：大徽章圆图
 3. 徽章名称：YOLO（粗体白）
 4. 徽章描述：You want it? You merge it.（白 15fp、opacity 0.85）
@@ -36,11 +36,11 @@
 | 1 | 右上 | ✕ 关闭（深蓝圆底） | 返回 Profile | ✅ | — | 与二级页返回语义一致，自绘 |
 | 2 | 居中 | 大徽章图（260×260） | 展示 | ⚠️ | — | 详情片段 img（hash 版）→ 兜底 CDN `{slug}-default.png` |
 | 3 | 居中 | 名称（20fp（title_font_size）） | 展示 | ✅ | — | 片段 `<h3>` |
-| 4 | 居中 | 描述（15fp（chip_font_size）、opacity 0.85） | 展示 | ✅ | — | 片段 `<div class="mt-1">` |
-| 5 | 中部 | 🏆 圆钮 + 「Unlocked 9月1日」 | 展示解锁日期 | ✅ | — | 片段 relative-time datetime（UTC → 本地「月 日」，intl 格式化） |
-| 6 | 中部 | • +「`引用` · `事件标签`」 | 展示触发事件 | ⚠️ | — | 片段 `.achievement-history-tier`；私有仓库引用为 `inaccessible` → 仅显示事件标签 |
+| 4 | 居中 | 描述（15fp（chip_font_size）、opacity 0.85） | 展示 | ✅ | — | 片段 `<div class="mt-1">`；文本框左右各留 36（奖杯中轴），整体居中且最左不越过奖杯，长文案框内换行 |
+| 5 | 中部 | 🏆 圆钮（圆形底 + 阴影）+ 解锁文案 | 展示解锁日期 | ✅ | — | 文案国际化：英文「Unlocked August 10」/ 中文「解锁时间: 8月10日」；日期按应用首选语言（Settings 语言三态覆盖后）格式化，非系统 locale；圆钮为半透明阴影色圆垫底（achievement_icon_shadow，无实底/无描边），距屏幕左缘固定 24（每页一致，不随内容居中） |
+| 6 | 中部 | • dot-fill +「`引用` · `事件标签`」 | 展示触发事件 | ⚠️ | — | 片段 `.achievement-history-tier`；私有仓库引用为 `inaccessible` → 仅显示事件标签；每条「dot-fill + 文案」整体在行内水平居中（Unlocked 行不受影响，仍固定左缘 24）；点与首行文字垂直居中；行数多时区域受限内滚（maxHeight 160、无滚动条），内滚子 Column 显式 width('100%') + Text 显式 maxWidth 防无界测量丢字；底部渐变淡出带（32vp、主题底部色透明→实色）仅内容溢出需要滚动时显示（独立组件 AchievementEventList 按页测量溢出） |
 | 7 | 底部 | 圆点翻页（Swiper 已解锁徽章） | 左右滑切换徽章 | ✅ | — | 页数=已解锁徽章数；入口参数为起始下标 |
-| 8 | 底部 | Share 按钮 | 分享该徽章页面 URL | ⚠️ | — | 走 Spec 061 统一出口（HYPERLINK）；分享图片资源未落地，边界外 |
+| 8 | 底部 | Share 按钮 | 分享该徽章页面 URL | ⚠️ | — | 走 Spec 061 统一出口（HYPERLINK）；分享图片资源未落地，边界外；样式与 Home outlineButton（ADD FAVORITES/GET STARTED）同构：透明底 + 1vp 半透明白描边（achievement_share_border）+ 6vp 圆角 + 高 44 + caption 字号白字 |
 
 ---
 
@@ -89,9 +89,20 @@ GET https://github.com/users/{login}/achievements/{slug}/detail
 
 ## 七、备注
 
-- 渐变底色从参考截图采样：顶 #434986（右缘 y≈0.10）、底 #303788（右缘 y≈0.90），竖直 linearGradient；
-  颜色入 resources color.json（base/dark 双套），ets 禁止 #RRGGBB 硬编码。
+- 整页背景（2026-09-13 定案，色源=官方资产）：详情片段头图 div 的 `background-image` 即官方每徽章
+  主题横幅（`<slug>-detail-<hash>.png`，768×360 渐变/纯色图，全部徽章均有），解析为 `detailBgUrl`，
+  根布局 `.backgroundImage(url) + Fill 拉伸` 铺满整页（含顶部关闭区与底部圆点/Share 区），随 Swiper
+  当前页切换；模型层纯函数解析有单测。蓝紫渐变 #434986→#303788 保留为兜底（URL 空/图未加载时露出）。
+  翻页时背景随滑动进度渐变过渡：根布局分「基底层（当前页横幅，过渡期钉在来源页）+ 过渡层（目标页
+  横幅按 onGestureSwipe 进度淡入）」两层；松手补间阶段不再逐帧回调，onChange 时用 animateTo 把过渡
+  层推到终态（翻页成功→1/取消→0）后清除，消除突变。
+  官方横幅逐像素色值（资产解码，非截图）：YOLO 全图纯色 #FEBC9C；Starstruck 橙黄→紫→青多向渐变；
+  Pull Shark #0A6ADD→#2B34A6；Quickdraw #FCF2C7→#FB9146；Pair Extraordinaire #ADEEBA→#CDEC79。
+  本地全量色表 `models/AchievementThemeColors.ets`（数据色板，颜色门禁白名单）：覆盖全部 14 枚官方
+  徽章 slug（7 枚可获取 + arctic-code-vault/heart-on-your-sleeve/mars-2020/open-sourcerer 及 3 枚
+  proxima 内部徽章），色值采样自官方横幅镜像（Schweinepriester/github-profile-achievements
+  images/backgrounds/，即官方 CDN 原图）。兜底链：官方横幅图 → 本地色表渐变 → 蓝紫渐变 token。
 - Profile 页勋章行图片目前 24vp；详情页大图用官方 `{slug}-default-{hash}.png`（详情片段内嵌），失败兜底 CDN 无 hash URL（服务端仍有效）。
 - 翻页圆点：自绘 Circle（当前页白实心 7vp / 其余白 30% 7vp）；Swiper indicator 自绘。
-- 关闭按钮用 oct_x_16 白，深蓝圆底（36×36）。
+- 关闭按钮用 oct_x_16 白，半透明阴影色圆垫底（36×36，与 trophy 圆钮同款）。
 - 保留现有 AchievementsService.fetch（Profile 行）不变；新增 fetchSlugs / fetchDetail。

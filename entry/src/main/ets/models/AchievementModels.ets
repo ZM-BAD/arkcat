@@ -22,6 +22,8 @@ export interface AchievementDetail {
   description: string;
   /** 官方徽章图（详情片段内 hash 版；解析失败为兜底 CDN URL） */
   badgeImageUrl: string;
+  /** 官方详情主题横幅图（纯色主题底，官方详情头图即背景；未解析到为 ''） */
+  detailBgUrl: string;
   /** 解锁时间 ISO UTC（relative-time datetime）；未解析到为 '' */
   unlockedAt: string;
   /** 达成事件列表（多次达成/多 tier 时多条；无则空数组，UI 隐藏区域） */
@@ -63,6 +65,8 @@ export function parseAchievementDetail(html: string, slug: string, fallbackImage
     }
   }
   const timeMatch = /<relative-time[^>]*datetime="([^"]+)"/.exec(html);
+  // 详情头图 div 的 background-image 即官方每徽章主题横幅（纯色底），页面用它铺满作整页背景
+  const bgMatch = /background-image:\s*url\('([^']+)'\)/.exec(html);
   const events: AchievementEvent[] = [];
   // 每条「达成/层级」为一段 achievement-history-tier，内部为「引用 · 事件标签」（引用可为 inaccessible）
   const tierRegex = /achievement-history-tier/g;
@@ -72,15 +76,39 @@ export function parseAchievementDetail(html: string, slug: string, fallbackImage
     tierMatch = tierRegex.exec(html);
     const segEnd = tierMatch !== null ? tierMatch.index : html.length;
     const tierHtml = html.substring(segStart, segEnd);
-    const refLabel = /<span class="color-fg-muted">([^<]+)<\/span>\s*·\s*<span>([^<]+)<\/span>/.exec(tierHtml) ??
-      /<a[^>]*>([^<]+)<\/a>\s*·\s*<span>([^<]+)<\/span>/.exec(tierHtml);
-    if (refLabel !== null && (refLabel[2] ?? '') !== '') {
-      const ref = (refLabel[1] ?? '').trim();
+    // tier body 兼容三种线上形态：
+    // ① 「<a>引用</a> · <span>标签</span>」（Pull Shark/YOLO/Pair 等，标签内可嵌套 user-mention 链接）
+    // ② 仅「<a>引用</a>」（Arctic Code Vault：被归档的仓库列表，无标签）
+    // ③ 仅「<span>标签</span>」（Arctic Code Vault 尾注 these repositories... were archived）
+    // ④ 「<span class="color-fg-muted">inaccessible</span> · <span>标签</span>」（私有仓库匿名不可见）
+    const combined = /<span class="color-fg-muted">([^<]+)<\/span>\s*·\s*<span>([\s\S]*?)<\/span>/.exec(tierHtml) ??
+      /<a[^>]*>([\s\S]*?)<\/a>\s*·\s*<span>([\s\S]*?)<\/span>/.exec(tierHtml);
+    if (combined !== null) {
+      const ref = (combined[1] ?? '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+      const label = (combined[2] ?? '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
       // 私有仓库匿名不可见：隐藏引用，仅保留事件标签（移动端因登录态可见原文）
       events.push({
         ref: ref === 'inaccessible' ? '' : ref,
-        label: (refLabel[2] ?? '').trim()
+        label: label
       });
+    } else {
+      // 形态②：body 内首个链接即引用（无标签）
+      const refOnly = /<a[^>]*>([\s\S]*?)<\/a>/.exec(tierHtml);
+      if (refOnly !== null) {
+        events.push({
+          ref: (refOnly[1] ?? '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim(),
+          label: ''
+        });
+      } else {
+        // 形态③：纯文本标签（无引用）
+        const labelOnly = /<span>([\s\S]*?)<\/span>/.exec(tierHtml);
+        if (labelOnly !== null) {
+          const label = (labelOnly[1] ?? '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+          if (label !== '') {
+            events.push({ ref: '', label: label });
+          }
+        }
+      }
     }
   }
   return {
@@ -88,6 +116,7 @@ export function parseAchievementDetail(html: string, slug: string, fallbackImage
     name: (nameMatch[1] ?? '').trim(),
     description: descMatch !== null && descMatch[1] !== undefined ? (descMatch[1] ?? '').trim() : '',
     badgeImageUrl: badgeImageUrl,
+    detailBgUrl: bgMatch !== null && bgMatch[1] !== undefined ? (bgMatch[1] ?? '').trim() : '',
     unlockedAt: timeMatch !== null && timeMatch[1] !== undefined ? (timeMatch[1] ?? '').trim() : '',
     events: events
   };

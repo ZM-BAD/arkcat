@@ -1946,7 +1946,7 @@
     },
     {
       "name": "achievement_unlocked_fmt",
-      "value": "解锁于 %1$s"
+      "value": "解锁时间: %1$s"
     },
     {
       "name": "achievement_share",

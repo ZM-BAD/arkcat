@@ -221,12 +221,24 @@
       "value": "#22264C"
     },
     {
+      "name": "achievement_bg_bottom_fade",
+      "value": "#0022264C"
+    },
+    {
       "name": "achievement_share_bg",
       "value": "#3B4080"
     },
     {
       "name": "achievement_close_bg",
       "value": "#2B2F5C"
+    },
+    {
+      "name": "achievement_icon_shadow",
+      "value": "#4D000000"
+    },
+    {
+      "name": "achievement_share_border",
+      "value": "#99FFFFFF"
     },
     {
       "name": "diff_add_bg",

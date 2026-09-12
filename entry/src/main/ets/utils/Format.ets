@@ -82,8 +82,10 @@ export function githubShortTime(parts: TimeParts): string {
 }
 
 /**
- * ISO 解锁时间 → 本地「月 日」文本（如 September 1 / 9月1日，随设备语言时区）；
+ * ISO 解锁时间 → 本地「月 日」文本；跨年（非当前年份）带年份（February 2, 2020 / 2020年2月2日），
  * 非法 ISO 返回 ''。Spec 052 成就解锁行。
+ * 用应用首选语言（Settings 语言三态覆盖后的生效语言）而非系统 locale：
+ * 否则中文 App + 英文系统会出现「Unlocked 9月11日」式混排。
  */
 export function unlockDateText(iso: string): string {
   const ts = Date.parse(iso);
@@ -91,9 +93,14 @@ export function unlockDateText(iso: string): string {
     return '';
   }
   try {
-    const locale = i18n.System.getSystemLocale();
-    const fmt = new intl.DateTimeFormat(locale, { month: 'long', day: 'numeric' });
-    return fmt.format(new Date(ts));
+    const date = new Date(ts);
+    const withYear = date.getFullYear() !== new Date().getFullYear();
+    const locale = i18n.System.getAppPreferredLanguage();
+    const options: intl.DateTimeOptions = withYear ?
+      { year: 'numeric', month: 'long', day: 'numeric' } :
+      { month: 'long', day: 'numeric' };
+    const fmt = new intl.DateTimeFormat(locale, options);
+    return fmt.format(date);
   } catch (e) {
     return '';
   }
