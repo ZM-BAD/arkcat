@@ -16,7 +16,7 @@ import {
 import { parseDiffPatch, fileBaseName } from '../../entry/src/main/ets/utils/Diff';
 import {
   defaultWorkSections, visibleWorkSections, workSectionsToStorage, workSectionsFromStorage,
-  WorkSection
+  moveWorkSection, WorkSection
 } from '../../entry/src/main/ets/utils/WorkConfig';
 import {
   mapRepoCommit, mapRepoCommitsPage, mapPrCommits,
@@ -292,6 +292,28 @@ test('visibleWorkSections 仅保留 visible 项且保持顺序', () => {
   assert.equal(visible.length, 2);
   assert.equal(visible[0].id, 'issues');
   assert.equal(visible[1].id, 'starred');
+});
+
+test('moveWorkSection 上移/下移与边界（Spec 016 重排模式）', () => {
+  const sections: WorkSection[] = [
+    { id: 'issues', visible: true },
+    { id: 'prs', visible: false },
+    { id: 'starred', visible: true }
+  ];
+  const ids = (list: WorkSection[]): string => list.map((s) => s.id).join(',');
+
+  // 下移：prs 与 starred 交换（visible=false 的条目同样参与排序）
+  assert.equal(ids(moveWorkSection(sections, 1, 2)), 'issues,starred,prs');
+  // 上移：starred 移到首位
+  assert.equal(ids(moveWorkSection(sections, 2, 0)), 'starred,issues,prs');
+  // 首行上移 / 末行下移 / 原位 / 越界：原样返回
+  assert.equal(ids(moveWorkSection(sections, 0, -1)), 'issues,prs,starred');
+  assert.equal(ids(moveWorkSection(sections, 2, 3)), 'issues,prs,starred');
+  assert.equal(ids(moveWorkSection(sections, 1, 1)), 'issues,prs,starred');
+  assert.equal(ids(moveWorkSection(sections, -1, 0)), 'issues,prs,starred');
+  assert.equal(ids(moveWorkSection(sections, 9, 0)), 'issues,prs,starred');
+  // 入参不被改写
+  assert.equal(ids(sections), 'issues,prs,starred');
 });
 
 test('workSectionsFromStorage 非数组/非法 JSON 回退默认', () => {

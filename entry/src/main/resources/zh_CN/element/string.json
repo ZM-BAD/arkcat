@@ -981,6 +981,14 @@
       "value": "保存"
     },
     {
+      "name": "edit_work_show_reorder",
+      "value": "显示排序操作"
+    },
+    {
+      "name": "edit_work_hide_reorder",
+      "value": "隐藏排序操作"
+    },
+    {
       "name": "work_filter_all",
       "value": "全部"
     },
@@ -1651,6 +1659,14 @@
     {
       "name": "a11y_refresh",
       "value": "刷新"
+    },
+    {
+      "name": "a11y_move_up",
+      "value": "上移"
+    },
+    {
+      "name": "a11y_move_down",
+      "value": "下移"
     },
     {
       "name": "work_scope_hint",

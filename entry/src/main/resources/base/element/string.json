@@ -981,6 +981,14 @@
       "value": "SAVE"
     },
     {
+      "name": "edit_work_show_reorder",
+      "value": "Show reorder actions"
+    },
+    {
+      "name": "edit_work_hide_reorder",
+      "value": "Hide reorder actions"
+    },
+    {
       "name": "work_filter_all",
       "value": "All"
     },
@@ -1683,6 +1691,14 @@
     {
       "name": "a11y_refresh",
       "value": "Refresh"
+    },
+    {
+      "name": "a11y_move_up",
+      "value": "Move up"
+    },
+    {
+      "name": "a11y_move_down",
+      "value": "Move down"
     },
     {
       "name": "work_scope_hint",

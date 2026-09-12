@@ -46,6 +46,18 @@ export function workSectionsToStorage(sections: WorkSection[]): string {
   return JSON.stringify(sections);
 }
 
+/** 排序（纯函数）：把 from 处条目移到 to 处；越界或原位返回原序副本（不改动入参） */
+export function moveWorkSection(sections: WorkSection[], from: number, to: number): WorkSection[] {
+  const next: WorkSection[] = sections.slice();
+  if (from < 0 || from >= next.length || to < 0 || to >= next.length || from === to) {
+    return next;
+  }
+  const moved = next[from];
+  next.splice(from, 1);
+  next.splice(to, 0, moved);
+  return next;
+}
+
 export function workSectionsFromStorage(text: string): WorkSection[] {
   try {
     const parsed: Object | null = JSON.parse(text);

@@ -105,6 +105,7 @@ ets/components/OctIcon.ets            # 统一样式入口
 - 生产资源放在 `entry/src/main/resources/base/media/`（命名 `oct_<name>_<size>.svg`），与原始文件保持一致，着色全部由 `OctIcon.fillColor` 完成。
 - 所有图标默认 `size=16`；头部操作类（返回/搜索/新建）用 24。
 - 不新增/修改任何 i18n key（字形为代码内字面量）。
+- **内部 `Image` 固定 `.draggable(false)`（2026-09-11）**：`Image` 的 `draggable` 默认为 `true`（官方「拖拽事件」文档），长按图标会被当成「拖出这张图」——在可拖拽列表里会截胡 List 的行拖拽（EditMyWork 的拖拽柄曾因此完全失效）。图标在本项目只作视觉/按钮，全库无「拖出」用法，故统一关闭。
 
 ---
 
