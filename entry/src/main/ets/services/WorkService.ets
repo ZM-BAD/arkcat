@@ -40,6 +40,22 @@ query ViewerLists($first: Int = 50) {
   }
 }`;
 
+/** 他人 Starred 页 Lists 区（Spec 023 他人视角）：user(login).lists，服务端仅返回公开列表；只读展示不取成员游标 */
+const USER_LISTS_BY_LOGIN_QUERY = `
+query UserListsByLogin($login: String!, $first: Int = 50) {
+  user(login: $login) {
+    lists(first: $first) {
+      nodes {
+        id name description
+        items(first: 100) {
+          totalCount
+          nodes { ... on Repository { id } }
+        }
+      }
+    }
+  }
+}`;
+
 const USER_LIST_ITEMS_QUERY = `
 query UserListItems($id: ID!, $after: String) {
   node(id: $id) {
@@ -64,6 +80,7 @@ query ListDetail($id: ID!, $first: Int = 100) {
   node(id: $id) {
     ... on UserList {
       id name description
+      user { login avatarUrl }
       items(first: $first) {
         totalCount
         nodes { ... on Repository {
@@ -337,6 +354,13 @@ export class WorkService {
       }
     }
     return lists;
+  }
+
+  /** 他人（指定 login）的星标列表：Lists 区只读展示用，无成员切换故不做 repoIds 分页补全 */
+  static async fetchUserListsForLogin(token: string, login: string): Promise<WorkUserList[]> {
+    const variables: Record<string, Object> = { 'login': login };
+    const data = await graphql(USER_LISTS_BY_LOGIN_QUERY, variables, token);
+    return mapWorkUserLists(data, 'user');
   }
 
   /** 全量设置某仓库所属的列表集合（toggle = 重发完整 listIds） */

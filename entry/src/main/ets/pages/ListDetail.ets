@@ -1,6 +1,7 @@
 /**
  * 列表详情页（Spec 023）：返回 + 竖三点（Edit/Delete）+ 归属人/名称/描述/计数 + 成员仓库卡片。
  * Edit 复用 CreateList 编辑模式（editListId）；Delete 走确认弹窗 + deleteUserList。
+ * 他人列表（isOwn=false，Starred 他人页入口）：只读，隐藏竖三点（Edit/Delete 为 viewer 专属 mutation）。
  */
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
@@ -16,6 +17,8 @@ export struct ListDetailView {
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
   @Param listId: string = '';
+  /** 是否本人列表：他人列表只读（无 Edit/Delete 入口） */
+  @Param isOwn: boolean = true;
   /** 回页刷新信号（Edit 页 pop 回时自增，@Monitor 触发重取） */
   @Param listTick: number = 0;
   @Local detail: WorkListDetail | null = null;
@@ -175,30 +178,32 @@ export struct ListDetailView {
           this.pathStack.pop();
         })
         Blank()
-        // 竖三点：Edit / Delete（官方 kebab-vertical = kebab_horizontal rotate90）
-        Stack() {
-          OctIcon({
-            res: $r('app.media.oct_kebab_horizontal_16'),
-            iconSize: 18,
-            iconColor: $r('app.color.link_blue')
-          })
-            .rotate({ angle: 90 })
-        }
-        .width(44)
-        .height(44)
-        .accessibilityDescription($r('app.string.a11y_more'))
-        .focusable(true)
-        .bindMenu([
-          {
-            value: $r('app.string.list_detail_edit'),
-            action: (): void => this.pathStack.pushPathByName('createList', this.listId)
-          },
-          {
-            value: $r('app.string.list_detail_delete'),
-            action: (): void => this.confirmDelete()
+        // 竖三点：Edit / Delete（官方 kebab-vertical = kebab_horizontal rotate90）；他人列表只读隐藏
+        if (this.isOwn) {
+          Stack() {
+            OctIcon({
+              res: $r('app.media.oct_kebab_horizontal_16'),
+              iconSize: 18,
+              iconColor: $r('app.color.link_blue')
+            })
+              .rotate({ angle: 90 })
           }
-        ])
-        .padding(6)
+          .width(44)
+          .height(44)
+          .accessibilityDescription($r('app.string.a11y_more'))
+          .focusable(true)
+          .bindMenu([
+            {
+              value: $r('app.string.list_detail_edit'),
+              action: (): void => this.pathStack.pushPathByName('createList', this.listId)
+            },
+            {
+              value: $r('app.string.list_detail_delete'),
+              action: (): void => this.confirmDelete()
+            }
+          ])
+          .padding(6)
+        }
       }
       .width('100%')
       .height(56)
@@ -210,14 +215,14 @@ export struct ListDetailView {
         Scroll() {
           Column({ space: 8 }) {
             if (this.detail !== null) {
-              // 归属人 + 大标题 + 描述 + 仓库计数（官方布局）
+              // 归属人 + 大标题 + 描述 + 仓库计数（官方布局；他人列表显示真实归属人）
               Row({ space: 8 }) {
-                Image(this.detail.viewerAvatar)
+                Image(this.detail.ownerAvatar)
                   .width(18)
                   .height(18)
                   .borderRadius(9)
                   .backgroundColor($r('app.color.heat_empty'))
-                Text(this.detail.viewerLogin)
+                Text(this.detail.ownerLogin)
                   .fontSize($r('app.float.caption_font_size'))
                   .fontColor($r('app.color.text_secondary'))
                 Blank()

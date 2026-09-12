@@ -1,6 +1,7 @@
 /**
  * Starred 仓库卡（Spec 023/035）：归属行（头像/owner/⋯）+ 名称 + 描述 + 星数/语言。
- * ⋯ 打开列表成员 sheet 经 onOpenList 上抛；点卡片跳仓库详情经 onOpenDetail 上抛。
+ * ⋯ 打开列表成员 sheet 经 onOpenList 上抛（仅本人 Starred 页展示，showListAction 控制）；
+ * 点卡片跳仓库详情经 onOpenDetail 上抛。
  */
 import { OctIcon } from './OctIcon';
 import { WorkStarredRepoItem } from '../models/WorkModels';
@@ -12,6 +13,8 @@ export struct StarredRepoRow {
     id: '', name: '', ownerLogin: '', ownerAvatar: '', description: '',
     stargazerCount: 0, language: '', languageColor: ''
   };
+  /** 行内 ⋯（加入我的列表）是否展示：他人 Starred 页隐藏 */
+  @Param showListAction: boolean = true;
   @Event onOpenDetail: () => void = (): void => { };
   /** ⋯ 点击：打开列表成员 sheet */
   @Event onOpenList: () => void = (): void => { };
@@ -33,18 +36,20 @@ export struct StarredRepoRow {
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .layoutWeight(1)
         // 图标贴触点框右上、行内容顶对齐：顶部留白与下方 star 行一致（card_padding 12）
-        Stack({ alignContent: Alignment.TopEnd }) {
-          OctIcon({
-            res: $r('app.media.oct_kebab_horizontal_16'),
-            iconSize: 15,
-            iconColor: $r('app.color.text_secondary')
-          })
+        if (this.showListAction) {
+          Stack({ alignContent: Alignment.TopEnd }) {
+            OctIcon({
+              res: $r('app.media.oct_kebab_horizontal_16'),
+              iconSize: 15,
+              iconColor: $r('app.color.text_secondary')
+            })
+          }
+          .width(32)
+          .height(32)
+          .accessibilityDescription($r('app.string.a11y_more'))
+          .focusable(true)
+          .onClick((): void => this.onOpenList())
         }
-        .width(32)
-        .height(32)
-        .accessibilityDescription($r('app.string.a11y_more'))
-        .focusable(true)
-        .onClick((): void => this.onOpenList())
       }
       .width('100%')
       .alignItems(VerticalAlign.Top)

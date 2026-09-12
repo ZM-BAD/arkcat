@@ -115,8 +115,10 @@ struct Index {
   @State starredLogin: string = '';
   /** Starred 页回显信号：子页 pop 回时自增，驱动 Starred 页重取列表 */
   @State starredListsTick: number = 0;
-  /** 列表详情参数（listId）与回显信号（Edit 页 pop 回时自增） */
+  /** 列表详情参数（listId，可带 `|0` 他人标记）与回显信号（Edit 页 pop 回时自增） */
   @State listDetailId: string = '';
+  /** 列表详情归属：false=他人列表（只读，隐藏 Edit/Delete） */
+  @State listDetailOwn: boolean = true;
   @State listDetailTick: number = 0;
   /** Create list 页编辑模式参数（''=新建；否则为被编辑列表 id） */
   @State createListEditId: string = '';
@@ -825,11 +827,21 @@ struct Index {
         token: this.token,
         pathStack: this.pathStack,
         listId: this.listDetailId,
+        isOwn: this.listDetailOwn,
         listTick: this.listDetailTick
       })
     }
     .onReady((context: NavDestinationContext) => {
-      this.listDetailId = context.pathInfo.param as string;
+      // `|0` 后缀 = 他人列表（Starred 他人页入口，只读）；无标记默认本人列表
+      const raw = context.pathInfo.param as string;
+      const sep = raw.lastIndexOf('|');
+      if (sep >= 0) {
+        this.listDetailId = raw.substring(0, sep);
+        this.listDetailOwn = raw.substring(sep + 1) !== '0';
+      } else {
+        this.listDetailId = raw;
+        this.listDetailOwn = true;
+      }
       this.listDetailShownOnce = false;
     })
     // Edit 页 pop 回时重取列表详情；首显跳过（listId 变化已触发首载，review A6/D17）

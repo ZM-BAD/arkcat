@@ -95,5 +95,6 @@ query WorkStarred($first: Int = 30, $after: String) {
 - 主语言缺失（无语言仓库）时隐藏语言点与名称，与官方一致。
 - 入口复用 013 的 Starred 彩色图标（黄 `#E3B341`）。
 - 描述文本原样展示（用户截图中有中文描述，不翻译）。
+- 他人视角（035 重构后 Profile Starred 入口带 login，官方实测两形态）：本人页保持 My lists 区（+ NEW/列表行/空态卡）+ 行内 ⋯ 不变；他人页显示「Lists」区（只读：无 + NEW/空态卡，数据 `user(login).lists`，服务端仅返回公开列表；行进只读列表详情，详情页隐藏 Edit/Delete、归属人取 `node.user`）；对方无 lists 时 Lists 区与 Starred 分组头均不显示，直接进仓库列表。
 
 - 模拟器实测：Starred 真实数据渲染（tokio-rs/tokio ★33k Rust 等）+ My lists 空态卡展示通过。

@@ -154,7 +154,10 @@ export interface WorkStarredRepoItem {
 export interface WorkStarredPage {
   hasNextPage: boolean;
   endCursor: string;
+  /** 页面归属人 login（viewer 形状=自己；user 形状=目标用户），副标题展示用 */
   viewerLogin: string;
+  /** 当前登录者 login（恒取 viewer.login），本人页判定用——勿与 viewerLogin 混用 */
+  currentLogin: string;
   repos: WorkStarredRepoItem[];
 }
 
@@ -693,9 +696,11 @@ export function mapStarredRepo(raw: JsonMap): WorkStarredRepoItem {
 /** viewer / user(login) .starredRepositories 响应 → WorkStarredPage（Spec 035 双形状） */
 export function mapWorkStarredPage(data: JsonMap): WorkStarredPage {
   const viewer = Json.obj(data, 'viewer') ?? ({} as JsonMap);
+  // 当前登录者恒取 viewer.login（user 形状查询也带 viewer{login}）
+  const currentLogin = Json.str(viewer, 'login');
   let starredWrap = Json.obj(viewer, 'starredRepositories') ?? ({} as JsonMap);
   let login = Json.str(viewer, 'login');
-  // user(login) 查询形状：viewer 无星标节点时读 user
+  // user(login) 查询形状：viewer 无星标节点时读 user（归属人换成目标用户）
   if (Json.obj(starredWrap, 'pageInfo') === null) {
     const userNode = Json.obj(data, 'user') ?? ({} as JsonMap);
     starredWrap = Json.obj(userNode, 'starredRepositories') ?? ({} as JsonMap);
@@ -710,6 +715,7 @@ export function mapWorkStarredPage(data: JsonMap): WorkStarredPage {
     hasNextPage: pageInfo !== null ? Json.bool(pageInfo, 'hasNextPage') : false,
     endCursor: pageInfo !== null ? Json.str(pageInfo, 'endCursor') : '',
     viewerLogin: login,
+    currentLogin: currentLogin,
     repos: repos
   };
 }
@@ -728,10 +734,10 @@ export interface WorkUserList {
   repoCursor: string;
 }
 
-/** viewer.lists 响应 → WorkUserList[]（成员=列表内仓库节点 id 集合） */
-export function mapWorkUserLists(data: JsonMap): WorkUserList[] {
-  const viewer = Json.obj(data, 'viewer') ?? ({} as JsonMap);
-  const listsWrap = Json.obj(viewer, 'lists') ?? ({} as JsonMap);
+/** lists 响应 → WorkUserList[]（成员=列表内仓库节点 id 集合；rootKey 区分 viewer/user 查询形状） */
+export function mapWorkUserLists(data: JsonMap, rootKey: string = 'viewer'): WorkUserList[] {
+  const root = Json.obj(data, rootKey) ?? ({} as JsonMap);
+  const listsWrap = Json.obj(root, 'lists') ?? ({} as JsonMap);
   const result: WorkUserList[] = [];
   for (const nodeItem of Json.arr(listsWrap, 'nodes')) {
     const node = nodeItem as JsonMap;
@@ -757,14 +763,14 @@ export function mapWorkUserLists(data: JsonMap): WorkUserList[] {
   return result;
 }
 
-/** 列表详情（Spec 023）：名称/描述/成员仓库 + 归属人（viewer） */
+/** 列表详情（Spec 023）：名称/描述/成员仓库 + 归属人（本人列表=viewer，他人列表=node.user） */
 export interface WorkListDetail {
   id: string;
   name: string;
   description: string;
   itemCount: number;
-  viewerLogin: string;
-  viewerAvatar: string;
+  ownerLogin: string;
+  ownerAvatar: string;
   repos: WorkStarredRepoItem[];
 }
 
@@ -777,13 +783,15 @@ export function mapWorkListDetail(data: JsonMap): WorkListDetail {
   for (const item of Json.arr(itemsWrap, 'nodes')) {
     repos.push(mapStarredRepo(item as JsonMap));
   }
+  // 归属人：node.user 存在（UserList 自带归属）则用之，回退 viewer（兼容旧响应形状）
+  const owner = Json.obj(node, 'user') ?? viewer;
   return {
     id: Json.str(node, 'id'),
     name: Json.str(node, 'name'),
     description: Json.str(node, 'description'),
     itemCount: Json.num(itemsWrap, 'totalCount'),
-    viewerLogin: Json.str(viewer, 'login'),
-    viewerAvatar: Json.str(viewer, 'avatarUrl'),
+    ownerLogin: Json.str(owner, 'login'),
+    ownerAvatar: Json.str(owner, 'avatarUrl'),
     repos: repos
   };
 }

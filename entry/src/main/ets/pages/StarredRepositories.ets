@@ -1,6 +1,7 @@
 /**
  * Starred Repositories 页（Spec 023/035）：viewer 星标仓库（默认）；传入 login 展示目标用户星标。
- * My lists 区（+ NEW 预留，v1 恒显空态卡）+ Starred 分组（头像/名称/描述/星数/语言）。
+ * My lists 区（+ NEW 预留，v1 恒显空态卡）仅本人页渲染（login 为空或与页面归属人一致）；
+ * Starred 分组（头像/名称/描述/星数/语言）通用，行内 ⋯（列表成员 sheet）仅本人页展示。
  * 仓库行组件化于 StarredRepoRow、列表成员 sheet 组件化于 StarredListSheet，
  * 本页保留拉取/分页/成员切换（乐观更新）逻辑。
  */
@@ -29,7 +30,10 @@ export struct StarredRepositoriesView {
   /** 成员切换进行中（乐观更新期间防连点） */
   @Local toggling: boolean = false;
   @Local repos: WorkStarredRepoItem[] = [];
+  /** 页面归属人 login（副标题展示；viewer/user 双形状语义见 WorkStarredPage） */
   @Local viewerLogin: string = '';
+  /** 当前登录者 login（本人页判定唯一依据；refresh 返回前为空=身份未明） */
+  @Local currentLogin: string = '';
   @Local listSheetOpen: boolean = false;
   @Local searchQuery: string = '';
   @Local cursor: string = '';
@@ -47,12 +51,22 @@ export struct StarredRepositoriesView {
   onListTickChanged(): void {
     // 回页同时刷新仓库列表（review D10：详情取消星标后返回仍显示旧数据）
     this.refresh();
-    this.fetchLists();
+  }
+
+  /** login 晚于 aboutToAppear 到达（Index onReady）→ 变化即重拉（review A6 同款：否则首开沿用旧 login） */
+  @Monitor('login')
+  onLoginChanged(): void {
+    this.refresh();
   }
 
   aboutToAppear(): void {
     this.refresh();
-    this.fetchLists();
+  }
+
+  /** 本人页判定：Home 入口 login 为空；Profile 入口带 login，与**当前登录者**一致才是本人。
+   * 勿用 viewerLogin（那是页面归属人，他人页两者恒等，会导致他人页永远判成本人页） */
+  private get isOwnPage(): boolean {
+    return this.login === '' || this.login === this.currentLogin;
   }
 
   private refresh(): void {
@@ -63,11 +77,14 @@ export struct StarredRepositoriesView {
         // 排序后续再定：当前直接展示服务端返回顺序
         this.repos = page.repos;
         this.viewerLogin = page.viewerLogin;
+        this.currentLogin = page.currentLogin;
         this.cursor = page.endCursor;
         this.hasNextPage = page.hasNextPage;
         this.loading = false;
         this.isRefreshing = false;
         this.loadingMore = false;
+        // 身份已明（currentLogin 到位）再拉 lists，本人/他人分支才不会判错
+        this.fetchLists();
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
@@ -98,9 +115,16 @@ export struct StarredRepositoriesView {
       });
   }
 
-  /** 拉取 viewer 星标列表（My lists 展示 + sheet 成员状态） */
+  /** 拉取页面归属人的列表：本人=viewer.lists（含成员态）；他人=user(login).lists（只读展示，Spec 023 他人视角）。
+   * 由 refresh 成功回调驱动（身份 currentLogin 已明）；身份未明时跳过防分支判错 */
   private fetchLists(): void {
-    WorkService.fetchUserLists(this.token)
+    if (this.login !== '' && this.currentLogin === '') {
+      return;
+    }
+    const fetcher = this.isOwnPage
+      ? WorkService.fetchUserLists(this.token)
+      : WorkService.fetchUserListsForLogin(this.token, this.login);
+    fetcher
       .then((lists: WorkUserList[]) => {
         this.lists = lists;
       })
@@ -321,25 +345,89 @@ export struct StarredRepositoriesView {
       Refresh({ refreshing: $$this.isRefreshing }) {
       Scroll() {
         Column() {
-          // My lists 行（列表 API 后续 Spec，v1 展示行 + 空态卡）
-          Row() {
-            OctIcon({ res: $r('app.media.oct_three_bars_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
-            Text($r('app.string.work_starred_my_lists'))
-              .fontSize($r('app.float.body_font_size'))
-              .fontColor($r('app.color.text_primary'))
-              .margin({ left: 10 })
-            Blank()
-            Text($r('app.string.work_starred_new'))
-              .fontSize($r('app.float.body_font_size'))
-              .fontColor($r('app.color.link_blue'))
-              .responseRegion({ x: -6, y: -7, width: '130%', height: '147%' })
-              .onClick(() => this.pathStack.pushPathByName('createList', ''))
-          }
-          .width('100%')
-          .height(44)
+          // My lists 区仅本人页渲染（他人 Starred 页直接进 Starred 分组，对齐官方）
+          if (this.isOwnPage) {
+            // My lists 行（列表 API 后续 Spec，v1 展示行 + 空态卡）
+            Row() {
+              OctIcon({ res: $r('app.media.oct_list_unordered_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+              Text($r('app.string.work_starred_my_lists'))
+                .fontSize($r('app.float.body_font_size'))
+                .fontColor($r('app.color.text_primary'))
+                .margin({ left: 10 })
+              Blank()
+              Text($r('app.string.work_starred_new'))
+                .fontSize($r('app.float.body_font_size'))
+                .fontColor($r('app.color.link_blue'))
+                .responseRegion({ x: -6, y: -7, width: '130%', height: '147%' })
+                .onClick(() => this.pathStack.pushPathByName('createList', ''))
+            }
+            .width('100%')
+            .height(44)
 
-          if (this.lists.length > 0) {
-            // 已建列表：名称 + 数量（点击进列表详情）
+            if (this.lists.length > 0) {
+              // 已建列表：名称 + 数量（点击进列表详情）
+              ForEach(this.lists, (list: WorkUserList) => {
+                Row() {
+                  Text(list.name)
+                    .fontSize($r('app.float.body_font_size'))
+                    .fontColor($r('app.color.text_primary'))
+                    .layoutWeight(1)
+                    .maxLines(1)
+                    .textOverflow({ overflow: TextOverflow.Ellipsis })
+                  Text(compactCount(list.itemCount))
+                    .fontSize($r('app.float.caption_font_size'))
+                    .fontColor($r('app.color.text_secondary'))
+                }
+                .width('100%')
+                .height(48)
+                .onClick((): void => {
+                  this.pathStack.pushPathByName('listDetail', list.id);
+                })
+                // key 含 itemCount：切换后计数重新渲染（同 key 复用 => 显示陈旧数量）
+              }, (list: WorkUserList) => `${list.id}_${list.itemCount}`)
+            } else {
+              // Create your first list 空态卡
+              Column({ space: 12 }) {
+                Text($r('app.string.work_starred_first_list_title'))
+                  .fontSize(20)
+                  .fontWeight(600)
+                  .fontColor($r('app.color.text_primary'))
+                  .textAlign(TextAlign.Center)
+                  .width('100%')
+                Text($r('app.string.work_starred_first_list_desc'))
+                  .fontSize($r('app.float.body_font_size'))
+                  .fontColor($r('app.color.text_secondary'))
+                  .textAlign(TextAlign.Center)
+                  .width('100%')
+                Button($r('app.string.work_starred_create_list'))
+                  .width('100%')
+                  .height(44)
+                  .fontSize($r('app.float.caption_font_size'))
+                  .fontColor($r('app.color.link_blue'))
+                  .backgroundColor(Color.Transparent)
+                  .borderRadius(6)
+                  .border({ width: 1, color: $r('app.color.border') })
+                  .onClick(() => this.pathStack.pushPathByName('createList', ''))
+              }
+              .padding(24)
+              .width('100%')
+            }
+
+            Divider()
+              .color($r('app.color.divider'))
+              .margin({ top: 8, bottom: 8 })
+          } else if (this.lists.length > 0) {
+            // 他人 Lists 区（Spec 023 他人视角，对齐官方）：只读——无 + NEW/空态卡，行进只读列表详情
+            Row() {
+              OctIcon({ res: $r('app.media.oct_list_unordered_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+              Text($r('app.string.work_starred_lists_title'))
+                .fontSize($r('app.float.body_font_size'))
+                .fontColor($r('app.color.text_primary'))
+                .margin({ left: 10 })
+            }
+            .width('100%')
+            .height(44)
+
             ForEach(this.lists, (list: WorkUserList) => {
               Row() {
                 Text(list.name)
@@ -355,58 +443,36 @@ export struct StarredRepositoriesView {
               .width('100%')
               .height(48)
               .onClick((): void => {
-                this.pathStack.pushPathByName('listDetail', list.id);
+                // `|0` 归属标记：他人列表，详情页隐藏 Edit/Delete（路由参数约定见 Index listDetailDestination）
+                this.pathStack.pushPathByName('listDetail', `${list.id}|0`);
               })
               // key 含 itemCount：切换后计数重新渲染（同 key 复用 => 显示陈旧数量）
             }, (list: WorkUserList) => `${list.id}_${list.itemCount}`)
-          } else {
-            // Create your first list 空态卡
-            Column({ space: 12 }) {
-              Text($r('app.string.work_starred_first_list_title'))
-                .fontSize(20)
-                .fontWeight(600)
+
+            Divider()
+              .color($r('app.color.divider'))
+              .margin({ top: 8, bottom: 8 })
+          }
+
+          // Starred 分组头（官方：他人页无 lists 时不显示区块头，直接进仓库列表）
+          if (this.isOwnPage || this.lists.length > 0) {
+            Row() {
+              OctIcon({ res: $r('app.media.oct_star_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+              Text($r('app.string.home_work_starred'))
+                .fontSize(16)
+                .fontWeight(FontWeight.Medium)
                 .fontColor($r('app.color.text_primary'))
-                .textAlign(TextAlign.Center)
-                .width('100%')
-              Text($r('app.string.work_starred_first_list_desc'))
-                .fontSize($r('app.float.body_font_size'))
-                .fontColor($r('app.color.text_secondary'))
-                .textAlign(TextAlign.Center)
-                .width('100%')
-              Button($r('app.string.work_starred_create_list'))
-                .width('100%')
-                .height(44)
-                .fontSize($r('app.float.caption_font_size'))
-                .fontColor($r('app.color.link_blue'))
-                .backgroundColor(Color.Transparent)
-                .borderRadius(6)
-                .border({ width: 1, color: $r('app.color.border') })
-                .onClick(() => this.pathStack.pushPathByName('createList', ''))
+                .margin({ left: 10 })
             }
-            .padding(24)
             .width('100%')
+            .height(40)
           }
-
-          Divider()
-            .color($r('app.color.divider'))
-            .margin({ top: 8, bottom: 8 })
-
-          // Starred 分组头
-          Row() {
-            OctIcon({ res: $r('app.media.oct_star_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
-            Text($r('app.string.home_work_starred'))
-              .fontSize(16)
-              .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.text_primary'))
-              .margin({ left: 10 })
-          }
-          .width('100%')
-          .height(40)
 
           if (this.shownRepos().length > 0) {
             ForEach(this.shownRepos(), (repo: WorkStarredRepoItem) => {
               StarredRepoRow({
                 repo: repo,
+                showListAction: this.isOwnPage,
                 onOpenDetail: (): void => {
                   this.pathStack.pushPathByName('repoDetail', `${repo.ownerLogin}/${repo.name}`);
                 },

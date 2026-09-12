@@ -1081,6 +1081,10 @@
       "value": "我的列表"
     },
     {
+      "name": "work_starred_lists_title",
+      "value": "列表"
+    },
+    {
       "name": "work_starred_new",
       "value": "+ 新建"
     },
