@@ -10,6 +10,7 @@ import { LicenseInfo, mapLicenseInfo } from '../models/RepoLicenseModels';
 
 const REPO_QUERY = `
 query RepositoryDetail($owner: String!, $name: String!) {
+  viewer { login }
   repository(owner: $owner, name: $name) {
     id
     name
@@ -60,7 +61,8 @@ mutation ForkRepo($repositoryId: ID!) {
 const STARGAZERS_QUERY = `
 query RepoStargazers($owner: String!, $name: String!, $first: Int = 50, $after: String) {
   repository(owner: $owner, name: $name) {
-    stargazers(first: $first, after: $after) {
+    stargazers(first: $first, after: $after,
+      orderBy: { field: STARRED_AT, direction: DESC }) {
       pageInfo { hasNextPage endCursor }
       nodes { login name bio avatarUrl }
     }

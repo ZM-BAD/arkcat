@@ -70,6 +70,12 @@ export struct RepoDetailView {
       });
   }
 
+  /** stargazers 入口可见性：仅本人仓库（Spec 053；他人仓库点击无反应，对齐官方 App） */
+  private get canViewStargazers(): boolean {
+    const detail = this.detail;
+    return detail !== null && detail.viewerLogin !== '' && detail.ownerLogin === detail.viewerLogin;
+  }
+
   private navigateLink(name: string, param: string): void {
     this.pathStack.pushPathByName(name, param);
   }
@@ -99,6 +105,7 @@ export struct RepoDetailView {
           lastCommitMessage: detail.lastCommitMessage,
           ownerAvatarUrl: detail.ownerAvatarUrl,
           ownerLogin: detail.ownerLogin,
+          viewerLogin: detail.viewerLogin,
           issueCount: detail.issueCount,
           prCount: detail.prCount,
           releaseCount: detail.releaseCount,
@@ -219,6 +226,10 @@ export struct RepoDetailView {
         }
         .responseRegion({ x: 0, y: -12, width: '100%', height: '220%' })
         .onClick(() => {
+          // stargazers 名单仅本人仓库可见（Spec 053）：他人仓库点击无任何反应
+          if (!this.canViewStargazers) {
+            return;
+          }
           this.pathStack.pushPathByName('stargazers', `${this.owner}/${this.name}`);
         })
         Text('·')

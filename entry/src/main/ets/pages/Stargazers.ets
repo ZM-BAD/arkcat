@@ -110,7 +110,7 @@ export struct StargazersView {
         if (user.bio !== '') {
           Text(user.bio)
             .fontSize($r('app.float.body_font_size'))
-            .fontColor($r('app.color.text_secondary'))
+            .fontColor($r('app.color.text_primary'))
             .maxLines(2)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .lineHeight(20)
