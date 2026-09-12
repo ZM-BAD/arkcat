@@ -1,7 +1,8 @@
 /**
- * 仓库内 Issue 列表页（Spec 007/026 修订）：官方布局对齐——
- * 副标题 owner + 四筛选（状态/Label/Author/Assignee）+ 行样式（状态圈/标题/#N/时间/💬/🔁）。
- * Author/Assignee 为客户端过滤（首屏集合），行点击进入 Issue 详情（Spec 030）。
+ * 仓库内 Issue 列表页（Spec 007/026 修订 + Spec 063 顶栏改版）：官方布局对齐——
+ * 顶栏两行标题（灰小字 owner/name + 粗体 Issues）+ 蓝色搜索（顶栏内联过滤，框内灰 ✕ 清除，返回键退出搜索）
+ * + circle-plus 新建；四筛选（状态/Label/Author/Assignee）+ 行样式（状态圈/标题/#N/时间/💬/🔁）。
+ * Author/Assignee 与搜索词均为客户端过滤（已加载集合），行点击进入 Issue 详情（Spec 030）。
  */
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
@@ -38,6 +39,25 @@ export struct IssuesListView {
   @Local isRefreshing: boolean = false;
   /** 触底加载更多（底部转圈指示） */
   @Local loadingMore: boolean = false;
+  /** 顶栏内联搜索（Spec 063）：开启后标题区换成搜索框，列表按标题/编号本地过滤 */
+  @Local searchOn: boolean = false;
+  @Local searchQuery: string = '';
+
+  private enterSearch(): void {
+    this.searchOn = true;
+    this.searchQuery = '';
+    this.applyFilters();
+    // 下一帧获焦，自动弹起软键盘
+    setTimeout((): void => {
+      this.getUIContext().getFocusController().requestFocus('issues_search');
+    }, 60);
+  }
+
+  private exitSearch(): void {
+    this.searchOn = false;
+    this.searchQuery = '';
+    this.applyFilters();
+  }
 
   /** 返回刷新（review B13） */
   @Monitor('returnTick')
@@ -93,8 +113,9 @@ export struct IssuesListView {
       });
   }
 
-  /** 客户端过滤：Author/Assignee（Spec 027 边界） */
+  /** 客户端过滤：Author/Assignee（Spec 027 边界）+ 顶栏搜索词（Spec 063） */
   private applyFilters(): void {
+    const q = this.searchOn ? this.searchQuery.trim().toLowerCase() : '';
     const next: IssueSummary[] = [];
     for (const issue of this.all) {
       if (this.author !== '' && issue.authorLogin !== this.author) {
@@ -103,9 +124,21 @@ export struct IssuesListView {
       if (this.assignee !== '' && issue.assignees.indexOf(this.assignee) < 0) {
         continue;
       }
+      if (q !== '' && !this.matchQuery(issue, q)) {
+        continue;
+      }
       next.push(issue);
     }
     this.shown = next;
+  }
+
+  /** 搜索词匹配：标题子串，或「#123 / 123」按编号精确匹配 */
+  private matchQuery(issue: IssueSummary, q: string): boolean {
+    if (issue.title.toLowerCase().includes(q)) {
+      return true;
+    }
+    const num = q.startsWith('#') ? q.substring(1) : q;
+    return num !== '' && `${issue.number}` === num;
   }
 
   /** State 下拉选项（All/Open/Closed） */
@@ -295,35 +328,74 @@ export struct IssuesListView {
         }
 .width(44)
 .height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
+        .accessibilityDescription(this.searchOn ? $r('app.string.a11y_close') : $r('app.string.a11y_back'))
         .focusable(true)
         .onClick(() => {
+          // 搜索态下返回 = 退出搜索（回标题）；否则退出本页
+          if (this.searchOn) {
+            this.exitSearch();
+            return;
+          }
           this.pathStack.pop();
         })
-        Column({ space: 0 }) {
-          Text(this.owner)
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-          Text($r('app.string.repo_issues_link'))
+        if (this.searchOn) {
+          // 顶栏内联搜索（Spec 063）：标题区换成输入框，占位「Search Issues」
+          TextInput({
+            placeholder: this.stringOf($r('app.string.page_search_issues')),
+            text: this.searchQuery
+          })
+            .id('issues_search')
+            .height(44)
             .fontSize($r('app.float.title_font_size'))
-            .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
-        }
-        .layoutWeight(1)
-        .alignItems(HorizontalAlign.Start)
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
-        }
+            .caretColor($r('app.color.link_blue'))
+            .backgroundColor(Color.Transparent)
+            .onChange((v: string) => {
+              this.searchQuery = v;
+              this.applyFilters();
+            })
+            .layoutWeight(1)
+          // 框内灰 ✕（有文字才显示）：只清空关键词、留在搜索态（与 Home 搜索页一致）
+          if (this.searchQuery !== '') {
+            Stack() {
+              OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+            }
 .width(44)
 .height(44)
-        .padding(6)
-        .accessibilityDescription($r('app.string.a11y_search'))
-        .focusable(true)
-        .onClick(() => {
-          this.pathStack.pushPathByName('search', '');
-        })
+            .accessibilityDescription($r('app.string.a11y_close'))
+            .focusable(true)
+            .onClick(() => {
+              this.searchQuery = '';
+              this.applyFilters();
+            })
+          }
+        } else {
+          Column({ space: 0 }) {
+            Text(`${this.owner}/${this.name}`)
+              .fontSize($r('app.float.caption_font_size'))
+              .fontColor($r('app.color.text_secondary'))
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
+            Text($r('app.string.repo_issues_link'))
+              .fontSize($r('app.float.title_font_size'))
+              .fontWeight(600)
+              .fontColor($r('app.color.text_primary'))
+          }
+          .layoutWeight(1)
+          .alignItems(HorizontalAlign.Start)
+          // 🔍 仅未搜索态显示：进入搜索后让位给输入框（用户 2026-09-11 定案）
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 20, iconColor: $r('app.color.link_blue') })
+          }
+.width(44)
+.height(44)
+          .padding(6)
+          .accessibilityDescription($r('app.string.a11y_search'))
+          .focusable(true)
+          .onClick(() => this.enterSearch())
+        }
         Stack() {
-          OctIcon({ res: $r('app.media.oct_plus_24'), iconSize: 20, iconColor: $r('app.color.link_blue') })
+          OctIcon({ res: $r('app.media.oct_plus_circle_24'), iconSize: 20, iconColor: $r('app.color.link_blue') })
         }
 .width(44)
 .height(44)
@@ -429,6 +501,8 @@ export struct IssuesListView {
             }
           } else if (this.loading || this.errorMsg !== '') {
             StateView({ loading: this.loading, error: this.errorMsg, onRetry: () => this.refresh() })
+          } else if (this.searchOn && this.searchQuery.trim() !== '') {
+            StateView({ empty: true, emptyText: $r('app.string.search_no_results') })
           } else {
             StateView({ empty: true, emptyText: $r('app.string.issues_empty') })
           }

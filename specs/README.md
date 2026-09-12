@@ -71,6 +71,9 @@
 | 058 | [copilot-ui.md](058-copilot-ui.md) | Copilot UI 架子（已被 059 取代：mock 换真实 API） | Level 1 | deprecated |
 | 059 | [copilot-chat.md](059-copilot-chat.md) | Copilot 真实对话（已被 060 移除：上架合规，Copilot 三关无解） | Level 1 | deprecated |
 | 060 | [profile-tab-remove-copilot.md](060-profile-tab-remove-copilot.md) | 底栏结构调整（tab4 = 我的主页 Tab，图标为账号头像）+ Copilot 移除 | Level 1 | approved |
+| 061 | [share-system-panel.md](061-share-system-panel.md) | 全应用分享按钮统一走系统分享面板（ShareKit） | Level 1 | approved |
+| 062 | [secondary-header-icons.md](062-secondary-header-icons.md) | 二级页顶栏图标统一（share-android 蓝 + 蓝色竖三点；含 Issue 详情） | Level 2 | approved |
+| 063 | [issues-list-header.md](063-issues-list-header.md) | 仓库 Issue 列表顶栏改版（两行标题 owner/name + 顶栏内联搜索 + circle-plus） | Level 3 | implemented |
 
 ## 覆盖率
 

@@ -15,7 +15,7 @@
 
 ## 二、整体 UI 结构
 
-1. 顶部 App Bar：← 返回 + Issues 标题 + ＋ 新建 + 🔍 搜索
+1. 顶部 App Bar：← 返回 + 两行标题（灰小字 `owner/name` + 粗体 Issues）+ 🔍 搜索（蓝，点击当页顶栏内联搜索）+ ⨁ 新建（circle-plus）——详见 Spec 063
 2. 排序条：🔍 Sort by... 下拉
 3. 状态 Tab：All/Open/Closed 下拉 chip（FilterDropdownChip）
 4. Issue 卡片列表：卡片 = 标题 + 元信息行（#编号 · label · 相对时间 · 💬 评论数）
@@ -30,10 +30,10 @@
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar 左 | ← 返回 | 回退 | ✅ 纯 UI | — | — |
-| 2 | App Bar 中 | 标题「Issues」 | 展示 | ✅ 纯 UI | — | — |
-| 3 | App Bar 右 | + 新建按钮 | 占位提示 | ✅ 纯 UI | — | 创建页由 043 承接 |
+| 2 | App Bar 中 | 两行标题（`owner/name` + Issues） | 展示 | ✅ 纯 UI | — | 第一行为仓库名（Spec 063 改版） |
+| 3 | App Bar 右 | ⨁ 新建按钮（circle-plus） | 占位提示 | ✅ 纯 UI | — | `oct_plus_circle_24`（Spec 063）；创建页由 043 承接 |
 | 4 | App Bar 右 | 右键漏斗徽标 | bindMenu（创建快捷方式/清除全部筛选） | ✅ 客户端 | — | — |
-| 5 | App Bar 右 | 🔍 搜索 | 进全局搜索 | ✅ 纯 UI | — | — |
+| 5 | App Bar 右 | 🔍 搜索（蓝） | 当页顶栏内联搜索（本地过滤） | ✅ 纯 UI | — | 不再跳全域搜索页（Spec 063） |
 | 6 | 排序条 | Sort by 下拉 | 排序 | ✅ | `orderBy: { field: CREATED_AT }` | — |
 | 7 | 状态 Tab | All/Open/Closed 下拉 chip（FilterDropdownChip） | 切换 | ✅ | `states: [OPEN]` / `[CLOSED]` | — |
 | 8 | Issue 卡片 | Issue 标题 | 点击进入详情 | ✅ | `issue.title` | — |
