@@ -573,6 +573,10 @@
       "value": "简体中文"
     },
     {
+      "name": "settings_language_follow_system",
+      "value": "Follow system"
+    },
+    {
       "name": "settings_accounts",
       "value": "Accounts"
     },
@@ -633,16 +637,12 @@
       "value": "Share Feedback"
     },
     {
-      "name": "settings_get_help",
-      "value": "Get Help"
-    },
-    {
       "name": "settings_terms",
       "value": "Terms of Service"
     },
     {
       "name": "settings_privacy",
-      "value": "Privacy Policy & Analytics"
+      "value": "Privacy Policy"
     },
     {
       "name": "settings_open_source",
@@ -657,16 +657,16 @@
       "value": "This feature will be available in a future version"
     },
     {
-      "name": "settings_sign_out_confirm",
-      "value": "Sign out of this account?"
+      "name": "settings_sign_out_cancel",
+      "value": "CANCEL"
+    },
+    {
+      "name": "settings_sign_out_action",
+      "value": "SIGN OUT"
     },
     {
       "name": "settings_cancel",
       "value": "Cancel"
-    },
-    {
-      "name": "settings_confirm",
-      "value": "Sign Out"
     },
     {
       "name": "settings_version",
@@ -2075,6 +2075,26 @@
     {
       "name": "discussions_filter_unlabeled",
       "value": "Unlabeled"
+    },
+    {
+      "name": "app_lock_toggle",
+      "value": "Use device credentials to unlock the app"
+    },
+    {
+      "name": "app_lock_auth_title",
+      "value": "Unlock ArkCat"
+    },
+    {
+      "name": "app_lock_locked_title",
+      "value": "ArkCat is locked"
+    },
+    {
+      "name": "app_lock_unlock",
+      "value": "Unlock"
+    },
+    {
+      "name": "app_lock_no_credential",
+      "value": "No screen lock found. Set a lock screen password in system settings first."
     }
   ]
 }

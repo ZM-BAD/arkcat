@@ -59,7 +59,7 @@
 | 046 | [search-full.md](046-search-full.md) | 搜索全类型与最近搜索（Search 六类详情） | Level 3 | implemented |
 | 047 | [releases-detail-download.md](047-releases-detail-download.md) | Release 详情与资产下载 | Level 3 | implemented |
 | 048 | [actions-checks.md](048-actions-checks.md) | Actions/Checks 状态检查（Check runs 详情 + 一键重跑） | Level 3 | draft |
-| 049 | [multi-account-security.md](049-multi-account-security.md) | 多账号与安全（049a 账号管理器已实现；049b App Lock 未做） | Level 3 | draft |
+| 049 | [multi-account-security.md](049-multi-account-security.md) | 多账号与安全（049a 账号管理器已实现；App Lock 拆出至 066） | Level 3 | implemented |
 | 050 | [home-favorites-shortcuts.md](050-home-favorites-shortcuts.md) | Home 个性化（Favorites 收藏 + Shortcuts 快捷入口） | Level 3 | draft |
 | 051 | [accessibility-multidevice.md](051-accessibility-multidevice.md) | 无障碍与多设备适配（横向规范） | Level 4 | draft |
 | 052 | [achievement-detail.md](052-achievement-detail.md) | 成就详情页（徽章大图/事件/分享） | Level 3 | implemented |
@@ -74,6 +74,9 @@
 | 061 | [share-system-panel.md](061-share-system-panel.md) | 全应用分享按钮统一走系统分享面板（ShareKit） | Level 1 | approved |
 | 062 | [secondary-header-icons.md](062-secondary-header-icons.md) | 二级页顶栏图标统一（share-android 蓝 + 蓝色竖三点；含 Issue 详情） | Level 2 | approved |
 | 063 | [issues-list-header.md](063-issues-list-header.md) | 仓库 Issue 列表顶栏改版（两行标题 owner/name + 顶栏内联搜索 + circle-plus） | Level 3 | implemented |
+| 064 | [open-source-libraries.md](064-open-source-libraries.md) | 开源库披露页（Octicons/Primer MIT 条目） | Level 3 | implemented |
+| 065 | [share-feedback-discussions.md](065-share-feedback-discussions.md) | Share Feedback → 仓库 Discussions（REST 开启 has_discussions + repo 限定模式） | Level 3 | implemented |
+| 066 | [app-lock.md](066-app-lock.md) | App Lock（设备凭据锁定：Toggle 子页 + 后台回前台/冷启动系统认证） | Level 3 | draft |
 
 ## 覆盖率
 

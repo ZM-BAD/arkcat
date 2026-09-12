@@ -18,7 +18,8 @@ const KIT_STUBS = {
   '@kit.ArkUI': resolve(HERE, 'stubs/ark-ui.js'),
   '@kit.AssetStoreKit': resolve(HERE, 'stubs/asset-store-kit.js'),
   '@kit.ShareKit': resolve(HERE, 'stubs/share-kit.js'),
-  '@kit.PerformanceAnalysisKit': resolve(HERE, 'stubs/performance-analysis-kit.js')
+  '@kit.PerformanceAnalysisKit': resolve(HERE, 'stubs/performance-analysis-kit.js'),
+  '@kit.UserAuthenticationKit': resolve(HERE, 'stubs/user-authentication-kit.js')
 };
 
 try {

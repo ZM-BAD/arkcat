@@ -1087,3 +1087,19 @@ test('WorkDiscussions：Author/Label qualifier 与映射（Spec 065）', async (
   // labels 映射
   assert.equal(m.mapRepoLabels({ repository: { labels: { nodes: [{ name: 'Bug', color: 'D73A4A' }] } } }).length, 1);
 });
+
+test('AppLock：偏好归一化（Spec 066）', async () => {
+  const m = await import('../../entry/src/main/ets/utils/AppLock');
+  // 仅 '1' 视为开启
+  assert.equal(m.normalizeAppLockPref('1'), true);
+  // 缺省/脏值一律 OFF（未设置过/偏好损坏不得误锁）
+  assert.equal(m.normalizeAppLockPref(''), false);
+  assert.equal(m.normalizeAppLockPref('0'), false);
+  assert.equal(m.normalizeAppLockPref('true'), false);
+  assert.equal(m.normalizeAppLockPref(undefined), false);
+  assert.equal(m.normalizeAppLockPref(null), false);
+  // 键名与 AppStorage 键约定
+  assert.equal(m.KEY_APP_LOCK, 'app_lock_enabled');
+  assert.equal(m.APP_LOCK_ENABLED_KEY, 'appLockEnabled');
+  assert.equal(m.APP_LOCK_LOCKED_KEY, 'appLockLocked');
+});

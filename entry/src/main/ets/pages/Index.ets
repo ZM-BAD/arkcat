@@ -56,12 +56,13 @@ import { ExploreRepoListView } from './ExploreRepoList';
 import { FilterActivityView } from './FilterActivity';
 import { AccountsView } from './Accounts';
 import { InAppBrowserView } from './InAppBrowser';
+import { AppLockOverlay, AppLockSettingsView } from './AppLock';
 
 /** 隐藏底部 Tab 栏的路由：Settings 及其下级页面（走查 09-08 定案）+ 模态全屏页（052 徽章详情）
  *  + 应用内浏览器（用户 09-08 定案：该子页也不显示底栏） */
 const TAB_BAR_HIDDEN_ROUTES: string[] = [
   'settings', 'notificationSettings', 'codeOptions', 'accounts', 'tokenSetup', 'achievementDetail',
-  'openSourceLibraries', 'inAppBrowser', 'repoDiscussions'
+  'openSourceLibraries', 'inAppBrowser', 'repoDiscussions', 'appLock'
 ];
 
 @Entry
@@ -96,6 +97,8 @@ struct Index {
   @State inboxHasUnread: boolean = false;
   /** Inbox 标记已读后经 AppStorage 通知重算未读角标（review A4） */
   @StorageProp('inboxUnreadTick') @Watch('onInboxUnreadTick') inboxUnreadTick: number = 0;
+  /** Spec 066：App Lock 锁定态（EntryAbility 冷启动/退后台置位，AppLockOverlay 解锁清除） */
+  @StorageLink('appLockLocked') appLockLocked: boolean = false;
   @State listLogin: string = '';
   /** Discussions 单仓库模式（Share Feedback）：'owner/name'，空串=全局 */
   @State repoForDiscussions: string = '';
@@ -425,6 +428,17 @@ struct Index {
   openSourceLibrariesDestination() {
     NavDestination() {
       OpenSourceLibrariesView({
+        pathStack: this.pathStack
+      })
+    }
+    .hideTitleBar(true)
+  }
+
+  /** Spec 066：App Lock 设置子页（单 Toggle；Settings 级页面，底栏隐藏） */
+  @Builder
+  appLockDestination() {
+    NavDestination() {
+      AppLockSettingsView({
         pathStack: this.pathStack
       })
     }
@@ -1144,6 +1158,8 @@ struct Index {
       this.codeOptionsDestination()
     } else if (name === 'openSourceLibraries') {
       this.openSourceLibrariesDestination()
+    } else if (name === 'appLock') {
+      this.appLockDestination()
     } else if (name === 'userList') {
       this.userListDestination()
     } else if (name === 'orgList') {
@@ -1421,6 +1437,12 @@ struct Index {
         }
         .width('100%')
         .height('100%')
+      }
+
+      // Spec 066：App Lock 锁定遮罩——Stack 顶层，盖住 Navigation 与底栏；
+      // 仅登录后生效（登录页/开屏无需锁，锁定在 EntryAbility 冷启动/退后台时置位）
+      if (this.token !== '' && this.appLockLocked) {
+        AppLockOverlay()
       }
     }
     .width('100%')

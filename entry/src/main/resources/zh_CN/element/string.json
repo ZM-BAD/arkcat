@@ -573,6 +573,10 @@
       "value": "简体中文"
     },
     {
+      "name": "settings_language_follow_system",
+      "value": "跟随系统"
+    },
+    {
       "name": "settings_accounts",
       "value": "账号"
     },
@@ -633,16 +637,12 @@
       "value": "分享反馈"
     },
     {
-      "name": "settings_get_help",
-      "value": "获取帮助"
-    },
-    {
       "name": "settings_terms",
       "value": "服务条款"
     },
     {
       "name": "settings_privacy",
-      "value": "隐私政策与分析"
+      "value": "隐私政策"
     },
     {
       "name": "settings_open_source",
@@ -654,19 +654,19 @@
     },
     {
       "name": "settings_feature_coming",
-      "value": "该功能将在后续版本提供"
+      "value": "该功能将在未来版本中提供"
     },
     {
-      "name": "settings_sign_out_confirm",
-      "value": "退出该账号？"
+      "name": "settings_sign_out_cancel",
+      "value": "取消"
+    },
+    {
+      "name": "settings_sign_out_action",
+      "value": "退出登录"
     },
     {
       "name": "settings_cancel",
       "value": "取消"
-    },
-    {
-      "name": "settings_confirm",
-      "value": "退出登录"
     },
     {
       "name": "settings_version",
@@ -2075,6 +2075,26 @@
     {
       "name": "discussions_filter_unlabeled",
       "value": "无标签"
+    },
+    {
+      "name": "app_lock_toggle",
+      "value": "使用设备凭据解锁应用"
+    },
+    {
+      "name": "app_lock_auth_title",
+      "value": "解锁 ArkCat"
+    },
+    {
+      "name": "app_lock_locked_title",
+      "value": "ArkCat 已锁定"
+    },
+    {
+      "name": "app_lock_unlock",
+      "value": "解锁"
+    },
+    {
+      "name": "app_lock_no_credential",
+      "value": "未检测到设备锁屏凭据，请先在系统设置中设置锁屏密码"
     }
   ]
 }
