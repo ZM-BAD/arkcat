@@ -11,7 +11,7 @@
 
 点击仓库详情页 More 折叠区中「Contributors」/「Watchers」入口行进入对应列表页：
 两页共用「仓库名（粗体）+ 副标题（灰）」自绘 AppBar 模式，与 Stargazers 列表页同款行样式
-（56vp 圆头像 / 粗体显示名 / 灰 login / 灰 bio 两行）。行点击进入用户主页。
+（56vp 圆头像 / 粗体显示名 / 灰 login / 黑 bio 两行）。行点击进入用户主页。
 
 ---
 
@@ -33,7 +33,7 @@ Contributors / Watchers 两页结构一致，仅副标题与数据源不同：
 | # | 位置 | 元素 | 功能 | 可行性 | 接口 | 备注 |
 | --- | ------ | ------ | ------ | -------- | ------ | ------ |
 | 1 | AppBar | ← + 仓库名（粗体 20fp）+ 副标题（灰 14fp（body_font_size）） | 返回 / 标题 | ✅ | — | 副标题文案复用 repo_contributors/repo_watchers；参数 owner/name |
-| 2 | 行 | 56vp 圆头像 + 显示名（粗体）/login（灰·无@）/bio（灰 2 行省略） | 展示 | ✅ | Watchers: repository.watchers(first:50) nodes{login name bio avatarUrl}；Contributors: REST /contributors 取 login 序 + GraphQL user(login) 批量补 name/bio/avatarUrl | bio 为空隐藏；无显示名时仅灰 login 单行（与 Stargazers 行一致）；行点击 → userProfile |
+| 2 | 行 | 56vp 圆头像 + 显示名（粗体）/login（灰·无@）/bio（黑 2 行省略） | 展示 | ✅ | Watchers: repository.watchers(first:50) nodes{login name bio avatarUrl}；Contributors: REST /contributors 取 login 序 + GraphQL user(login) 批量补 name/bio/avatarUrl | bio 为空隐藏；无显示名时仅灰 login 单行（与 Stargazers 行一致）；行点击 → userProfile |
 | 3 | 行 | 无头像占位：底色 + oct_person_16 灰 icon | 展示（官方灰人形近似） | ✅ | — | 仅 avatarUrl 为空时叠 person 图标（无加载中/失败态） |
 | 4 | 列表 | 分页（hasNextPage → 触底自动加载） | 翻页 | ✅ | Watchers: pageInfo{hasNextPage endCursor}；Contributors: REST page=N 且返回长度=50 近似 | 列表尾部 spinner（ListLoadingFooter），非文字钮 |
 | 5 | 列表 | 空态 / StateView | 展示 | ✅ | — | social_contributors_empty / social_watchers_empty；REST 404（无贡献者）→ 空态 |

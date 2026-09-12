@@ -32,7 +32,7 @@ Profile 页「N followers · N following」计数行拆为**两个可点击片�
 | 2 | 行 | 圆头像（80 逻辑宽内） | 展示 | ✅ | `avatarUrl` | — |
 | 3 | 行 | 显示名（粗体；缺失时仅灰色用户名行） | 展示 | ✅ | `name` | 显示名空 → 单行 `@login` 灰色 |
 | 4 | 行 | 用户名（灰，无 @ 前缀） | 展示 | ✅ | `login` | — |
-| 5 | 行 | 简介（灰，可选，最多 2 行省略） | 展示 | ✅ | `bio` | — |
+| 5 | 行 | 简介（黑 text_primary，可选，最多 2 行省略） | 展示 | ✅ | `bio` | — |
 | 6 | 行 | 整行点击 → 用户主页 | 导航 | ✅ | —（纯 UI） | pushPathByName('userProfile', login) |
 | 7 | 列表底 | 加载更多（首次 25 条，endCursor 分页） | 请求 | ✅ | `pageInfo { hasNextPage endCursor }` | 与 WorkService 同模式 |
 | 8 | 空态 | 无数据提示 | 展示 | ✅ | —（纯 UI） | 复用 StateView/空态文案 |

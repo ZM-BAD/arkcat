@@ -74,7 +74,7 @@ export struct StarredRepositoriesView {
     this.errorMsg = '';
     WorkService.fetchStarred(this.token, '', this.login)
       .then((page: WorkStarredPage) => {
-        // 排序后续再定：当前直接展示服务端返回顺序
+        // 展示顺序由服务端定：查询显式 STARRED_AT DESC，最新加星的在前
         this.repos = page.repos;
         this.viewerLogin = page.viewerLogin;
         this.currentLogin = page.currentLogin;
