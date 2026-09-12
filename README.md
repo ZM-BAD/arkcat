@@ -113,5 +113,7 @@ devecocli build                   # build debug HAP
 
 **ArkCat is a free, open-source, non-commercial HarmonyOS client for GitHub. It is not affiliated with, endorsed by, or sponsored by GitHub, Inc. GitHub and the GitHub logo are trademarks of GitHub, Inc. ArkCat contains no official GitHub assets or artwork.**
 
+Copyright © 2026 周铭
+
 - Project code: [GPL-3.0](./LICENSE)
 - Icons (Octicons, under [`assets/octicons/`](assets/octicons/README.md)): MIT License — see [`assets/octicons/LICENSE`](assets/octicons/LICENSE)

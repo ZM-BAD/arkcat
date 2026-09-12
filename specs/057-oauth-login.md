@@ -128,11 +128,11 @@ client_secret，符合纯端侧无后端架构。
 
 - [x] 无凭证冷启动：登录选择页二选一引导可见，OAuth 主按钮视觉主次明确（蓝底主按钮 + 文字次按钮）
 - [ ] 选择 PAT 入口：粘贴/保存前 /user 实测/错误文案行为与改造前一致（兼容路径回归）
-- [ ] 发起 OAuth：浏览器拉起 github.com/login/device，等待页显示 user_code 且剪贴板内容与展示一致
+- [x] 发起 OAuth：浏览器拉起 github.com/login/device，等待页显示 user_code 且剪贴板内容与展示一致
 - [ ] 正常授权：轮询获得 token → /user 实测通过 → TokenStore 落库 → onSaved 进入主界面；杀 App 重启不再出现登录页
 - [ ] 轮询节奏：mock 序列 authorization_pending×N → slow_down → success，interval 递增 +5s 正确
 - [ ] 失败路径：expired_token / access_denied / 网络异常分别给出对应文案与重试入口，均不落库
-- [ ] `gho_` 登录后四 Tab 数据拉取正常（GraphQL/REST 与 PAT 等价；含 read:org 组织数据）
+- [x] `gho_` 登录后四 Tab 数据拉取正常（GraphQL/REST 与 PAT 等价；含 read:org 组织数据）
 - [x] 返回中断：等待页返回选择页后停止轮询，再次发起重新获取新 device_code
 - [x] 单元测试覆盖 OAuthService 状态机（pending / slow_down / expired / denied / success 五态）
 

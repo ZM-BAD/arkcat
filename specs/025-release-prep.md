@@ -39,7 +39,7 @@ arkcat/
 | 2 | `assets/octicons/` | `LICENSE`（MIT） | 第三方资产许可 | ✅ | — | 上游自带，保留不改 |
 | 3 | README.md | 「非官方 / 非商业」声明段（英文） | 品牌风险抗辩 | ✅ | — | 措辞见 Spec 规范文本 |
 | 4 | README_zh.md | 同款声明段（中文） | 同上 | ✅ | — | 与英文一致 |
-| 5 | README 双文 | License 段：GPL-3.0 + Octicons MIT 例外 | 许可说明 | ✅ | — | 替换原 Apache-2.0 |
+| 5 | README 双文 | License 段：GPL-3.0 + Octicons MIT 例外 + 版权声明行 | 许可说明 | ✅ | — | 替换原 Apache-2.0；版权行 `Copyright © 2026 周铭`（GPL-3.0 要求随附版权声明，此前全仓缺失） |
 | 6 | `docs/` | `app-store-checklist.md` | 上架准备清单 | ✅ | — | 含零盈利条目 |
 | 7 | specs | 025 本文件 | 规范固化 | ✅ | — | — |
 | 8 | 全仓库 | 品牌红线：不得引入 GitHub logo / Octocat / 官方插画素材 | 商标合规 | ✅ | — | 红线入 CONTRIBUTING 建议 |
@@ -69,7 +69,7 @@ arkcat/
 
 - [x] 测试 1：仓库根存在 `LICENSE` 且首行为 GPL-3.0 声明
 - [x] 测试 2：README 双文均含「not affiliated / 非官方」与「non-commercial / 非商业」措辞（grep 双文比对）
-- [x] 测试 3：README 双文 License 段为 GPL-3.0，并注明 Octicons 为 MIT（`assets/octicons/LICENSE`）
+- [x] 测试 3：README 双文 License 段为 GPL-3.0、注明 Octicons 为 MIT（`assets/octicons/LICENSE`），并含项目版权声明行 `Copyright © 2026 周铭`（双文各一处）
 - [x] 测试 4：`bash scripts/check-spec.sh` 通过（含 025 编号连续）
 - [x] 测试 5：pre-commit markdownlint / gitleaks 通过
 - [x] 测试 6：CI structure-check 所需文件不受影响（仅新增 docs/）
