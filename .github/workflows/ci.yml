@@ -147,7 +147,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "17"
@@ -170,7 +170,7 @@ jobs:
         run: bash scripts/ci-build.sh
 
       - name: Upload HAP artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: arkcat-debug-hap
           path: entry/build/default/outputs/**/*.hap
@@ -230,18 +230,19 @@ jobs:
   # ──────────────────────────────────────────
   # Job 8: 官方 Local Test（macOS 专属：hvigorw test 暂不支持 Linux）
   # Hypium + 真实 ArkTS 语义，产出可按文件统计的覆盖率报告
-  # ⚠️ 禁用中：私仓计费 ×10（同 Job 4）；仓库 public 后恢复（handoff.md 2026-09-08）
+  # ⚠️ 禁用中：私仓计费 ×10；2026-09-12 已实测首跑全绿（setup 102s / test 16s），
+  #    仓库 public 后恢复（删掉 if: false 即可）
   # ──────────────────────────────────────────
   official-local-test:
     name: Official Local Test (macOS)
     runs-on: macos-latest
-    if: false  # 私仓计费暂停；public 后恢复（handoff.md 2026-09-08 有记录）
+    if: false  # 私仓计费暂停；public 后恢复（首跑已验证通过）
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
       - name: Setup JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "17"
@@ -266,8 +267,58 @@ jobs:
           hvigorw test -p module=entry -p coverage=true --no-daemon
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: local-test-coverage
+          path: entry/.test/default/outputs/test/reports
+          if-no-files-found: warn
+
+  # ──────────────────────────────────────────
+  # Job 9: 官方 Local Test（Windows）——面向开源后使用 Windows 的贡献者，
+  # 与 Job 8 同一套 hvigorw test + Hypium 覆盖率流程
+  # setup-ohos 的 Windows 支持要求 CLI tools > 6.1.1.280（本 job 用 26.0.0.821 ✅）；
+  # Windows 版 CLI tools 经 PATH 提供 hvigorw.bat / ohpm.bat（PowerShell 按 PATHEXT 解析）
+  # ⚠️ 禁用中：私仓 Windows runner 计费 ×2；2026-09-12 已实测首跑全绿
+  #    （无缓存 setup 8m38s / test 1m38s / SDK 缓存保存约 15m，二次起走缓存提速），
+  #    仓库 public 后随 Job 8 一同恢复
+  # ──────────────────────────────────────────
+  official-local-test-windows:
+    name: Official Local Test (Windows)
+    runs-on: windows-latest
+    if: false  # 私仓计费暂停；public 后恢复（首跑已验证通过）
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Setup HarmonyOS CLI tools (API 26)
+        uses: ErBWs/setup-ohos@v2
+        with:
+          version: 26.0.0.821
+          cache: true
+
+      - name: Install dependencies
+        run: ohpm install --all
+
+      - name: Run official local test
+        shell: pwsh
+        run: |
+          $env:DEVECO_SDK_HOME = $env:HOS_SDK_HOME
+          hvigorw.bat test -p module=entry -p coverage=true --no-daemon
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v7
+        with:
+          name: local-test-coverage-windows
           path: entry/.test/default/outputs/test/reports
           if-no-files-found: warn
