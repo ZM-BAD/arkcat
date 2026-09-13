@@ -22,6 +22,7 @@ query IssuesList(
         id number title state createdAt
         author { login }
         labels(first: 5) { nodes { name color } }
+        milestone { title }
         comments { totalCount }
         assignees(first: 10) { nodes { login } }
         timelineItems(itemTypes: [CROSS_REFERENCED_EVENT], first: 5) {
@@ -50,15 +51,38 @@ export function repoIssueStates(state: string): string[] {
   return ['OPEN', 'CLOSED'];
 }
 
+/**
+ * 排序键 → GraphQL IssueOrder（键集与工作区 Sort 一致；reactions 键 repository.issues
+ * 无对应 orderBy，不进本页排序面板）。
+ */
+export function repoIssueOrder(sortKey: string): IssueOrderInput {
+  if (sortKey === 'oldest') {
+    return { 'field': 'CREATED_AT', 'direction': 'ASC' };
+  }
+  if (sortKey === 'most_commented') {
+    return { 'field': 'COMMENTS', 'direction': 'DESC' };
+  }
+  if (sortKey === 'least_commented') {
+    return { 'field': 'COMMENTS', 'direction': 'ASC' };
+  }
+  if (sortKey === 'recently_updated') {
+    return { 'field': 'UPDATED_AT', 'direction': 'DESC' };
+  }
+  if (sortKey === 'least_recently_updated') {
+    return { 'field': 'UPDATED_AT', 'direction': 'ASC' };
+  }
+  return { 'field': 'CREATED_AT', 'direction': 'DESC' };
+}
+
 export class IssuesService {
   /**
-   * 仓库内 Issue 列表（Spec 027）：状态集合 + Label + Author/Assignee（服务端 filterBy）+ 游标。
-   * filterBy 与 states/labels 正交，分页语义不变。
+   * 仓库内 Issue 列表（Spec 027）：状态集合 + Label + Author/Assignee（服务端 filterBy）+ 排序 + 游标。
+   * filterBy 与 states/labels 正交，分页语义不变；sortKey 按 repoIssueOrder 映射服务端 orderBy。
    */
   static async fetchRepoIssues(token: string, owner: string, name: string,
     state: string, label: string, cursor: string, author: string = '',
-    assignee: string = ''): Promise<IssuesPage> {
-    const order: IssueOrderInput = { 'field': 'CREATED_AT', 'direction': 'DESC' };
+    assignee: string = '', sortKey: string = 'newest'): Promise<IssuesPage> {
+    const order: IssueOrderInput = repoIssueOrder(sortKey);
     const variables: Record<string, Object> = {
       'owner': owner,
       'name': name,

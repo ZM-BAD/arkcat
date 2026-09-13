@@ -15,6 +15,8 @@ export interface IssueSummary {
   commentCount: number;
   linkedPrCount: number;
   assignees: string[];
+  /** 所属里程碑标题（无里程碑=''；仓库内 Issues 的 Milestone 筛选客户端过滤用） */
+  milestoneTitle: string;
 }
 
 /** Issues 列表页数据（含分页游标） */
@@ -54,6 +56,7 @@ export function mapIssue(raw: JsonMap): IssueSummary {
       }
     }
   }
+  const milestone = Json.obj(raw, 'milestone');
   return {
     id: Json.str(raw, 'id'),
     number: Json.num(raw, 'number'),
@@ -64,7 +67,8 @@ export function mapIssue(raw: JsonMap): IssueSummary {
     labels: labels,
     commentCount: comments ? Json.num(comments, 'totalCount') : 0,
     linkedPrCount: linkedPrCount,
-    assignees: assignees
+    assignees: assignees,
+    milestoneTitle: milestone ? Json.str(milestone, 'title') : ''
   };
 }
 

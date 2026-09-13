@@ -253,6 +253,10 @@
       "value": "Issues"
     },
     {
+      "name": "repo_issues_milestone",
+      "value": "Milestone"
+    },
+    {
       "name": "issues_state_open",
       "value": "Open"
     },
@@ -455,6 +459,14 @@
     {
       "name": "filter_language_title",
       "value": "Filter by language"
+    },
+    {
+      "name": "filter_languages",
+      "value": "Filter languages"
+    },
+    {
+      "name": "filter_spoken_languages",
+      "value": "Filter spoken languages"
     },
     {
       "name": "explore_filter_spoken_title",

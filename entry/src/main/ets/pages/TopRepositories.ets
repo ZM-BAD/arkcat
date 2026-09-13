@@ -5,8 +5,10 @@
  */
 import { WorkTopRepoItem, WorkTopReposPage, filterTopRepos } from '../models/WorkModels';
 import { FilterDropdownChip, FilterDropdownOption } from '../components/FilterDropdownChip';
+import { OctIcon } from '../components/OctIcon';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
+import { WorkEmptyView } from '../components/WorkEmptyView';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { AppBar, AppBarAction, AppBarActionCfg } from '../components/AppBar';
 import { PageShadowBar } from '../components/PageShadowBar';
@@ -107,6 +109,25 @@ export struct TopRepositoriesView {
     return this.stringOf($r('app.string.repos_filter_all'));
   }
 
+  /** 漏斗徽标计数：Type 非 All 计 1（全库口径：dirty=非默认值） */
+  private activeFilterCount(): number {
+    return this.filterKey !== 'all' ? 1 : 0;
+  }
+
+  /** 漏斗菜单 Clear all filters：全部回默认并重查 */
+  private clearAllFilters(): void {
+    if (this.filterKey === 'all') {
+      return;
+    }
+    this.filterKey = 'all';
+    this.refresh();
+  }
+
+  /** 空态 RESET ALL FILTERS 门控：仅存在 dirty 筛选且列表为空时显示（全库口径，点击=Clear all filters 同函数） */
+  private canResetFilters(): boolean {
+    return this.activeFilterCount() > 0;
+  }
+
   /** 8 项筛选维度客户端过滤（已拉取集合内；服务端已下推的项在此幂等复核） */
   private visibleRepos(): WorkTopRepoItem[] {
     return filterTopRepos(this.repos, this.filterKey);
@@ -182,18 +203,63 @@ export struct TopRepositoriesView {
       Refresh({ refreshing: $$this.isRefreshing }) {
       Scroll() {
         Column() {
-          FilterDropdownChip({
-            label: this.filterLabel(),
-            active: this.filterKey !== 'all',
-            options: this.filterOptions(),
-            selectedKey: this.filterKey,
-            onPick: (key: string): void => {
-              if (this.filterKey !== key) {
-                this.filterKey = key;
-                this.refresh();
+          Row() {
+            // 漏斗徽标：激活筛选组数（全库同款；无激活时隐藏；固定在筛选条最左、不随 chip 横向滚动）
+            if (this.activeFilterCount() > 0) {
+              Row({ space: 4 }) {
+                OctIcon({
+                  res: $r('app.media.oct_filter_16'),
+                  iconSize: 14,
+                  iconColor: $r('app.color.link_blue')
+                })
+                Stack() {
+                  Text(`${this.activeFilterCount()}`)
+                    .fontSize(12)
+                    .fontColor(Color.White)
+                }
+                .width(18)
+                .height(18)
+                .borderRadius(9)
+                .backgroundColor($r('app.color.link_blue'))
+              }
+              .height(32)
+              .responseRegion({ x: 0, y: -6, width: '100%', height: '144%' })
+              .padding({ left: 8, right: 8 })
+              .borderRadius(16)
+              .backgroundColor($r('app.color.chip_bg'))
+              .border({ width: 1, color: $r('app.color.border') })
+              .margin({ right: 8 })
+              .bindMenu([
+                {
+                  value: $r('app.string.work_clear_all_filters'),
+                  action: (): void => this.clearAllFilters()
+                }
+              ])
+            }
+
+            // chips 滚动区：仅这一段随手指横向滑动
+            Scroll() {
+              Row() {
+                FilterDropdownChip({
+                  label: this.filterLabel(),
+                  active: this.filterKey !== 'all',
+                  options: this.filterOptions(),
+                  selectedKey: this.filterKey,
+                  onPick: (key: string): void => {
+                    if (this.filterKey !== key) {
+                      this.filterKey = key;
+                      this.refresh();
+                    }
+                  }
+                })
               }
             }
-          })
+            .scrollable(ScrollDirection.Horizontal)
+            .scrollBar(BarState.Off)
+            .layoutWeight(1)
+            .align(Alignment.Start)
+          }
+          .width('100%')
           .margin({ bottom: 12 })
           if (this.visibleRepos().length > 0) {
             ForEach(this.visibleRepos(), (repo: WorkTopRepoItem) => {
@@ -209,11 +275,13 @@ export struct TopRepositoriesView {
               onRetry: () => this.refresh()
             })
           } else {
-            StateView({
-              empty: true,
-              emptyText: $r('app.string.work_top_repos_empty'),
-              emptySub: isLimitedRangeEmpty(this.visibleRepos().length, this.hasNextPage)
-                ? $r('app.string.filter_loaded_range_hint') : null
+            WorkEmptyView({
+              iconText: '🐱',
+              title: $r('app.string.work_top_repos_empty'),
+              subtitle: isLimitedRangeEmpty(this.visibleRepos().length, this.hasNextPage)
+                ? $r('app.string.filter_loaded_range_hint') : null,
+              button: this.canResetFilters() ? $r('app.string.work_reset_all_filters') : null,
+              onButton: (): void => this.clearAllFilters()
             })
           }
         }

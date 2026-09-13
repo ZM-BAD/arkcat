@@ -333,24 +333,73 @@ export struct ExploreRepoListView {
   @Builder
   spokenSheet() {
     Column() {
-      this.sheetHeader($r('app.string.explore_filter_spoken_title'), (): void => {
-        this.sheetSearchShow = !this.sheetSearchShow;
-      })
+      // 搜索态双态标题（与 WorkFilterSelectSheet/LanguageFilterSheet 同款）；常态 ✕=关闭面板
+      Row() {
+        Stack() {
+          OctIcon({
+            res: this.sheetSearchShow ? $r('app.media.oct_arrow_left_24') : $r('app.media.oct_x_16'),
+            iconSize: 18,
+            iconColor: $r('app.color.text_primary')
+          })
+        }
+        .width(44)
+        .height(44)
+        .onClick((): void => {
+          if (this.sheetSearchShow) {
+            this.sheetSearch = '';
+            this.sheetSearchShow = false;
+          } else {
+            this.sheetKind = '';
+          }
+        })
+        if (this.sheetSearchShow) {
+          // 标题原地变搜索框：对口语清单客户端过滤；框内右端 ✕ 一键清空
+          Stack({ alignContent: Alignment.End }) {
+            TextInput({ placeholder: this.stringOf($r('app.string.filter_spoken_languages')), text: this.sheetSearch })
+              .height(40)
+              .fontSize($r('app.float.body_font_size'))
+              .width('100%')
+              .padding({ right: 34 })
+              .borderRadius(6)
+              .backgroundColor($r('app.color.chip_bg'))
+              .defaultFocus(true)
+              .onChange((v: string): void => {
+                this.sheetSearch = v;
+              })
+            if (this.sheetSearch !== '') {
+              Stack() {
+                OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
+              }
+              .width(36)
+              .height(36)
+              .onClick((): void => {
+                this.sheetSearch = '';
+              })
+            }
+          }
+          .layoutWeight(1)
+          .margin({ right: 8 })
+        } else {
+          Text($r('app.string.explore_filter_spoken_title'))
+            .fontSize($r('app.float.title_font_size'))
+            .fontWeight(600)
+            .fontColor($r('app.color.text_primary'))
+            .layoutWeight(1)
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 18, iconColor: $r('app.color.link_blue') })
+          }
+          .width(44)
+          .height(44)
+          .onClick((): void => {
+            this.sheetSearchShow = true;
+          })
+        }
+      }
+      .padding({ left: 8, right: 8 })
       Divider()
         .color($r('app.color.divider'))
         .strokeWidth(1)
         .width('100%')
-      if (this.sheetSearchShow) {
-        TextInput({ placeholder: this.stringOf($r('app.string.search_placeholder')), text: this.sheetSearch })
-          .height(40)
-          .fontSize($r('app.float.body_font_size'))
-          .margin({ left: 16, right: 16, bottom: 4 })
-          .borderRadius(6)
-          .backgroundColor($r('app.color.chip_bg'))
-          .onChange((v: string): void => {
-            this.sheetSearch = v;
-          })
-      }
       Scroll() {
         Column() {
           if (this.filteredSpoken().length > 0) {
@@ -372,6 +421,8 @@ export struct ExploreRepoListView {
       }
       .layoutWeight(1)
       .scrollBar(BarState.Off)
+      // 内容不足一屏时顶对齐：Scroll 默认居中会把过滤后的唯一结果行甩到面板中部（坑 30）
+      .align(Alignment.Top)
     }
     .width('100%')
     .height('100%')
@@ -453,6 +504,7 @@ export struct ExploreRepoListView {
       // 语言面板与 Repositories 页共用组件（Spec 037/056）
       LanguageFilterSheet({
         title: $r('app.string.filter_language_title'),
+        searchPlaceholder: $r('app.string.filter_languages'),
         languages: this.allLanguages,
         selected: this.language,
         onPick: (name: string): void => this.pickLanguage(name),

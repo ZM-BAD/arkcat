@@ -1,16 +1,20 @@
 /**
  * 仓库内 Issue 列表页（Spec 007/026 修订 + Spec 063 顶栏改版）：官方布局对齐——
  * 顶栏两行标题（灰小字 owner/name + 粗体 Issues）+ 蓝色搜索（顶栏内联过滤，框内灰 ✕ 清除，返回键退出搜索）
- * + circle-plus 新建；四筛选（状态/Label/Author/Assignee）+ 行样式（状态圈/标题/#N/时间/💬/🔁）。
- * Author/Assignee 与搜索词均为客户端过滤（已加载集合），行点击进入 Issue 详情（Spec 030）。
+ * + circle-plus 新建；六筛选（State=下拉；Label/Author/Assignee/Milestone/Sort=底部面板）+ 行样式（状态圈/标题/#N/时间/💬/🔁）。
+ * Author/Assignee 走服务端 filterBy；Milestone 客户端过滤（候选从已加载 issue 聚合，池子只增不减）；
+ * Sort 与工作区一致（WorkFilterSortSheet，6 键映射服务端 orderBy，reactions 本连接不支持不进面板）。
+ * 搜索词为客户端过滤，行点击进入 Issue 详情（Spec 030）。
  */
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
-import { FilterDropdownChip, FilterDropdownOption } from '../components/FilterDropdownChip';
+import { FilterDropdownChip, FilterDropdownOption, FilterSheetChip } from '../components/FilterDropdownChip';
+import { WorkFilterSortSheet } from '../components/WorkFilterSortSheet';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { IssueSummary, IssuesPage } from '../models/IssuesModels';
 import { IssuesService } from '../services/IssuesService';
 import { StateView } from '../components/StateView';
+import { WorkEmptyView } from '../components/WorkEmptyView';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
@@ -23,10 +27,18 @@ export struct IssuesListView {
   @Param pathStack: NavPathStack = new NavPathStack();
   /** 返回刷新 tick（review B13） */
   @Param returnTick: number = 0;
-  @Local state: string = 'all';
+  /** State 默认值=Open（2026-09-14 用户拍板，与官方一致；取非默认值计 dirty） */
+  @Local state: string = 'open';
   @Local label: string = '';
   @Local author: string = '';
   @Local assignee: string = '';
+  /** Milestone（客户端过滤，值为里程碑标题；''=不过滤；候选池从已加载 issue 聚合只增不减） */
+  @Local milestone: string = '';
+  @Local milestonePool: string[] = [];
+  /** Sort（与工作区一致：WorkFilterSortSheet 6 键；reactions 键本连接不支持不进面板） */
+  @Local sortKey: string = 'newest';
+  /** 弹层内容（'' | 'sort'）：单 bindSheet 内切换 */
+  @Local sheetKind: string = '';
   @Local all: IssueSummary[] = [];
   @Local shown: IssueSummary[] = [];
   @Local repoLabels: string[] = [];
@@ -79,7 +91,7 @@ export struct IssuesListView {
     this.loading = true;
     this.errorMsg = '';
     IssuesService.fetchRepoIssues(this.token, this.owner, this.name, this.state, this.label, '',
-      this.author, this.assignee)
+      this.author, this.assignee, this.sortKey)
       .then((page: IssuesPage) => {
         this.all = page.issues;
         this.repoLabels = page.repoLabels;
@@ -106,7 +118,7 @@ export struct IssuesListView {
     this.loading = true;
     this.loadingMore = true;
     IssuesService.fetchRepoIssues(this.token, this.owner, this.name, this.state, this.label, this.cursor,
-        this.author, this.assignee)
+        this.author, this.assignee, this.sortKey)
       .then((page: IssuesPage) => {
         this.all = this.all.concat(page.issues);
         this.cursor = page.endCursor;
@@ -124,7 +136,8 @@ export struct IssuesListView {
   }
 
   /**
-   * 客户端过滤：仅顶栏搜索词（Spec 063）。
+   * 客户端过滤：顶栏搜索词（Spec 063）+ Milestone（服务端无 milestone 参数，只能本地筛；
+   * 候选来自已加载集合，选中必有匹配、无「假空」）。
    * Author/Assignee 自 2026-09-13 起走服务端 filterBy（createdBy/assignee），不再本地过滤。
    */
   private applyFilters(): void {
@@ -132,6 +145,9 @@ export struct IssuesListView {
     const next: IssueSummary[] = [];
     for (const issue of this.all) {
       if (q !== '' && !this.matchQuery(issue, q)) {
+        continue;
+      }
+      if (this.milestone !== '' && issue.milestoneTitle !== this.milestone) {
         continue;
       }
       next.push(issue);
@@ -166,8 +182,7 @@ export struct IssuesListView {
     return opts;
   }
 
-  /** Author 下拉选项（首屏作者集合） */
-  /** 把本页出现的 author/assignee 并入候选池（会话内只增不减） */
+  /** 把本页出现的 author/assignee/milestone 并入候选池（会话内只增不减） */
   private absorbFilterPools(issues: IssueSummary[]): void {
     for (const issue of issues) {
       if (issue.authorLogin !== '' && this.authorPool.indexOf(issue.authorLogin) < 0) {
@@ -177,6 +192,9 @@ export struct IssuesListView {
         if (this.assigneePool.indexOf(a) < 0) {
           this.assigneePool = this.assigneePool.concat([a]);
         }
+      }
+      if (issue.milestoneTitle !== '' && this.milestonePool.indexOf(issue.milestoneTitle) < 0) {
+        this.milestonePool = this.milestonePool.concat([issue.milestoneTitle]);
       }
     }
   }
@@ -198,12 +216,51 @@ export struct IssuesListView {
     return options;
   }
 
-  /** 清空全部筛选（漏斗菜单） */
+  /** Milestone 下拉选项（会话内出现过的里程碑集合；再点选中项=取消） */
+  private milestoneFilterOptions(): FilterDropdownOption[] {
+    const options: FilterDropdownOption[] = [];
+    for (const m of this.milestonePool) {
+      options.push({ key: m, label: m });
+    }
+    return options;
+  }
+
+  private milestoneLabel(): string {
+    return this.milestone !== '' ? this.milestone : this.stringOf($r('app.string.repo_issues_milestone'));
+  }
+
+  /** Sort chip 文案（与工作区同款：Sort: <排序名>） */
+  private sortChipLabel(): string {
+    return resText(this.getUIContext(), $r('app.string.issues_filter_sort_prefix'), this.sortLabelCore());
+  }
+
+  private sortLabelCore(): string {
+    if (this.sortKey === 'oldest') {
+      return this.stringOf($r('app.string.issues_sort_oldest'));
+    }
+    if (this.sortKey === 'most_commented') {
+      return this.stringOf($r('app.string.issues_sort_most_commented'));
+    }
+    if (this.sortKey === 'least_commented') {
+      return this.stringOf($r('app.string.issues_sort_least_commented'));
+    }
+    if (this.sortKey === 'recently_updated') {
+      return this.stringOf($r('app.string.issues_sort_recently_updated'));
+    }
+    if (this.sortKey === 'least_recently_updated') {
+      return this.stringOf($r('app.string.issues_sort_least_recently_updated'));
+    }
+    return this.stringOf($r('app.string.issues_sort_newest'));
+  }
+
+  /** 清空全部筛选（漏斗菜单/空态 RESET 同函数）：含新增的 Milestone 与 Sort */
   private clearAllFilters(): void {
-    this.state = 'all';
+    this.state = 'open';
     this.label = '';
     this.author = '';
     this.assignee = '';
+    this.milestone = '';
+    this.sortKey = 'newest';
     this.refresh();
   }
 
@@ -226,7 +283,8 @@ export struct IssuesListView {
   }
 
   private activeFilterCount(): number {
-    let c = this.state === 'all' ? 0 : 1;
+    // State 默认=Open：非 open 才计 1；Milestone/Sort 各计 1（全库口径：dirty=非默认值，排序计入）
+    let c = this.state === 'open' ? 0 : 1;
     if (this.label !== '') {
       c++;
     }
@@ -234,6 +292,12 @@ export struct IssuesListView {
       c++;
     }
     if (this.assignee !== '') {
+      c++;
+    }
+    if (this.milestone !== '') {
+      c++;
+    }
+    if (this.sortKey !== 'newest') {
       c++;
     }
     return c;
@@ -329,6 +393,139 @@ export struct IssuesListView {
     .onClick(() => {
       this.pathStack.pushPathByName('issueDetail', `${this.owner}/${this.name}/${issue.number}`);
     })
+  }
+
+  /** 当前列表面板的标题（label/author/assignee/milestone 共用一套列表面板结构） */
+  private currentListTitle(): Resource {
+    if (this.sheetKind === 'label') {
+      return $r('app.string.repo_prs_label');
+    }
+    if (this.sheetKind === 'author') {
+      return $r('app.string.repo_prs_author');
+    }
+    if (this.sheetKind === 'assignee') {
+      return $r('app.string.repo_prs_assignee');
+    }
+    return $r('app.string.repo_issues_milestone');
+  }
+
+  private currentListOptions(): FilterDropdownOption[] {
+    if (this.sheetKind === 'label') {
+      return this.labelFilterOptions();
+    }
+    if (this.sheetKind === 'author') {
+      return this.authorFilterOptions();
+    }
+    if (this.sheetKind === 'assignee') {
+      return this.assigneeFilterOptions();
+    }
+    return this.milestoneFilterOptions();
+  }
+
+  private currentListSelected(): string {
+    if (this.sheetKind === 'label') {
+      return this.label;
+    }
+    if (this.sheetKind === 'author') {
+      return this.author;
+    }
+    if (this.sheetKind === 'assignee') {
+      return this.assignee;
+    }
+    return this.milestone;
+  }
+
+  /** 单选即生效并关面板；再点选中项=取消（清筛选）。Milestone 为客户端过滤不重查 */
+  private applyListPick(key: string): void {
+    const kind = this.sheetKind;
+    const picked = this.currentListSelected() === key ? '' : key;
+    if (kind === 'label') {
+      this.label = picked;
+    } else if (kind === 'author') {
+      this.author = picked;
+    } else if (kind === 'assignee') {
+      this.assignee = picked;
+    } else if (kind === 'milestone') {
+      this.milestone = picked;
+    }
+    this.sheetKind = '';
+    if (kind === 'milestone') {
+      this.applyFilters();
+    } else {
+      this.refresh();
+    }
+  }
+
+  /** 弹层分派（单 bindSheet）：label/author/assignee/milestone 列表单选 + Sort 面板（与工作区同款） */
+  @Builder
+  sortSheet() {
+    if (this.sheetKind === 'label' || this.sheetKind === 'author'
+      || this.sheetKind === 'assignee' || this.sheetKind === 'milestone') {
+      Column() {
+        Row() {
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 18, iconColor: $r('app.color.text_primary') })
+          }
+          .width(44)
+          .height(44)
+          .onClick((): void => {
+            this.sheetKind = '';
+          })
+          Text(this.currentListTitle())
+            .fontSize($r('app.float.title_font_size'))
+            .fontWeight(600)
+            .fontColor($r('app.color.text_primary'))
+            .layoutWeight(1)
+        }
+        .padding({ left: 8, right: 8 })
+        Divider()
+          .color($r('app.color.divider'))
+          .strokeWidth(1)
+          .width('100%')
+        Scroll() {
+          Column() {
+            ForEach(this.currentListOptions(), (opt: FilterDropdownOption) => {
+              Row() {
+                Text(opt.label)
+                  .fontSize($r('app.float.body_font_size'))
+                  .fontColor($r('app.color.text_primary'))
+                  .layoutWeight(1)
+                  .maxLines(1)
+                  .textOverflow({ overflow: TextOverflow.Ellipsis })
+                if (this.currentListSelected() === opt.key) {
+                  OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 16, iconColor: $r('app.color.link_blue') })
+                    .margin({ left: 8 })
+                }
+              }
+              .width('100%')
+              .height(56)
+              .padding({ left: 20, right: 16 })
+              .onClick((): void => this.applyListPick(opt.key))
+            }, (opt: FilterDropdownOption) => `${opt.key}_${this.currentListSelected() === opt.key ? 'on' : 'off'}`)
+          }
+        }
+        .layoutWeight(1)
+        .scrollBar(BarState.Off)
+        .align(Alignment.Top)
+      }
+      .width('100%')
+      .height('100%')
+      .backgroundColor($r('app.color.card_background'))
+    } else {
+      WorkFilterSortSheet({
+        sortKey: this.sortKey,
+        onPick: (key: string): void => {
+          if (this.sortKey !== key) {
+            this.sortKey = key;
+            this.refresh();
+          }
+          this.sheetKind = '';
+        },
+        onClose: (): void => {
+          this.sheetKind = '';
+        }
+      })
+    }
   }
 
   build() {
@@ -471,34 +668,45 @@ export struct IssuesListView {
             Row() {
             FilterDropdownChip({
               label: this.stateLabel(),
-              active: this.state !== 'all',
+              // State 默认=Open：取非默认值才算 dirty 发蓝
+              active: this.state !== 'open',
               options: this.stateFilterOptions(),
               selectedKey: this.state,
               onPick: (key: string): void => { this.state = key; this.refresh(); }
             })
 
-            FilterDropdownChip({
+            // Label/Author/Assignee/Milestone：底部面板模式（与 Sort 一致），单选即关、再点选中项=取消
+            FilterSheetChip({
               label: this.label === '' ? this.stringOf($r('app.string.repo_prs_label')) : this.label,
               active: this.label !== '',
-              options: this.labelFilterOptions(),
-              selectedKey: this.label,
-              onPick: (key: string): void => { this.label = this.label === key ? '' : key; this.refresh(); }
+              onTap: (): void => { this.sheetKind = 'label'; }
             })
 
-            FilterDropdownChip({
+            FilterSheetChip({
               label: this.author === '' ? this.stringOf($r('app.string.repo_prs_author')) : this.author,
               active: this.author !== '',
-              options: this.authorFilterOptions(),
-              selectedKey: this.author,
-              onPick: (key: string): void => { this.author = this.author === key ? '' : key; this.refresh(); }
+              onTap: (): void => { this.sheetKind = 'author'; }
             })
 
-            FilterDropdownChip({
+            FilterSheetChip({
               label: this.assignee === '' ? this.stringOf($r('app.string.repo_prs_assignee')) : this.assignee,
               active: this.assignee !== '',
-              options: this.assigneeFilterOptions(),
-              selectedKey: this.assignee,
-              onPick: (key: string): void => { this.assignee = this.assignee === key ? '' : key; this.refresh(); }
+              onTap: (): void => { this.sheetKind = 'assignee'; }
+            })
+
+            FilterSheetChip({
+              label: this.milestoneLabel(),
+              active: this.milestone !== '',
+              onTap: (): void => { this.sheetKind = 'milestone'; }
+            })
+
+            // Sort：底部面板（与工作区同款 WorkFilterSortSheet）
+            FilterSheetChip({
+              label: this.sortChipLabel(),
+              active: this.sortKey !== 'newest',
+              onTap: (): void => {
+                this.sheetKind = 'sort';
+              }
             })
             }
           }
@@ -522,7 +730,12 @@ export struct IssuesListView {
           } else if (this.searchOn && this.searchQuery.trim() !== '') {
             StateView({ empty: true, emptyText: $r('app.string.search_no_results') })
           } else {
-            StateView({ empty: true, emptyText: $r('app.string.issues_empty') })
+            WorkEmptyView({
+              iconText: '🐱',
+              title: $r('app.string.issues_empty'),
+              button: this.activeFilterCount() > 0 ? $r('app.string.work_reset_all_filters') : null,
+              onButton: (): void => this.clearAllFilters()
+            })
           }
         }
         .padding({ left: 16, right: 16, bottom: 16 })
@@ -544,5 +757,15 @@ export struct IssuesListView {
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
+    .bindSheet(this.sheetKind !== '', this.sortSheet(), {
+      height: this.sheetKind === 'sort' ? 620 : 560,
+      backgroundColor: $r('app.color.bg_page'),
+      // 关闭钮自绘，避免默认 ✕ 重叠（全库 bindSheet 口径）
+      showClose: false,
+      // 交互关闭后复位，否则 isShow 表达式恒 true 弹层失效（review B3）
+      onDisappear: (): void => {
+        this.sheetKind = '';
+      }
+    })
   }
 }

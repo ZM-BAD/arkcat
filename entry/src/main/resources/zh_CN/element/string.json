@@ -253,6 +253,10 @@
       "value": "议题"
     },
     {
+      "name": "repo_issues_milestone",
+      "value": "里程碑"
+    },
+    {
       "name": "issues_state_open",
       "value": "开启"
     },
@@ -455,6 +459,14 @@
     {
       "name": "filter_language_title",
       "value": "按语言筛选"
+    },
+    {
+      "name": "filter_languages",
+      "value": "筛选语言"
+    },
+    {
+      "name": "filter_spoken_languages",
+      "value": "筛选口语"
     },
     {
       "name": "explore_filter_spoken_title",

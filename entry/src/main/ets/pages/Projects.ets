@@ -144,6 +144,34 @@ export struct ProjectsView {
     this.searchQuery = '';
   }
 
+  /** 漏斗徽标计数：范围/状态/排序各计 1（全库口径：dirty=非默认值，排序计入） */
+  private activeFilterCount(): number {
+    let n = 0;
+    if (this.ownedOnly) {
+      n++;
+    }
+    if (this.stateFilter !== 'open') {
+      n++;
+    }
+    if (this.sortKey !== 'most_viewed') {
+      n++;
+    }
+    return n;
+  }
+
+  /** 漏斗菜单 Clear all filters：全部回默认并重筛（不清页内搜索） */
+  private clearAllFilters(): void {
+    this.ownedOnly = false;
+    this.stateFilter = 'open';
+    this.sortKey = 'most_viewed';
+    this.applyFilters();
+  }
+
+  /** 空态 RESET ALL FILTERS 门控：仅存在 dirty 筛选且列表为空时显示（全库口径，点击=Clear all filters 同函数） */
+  private canResetFilters(): boolean {
+    return this.activeFilterCount() > 0;
+  }
+
   private scopeName(): string {
     return 'read:project';
   }
@@ -357,8 +385,43 @@ export struct ProjectsView {
 
       Scroll() {
         Column() {
-          Scroll() {
           Row() {
+            // 漏斗徽标：激活筛选组数（范围/状态/排序各计 1；无激活时隐藏；固定在筛选条最左、不随 chip 横向滚动）
+            if (this.activeFilterCount() > 0) {
+              Row({ space: 4 }) {
+                OctIcon({
+                  res: $r('app.media.oct_filter_16'),
+                  iconSize: 14,
+                  iconColor: $r('app.color.link_blue')
+                })
+                Stack() {
+                  Text(`${this.activeFilterCount()}`)
+                    .fontSize(12)
+                    .fontColor(Color.White)
+                }
+                .width(18)
+                .height(18)
+                .borderRadius(9)
+                .backgroundColor($r('app.color.link_blue'))
+              }
+              .height(32)
+              .responseRegion({ x: 0, y: -6, width: '100%', height: '144%' })
+              .padding({ left: 8, right: 8 })
+              .borderRadius(16)
+              .backgroundColor($r('app.color.chip_bg'))
+              .border({ width: 1, color: $r('app.color.border') })
+              .margin({ right: 8 })
+              .bindMenu([
+                {
+                  value: $r('app.string.work_clear_all_filters'),
+                  action: (): void => this.clearAllFilters()
+                }
+              ])
+            }
+
+            // chips 滚动区：仅这一段随手指横向滑动
+            Scroll() {
+            Row() {
             FilterDropdownChip({
               label: this.rangeLabel(),
               active: this.ownedOnly,
@@ -391,10 +454,14 @@ export struct ProjectsView {
                 this.applyFilters();
               }
             })
+            }
+            }
+            .scrollable(ScrollDirection.Horizontal)
+            .scrollBar(BarState.Off)
+            .layoutWeight(1)
+            .align(Alignment.Start)
           }
-          }
-          .scrollable(ScrollDirection.Horizontal)
-          .scrollBar(BarState.Off)
+          .width('100%')
           .margin({ bottom: 12 })
 
           if (this.visibleProjects().length > 0) {
@@ -415,7 +482,9 @@ export struct ProjectsView {
               iconText: '🐱',
               title: $r('app.string.work_projects_empty'),
               subtitle: isLimitedRangeEmpty(this.filtered.length, this.hasNextPage)
-                ? $r('app.string.filter_loaded_range_hint') : null
+                ? $r('app.string.filter_loaded_range_hint') : null,
+              button: this.canResetFilters() ? $r('app.string.work_reset_all_filters') : null,
+              onButton: (): void => this.clearAllFilters()
             })
           }
         }

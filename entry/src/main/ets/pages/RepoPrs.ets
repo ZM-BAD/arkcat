@@ -424,7 +424,9 @@ export struct RepoPrsView {
               iconText: '🐱',
               title: $r('app.string.repo_prs_empty'),
               subtitle: isLimitedRangeEmpty(this.shown.length, this.hasNextPage)
-                ? $r('app.string.filter_loaded_range_hint') : null
+                ? $r('app.string.filter_loaded_range_hint') : null,
+              button: this.activeFilterCount() > 0 ? $r('app.string.work_reset_all_filters') : null,
+              onButton: (): void => this.clearAllFilters()
             })
           }
         }

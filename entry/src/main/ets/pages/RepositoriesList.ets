@@ -444,6 +444,7 @@ export struct RepositoriesListView {
     if (this.sheetKind === 'language') {
       LanguageFilterSheet({
         title: $r('app.string.filter_language_title'),
+        searchPlaceholder: $r('app.string.filter_languages'),
         languages: this.allLanguages,
         selected: this.langFilter,
         onPick: (name: string): void => this.pickLanguage(name),

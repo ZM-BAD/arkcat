@@ -796,7 +796,7 @@ export struct DiscussionsView {
               iconText: '🐱',
               title: $r('app.string.work_discussions_empty'),
               button: (this.state !== 'open' || this.scope !== 'created' || this.unanswered)
-                ? $r('app.string.work_clear_all_filters') : null,
+                ? $r('app.string.work_reset_all_filters') : null,
               onButton: (): void => this.resetFilters()
             })
           }
