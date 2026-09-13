@@ -284,7 +284,7 @@ export struct WorkIssuesView {
         }
         if (this.inSearch) {
           Stack() {
-            OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+            OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
           }
           .width(44)
           .height(44)
@@ -310,7 +310,7 @@ export struct WorkIssuesView {
         Stack() {
           OctIcon({
             res: $r('app.media.oct_kebab_horizontal_16'),
-            iconSize: 18,
+            iconSize: 20,
             iconColor: $r('app.color.link_blue')
           })
           .rotate({ angle: 90 })

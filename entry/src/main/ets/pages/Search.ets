@@ -318,7 +318,7 @@ export struct SearchView {
 
           if (this.keyword !== '') {
             Stack() {
-              OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+              OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
             }
             .width(44)
             .height(44)
@@ -329,7 +329,7 @@ export struct SearchView {
             })
           }
           Stack() {
-            OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 18, iconColor: $r('app.color.link_blue') })
+            OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
               .rotate({ angle: 90 })
           }
           .width(44)

@@ -238,7 +238,7 @@ export struct WorkFilterBar {
       ForEach(this.menuOptions(kind), (opt: DropdownOption) => {
         Row() {
           Text(opt.label)
-            .fontSize($r('app.float.body_font_size'))
+            .fontSize($r('app.float.menu_font_size'))
             .fontColor($r('app.color.text_primary'))
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -249,7 +249,7 @@ export struct WorkFilterBar {
           }
         }
         .width('100%')
-        .height(44)
+        .height(52)
         .padding({ left: 14, right: 14 })
         .onClick((): void => this.onMenuPick(kind, opt.key))
       }, (opt: DropdownOption) => `${kind}:${opt.key}`)
@@ -265,7 +265,7 @@ export struct WorkFilterBar {
   filterChip($$: ChipState) {
     Row() {
       Text($$.label)
-        .fontSize($r('app.float.chip_font_size'))
+        .fontSize($r('app.float.caption_font_size'))
         .fontColor($$.active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
       OctIcon({
         res: $r('app.media.oct_chevron_down_16'),
@@ -274,10 +274,10 @@ export struct WorkFilterBar {
       })
         .margin({ left: 8 })
     }
-    .height(38)
-    .responseRegion({ x: 0, y: -3, width: '100%', height: '116%' })
-    .padding({ left: 10, right: 12 })
-    .borderRadius(19)
+    .height(32)
+    .responseRegion({ x: 0, y: -6, width: '100%', height: '144%' })
+    .padding({ left: 8, right: 8 })
+    .borderRadius(16)
     .backgroundColor($$.active ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
     .margin({ right: 8 })
     .border({ width: 1, color: $$.active ? $r('app.color.chip_active_border') : $r('app.color.border') })
@@ -506,10 +506,10 @@ export struct WorkFilterBar {
               .borderRadius(9)
               .backgroundColor($r('app.color.link_blue'))
             }
-            .height(38)
-            .responseRegion({ x: 0, y: -3, width: '100%', height: '116%' })
-            .padding({ left: 10, right: 12 })
-            .borderRadius(19)
+            .height(32)
+            .responseRegion({ x: 0, y: -6, width: '100%', height: '144%' })
+            .padding({ left: 8, right: 8 })
+            .borderRadius(16)
             .backgroundColor($r('app.color.chip_bg'))
             .border({ width: 1, color: $r('app.color.border') })
             .margin({ right: 8 })

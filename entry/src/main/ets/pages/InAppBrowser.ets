@@ -20,7 +20,7 @@ export struct InAppBrowserView {
 
   build() {
     Column() {
-      Row({ space: 4 }) {
+      Row() {
         Stack() {
           OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }

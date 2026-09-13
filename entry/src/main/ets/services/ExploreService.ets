@@ -79,7 +79,11 @@ export function mapRepoMeta(repos: RepoSummary[], data: JsonMap): RepoSummary[] 
       graphqlId: repo.graphqlId,
       openGraphImageUrl: Json.str(node, 'openGraphImageUrl'),
       viewerHasStarred: Json.bool(node, 'viewerHasStarred'),
-      contributorCount: repo.contributorCount
+      contributorCount: repo.contributorCount,
+      isArchived: repo.isArchived,
+      isFork: repo.isFork,
+      isMirror: repo.isMirror,
+      isTemplate: repo.isTemplate
     });
   }
   return merged;
@@ -192,7 +196,11 @@ export function mapSearchRepos(body: string): RepoSummary[] {
       graphqlId: Json.str(item, 'node_id'),
       openGraphImageUrl: '',
       viewerHasStarred: false,
-      contributorCount: 0
+      contributorCount: 0,
+      isArchived: Json.bool(item, 'archived'),
+      isFork: Json.bool(item, 'fork'),
+      isMirror: Json.str(item, 'mirror_url') !== '',
+      isTemplate: Json.bool(item, 'is_template')
     });
   }
   return repos;
@@ -258,7 +266,11 @@ export class ExploreService {
         graphqlId: repo.graphqlId,
         openGraphImageUrl: repo.openGraphImageUrl,
         viewerHasStarred: repo.viewerHasStarred,
-        contributorCount: counts.get(repo.nameWithOwner) ?? 0
+        contributorCount: counts.get(repo.nameWithOwner) ?? 0,
+        isArchived: repo.isArchived,
+        isFork: repo.isFork,
+        isMirror: repo.isMirror,
+        isTemplate: repo.isTemplate
       };
     });
   }

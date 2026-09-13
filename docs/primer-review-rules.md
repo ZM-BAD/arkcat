@@ -29,7 +29,7 @@
 
 ## C. 排版（DESIGN.md §3）
 
-- **C12** 字号主档 5 档：12/14/16/20/32（`FONT_XS~XL`）+ 既有辅助档 chip 15 / menu 17（float.json，2026-09-06 复核增补出处）；页面标题 20fp、正文 14fp、辅助 12fp；出现其他数值打回。
+- **C12** 字号主档 5 档：12/14/16/20/32（`FONT_XS~XL`）+ 既有辅助档 chip 15 / menu 17（float.json，2026-09-06 复核增补出处）；页面标题 20fp、正文 14fp、辅助 12fp；出现其他数值打回。下拉筛选 chip（FilterDropdownChip 及各页 sheet/menu 触发 chip）文字统一 12fp caption（2026-09-13 收口，chip 15 档保留给非下拉标签如 GitHub label）。
 - **C13** 字重只用官方 4 档：标题 600、正文 400、强调 500（300 仅弃用态）。
 - **C14** 代码/行号/commit SHA/分支名必须 monospace；正文一律 HarmonyOS Sans，禁止混排。
 - **C15** 行高对齐 4px 网格（≈1.5 倍字号）；单行截断 `maxLines`+ellipsis，路径/ref 类长文本优先考虑中段截断语义（Truncate）。
@@ -43,7 +43,7 @@
 
 ## E. 圆角 / 描边 / 阴影（DESIGN.md §4/§6）
 
-- **E20** 圆角 4 档对位：chip/小标签=3（`RADIUS_SMALL`）、按钮/带边框卡=6（`RADIUS_MEDIUM`）、大卡/模态=12（`RADIUS_LARGE`）、头像/胶囊=9999（`RADIUS_FULL`）；禁止 4/8/10 等随意值。
+- **E20** 圆角 4 档对位：chip/小标签=3（`RADIUS_SMALL`）、按钮/带边框卡=6（`RADIUS_MEDIUM`）、大卡/模态=12（`RADIUS_LARGE`）、头像/胶囊=9999（`RADIUS_FULL`）；禁止 4/8/10 等随意值。下拉筛选 chip 统一胶囊轮廓：高 32 / 圆角 16 / padding 8 / chevron 间距 8，responseRegion 扩至 44 触控（Primer Token 尺寸对齐，2026-09-13 收口）。
 - **E21** Shape 外轮廓用 `.stroke()`（`.border()` 在 Circle 上画矩形外框——已有踩坑定案）；描边宽 1 + border 语义色。
 - **E22** 阴影只有 resting（静置卡片）/floating（浮层）两档；滚动顶部阴影统一走 `PageShadowBar`，禁止自造阴影参数。
 

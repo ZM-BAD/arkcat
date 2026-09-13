@@ -68,11 +68,14 @@ export struct FilterActivityView {
     Column() {
       // 自绘头部（二级页约定：hideTitleBar；右 SAVE 为蓝色文字操作）
       Row() {
-        Row() {
+        // 返回键触控区用 Stack（图标居中）：视觉左缘 = 4 + (44-20)/2 = 16，与 AppBar 组件一致
+        Stack() {
           OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
         .width(44)
         .height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
         .onClick(() => this.pathStack.pop())
 
         Text($r('app.string.explore_filter_activity'))
@@ -81,15 +84,14 @@ export struct FilterActivityView {
           .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
 
-        Row() {
-          Text($r('app.string.explore_filter_save'))
-            .fontSize($r('app.float.body_font_size'))
-            .fontWeight(600)
-            .fontColor($r('app.color.link_blue'))
-        }
-        .height(44)
-        .padding({ left: 4, right: 4 })
-        .onClick(() => this.save())
+        // 右缘对齐规范：行 padding 4 + 文字右 padding 12 = 视觉 16（CreateList SAVE 同款写法）
+        Text($r('app.string.explore_filter_save'))
+          .fontSize($r('app.float.body_font_size'))
+          .fontWeight(600)
+          .fontColor($r('app.color.link_blue'))
+          .padding({ left: 6, right: 12, top: 6, bottom: 6 })
+          .responseRegion({ x: -6, y: -7, width: '130%', height: '147%' })
+          .onClick(() => this.save())
       }
       .width('100%')
       .height(48)

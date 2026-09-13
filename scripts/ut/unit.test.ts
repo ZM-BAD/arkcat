@@ -528,9 +528,36 @@ function repoSummary(id: string, nameWithOwner: string): RepoSummary {
     id: id, name: nameWithOwner.substring(2), nameWithOwner: nameWithOwner, description: '',
     stargazerCount: 1, forkCount: 0, primaryLanguage: '', languageColor: '', isPrivate: false,
     ownerLogin: nameWithOwner.substring(0, 1), ownerAvatarUrl: '', graphqlId: 'N' + id,
-    openGraphImageUrl: '', viewerHasStarred: false, contributorCount: 0
+    openGraphImageUrl: '', viewerHasStarred: false, contributorCount: 0,
+    isArchived: false, isFork: false, isMirror: false, isTemplate: false
   };
 }
+
+test('filterReposByType 官方 8 项语义（Spec 021/037）', async () => {
+  const m = await import('../../entry/src/main/ets/models/GitHubModels');
+  const plain = repoSummary('1', 'a/plain');
+  const archived = { ...repoSummary('2', 'a/archived'), isArchived: true };
+  const fork = { ...repoSummary('3', 'a/fork'), isFork: true };
+  const mirror = { ...repoSummary('4', 'a/mirror'), isMirror: true };
+  const template = { ...repoSummary('5', 'a/template'), isTemplate: true };
+  const priv = { ...repoSummary('6', 'a/priv'), isPrivate: true };
+  const all = [plain, archived, fork, mirror, template, priv];
+  // all 不过滤
+  assert.equal(m.filterReposByType(all, 'all').length, 6);
+  assert.equal(m.filterReposByType(all, 'archived')[0].id, '2');
+  assert.equal(m.filterReposByType(all, 'fork')[0].id, '3');
+  assert.equal(m.filterReposByType(all, 'mirror')[0].id, '4');
+  assert.equal(m.filterReposByType(all, 'template')[0].id, '5');
+  assert.equal(m.filterReposByType(all, 'private')[0].id, '6');
+  // public = 非私有（GraphQL 无 INTERNAL 区分）
+  assert.equal(m.filterReposByType(all, 'public').length, 5);
+  // source = 非 fork/镜像/归档（普通私有仓库仍算 source）
+  const source = m.filterReposByType(all, 'source');
+  assert.equal(source.length, 3);
+  assert.deepEqual(source.map((r: RepoSummary): string => r.id), ['1', '5', '6']);
+  // 未知 key 不过滤（防御性：脏值不得清空列表）
+  assert.equal(m.filterReposByType(all, 'weird').length, 6);
+});
 
 test('buildNotificationsPath 过滤参数（Focused 参与模式）', () => {
   assert.equal(buildNotificationsPath(true, 30), '/notifications?all=true&per_page=30');

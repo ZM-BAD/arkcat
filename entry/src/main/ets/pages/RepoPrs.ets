@@ -221,7 +221,7 @@ export struct RepoPrsView {
           Text(`#${item.number}`)
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))
-            .margin({ left: 6 })
+            .margin({ left: 8 })
         }
         .width('100%')
 
@@ -332,9 +332,10 @@ export struct RepoPrsView {
                 .borderRadius(9)
                 .backgroundColor($r('app.color.link_blue'))
               }
-              .height(38)
-              .padding({ left: 10, right: 12 })
-              .borderRadius(19)
+              .height(32)
+              .responseRegion({ x: 0, y: -6, width: '100%', height: '144%' })
+              .padding({ left: 8, right: 8 })
+              .borderRadius(16)
               .backgroundColor($r('app.color.chip_bg'))
               .border({ width: 1, color: $r('app.color.border') })
               .margin({ right: 8 })

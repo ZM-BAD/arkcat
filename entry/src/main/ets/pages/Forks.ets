@@ -195,7 +195,7 @@ export struct ForksView {
     Column() {
       if (this.inSearch) {
         // 搜索态：内联搜索头不进 AppBar（Spec 067 豁免内联搜索头），保留自绘
-        Row({ space: 8 }) {
+        Row() {
           Stack() {
             OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
           }
@@ -222,7 +222,7 @@ export struct ForksView {
           Text(this.stringOf($r('app.string.search_cancel')))
             .fontSize($r('app.float.body_font_size'))
             .fontColor($r('app.color.link_blue'))
-            .padding(6)
+            .padding({ left: 6, right: 12, top: 6, bottom: 6 })
             .responseRegion({ x: -6, y: -6, width: '140%', height: '140%' })
             .onClick(() => this.exitSearch())
         }

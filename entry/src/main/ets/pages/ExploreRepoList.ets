@@ -17,7 +17,8 @@ import { StateView } from '../components/StateView';
 import { AppBar } from '../components/AppBar';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
-import { FilterDropdownChip, FilterDropdownOption } from '../components/FilterDropdownChip';
+import { FilterDropdownChip, FilterDropdownOption, FilterSheetChip } from '../components/FilterDropdownChip';
+import { LanguageFilterSheet } from '../components/LanguageFilterSheet';
 import { TrendingRepoCard } from '../components/TrendingRepoCard';
 import { resText } from '../utils/I18n';
 
@@ -158,14 +159,6 @@ export struct ExploreRepoListView {
     this.sheetSearch = '';
     this.sheetSearchShow = false;
     this.sheetKind = kind;
-  }
-
-  private filteredLanguages(): ExploreLanguage[] {
-    const q = this.sheetSearch.trim().toLowerCase();
-    if (q === '') {
-      return this.allLanguages;
-    }
-    return this.allLanguages.filter((l: ExploreLanguage): boolean => l.name.toLowerCase().includes(q));
   }
 
   private filteredSpoken(): SpokenLanguage[] {
@@ -319,6 +312,8 @@ export struct ExploreRepoListView {
           .width(12)
           .height(12)
           .fill($$.color !== '' ? $$.color : $r('app.color.repo_language_unknown'))
+          // 色点与行文本之间的固定间隔（与 LanguageFilterSheet 同口径）
+          .margin({ right: 16 })
       }
       Text($$.label)
         .fontSize($r('app.float.body_font_size'))
@@ -333,54 +328,6 @@ export struct ExploreRepoListView {
     .height(56)
     .padding({ left: 20, right: 16 })
     .onClick(onClick)
-  }
-
-  @Builder
-  languageSheet() {
-    Column() {
-      this.sheetHeader($r('app.string.explore_filter_language_title'), (): void => {
-        this.sheetSearchShow = !this.sheetSearchShow;
-      })
-      Divider()
-        .color($r('app.color.divider'))
-        .strokeWidth(1)
-        .width('100%')
-      if (this.sheetSearchShow) {
-        TextInput({ placeholder: this.stringOf($r('app.string.search_placeholder')), text: this.sheetSearch })
-          .height(40)
-          .fontSize($r('app.float.body_font_size'))
-          .margin({ left: 16, right: 16, bottom: 4 })
-          .borderRadius(6)
-          .backgroundColor($r('app.color.chip_bg'))
-          .onChange((v: string): void => {
-            this.sheetSearch = v;
-          })
-      }
-      Scroll() {
-        Column() {
-          if (this.filteredLanguages().length > 0) {
-            ForEach(this.filteredLanguages(), (lang: ExploreLanguage) => {
-              this.sheetRow({
-                label: lang.name,
-                color: lang.color,
-                selected: this.language === lang.name
-              }, (): void => this.pickLanguage(lang.name))
-            }, (lang: ExploreLanguage) => lang.name)
-          } else {
-            Text(this.stringOf($r('app.string.explore_filter_no_results')))
-              .fontSize($r('app.float.caption_font_size'))
-              .fontColor($r('app.color.text_secondary'))
-              .width('100%')
-              .padding({ left: 20, top: 16, bottom: 12 })
-          }
-        }
-      }
-      .layoutWeight(1)
-      .scrollBar(BarState.Off)
-    }
-    .width('100%')
-    .height('100%')
-    .backgroundColor($r('app.color.card_background'))
   }
 
   @Builder
@@ -415,7 +362,7 @@ export struct ExploreRepoListView {
               }, (): void => this.pickSpoken(lang.query))
             }, (lang: SpokenLanguage) => lang.query + '_' + lang.name)
           } else {
-            Text(this.stringOf($r('app.string.explore_filter_no_results')))
+            Text(this.stringOf($r('app.string.filter_no_results')))
               .fontSize($r('app.float.caption_font_size'))
               .fontColor($r('app.color.text_secondary'))
               .width('100%')
@@ -503,7 +450,16 @@ export struct ExploreRepoListView {
   @Builder
   overlaySheet() {
     if (this.sheetKind === 'language') {
-      this.languageSheet()
+      // 语言面板与 Repositories 页共用组件（Spec 037/056）
+      LanguageFilterSheet({
+        title: $r('app.string.filter_language_title'),
+        languages: this.allLanguages,
+        selected: this.language,
+        onPick: (name: string): void => this.pickLanguage(name),
+        onClose: (): void => {
+          this.sheetKind = '';
+        }
+      })
     } else if (this.sheetKind === 'spoken') {
       this.spokenSheet()
     } else if (this.sheetKind === 'lists') {
@@ -548,10 +504,10 @@ export struct ExploreRepoListView {
                   .borderRadius(9)
                   .backgroundColor($r('app.color.link_blue'))
                 }
-                .height(38)
-                .responseRegion({ x: 0, y: -3, width: '100%', height: '116%' })
-                .padding({ left: 10, right: 12 })
-                .borderRadius(19)
+                .height(32)
+                .responseRegion({ x: 0, y: -6, width: '100%', height: '144%' })
+                .padding({ left: 8, right: 8 })
+                .borderRadius(16)
                 .backgroundColor($r('app.color.chip_bg'))
                 .border({ width: 1, color: $r('app.color.border') })
                 .margin({ right: 8 })
@@ -572,51 +528,19 @@ export struct ExploreRepoListView {
                   }
                 }
               })
-            // Language chip：sheet 型（点击底部面板），随筛选生效变蓝（沿筛选行官方化约定）
-            Row() {
-              Text(this.language !== '' ? this.language : this.stringOf($r('app.string.explore_filter_language')))
-                .fontSize($r('app.float.chip_font_size'))
-                .fontColor(this.language !== '' ? $r('app.color.link_blue') : $r('app.color.text_primary'))
-              OctIcon({
-                res: $r('app.media.oct_chevron_down_16'),
-                iconSize: 12,
-                iconColor: this.language !== '' ? $r('app.color.link_blue') : $r('app.color.text_secondary')
-              })
-                .margin({ left: 8 })
-            }
-            .height(38)
-            .padding({ left: 10, right: 12 })
-            .borderRadius(19)
-            .backgroundColor(this.language !== '' ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
-            .border({
-              width: 1,
-              color: this.language !== '' ? $r('app.color.chip_active_border') : $r('app.color.border')
+            // Language chip：sheet 型（点击拉起底部面板），随筛选生效变蓝（沿筛选行官方化约定）
+            FilterSheetChip({
+              label: this.language !== '' ? this.language : this.stringOf($r('app.string.explore_filter_language')),
+              active: this.language !== '',
+              onTap: (): void => this.openSheet('language')
             })
-            .onClick(() => this.openSheet('language'))
-              .margin({ right: 8 })
 
-            // Spoken language chip：同上（sheet 型）
-            Row() {
-              Text(this.spoken !== '' ? this.spokenLabel() : this.stringOf($r('app.string.explore_filter_spoken')))
-                .fontSize($r('app.float.chip_font_size'))
-                .fontColor(this.spoken !== '' ? $r('app.color.link_blue') : $r('app.color.text_primary'))
-              OctIcon({
-                res: $r('app.media.oct_chevron_down_16'),
-                iconSize: 12,
-                iconColor: this.spoken !== '' ? $r('app.color.link_blue') : $r('app.color.text_secondary')
-              })
-                .margin({ left: 8 })
-            }
-            .height(38)
-            .padding({ left: 10, right: 12 })
-            .borderRadius(19)
-            .backgroundColor(this.spoken !== '' ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
-            .border({
-              width: 1,
-              color: this.spoken !== '' ? $r('app.color.chip_active_border') : $r('app.color.border')
+            // Spoken language chip：同款 sheet 型
+            FilterSheetChip({
+              label: this.spoken !== '' ? this.spokenLabel() : this.stringOf($r('app.string.explore_filter_spoken')),
+              active: this.spoken !== '',
+              onTap: (): void => this.openSheet('spoken')
             })
-            .onClick(() => this.openSheet('spoken'))
-              .margin({ right: 8 })
             }
             .padding({ left: 16, right: 16 })
           }

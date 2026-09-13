@@ -1,20 +1,22 @@
 /**
  * 仓库列表页（Spec 037）：通用（用户/组织，owner+mode 参数化）。
- * 三个筛选下拉（All/Language/Sort）均为真实筛选；行点击进仓库详情。
+ * 筛选三件：Type（官方 8 项下拉）+ Language（底部面板，全量语言清单）+ Sort（服务端排序），
+ * 三者均为真实筛选；行点击进仓库详情。
  */
 import { AppBar, AppBarAction, AppBarActionCfg } from '../components/AppBar';
+import { FilterDropdownChip, FilterDropdownOption, FilterSheetChip } from '../components/FilterDropdownChip';
+import { LanguageFilterSheet } from '../components/LanguageFilterSheet';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { RepoListPage } from '../models/ProfileModels';
+import { ExploreLanguage, PROGRAM_LANGUAGES, sortLanguages } from '../models/ExploreLanguages';
 import { RepoSummary } from '../models/GitHubModels';
+import { ExploreService } from '../services/ExploreService';
 import { ProfileListService, RepoOrder } from '../services/ProfileListService';
 import { StateView } from '../components/StateView';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { compactCount } from '../utils/Format';
 import { resText } from '../utils/I18n';
-
-const LANGUAGES: string[] = ['Go', 'Rust', 'TypeScript', 'JavaScript', 'Python', 'Java', 'C',
-  'C++', 'C#', 'Ruby', 'Shell', 'Kotlin', 'Swift', 'Dart'];
 
 @ComponentV2
 export struct RepositoriesListView {
@@ -32,12 +34,28 @@ export struct RepositoriesListView {
   @Local isRefreshing: boolean = false;
   /** 触底加载更多（底部转圈指示） */
   @Local loadingMore: boolean = false;
+  /** Type 筛选（官方 8 项：all/archived/fork/mirror/private/public/source/template） */
   @Local typeFilter: string = 'all';
   @Local langFilter: string = '';
   @Local sortField: string = 'PUSHED_AT';
+  /** 语言面板（''=关闭；全量语言经 GET /languages，失败降级内置子集） */
+  @Local langSheetOpen: boolean = false;
+  @Local allLanguages: ExploreLanguage[] = [];
 
   aboutToAppear(): void {
+    this.loadLanguages();
     this.refresh();
+  }
+
+  /** 全量语言：官方接口 GET /languages（833 项），失败回退内置子集 */
+  private loadLanguages(): void {
+    ExploreService.fetchAllLanguages(this.token)
+      .then((list: ExploreLanguage[]) => {
+        this.allLanguages = sortLanguages(list);
+      })
+      .catch(() => {
+        this.allLanguages = sortLanguages(PROGRAM_LANGUAGES);
+      });
   }
 
   private refresh(): void {
@@ -94,6 +112,25 @@ export struct RepositoriesListView {
     this.refresh();
   }
 
+  /** 激活筛选数（Issues/Inbox 同款漏斗徽标口径）：Type + Language（Sort 是排序不计入） */
+  private activeFilterCount(): number {
+    let c = 0;
+    if (this.typeFilter !== 'all') {
+      c++;
+    }
+    if (this.langFilter !== '') {
+      c++;
+    }
+    return c;
+  }
+
+  /** 清除全部筛选：Type 回 All、语言清空（Sort 是排序保留） */
+  private clearAllFilters(): void {
+    this.typeFilter = 'all';
+    this.langFilter = '';
+    this.applyFilters();
+  }
+
   private orderRef(): RepoOrder {
     return {
       field: this.sortField,
@@ -106,11 +143,10 @@ export struct RepositoriesListView {
   }
 
   private typeLabel(): string {
-    if (this.typeFilter === 'public') {
-      return this.stringOf($r('app.string.repos_filter_public'));
-    }
-    if (this.typeFilter === 'private') {
-      return this.stringOf($r('app.string.repos_filter_private'));
+    for (const opt of this.typeOptions()) {
+      if (opt.key === this.typeFilter) {
+        return opt.label;
+      }
     }
     return this.stringOf($r('app.string.repos_filter_all'));
   }
@@ -127,49 +163,33 @@ export struct RepositoriesListView {
     return resText(this.getUIContext(), $r('app.string.repos_sort_format'), this.stringOf(key));
   }
 
-  private typeMenu(): MenuElement[] {
+  /** 官方 Type 下拉 8 项（顺序与官方一致，Spec 021 同款口径） */
+  private typeOptions(): FilterDropdownOption[] {
     return [
-      { value: this.stringOf($r('app.string.repos_filter_all')), action: () => { this.typeFilter = 'all'; this.applyFilters(); } },
-      { value: this.stringOf($r('app.string.repos_filter_public')), action: () => { this.typeFilter = 'public'; this.applyFilters(); } },
-      { value: this.stringOf($r('app.string.repos_filter_private')), action: () => { this.typeFilter = 'private'; this.applyFilters(); } }
+      { key: 'all', label: this.stringOf($r('app.string.repos_filter_all')) },
+      { key: 'archived', label: this.stringOf($r('app.string.repos_filter_archived')) },
+      { key: 'fork', label: this.stringOf($r('app.string.repos_filter_fork')) },
+      { key: 'mirror', label: this.stringOf($r('app.string.repos_filter_mirror')) },
+      { key: 'private', label: this.stringOf($r('app.string.repos_filter_private')) },
+      { key: 'public', label: this.stringOf($r('app.string.repos_filter_public')) },
+      { key: 'source', label: this.stringOf($r('app.string.repos_filter_source')) },
+      { key: 'template', label: this.stringOf($r('app.string.repos_filter_template')) }
     ];
   }
 
-  private langMenu(): MenuElement[] {
-    const items: MenuElement[] = [{
-      value: this.stringOf($r('app.string.repos_lang_all')),
-      action: () => {
-        this.langFilter = '';
-        this.applyFilters();
-      }
-    }];
-    for (const lang of LANGUAGES) {
-      items.push({
-        value: lang,
-        action: () => {
-          this.langFilter = lang;
-          this.applyFilters();
-        }
-      });
-    }
-    return items;
+  /** 语言选择：再点已选语言=取消筛选（Trending 同款），随后重查 */
+  private pickLanguage(name: string): void {
+    this.langFilter = this.langFilter === name ? '' : name;
+    this.langSheetOpen = false;
+    this.applyFilters();
   }
 
-  private sortMenu(): MenuElement[] {
-    const mk = (key: Resource, field: string): MenuElement => {
-      return {
-        value: this.stringOf(key),
-        action: () => {
-          this.sortField = field;
-          this.applyFilters();
-        }
-      };
-    };
+  private sortOptions(): FilterDropdownOption[] {
     return [
-      mk($r('app.string.repos_sort_recent'), 'PUSHED_AT'),
-      mk($r('app.string.repos_sort_stars'), 'STARGAZERS'),
-      mk($r('app.string.repos_sort_name'), 'NAME'),
-      mk($r('app.string.repos_sort_updated'), 'UPDATED_AT')
+      { key: 'PUSHED_AT', label: this.stringOf($r('app.string.repos_sort_recent')) },
+      { key: 'STARGAZERS', label: this.stringOf($r('app.string.repos_sort_stars')) },
+      { key: 'NAME', label: this.stringOf($r('app.string.repos_sort_name')) },
+      { key: 'UPDATED_AT', label: this.stringOf($r('app.string.repos_sort_updated')) }
     ];
   }
 
@@ -247,33 +267,72 @@ export struct RepositoriesListView {
 
       PageShadowBar({ show: this.scrollShadow })
 
-      // 筛选条：All / Language / Sort（内联 Text，避免 @Builder 参数不刷新）
+      // 筛选条：漏斗徽标（有激活筛选时）+ All / Language / Sort，整条横向可滑动
+      Scroll() {
       Row() {
-        Text(this.typeLabel())
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_primary'))
-          .padding({ left: 12, right: 10, top: 7, bottom: 7 })
-          .borderRadius(12)
-          .backgroundColor($r('app.color.card_background'))
+        if (this.activeFilterCount() > 0) {
+          Row({ space: 4 }) {
+            OctIcon({
+              res: $r('app.media.oct_filter_16'),
+              iconSize: 14,
+              iconColor: $r('app.color.link_blue')
+            })
+            Stack() {
+              Text(`${this.activeFilterCount()}`)
+                .fontSize(12)
+                .fontColor(Color.White)
+            }
+            .width(18)
+            .height(18)
+            .borderRadius(9)
+            .backgroundColor($r('app.color.link_blue'))
+          }
+          .height(32)
+          .responseRegion({ x: 0, y: -6, width: '100%', height: '144%' })
+          .padding({ left: 8, right: 8 })
+          .borderRadius(16)
+          .backgroundColor($r('app.color.chip_bg'))
+          .border({ width: 1, color: $r('app.color.border') })
           .margin({ right: 8 })
-          .bindMenu(this.typeMenu())
-        Text(this.langFilter === '' ? this.stringOf($r('app.string.repos_filter_language')) : this.langFilter)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_primary'))
-          .padding({ left: 12, right: 10, top: 7, bottom: 7 })
-          .borderRadius(12)
-          .backgroundColor($r('app.color.card_background'))
-          .margin({ right: 8 })
-          .bindMenu(this.langMenu())
-        Text(this.sortLabel())
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_primary'))
-          .padding({ left: 12, right: 10, top: 7, bottom: 7 })
-          .borderRadius(12)
-          .backgroundColor($r('app.color.card_background'))
-          .margin({ right: 8 })
-          .bindMenu(this.sortMenu())
+          .bindMenu([
+            {
+              value: $r('app.string.work_clear_all_filters'),
+              action: (): void => this.clearAllFilters()
+            }
+          ])
+        }
+        FilterDropdownChip({
+          label: this.typeLabel(),
+          active: false,
+          options: this.typeOptions(),
+          selectedKey: this.typeFilter,
+          onPick: (key: string): void => {
+            this.typeFilter = key;
+            this.applyFilters();
+          }
+        })
+        // Language chip：sheet 型（点击拉起底部语言面板），随筛选生效变蓝
+        FilterSheetChip({
+          label: this.langFilter !== '' ? this.langFilter : this.stringOf($r('app.string.repos_filter_language')),
+          active: this.langFilter !== '',
+          onTap: (): void => {
+            this.langSheetOpen = true;
+          }
+        })
+        FilterDropdownChip({
+          label: this.sortLabel(),
+          active: false,
+          options: this.sortOptions(),
+          selectedKey: this.sortField,
+          onPick: (key: string): void => {
+            this.sortField = key;
+            this.applyFilters();
+          }
+        })
       }
+      }
+      .scrollable(ScrollDirection.Horizontal)
+      .scrollBar(BarState.Off)
       .width('100%')
       .padding({ left: 16, right: 16, top: 2, bottom: 8 })
 
@@ -327,5 +386,29 @@ export struct RepositoriesListView {
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
+    .bindSheet(this.langSheetOpen!!, this.languageSheet(), {
+      height: 540,
+      backgroundColor: $r('app.color.card_background'),
+      // 关闭钮与标题行均自绘，避免默认 ✕ 与自绘按钮重叠
+      showClose: false,
+      // 交互式关闭（下滑/遮罩）后复位，否则表达式恒 true 再点 chip 拉不起来
+      onDisappear: (): void => {
+        this.langSheetOpen = false;
+      }
+    })
+  }
+
+  /** 语言底部面板（Trending 同构：✕ + 标题 + 🔍 内联搜索 + 色点行列表） */
+  @Builder
+  languageSheet() {
+    LanguageFilterSheet({
+      title: $r('app.string.filter_language_title'),
+      languages: this.allLanguages,
+      selected: this.langFilter,
+      onPick: (name: string): void => this.pickLanguage(name),
+      onClose: (): void => {
+        this.langSheetOpen = false;
+      }
+    })
   }
 }

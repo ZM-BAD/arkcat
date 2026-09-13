@@ -130,7 +130,7 @@ export struct PrFilesView {
   build() {
     Column() {
       // 自绘头部：← 标题 + ···（Find file）
-      Row({ space: 8 }) {
+      Row() {
         Stack() {
           OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
@@ -163,7 +163,7 @@ export struct PrFilesView {
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Start)
         Stack() {
-          OctIcon({ res: $r('app.media.oct_gear_16'), iconSize: 18, iconColor: $r('app.color.link_blue') })
+          OctIcon({ res: $r('app.media.oct_gear_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
         }
         .width(44)
         .height(44)

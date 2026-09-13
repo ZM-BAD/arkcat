@@ -453,7 +453,7 @@
       "value": "Spoken language"
     },
     {
-      "name": "explore_filter_language_title",
+      "name": "filter_language_title",
       "value": "Filter by language"
     },
     {
@@ -1585,20 +1585,36 @@
       "value": "All"
     },
     {
-      "name": "repos_filter_public",
-      "value": "Public"
+      "name": "repos_filter_archived",
+      "value": "Archived"
+    },
+    {
+      "name": "repos_filter_fork",
+      "value": "Fork"
+    },
+    {
+      "name": "repos_filter_mirror",
+      "value": "Mirror"
     },
     {
       "name": "repos_filter_private",
       "value": "Private"
     },
     {
-      "name": "repos_filter_language",
-      "value": "Language"
+      "name": "repos_filter_public",
+      "value": "Public"
     },
     {
-      "name": "repos_lang_all",
-      "value": "All languages"
+      "name": "repos_filter_source",
+      "value": "Source"
+    },
+    {
+      "name": "repos_filter_template",
+      "value": "Template"
+    },
+    {
+      "name": "repos_filter_language",
+      "value": "Language"
     },
     {
       "name": "repos_sort_recent",
@@ -1865,38 +1881,6 @@
       "value": "Top: Past year"
     },
     {
-      "name": "toprepos_filter_all",
-      "value": "All"
-    },
-    {
-      "name": "toprepos_filter_archived",
-      "value": "Archived"
-    },
-    {
-      "name": "toprepos_filter_fork",
-      "value": "Fork"
-    },
-    {
-      "name": "toprepos_filter_mirror",
-      "value": "Mirror"
-    },
-    {
-      "name": "toprepos_filter_private",
-      "value": "Private"
-    },
-    {
-      "name": "toprepos_filter_public",
-      "value": "Public"
-    },
-    {
-      "name": "toprepos_filter_source",
-      "value": "Source"
-    },
-    {
-      "name": "toprepos_filter_template",
-      "value": "Template"
-    },
-    {
       "name": "md_read_more",
       "value": "Read more"
     },
@@ -2053,7 +2037,7 @@
       "value": "Clear all filters"
     },
     {
-      "name": "explore_filter_no_results",
+      "name": "filter_no_results",
       "value": "No results"
     },
     {

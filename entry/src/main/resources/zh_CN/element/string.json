@@ -453,7 +453,7 @@
       "value": "口语"
     },
     {
-      "name": "explore_filter_language_title",
+      "name": "filter_language_title",
       "value": "按语言筛选"
     },
     {
@@ -1553,20 +1553,36 @@
       "value": "全部"
     },
     {
-      "name": "repos_filter_public",
-      "value": "公开"
+      "name": "repos_filter_archived",
+      "value": "已归档"
+    },
+    {
+      "name": "repos_filter_fork",
+      "value": "复刻"
+    },
+    {
+      "name": "repos_filter_mirror",
+      "value": "镜像"
     },
     {
       "name": "repos_filter_private",
       "value": "私有"
     },
     {
-      "name": "repos_filter_language",
-      "value": "语言"
+      "name": "repos_filter_public",
+      "value": "公开"
     },
     {
-      "name": "repos_lang_all",
-      "value": "所有语言"
+      "name": "repos_filter_source",
+      "value": "源码"
+    },
+    {
+      "name": "repos_filter_template",
+      "value": "模板"
+    },
+    {
+      "name": "repos_filter_language",
+      "value": "语言"
     },
     {
       "name": "repos_sort_recent",
@@ -1865,38 +1881,6 @@
       "value": "标题 · Z-A"
     },
     {
-      "name": "toprepos_filter_all",
-      "value": "全部"
-    },
-    {
-      "name": "toprepos_filter_archived",
-      "value": "已归档"
-    },
-    {
-      "name": "toprepos_filter_fork",
-      "value": "复刻"
-    },
-    {
-      "name": "toprepos_filter_mirror",
-      "value": "镜像"
-    },
-    {
-      "name": "toprepos_filter_private",
-      "value": "私有"
-    },
-    {
-      "name": "toprepos_filter_public",
-      "value": "公开"
-    },
-    {
-      "name": "toprepos_filter_source",
-      "value": "源码"
-    },
-    {
-      "name": "toprepos_filter_template",
-      "value": "模板"
-    },
-    {
       "name": "md_read_more",
       "value": "阅读更多"
     },
@@ -2053,7 +2037,7 @@
       "value": "清除全部筛选"
     },
     {
-      "name": "explore_filter_no_results",
+      "name": "filter_no_results",
       "value": "无匹配结果"
     },
     {

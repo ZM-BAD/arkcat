@@ -190,7 +190,7 @@ export struct EditMyWorkView {
 
   build() {
     Column() {
-      Row({ space: 8 }) {
+      Row() {
         Stack() {
           OctIcon({
             res: $r('app.media.oct_arrow_left_24'),
@@ -211,17 +211,17 @@ export struct EditMyWorkView {
           .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
         Text($r('app.string.edit_work_save'))
-          .fontSize($r('app.float.body_font_size'))
+          .fontSize($r('app.float.sub_text_font_size'))
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.link_blue'))
-          .padding(6)
+          .padding({ left: 6, right: 12, top: 6, bottom: 6 })
           .responseRegion({ x: -6, y: -7, width: '130%', height: '147%' })
           .onClick(() => this.save())
         // Spec 016：蓝色竖点（全库惯例 kebab-horizontal 旋转 90°）→ 重排模式菜单
         Stack() {
           OctIcon({
             res: $r('app.media.oct_kebab_horizontal_16'),
-            iconSize: 18,
+            iconSize: 20,
             iconColor: $r('app.color.link_blue')
           })
             .rotate({ angle: 90 })

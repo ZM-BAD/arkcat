@@ -80,14 +80,14 @@ export struct TopRepositoriesView {
 
   private filterOptions(): FilterDropdownOption[] {
     return [
-      { key: 'all', label: this.stringOf($r('app.string.toprepos_filter_all')) },
-      { key: 'archived', label: this.stringOf($r('app.string.toprepos_filter_archived')) },
-      { key: 'fork', label: this.stringOf($r('app.string.toprepos_filter_fork')) },
-      { key: 'mirror', label: this.stringOf($r('app.string.toprepos_filter_mirror')) },
-      { key: 'private', label: this.stringOf($r('app.string.toprepos_filter_private')) },
-      { key: 'public', label: this.stringOf($r('app.string.toprepos_filter_public')) },
-      { key: 'source', label: this.stringOf($r('app.string.toprepos_filter_source')) },
-      { key: 'template', label: this.stringOf($r('app.string.toprepos_filter_template')) }
+      { key: 'all', label: this.stringOf($r('app.string.repos_filter_all')) },
+      { key: 'archived', label: this.stringOf($r('app.string.repos_filter_archived')) },
+      { key: 'fork', label: this.stringOf($r('app.string.repos_filter_fork')) },
+      { key: 'mirror', label: this.stringOf($r('app.string.repos_filter_mirror')) },
+      { key: 'private', label: this.stringOf($r('app.string.repos_filter_private')) },
+      { key: 'public', label: this.stringOf($r('app.string.repos_filter_public')) },
+      { key: 'source', label: this.stringOf($r('app.string.repos_filter_source')) },
+      { key: 'template', label: this.stringOf($r('app.string.repos_filter_template')) }
     ];
   }
 
@@ -97,7 +97,7 @@ export struct TopRepositoriesView {
         return opt.label;
       }
     }
-    return this.stringOf($r('app.string.toprepos_filter_all'));
+    return this.stringOf($r('app.string.repos_filter_all'));
   }
 
   /** 8 项筛选维度客户端过滤（已拉取集合内） */

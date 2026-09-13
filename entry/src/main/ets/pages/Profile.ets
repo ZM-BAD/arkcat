@@ -271,7 +271,7 @@ export struct ProfileView {
           Stack() {
             OctIcon({
               res: $r('app.media.oct_kebab_horizontal_16'),
-              iconSize: 18,
+              iconSize: 20,
               iconColor: $r('app.color.link_blue')
             })
             .rotate({ angle: 90 })

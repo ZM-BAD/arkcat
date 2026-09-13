@@ -166,5 +166,6 @@ query ExploreRepoMeta {
 - 卡片内多组件实例各自 bindSheet 单实例（041 ReactionBar 同模式已验证）
 - 时间短格式 githubShortTime（Inbox 批约定）；复用令牌 merged_badge_bg/shortcut_blue_bg/flame_fg，无新增色值
 - Trending/Awesome 二级页已于 2026-09-07 按官方参考图收口（筛选行/横幅卡/三态按钮/Filter Activity 页）；
-  语言与口语列表为内置常见子集，官方 App 全量列表走内部端点（详见边界表）
+  语言列表 = `GET /languages` 全量 833 项（失败降级内置子集），口语列表 = 内置常见子集（官方 App 走内部端点，详见边界表）
+- Language 面板（✕ + 标题 + 🔍 内联搜索 + 色点行）已组件化为 `components/LanguageFilterSheet`，与 Spec 037 仓库列表页共用；Spoken 面板仍为页内自绘（无第二处复用）
 - **Recommendations 行图标：有意偏离官方，不得改回（强调项）**——官方 App 该行用的是 `mark-github`，即 **GitHub logo 本体**；ArkCat 不引入任何 GitHub 官方徽标（spec 024 §五），故改用中性图标 `oct_graph_stacked_area_16`（黑底 `text_primary` + 白图标不变）。这是 Filter Activity 页六类中**唯一**与官方参考图不一致的位置，其余五类（megaphone / tag / star / repo / person-add）与官方一致。依据是 GitHub 品牌指南原文「Do not use any GitHub logo as the icon or logo for your business/organization」——第三方把 GitHub logo 用作自家界面元素会构成来源混淆，且 MIT 许可不覆盖 logo 类文件。后续按官方参考图复刻此页时，**不得**把该行改回 mark-github。

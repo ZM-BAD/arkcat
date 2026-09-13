@@ -119,6 +119,26 @@ export struct InboxView {
     }
   }
 
+  /** 激活筛选数（Issues/PR 列表同款漏斗徽标口径）：类型多选 + 仓库单选 */
+  private activeFilterCount(): number {
+    let c = this.reasonKeys.length;
+    if (this.filter === 'repo' && this.repoFilter !== '') {
+      c++;
+    }
+    return c;
+  }
+
+  /** 清除全部筛选：类型清空、仓库单选取消并回 Inbox 视图 */
+  private clearAllFilters(): void {
+    this.reasonKeys = [];
+    if (this.filter === 'repo') {
+      this.filter = 'inbox';
+      this.refresh();
+    } else {
+      this.applyFilters();
+    }
+  }
+
   /** 仓库单选：点已选项取消（回到 Inbox 视图全量），选中即关 */
   private toggleRepoFilter(fullName: string): void {
     if (this.repoFilter === fullName) {
@@ -209,13 +229,13 @@ export struct InboxView {
     }
   }
 
-  /** chip 公共样式（@Styles 不支持参数：文本/背景等动态部分行内设置） */
+  /** chip 公共样式（@Styles 不支持参数：文本/背景等动态部分行内设置）；尺寸与全库下拉 chip 统一（32/16/12fp） */
   @Styles
   filterPillStyle() {
-    .height(30)
-    .responseRegion({ x: 0, y: -7, width: '100%', height: '147%' })
-    .padding({ left: 12, right: 10 })
-    .borderRadius(12)
+    .height(32)
+    .responseRegion({ x: 0, y: -6, width: '100%', height: '144%' })
+    .padding({ left: 8, right: 8 })
+    .borderRadius(16)
     .border({ width: 1, color: $r('app.color.border') })
   }
 
@@ -283,6 +303,40 @@ export struct InboxView {
         // 四个筛选 chip 内联渲染：@Builder 传值/$$ 引用参数均不随状态刷新（V2 坑，见 memory），
         // 文本/激活态直接读 @Local 才能随筛选变化实时更新
         Row({ space: 8 }) {
+          // 漏斗徽标：激活筛选组数（Issues/PR 列表同款；无激活时隐藏），点开菜单可一键清除
+          if (this.activeFilterCount() > 0) {
+            Row({ space: 4 }) {
+              OctIcon({
+                res: $r('app.media.oct_filter_16'),
+                iconSize: 14,
+                iconColor: $r('app.color.link_blue')
+              })
+              Stack() {
+                Text(`${this.activeFilterCount()}`)
+                  .fontSize(12)
+                  .fontColor(Color.White)
+              }
+              .width(18)
+              .height(18)
+              .borderRadius(9)
+              .backgroundColor($r('app.color.link_blue'))
+            }
+            .filterPillStyle()
+            .backgroundColor($r('app.color.chip_bg'))
+            .bindMenu([
+              {
+                value: $r('app.string.work_filter_create_shortcut'),
+                action: (): void => {
+                  promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+                }
+              },
+              {
+                value: $r('app.string.work_clear_all_filters'),
+                action: (): void => this.clearAllFilters()
+              }
+            ])
+          }
+
           Row() {
             Text(this.viewLabel())
               .fontSize($r('app.float.caption_font_size'))
@@ -292,10 +346,10 @@ export struct InboxView {
               iconSize: 12,
               iconColor: this.filter === 'inbox' ? $r('app.color.link_blue') : $r('app.color.text_secondary')
             })
-              .margin({ left: 4 })
+              .margin({ left: 8 })
           }
           .filterPillStyle()
-          .backgroundColor(this.filter === 'inbox' ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))
+          .backgroundColor(this.filter === 'inbox' ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
           .onClick((): void => {
             this.sheetKind = 'filters';
           })
@@ -306,7 +360,7 @@ export struct InboxView {
               .fontColor(this.filter === 'focused' ? $r('app.color.link_blue') : $r('app.color.text_primary'))
           }
           .filterPillStyle()
-          .backgroundColor(this.filter === 'focused' ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))
+          .backgroundColor(this.filter === 'focused' ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
           .onClick((): void => this.switchFilter('focused'))
 
           Row() {
@@ -315,7 +369,7 @@ export struct InboxView {
               .fontColor(this.filter === 'unread' ? $r('app.color.link_blue') : $r('app.color.text_primary'))
           }
           .filterPillStyle()
-          .backgroundColor(this.filter === 'unread' ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))
+          .backgroundColor(this.filter === 'unread' ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
           .onClick((): void => this.switchFilter('unread'))
 
           Row() {
@@ -327,10 +381,10 @@ export struct InboxView {
               iconSize: 12,
               iconColor: this.filter === 'repo' ? $r('app.color.link_blue') : $r('app.color.text_secondary')
             })
-              .margin({ left: 4 })
+              .margin({ left: 8 })
           }
           .filterPillStyle()
-          .backgroundColor(this.filter === 'repo' ? $r('app.color.chip_active_green_bg') : $r('app.color.card_background'))
+          .backgroundColor(this.filter === 'repo' ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
           .onClick((): void => {
             this.sheetKind = 'repo';
           })

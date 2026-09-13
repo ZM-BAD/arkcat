@@ -72,7 +72,7 @@ export struct AccountsView {
         .layoutWeight(1)
 
       Text(this.editMode ? $r('app.string.accounts_done') : $r('app.string.accounts_edit'))
-        .fontSize(16)
+        .fontSize($r('app.float.sub_text_font_size'))
         .fontWeight(500)
         .fontColor($r('app.color.link_blue'))
         .textAlign(TextAlign.End)

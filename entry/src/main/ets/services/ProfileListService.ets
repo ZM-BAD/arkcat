@@ -13,7 +13,7 @@ import { Json, JsonMap } from '../utils/Json';
 import {
   UserListPage, OrgListPage, OrgProfile, OrgSummary, RepoListPage, mapUserListPage
 } from '../models/ProfileModels';
-import { RepoSummary, mapRepo } from '../models/GitHubModels';
+import { RepoSummary, filterReposByType, mapRepo } from '../models/GitHubModels';
 import { LANGUAGE_COLORS } from '../models/LanguageColors';
 
 const ORG_REST_PAGE_LIMIT = 100;
@@ -55,12 +55,13 @@ const REPO_LIST_FIELDS = `
       pageInfo { hasNextPage endCursor }
       nodes { ... on Repository {
         id name nameWithOwner description stargazerCount forkCount isPrivate
+        isArchived isFork isMirror isTemplate
         primaryLanguage { name color }
       } }
 `;
 
 // 注：当前 GitHub schema 的 repositories 连接不再支持 privacy/filterByLanguage 参数，
-// 语言与隐私筛选在客户端执行（isPrivate 随行返回）。
+// 语言与类型（官方 Type 8 项）筛选在客户端执行（类型标志随行返回）。
 const ORG_REPOS_QUERY = `
 query OrgRepositories($login: String!, $first: Int = 25, $after: String,
   $orderBy: RepositoryOrder) {
@@ -203,27 +204,25 @@ export class ProfileListService {
 
   /** 通用仓库列表：GraphQL 优先；组织模式 GraphQL 失败（read:org 缺失）→ REST 一页 100 + 客户端筛选 */
   static async fetchRepoList(token: string, owner: string, mode: string, cursor: string,
-    order: RepoOrder, lang: string, privacy: string): Promise<RepoListPage> {
+    order: RepoOrder, lang: string, typeKey: string): Promise<RepoListPage> {
     const page = await ProfileListService.fetchRepoListGql(token, owner, mode, cursor, order);
-    return ProfileListService.filterRepoPage(page, lang, privacy);
+    return ProfileListService.filterRepoPage(page, lang, typeKey);
   }
 
-  /** 客户端语言/隐私筛选（已加载数据内；翻页后追加） */
-  private static filterRepoPage(page: RepoListPage, lang: string, privacy: string): RepoListPage {
-    const filtered: RepoSummary[] = [];
+  /** 客户端语言/类型筛选（已加载数据内；翻页后追加） */
+  private static filterRepoPage(page: RepoListPage, lang: string, typeKey: string): RepoListPage {
+    const byLang: RepoSummary[] = [];
     for (const repo of page.repos) {
       if (lang !== '' && repo.primaryLanguage !== lang) {
         continue;
       }
-      if (privacy === 'private' && !repo.isPrivate) {
-        continue;
-      }
-      if (privacy === 'public' && repo.isPrivate) {
-        continue;
-      }
-      filtered.push(repo);
+      byLang.push(repo);
     }
-    return { repos: filtered, hasNextPage: page.hasNextPage, endCursor: page.endCursor };
+    return {
+      repos: filterReposByType(byLang, typeKey),
+      hasNextPage: page.hasNextPage,
+      endCursor: page.endCursor
+    };
   }
 
   /** GraphQL 仓库列表（用户/组织；仅 orderBy 分页——schema 不再支持 filterByLanguage/privacy） */
@@ -277,7 +276,11 @@ export class ProfileListService {
           graphqlId: Json.str(item, 'node_id'),
           openGraphImageUrl: '',
           viewerHasStarred: false,
-          contributorCount: 0
+          contributorCount: 0,
+          isArchived: Json.bool(item, 'archived'),
+          isFork: Json.bool(item, 'fork'),
+          isMirror: Json.str(item, 'mirror_url') !== '',
+          isTemplate: Json.bool(item, 'is_template')
         });
       }
     }

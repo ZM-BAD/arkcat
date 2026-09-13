@@ -358,7 +358,7 @@ export struct IssuesListView {
           // 框内灰 ✕（有文字才显示）：只清空关键词、留在搜索态（与 Home 搜索页一致）
           if (this.searchQuery !== '') {
             Stack() {
-              OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+              OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
             }
 .width(44)
 .height(44)
@@ -435,9 +435,10 @@ export struct IssuesListView {
                 .borderRadius(9)
                 .backgroundColor($r('app.color.link_blue'))
               }
-              .height(38)
-              .padding({ left: 10, right: 12 })
-              .borderRadius(19)
+              .height(32)
+              .responseRegion({ x: 0, y: -6, width: '100%', height: '144%' })
+              .padding({ left: 8, right: 8 })
+              .borderRadius(16)
               .backgroundColor($r('app.color.chip_bg'))
               .border({ width: 1, color: $r('app.color.border') })
               .margin({ right: 8 })

@@ -1,6 +1,9 @@
 /**
  * 通用筛选下拉 chip（Spec 017-019）：文字 + chevron + 自绘弹出卡片（选中项右侧主题蓝勾、遮罩点击关闭）。
+ * 统一口径（Primer Token 对齐）：chip 文字 12fp（caption），胶囊轮廓收口高 32/圆角 16/左右 padding 8，
+ * chevron 间距 8；responseRegion 扩至 44 触控。
  * 独立组件保证 label/selectedKey 经 @Param 更新可响应（@Builder 传值参数会卡旧值，须走组件状态）。
+ * 同款外形的 sheet 型 chip 见 FilterSheetChip（点击拉起底部面板而非弹出卡片）。
  */
 import { common } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
@@ -130,7 +133,7 @@ export struct FilterDropdownChip {
   build() {
     Row() {
       Text(this.label)
-        .fontSize($r('app.float.chip_font_size'))
+        .fontSize($r('app.float.caption_font_size'))
         .fontColor(this.active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
       OctIcon({
         res: $r('app.media.oct_chevron_down_16'),
@@ -139,10 +142,10 @@ export struct FilterDropdownChip {
       })
         .margin({ left: 8 })
     }
-    .height(38)
-    .responseRegion({ x: 0, y: -3, width: '100%', height: '116%' })
-    .padding({ left: 10, right: 12 })
-    .borderRadius(19)
+    .height(32)
+    .responseRegion({ x: 0, y: -6, width: '100%', height: '144%' })
+    .padding({ left: 8, right: 8 })
+    .borderRadius(16)
     .backgroundColor(this.active ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
     .margin({ right: 8 })
     .border({ width: 1, color: this.active ? $r('app.color.chip_active_border') : $r('app.color.border') })
@@ -170,5 +173,40 @@ export struct FilterDropdownChip {
         }
       }
     })
+  }
+}
+
+/**
+ * 底部面板型筛选 chip（与 FilterDropdownChip 同款胶囊外形）：点击拉起页面 bindSheet 底部面板，
+ * 面板内选择（官方 Trending 的 Language/Spoken、Repositories 的 Language 均为此型）。
+ * 与下拉型的差异仅在于「点击去向」——本组件不自持弹层，激活态由调用方传入 active 决定。
+ */
+@ComponentV2
+export struct FilterSheetChip {
+  /** chip 显示文本（未选中时由调用方传入占位文案） */
+  @Param label: string = '';
+  @Param active: boolean = false;
+  @Event onTap: () => void = (): void => { };
+
+  build() {
+    Row() {
+      Text(this.label)
+        .fontSize($r('app.float.caption_font_size'))
+        .fontColor(this.active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
+      OctIcon({
+        res: $r('app.media.oct_chevron_down_16'),
+        iconSize: 12,
+        iconColor: this.active ? $r('app.color.link_blue') : $r('app.color.text_secondary')
+      })
+        .margin({ left: 8 })
+    }
+    .height(32)
+    .responseRegion({ x: 0, y: -6, width: '100%', height: '144%' })
+    .padding({ left: 8, right: 8 })
+    .borderRadius(16)
+    .backgroundColor(this.active ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
+    .margin({ right: 8 })
+    .border({ width: 1, color: this.active ? $r('app.color.chip_active_border') : $r('app.color.border') })
+    .onClick((): void => this.onTap())
   }
 }

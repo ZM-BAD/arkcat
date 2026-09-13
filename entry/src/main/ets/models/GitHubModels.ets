@@ -53,6 +53,39 @@ export interface RepoSummary {
   viewerHasStarred: boolean;
   /** 贡献者总数（REST /contributors Link last 页近似；未加载为 0） */
   contributorCount: number;
+  /** 仓库类型标志（官方 Type 筛选 8 项依据；查询未带时为 false） */
+  isArchived: boolean;
+  isFork: boolean;
+  isMirror: boolean;
+  isTemplate: boolean;
+}
+
+/** 官方仓库 Type 筛选 8 项（All/Archived/Fork/Mirror/Private/Public/Source/Template） */
+export function filterReposByType(repos: RepoSummary[], typeKey: string): RepoSummary[] {
+  return repos.filter((r: RepoSummary): boolean => {
+    if (typeKey === 'archived') {
+      return r.isArchived;
+    }
+    if (typeKey === 'fork') {
+      return r.isFork;
+    }
+    if (typeKey === 'mirror') {
+      return r.isMirror;
+    }
+    if (typeKey === 'private') {
+      return r.isPrivate;
+    }
+    if (typeKey === 'public') {
+      return !r.isPrivate;
+    }
+    if (typeKey === 'source') {
+      return !r.isFork && !r.isMirror && !r.isArchived;
+    }
+    if (typeKey === 'template') {
+      return r.isTemplate;
+    }
+    return true;
+  });
 }
 
 /** 通知条目（REST /notifications） */
@@ -124,7 +157,11 @@ export function mapRepo(raw: JsonMap): RepoSummary {
     graphqlId: Json.str(raw, 'id'),
     openGraphImageUrl: Json.str(raw, 'openGraphImageUrl'),
     viewerHasStarred: Json.bool(raw, 'viewerHasStarred'),
-    contributorCount: 0
+    contributorCount: 0,
+    isArchived: Json.bool(raw, 'isArchived'),
+    isFork: Json.bool(raw, 'isFork'),
+    isMirror: Json.bool(raw, 'isMirror'),
+    isTemplate: Json.bool(raw, 'isTemplate')
   };
 }
 

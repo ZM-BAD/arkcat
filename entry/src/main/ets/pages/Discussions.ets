@@ -557,7 +557,7 @@ export struct DiscussionsView {
         }
         if (this.inSearch) {
           Stack() {
-            OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
+            OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
           }
           .width(44)
           .height(44)
@@ -583,7 +583,7 @@ export struct DiscussionsView {
         Stack() {
   OctIcon({
           res: $r('app.media.oct_kebab_horizontal_16'),
-          iconSize: 18,
+          iconSize: 20,
           iconColor: $r('app.color.link_blue')
   })
   .rotate({ angle: 90 })
@@ -634,9 +634,10 @@ export struct DiscussionsView {
                 .borderRadius(9)
                 .backgroundColor($r('app.color.link_blue'))
               }
-              .height(38)
-              .padding({ left: 8, right: 12 })
-              .borderRadius(19)
+              .height(32)
+              .responseRegion({ x: 0, y: -6, width: '100%', height: '144%' })
+              .padding({ left: 8, right: 8 })
+              .borderRadius(16)
               .backgroundColor($r('app.color.chip_bg'))
               .border({ width: 1, color: $r('app.color.border') })
               .margin({ right: 8 })
@@ -685,7 +686,7 @@ export struct DiscussionsView {
               Row({ space: 4 }) {
                 Text(this.authorFilter !== ''
                   ? this.authorFilter : this.stringOf($r('app.string.discussions_filter_author')))
-                  .fontSize($r('app.float.chip_font_size'))
+                  .fontSize($r('app.float.caption_font_size'))
                   .fontColor(this.authorFilter !== '' ? $r('app.color.link_blue') : $r('app.color.text_primary'))
                   .maxLines(1)
                   .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -695,9 +696,10 @@ export struct DiscussionsView {
                   iconColor: this.authorFilter !== '' ? $r('app.color.link_blue') : $r('app.color.text_secondary')
                 })
               }
-              .height(38)
-              .padding({ left: 12, right: 10 })
-              .borderRadius(19)
+              .height(32)
+              .responseRegion({ x: 0, y: -6, width: '100%', height: '144%' })
+              .padding({ left: 8, right: 8 })
+              .borderRadius(16)
               .backgroundColor(this.authorFilter !== '' ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
               .border({
                 width: 1,
@@ -710,7 +712,7 @@ export struct DiscussionsView {
                 Text(this.labelFilter === 'none' ? this.stringOf($r('app.string.discussions_filter_unlabeled'))
                   : (this.labelFilter !== '' ? this.labelFilter
                     : this.stringOf($r('app.string.discussions_filter_label'))))
-                  .fontSize($r('app.float.chip_font_size'))
+                  .fontSize($r('app.float.caption_font_size'))
                   .fontColor(this.labelFilter !== '' ? $r('app.color.link_blue') : $r('app.color.text_primary'))
                   .maxLines(1)
                   .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -720,9 +722,10 @@ export struct DiscussionsView {
                   iconColor: this.labelFilter !== '' ? $r('app.color.link_blue') : $r('app.color.text_secondary')
                 })
               }
-              .height(38)
-              .padding({ left: 12, right: 10 })
-              .borderRadius(19)
+              .height(32)
+              .responseRegion({ x: 0, y: -6, width: '100%', height: '144%' })
+              .padding({ left: 8, right: 8 })
+              .borderRadius(16)
               .backgroundColor(this.labelFilter !== '' ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
               .border({
                 width: 1,
@@ -734,11 +737,12 @@ export struct DiscussionsView {
 
             // Unanswered 开关 chip（官方：只有选中/未选中两种状态，无下拉；样式与下拉芯片一致）
             Text(this.stringOf($r('app.string.work_discussions_unanswered')))
-              .fontSize($r('app.float.chip_font_size'))
+              .fontSize($r('app.float.caption_font_size'))
               .fontColor(this.unanswered ? $r('app.color.link_blue') : $r('app.color.text_primary'))
-              .height(38)
-              .padding({ left: 12, right: 12 })
-              .borderRadius(19)
+              .height(32)
+              .responseRegion({ x: 0, y: -6, width: '100%', height: '144%' })
+              .padding({ left: 8, right: 8 })
+              .borderRadius(16)
               .backgroundColor(this.unanswered ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
               .border({ width: 1, color: this.unanswered ? $r('app.color.chip_active_border') : $r('app.color.border') })
               .margin({ right: 8 })
