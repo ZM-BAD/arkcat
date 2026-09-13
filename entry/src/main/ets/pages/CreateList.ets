@@ -123,12 +123,13 @@ export struct CreateListView {
           .fontSize($r('app.float.sub_text_font_size'))
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.link_blue'))
-          .padding(6)
+          .padding({ left: 6, right: 12, top: 6, bottom: 6 })
           .responseRegion({ x: -6, y: -7, width: '130%', height: '147%' })
           .onClick(() => this.submit())
       }
       .width('100%')
-      .height(56)
+      .height(48)
+      .padding({ left: 4, right: 4 })
 
       Column({ space: 0 }) {
         Text($r('app.string.create_list_name_label'))

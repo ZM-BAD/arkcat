@@ -239,7 +239,7 @@ export struct ProfileView {
           }
           .alignItems(HorizontalAlign.Start)
           .layoutWeight(1)
-          .margin({ left: this.showBack ? 0 : 16 })
+          .margin({ left: this.showBack ? 0 : 12 })
         }
         Blank()
         // 🔗 分享：系统分享面板分享本主页（Spec 061；右侧组统一 44 触点与左侧返回对称）
@@ -286,7 +286,7 @@ export struct ProfileView {
       }
       .width('100%')
       .height(48)
-      .padding({ left: 0, right: 0 })
+      .padding({ left: 4, right: 4 })
 
       PageShadowBar({ show: this.scrollShadow })
 

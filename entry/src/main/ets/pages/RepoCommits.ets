@@ -3,6 +3,7 @@
  * 行：提交标题 + 绿✓ + 相对时间 + 作者（头像/登录名/authored）。
  * prNumber > 0 时切换为 PR 的 commits（pullRequest.commits）。
  */
+import { AppBar } from '../components/AppBar';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { RepoCommitItem, RepoCommitsPage } from '../models/RepoSubModels';
@@ -147,26 +148,13 @@ export struct RepoCommitsView {
 
   build() {
     Column() {
-      Row({ space: 8 }) {
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
-        }
-.width(44)
-.height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
-        .focusable(true)
-        .onClick(() => {
+      AppBar({
+        showBack: true,
+        title: $r('app.string.repo_commits_title'),
+        onBack: (): void => {
           this.pathStack.pop();
-        })
-        Text($r('app.string.repo_commits_title'))
-          .fontSize($r('app.float.title_font_size'))
-          .fontWeight(600)
-          .fontColor($r('app.color.text_primary'))
-          .layoutWeight(1)
-      }
-      .width('100%')
-      .height(48)
-      .padding({ left: 0, right: 0 })
+        }
+      })
 
       PageShadowBar({ show: this.scrollShadow })
 

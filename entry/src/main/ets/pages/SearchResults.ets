@@ -296,7 +296,7 @@ export struct SearchResultsView {
   build() {
     Column() {
       // 头部：← / 搜索框 / ✕ / ⋮
-      Row({ space: 8 }) {
+      Row() {
         Stack() {
           OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
@@ -352,7 +352,7 @@ export struct SearchResultsView {
       }
       .width('100%')
       .height(48)
-      .padding({ left: 0, right: 0 })
+      .padding({ left: 4, right: 4 })
 
       Divider().strokeWidth(1).color($r('app.color.divider'))
 

@@ -10,6 +10,7 @@ import { HomeService } from '../services/HomeService';
 import { friendlyError } from '../services/GitHttpClient';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
+import { AppBar, AppBarAction } from '../components/AppBar';
 import { WorkSection, WorkConfigStore, visibleWorkSections } from '../utils/WorkConfig';
 
 /** 标题栏底部渐变阴影（滚动时显示、回顶部消失） */
@@ -91,63 +92,22 @@ export struct HomeView {
   @Builder
   header() {
     Column() {
-      Row() {
-        Text($r('app.string.tab_home'))
-          .fontSize(20)
-          .fontWeight(600)
-          .fontColor($r('app.color.text_primary'))
-        Blank()
-        Stack() {
-          OctIcon({
-            res: $r('app.media.oct_search_24'),
-            iconSize: 20,
-            iconColor: $r('app.color.link_blue')
-          })
-        }
-.width(44)
-.height(44)
-        .accessibilityDescription($r('app.string.a11y_search'))
-        .focusable(true)
-        .onClick((): void => {
-          this.pathStack.pushPathByName('search', '');
-        })
-        .padding(6)
-        Stack() {
-          OctIcon({
-            res: $r('app.media.oct_sync_16'),
-            iconSize: 18,
-            iconColor: $r('app.color.link_blue')
-          })
-        }
-.width(44)
-.height(44)
-        .accessibilityDescription($r('app.string.a11y_refresh'))
-        .focusable(true)
-        .onClick((): void => {
-          // 与下拉刷新同效果：置位刷新动画，refresh() 完成后复位（review 用户反馈）
-          this.isRefreshing = true;
-          this.refresh();
-        })
-        .padding(6)
-        Stack() {
-          OctIcon({
-            res: $r('app.media.oct_plus_circle_24'),
-            iconSize: 20,
-            iconColor: $r('app.color.link_blue')
-          })
-        }
-.width(44)
-.height(44)
-        .accessibilityDescription($r('app.string.a11y_new'))
-        .focusable(true)
-        .onClick((): void => {
-          promptAction.showToast({ message: $r('app.string.home_new_coming') });
-        })
-        .padding(6)
-      }
-      .width('100%')
-      .height(56)
-      .padding({ left: 16, right: 16 })
+      AppBar({
+        title: $r('app.string.tab_home'),
+        actions: [
+          new AppBarAction($r('app.media.oct_search_24'), (): void => {
+            this.pathStack.pushPathByName('search', '');
+          }, { a11y: $r('app.string.a11y_search') }),
+          new AppBarAction($r('app.media.oct_sync_16'), (): void => {
+            // 与下拉刷新同效果：置位刷新动画，refresh() 完成后复位（review 用户反馈）
+            this.isRefreshing = true;
+            this.refresh();
+          }, { a11y: $r('app.string.a11y_refresh') }),
+          new AppBarAction($r('app.media.oct_plus_circle_24'), (): void => {
+            promptAction.showToast({ message: $r('app.string.home_new_coming') });
+          }, { a11y: $r('app.string.a11y_new') })
+        ]
+      })
       // 底部渐变阴影条：滚动中显示、回顶部消失（if 条件渲染，不依赖 shadow 属性刷新）
       if (this.headerShadow) {
         Row()

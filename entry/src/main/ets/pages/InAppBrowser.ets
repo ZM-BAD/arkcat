@@ -41,8 +41,8 @@ export struct InAppBrowserView {
           .layoutWeight(1)
       }
       .width('100%')
-      .height(52)
-      .padding({ left: 4, right: 16 })
+      .height(48)
+      .padding({ left: 4, right: 4 })
 
       if (this.loading) {
         // 加载中：顶部细进度条（替代阴影条，避免两条同时出现）

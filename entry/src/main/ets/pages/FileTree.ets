@@ -5,6 +5,7 @@
  */
 import { promptAction } from '@kit.ArkUI';
 import { pasteboard } from '@kit.BasicServicesKit';
+import { AppBar, AppBarAction, AppBarActionCfg } from '../components/AppBar';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { DirEntry, DirPage } from '../models/FileModels';
@@ -142,57 +143,28 @@ export struct FileTreeView {
 
   build() {
     Column() {
-      // 自绘头部：← 返回 + 标题（Files/目录名）+ 搜索/分享/更多
-      Row({ space: 8 }) {
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
-        }
-        .width(44)
-        .height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
-        .focusable(true)
-        .onClick(() => {
+      AppBar({
+        showBack: true,
+        title: this.titleText(),
+        onBack: (): void => {
           this.pathStack.pop();
-        })
-        Text(this.titleText())
-          .fontSize($r('app.float.title_font_size'))
-          .fontWeight(600)
-          .fontColor($r('app.color.text_primary'))
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .layoutWeight(1)
-        OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
-          .margin({ left: 12 })
-        .responseRegion({ x: -12, y: -12, width: '220%', height: '220%' })
-        .accessibilityDescription($r('app.string.a11y_search'))
-        .focusable(true)
-          .onClick(() => {
+        },
+        actions: [
+          new AppBarAction($r('app.media.oct_search_24'), (): void => {
             this.filterOn = !this.filterOn;
             if (!this.filterOn) {
               this.filterText = '';
             }
-          })
-        OctIcon({ res: $r('app.media.oct_share_android_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
-          .margin({ left: 12 })
-        .responseRegion({ x: -12, y: -12, width: '220%', height: '220%' })
-        .accessibilityDescription($r('app.string.a11y_share'))
-        .focusable(true)
-          .onClick(() => {
+          }, { iconColor: $r('app.color.text_secondary'), a11y: $r('app.string.a11y_search') }),
+          new AppBarAction($r('app.media.oct_share_android_16'), (): void => {
             const repo = `${this.owner}/${this.name}`;
             shareLink(this.getUIContext(), this.findUrl(),
               this.dirPath === '' ? repo : `${repo}/${this.dirPath}`);
-          })
-        OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
-          .rotate({ angle: 90 })
-          .margin({ left: 12 })
-          .responseRegion({ x: -12, y: -12, width: '220%', height: '220%' })
-          .accessibilityDescription($r('app.string.a11y_more'))
-          .focusable(true)
-          .bindMenu(this.menuItems())
-      }
-      .width('100%')
-      .height(60)
-      .padding({ left: 0, right: 0 })
+          }, { iconColor: $r('app.color.link_blue'), a11y: $r('app.string.a11y_share') }),
+          new AppBarAction($r('app.media.oct_kebab_horizontal_16'), (): void => {
+          }, { rotate90: true, iconColor: $r('app.color.link_blue'), a11y: $r('app.string.a11y_more'), menu: this.menuItems() })
+        ]
+      })
 
       PageShadowBar({ show: this.scrollShadow })
 

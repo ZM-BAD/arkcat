@@ -518,7 +518,7 @@ export struct DiscussionsView {
 
   build() {
     Column() {
-      Row({ space: 8 }) {
+      Row() {
         Stack() {
   OctIcon({
           res: $r('app.media.oct_arrow_left_24'),
@@ -608,7 +608,7 @@ export struct DiscussionsView {
       }
       .width('100%')
       .height(48)
-      .padding({ left: 0, right: 0 })
+      .padding({ left: 4, right: 4 })
 
       PageShadowBar({ show: this.scrollShadow })
 

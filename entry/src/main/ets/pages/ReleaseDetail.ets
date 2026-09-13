@@ -6,6 +6,7 @@ import { promptAction } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { fileIo as fs, picker } from '@kit.CoreFileKit';
+import { AppBar, AppBarAction, AppBarActionCfg } from '../components/AppBar';
 import { OctIcon } from '../components/OctIcon';
 import { MarkdownView } from '../components/MarkdownView';
 import { DownloadRow } from '../components/DownloadRow';
@@ -293,50 +294,23 @@ export struct ReleaseDetailView {
 
   build() {
     Column() {
-      Row({ space: 8 }) {
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
-        }
-.width(44)
-.height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
-        .focusable(true)
-        .onClick(() => {
+      // 官方布局：两行标题=灰小字 owner / repo（上）+ release 标题（下）→ subtitleAbove
+      AppBar({
+        showBack: true,
+        title: this.detail !== null && this.detail.name !== '' ? this.detail.name : this.tag,
+        subtitle: `${this.owner} / ${this.name}`,
+        subtitleAbove: true,
+        onBack: (): void => {
           this.pathStack.pop();
-        })
-        // 官方布局：两行标题=灰小字 owner / repo + release 标题；右上单图标蓝 share-android（走查修正七轮）
-        Column({ space: 0 }) {
-          Text(`${this.owner} / ${this.name}`)
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-          Text(this.detail !== null && this.detail.name !== '' ? this.detail.name : this.tag)
-            .fontSize($r('app.float.title_font_size'))
-            .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.text_primary'))
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-        }
-        .layoutWeight(1)
-        .alignItems(HorizontalAlign.Start)
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_share_android_16'), iconSize: 18, iconColor: $r('app.color.link_blue') })
-        }
-.width(44)
-.height(44)
-        .padding(6)
-        .accessibilityDescription($r('app.string.a11y_share'))
-        .focusable(true)
-        .onClick(() => {
-          if (this.detail !== null) {
-            shareLink(this.getUIContext(), this.detail.releaseUrl, this.detail.name);
-          }
-        })
-      }
-      .width('100%')
-      .height(56)
-      .padding({ left: 0, right: 0 })
+        },
+        actions: [
+          new AppBarAction($r('app.media.oct_share_android_16'), (): void => {
+            if (this.detail !== null) {
+              shareLink(this.getUIContext(), this.detail.releaseUrl, this.detail.name);
+            }
+          }, { iconColor: $r('app.color.link_blue'), a11y: $r('app.string.a11y_share') })
+        ]
+      })
 
       Refresh({ refreshing: $$this.isRefreshing }) {
         Scroll() {

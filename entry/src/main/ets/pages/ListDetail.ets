@@ -4,6 +4,7 @@
  * 他人列表（isOwn=false，Starred 他人页入口）：只读，隐藏竖三点（Edit/Delete 为 viewer 专属 mutation）。
  */
 import { promptAction } from '@kit.ArkUI';
+import { AppBar, AppBarAction, AppBarActionCfg } from '../components/AppBar';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { WorkListDetail, WorkStarredRepoItem } from '../models/WorkModels';
@@ -162,52 +163,30 @@ export struct ListDetailView {
 
   build() {
     Column() {
-      Row() {
-        Stack() {
-          OctIcon({
-            res: $r('app.media.oct_arrow_left_24'),
-            iconSize: 20,
-            iconColor: $r('app.color.text_primary')
-          })
-        }
-        .width(44)
-        .height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
-        .focusable(true)
-        .onClick((): void => {
+      AppBar({
+        showBack: true,
+        onBack: (): void => {
           this.pathStack.pop();
-        })
-        Blank()
-        // 竖三点：Edit / Delete（官方 kebab-vertical = kebab_horizontal rotate90）；他人列表只读隐藏
-        if (this.isOwn) {
-          Stack() {
-            OctIcon({
-              res: $r('app.media.oct_kebab_horizontal_16'),
-              iconSize: 18,
-              iconColor: $r('app.color.link_blue')
-            })
-              .rotate({ angle: 90 })
-          }
-          .width(44)
-          .height(44)
-          .accessibilityDescription($r('app.string.a11y_more'))
-          .focusable(true)
-          .bindMenu([
-            {
-              value: $r('app.string.list_detail_edit'),
-              action: (): void => this.pathStack.pushPathByName('createList', this.listId)
-            },
-            {
-              value: $r('app.string.list_detail_delete'),
-              action: (): void => this.confirmDelete()
-            }
-          ])
-          .padding(6)
-        }
-      }
-      .width('100%')
-      .height(56)
-      .padding({ left: 0, right: 0 })
+        },
+        actions: [
+          // 竖三点：Edit / Delete；他人列表只读隐藏（Edit/Delete 为 viewer 专属 mutation）
+          ...(this.isOwn ? [new AppBarAction($r('app.media.oct_kebab_horizontal_16'), (): void => {
+          }, {
+            rotate90: true,
+            a11y: $r('app.string.a11y_more'),
+            menu: [
+              {
+                value: $r('app.string.list_detail_edit'),
+                action: (): void => this.pathStack.pushPathByName('createList', this.listId)
+              },
+              {
+                value: $r('app.string.list_detail_delete'),
+                action: (): void => this.confirmDelete()
+              }
+            ]
+          })] : [])
+        ]
+      })
 
       PageShadowBar({ show: this.scrollShadow })
 

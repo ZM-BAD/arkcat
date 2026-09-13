@@ -78,13 +78,13 @@ export struct AccountsView {
         .textAlign(TextAlign.End)
         .width(60)
         .height(44)
-        .padding({ right: 4 })
+        .padding({ right: 12 })
         .onClick(() => {
           this.editMode = !this.editMode;
         })
     }
     .width('100%')
-    .height(56)
+    .height(48)
     .padding({ left: 4, right: 4 })
   }
 

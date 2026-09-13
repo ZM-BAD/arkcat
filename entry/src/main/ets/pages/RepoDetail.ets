@@ -9,6 +9,7 @@ import { RepoDetail, FileEntry, LanguageSlice } from '../models/RepoDetailModels
 import { RepoService } from '../services/RepoService';
 import { MarkdownService, MarkdownFetchResult } from '../services/MarkdownService';
 import { StateView } from '../components/StateView';
+import { AppBar, AppBarAction, AppBarActionCfg } from '../components/AppBar';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { MarkdownView } from '../components/MarkdownView';
@@ -521,53 +522,18 @@ export struct RepoDetailView {
 
   build() {
     Column() {
-      Row({ space: 8 }) {
-        Stack() {
-          OctIcon({
-            res: $r('app.media.oct_arrow_left_24'),
-            iconSize: 20,
-            iconColor: $r('app.color.text_primary')
-          })
-        }
-.width(44)
-.height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
-        .focusable(true)
-        .onClick(() => {
+      AppBar({
+        showBack: true,
+        onBack: (): void => {
           this.pathStack.pop();
-        })
-        Blank()
-        Stack() {
-          OctIcon({
-            res: $r('app.media.oct_plus_circle_24'),
-            iconSize: 20,
-            iconColor: $r('app.color.link_blue')
-          })
-        }
-.width(44)
-.height(44)
-        .padding(6)
-        .accessibilityDescription($r('app.string.a11y_new'))
-        .focusable(true)
-        .onClick(() => this.comingSoon())
-        Stack() {
-          OctIcon({
-            res: $r('app.media.oct_kebab_horizontal_16'),
-            iconSize: 18,
-            iconColor: $r('app.color.link_blue')
-          })
-          .rotate({ angle: 90 })
-        }
-.width(44)
-.height(44)
-        .padding(6)
-        .accessibilityDescription($r('app.string.a11y_more'))
-        .focusable(true)
-        .onClick(() => this.comingSoon())
-      }
-      .width('100%')
-      .height(48)
-      .padding({ left: 0, right: 0 })
+        },
+        actions: [
+          new AppBarAction($r('app.media.oct_plus_circle_24'), (): void => this.comingSoon(),
+            { iconColor: $r('app.color.link_blue'), a11y: $r('app.string.a11y_new') }),
+          new AppBarAction($r('app.media.oct_kebab_horizontal_16'), (): void => this.comingSoon(),
+            { rotate90: true, iconColor: $r('app.color.link_blue'), a11y: $r('app.string.a11y_more') })
+        ]
+      })
 
       PageShadowBar({ show: this.scrollShadow })
 

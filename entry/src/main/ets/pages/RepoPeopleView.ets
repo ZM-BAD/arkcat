@@ -3,6 +3,7 @@
  * kind 分派副标题、数据源与空态文案；行样式与 Stargazers 一致
  * （56 圆头像/粗体显示名/灰 login/两行 bio，整行点击进入用户主页）。
  */
+import { AppBar } from '../components/AppBar';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { UserSummary } from '../models/GitHubModels';
@@ -154,36 +155,14 @@ export struct RepoPeopleView {
 
   build() {
     Column() {
-      // 自绘头部：返回 + 仓库名（粗体）+ 副标题（灰）
-      Row({ space: 8 }) {
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
-        }
-        .width(44)
-        .height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
-        .focusable(true)
-        .onClick(() => {
+      AppBar({
+        showBack: true,
+        title: this.name,
+        subtitle: this.stringOf(this.subtitleRes()),
+        onBack: (): void => {
           this.pathStack.pop();
-        })
-        Column({ space: 2 }) {
-          Text(this.name)
-            .fontSize($r('app.float.title_font_size'))
-            .fontWeight(600)
-            .fontColor($r('app.color.text_primary'))
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-          Text(this.stringOf(this.subtitleRes()))
-            .fontSize($r('app.float.body_font_size'))
-            .fontColor($r('app.color.text_secondary'))
         }
-        .alignItems(HorizontalAlign.Start)
-        .layoutWeight(1)
-        Blank()
-      }
-      .width('100%')
-      .height(60)
-      .padding({ left: 0, right: 0 })
+      })
 
       PageShadowBar({ show: this.scrollShadow })
 

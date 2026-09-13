@@ -4,6 +4,7 @@
  * 右上 🔍 就地搜索（名称/描述过滤已加载分页）+ ＋（沿用 RepoDetail 惯例 toast）。
  */
 import { promptAction } from '@kit.ArkUI';
+import { AppBar, AppBarAction, AppBarActionCfg } from '../components/AppBar';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { ForkEntry, ForkPage } from '../models/RepoSocialModels';
@@ -192,19 +193,19 @@ export struct ForksView {
 
   build() {
     Column() {
-      // 自绘头部：返回 + 仓库名/Forks 副标题（搜索态替换为输入框）+ 🔍/＋
-      Row({ space: 8 }) {
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
-        }
-        .width(44)
-        .height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
-        .focusable(true)
-        .onClick(() => {
-          this.pathStack.pop();
-        })
-        if (this.inSearch) {
+      if (this.inSearch) {
+        // 搜索态：内联搜索头不进 AppBar（Spec 067 豁免内联搜索头），保留自绘
+        Row({ space: 8 }) {
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
+          }
+          .width(44)
+          .height(44)
+          .accessibilityDescription($r('app.string.a11y_back'))
+          .focusable(true)
+          .onClick(() => {
+            this.pathStack.pop();
+          })
           TextInput({
             placeholder: this.stringOf($r('app.string.social_forks_search')),
             text: this.searchQuery
@@ -218,44 +219,32 @@ export struct ForksView {
               this.searchQuery = v;
             })
             .layoutWeight(1)
-        } else {
-          Column({ space: 2 }) {
-            Text(this.name)
-              .fontSize($r('app.float.title_font_size'))
-              .fontWeight(600)
-              .fontColor($r('app.color.text_primary'))
-              .maxLines(1)
-              .textOverflow({ overflow: TextOverflow.Ellipsis })
-            Text(this.stringOf($r('app.string.social_forks')))
-              .fontSize($r('app.float.body_font_size'))
-              .fontColor($r('app.color.text_secondary'))
-          }
-          .alignItems(HorizontalAlign.Start)
-          .layoutWeight(1)
-        }
-        if (this.inSearch) {
           Text(this.stringOf($r('app.string.search_cancel')))
             .fontSize($r('app.float.body_font_size'))
             .fontColor($r('app.color.link_blue'))
             .padding(6)
             .responseRegion({ x: -6, y: -6, width: '140%', height: '140%' })
             .onClick(() => this.exitSearch())
-        } else {
-          OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 20, iconColor: $r('app.color.link_blue') })
-            .padding(6)
-            .responseRegion({ x: -6, y: -6, width: '140%', height: '140%' })
-            .accessibilityDescription($r('app.string.social_forks_search'))
-            .onClick(() => this.enterSearch())
-          OctIcon({ res: $r('app.media.oct_plus_circle_24'), iconSize: 20, iconColor: $r('app.color.link_blue') })
-            .padding(6)
-            .responseRegion({ x: -6, y: -6, width: '140%', height: '140%' })
-            .accessibilityDescription($r('app.string.a11y_new'))
-            .onClick(() => this.comingSoon())
         }
+        .width('100%')
+        .height(48)
+        .padding({ left: 4, right: 4 })
+      } else {
+        AppBar({
+          showBack: true,
+          title: this.name,
+          subtitle: this.stringOf($r('app.string.social_forks')),
+          onBack: (): void => {
+            this.pathStack.pop();
+          },
+          actions: [
+            new AppBarAction($r('app.media.oct_search_24'), (): void => this.enterSearch(),
+              { iconColor: $r('app.color.link_blue'), a11y: $r('app.string.social_forks_search') }),
+            new AppBarAction($r('app.media.oct_plus_circle_24'), (): void => this.comingSoon(),
+              { iconColor: $r('app.color.link_blue'), a11y: $r('app.string.a11y_new') })
+          ]
+        })
       }
-      .width('100%')
-      .height(60)
-      .padding({ left: 0, right: 0 })
       Divider().strokeWidth(1).color($r('app.color.divider'))
 
       PageShadowBar({ show: this.scrollShadow })

@@ -3,6 +3,7 @@
  * 筛选：状态（All/Open/Closed/Merged）+ Label（GraphQL）+ Author/Assignee（客户端过滤）。
  */
 import { promptAction } from '@kit.ArkUI';
+import { AppBar, AppBarAction, AppBarActionCfg } from '../components/AppBar';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { FilterDropdownChip, FilterDropdownOption } from '../components/FilterDropdownChip';
@@ -287,54 +288,24 @@ export struct RepoPrsView {
 
   build() {
     Column() {
-      Row({ space: 8 }) {
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
-        }
-.width(44)
-.height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
-        .focusable(true)
-        .onClick(() => {
+      // 两行头部：owner（灰小字·上）+ Pull requests（黑粗体·下）→ subtitleAbove
+      AppBar({
+        showBack: true,
+        title: $r('app.string.home_work_pull_requests'),
+        subtitle: this.owner,
+        subtitleAbove: true,
+        onBack: (): void => {
           this.pathStack.pop();
-        })
-        Column({ space: 0 }) {
-          Text(this.owner)
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-          Text($r('app.string.home_work_pull_requests'))
-            .fontSize($r('app.float.title_font_size'))
-            .fontWeight(600)
-            .fontColor($r('app.color.text_primary'))
-        }
-        .layoutWeight(1)
-        .alignItems(HorizontalAlign.Start)
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
-        }
-.width(44)
-.height(44)
-        .padding(6)
-        .accessibilityDescription($r('app.string.a11y_search'))
-        .focusable(true)
-        .onClick(() => {
-          this.pathStack.pushPathByName('search', '');
-        })
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_plus_24'), iconSize: 20, iconColor: $r('app.color.link_blue') })
-        }
-.width(44)
-.height(44)
-        .padding(6)
-        .accessibilityDescription($r('app.string.a11y_new'))
-        .focusable(true)
-        .onClick(() => {
-          promptAction.showToast({ message: $r('app.string.home_feature_coming') });
-        })
-      }
-      .width('100%')
-      .height(56)
-      .padding({ left: 0, right: 0 })
+        },
+        actions: [
+          new AppBarAction($r('app.media.oct_search_24'), (): void => {
+            this.pathStack.pushPathByName('search', '');
+          }, { iconColor: $r('app.color.text_primary'), a11y: $r('app.string.a11y_search') }),
+          new AppBarAction($r('app.media.oct_plus_24'), (): void => {
+            promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+          }, { iconColor: $r('app.color.link_blue'), a11y: $r('app.string.a11y_new') })
+        ]
+      })
 
       PageShadowBar({ show: this.scrollShadow })
 

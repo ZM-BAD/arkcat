@@ -7,6 +7,7 @@ import { promptAction } from '@kit.ArkUI';
 import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { pasteboard } from '@kit.BasicServicesKit';
+import { AppBar, AppBarAction, AppBarActionCfg } from '../components/AppBar';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { CommitDiffBlock } from '../components/CommitDiffBlock';
@@ -228,52 +229,23 @@ export struct CommitDetailView {
 
   build() {
     Column() {
-      // 自绘头部：← Commit + share + gear（DETAILS 页按官方仅 share）
-      Row({ space: 8 }) {
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
-        }
-        .width(44)
-        .height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
-        .focusable(true)
-        .onClick(() => {
+      AppBar({
+        showBack: true,
+        title: this.stringOf($r('app.string.commit_appbar')),
+        onBack: (): void => {
           this.pathStack.pop();
-        })
-        Text(this.stringOf($r('app.string.commit_appbar')))
-          .fontSize($r('app.float.title_font_size'))
-          .fontWeight(600)
-          .fontColor($r('app.color.text_primary'))
-          .layoutWeight(1)
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_share_android_16'), iconSize: 18, iconColor: $r('app.color.link_blue') })
-        }
-        .width(44)
-        .height(44)
-        .padding(6)
-        .accessibilityDescription($r('app.string.a11y_share'))
-        .focusable(true)
-        .onClick(() => {
-          const headline = this.detail !== null ? this.detail.headline : '';
-          shareLink(this.getUIContext(), commitPageUrl(this.owner, this.name, this.oid), headline);
-        })
-        if (this.tab === 0) {
-          Stack() {
-            OctIcon({ res: $r('app.media.oct_gear_16'), iconSize: 18, iconColor: $r('app.color.link_blue') })
-          }
-          .width(44)
-          .height(44)
-          .padding(6)
-          .accessibilityDescription($r('app.string.a11y_settings'))
-          .focusable(true)
-          .onClick(() => {
+        },
+        actions: [
+          new AppBarAction($r('app.media.oct_share_android_16'), (): void => {
+            const headline = this.detail !== null ? this.detail.headline : '';
+            shareLink(this.getUIContext(), commitPageUrl(this.owner, this.name, this.oid), headline);
+          }, { a11y: $r('app.string.a11y_share') }),
+          // gear 仅 CHANGES tab 显示（与原头部条件一致）
+          ...(this.tab === 0 ? [new AppBarAction($r('app.media.oct_gear_16'), (): void => {
             this.pathStack.pushPathByName('codeOptions', '');
-          })
-        }
-      }
-      .width('100%')
-      .height(48)
-      .padding({ left: 0, right: 0 })
+          }, { iconColor: $r('app.color.link_blue'), a11y: $r('app.string.a11y_settings') })] : [])
+        ]
+      })
 
       // 双 tab：选中黑粗+蓝下划线；未选灰
       Row() {

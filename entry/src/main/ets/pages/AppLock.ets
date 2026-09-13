@@ -9,8 +9,8 @@
 import { promptAction } from '@kit.ArkUI';
 import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
-import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
+import { AppBar } from '../components/AppBar';
 import { resText } from '../utils/I18n';
 import {
   KEY_APP_LOCK, APP_LOCK_ENABLED_KEY, APP_LOCK_LOCKED_KEY,
@@ -63,28 +63,13 @@ export struct AppLockSettingsView {
 
   build() {
     Column() {
-      // 自绘 App Bar：返回 + 大标题（同 064 模式）
-      Row({ space: 8 }) {
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
-        }
-        .width(44)
-        .height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
-        .focusable(true)
-        .onClick(() => {
+      AppBar({
+        showBack: true,
+        title: $r('app.string.settings_app_lock'),
+        onBack: (): void => {
           this.pathStack.pop();
-        })
-        Text($r('app.string.settings_app_lock'))
-          .fontSize($r('app.float.title_font_size'))
-          .fontWeight(700)
-          .fontColor($r('app.color.text_primary'))
-          .layoutWeight(1)
-          .maxLines(1)
-        Row().width(44)
-      }
-      .width('100%')
-      .height(56)
+        }
+      })
 
       PageShadowBar({ show: false })
 

@@ -322,7 +322,7 @@ export struct IssuesListView {
 
   build() {
     Column() {
-      Row({ space: 8 }) {
+      Row() {
         Stack() {
           OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
         }
@@ -407,8 +407,8 @@ export struct IssuesListView {
         })
       }
       .width('100%')
-      .height(56)
-      .padding({ left: 0, right: 0 })
+      .height(48)
+      .padding({ left: 4, right: 4 })
 
       PageShadowBar({ show: this.scrollShadow })
 

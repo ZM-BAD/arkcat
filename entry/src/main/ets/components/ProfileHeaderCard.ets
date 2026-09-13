@@ -146,7 +146,7 @@ export struct ProfileHeaderCard {
             .fontSize($r('app.float.title_font_size'))
             .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
-          Text(`@${this.profile?.user.login ?? ''}`)
+          Text(this.profile?.user.login ?? '')
             .fontSize($r('app.float.body_font_size'))
             .fontColor($r('app.color.text_secondary'))
         }

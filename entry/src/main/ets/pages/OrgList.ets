@@ -2,7 +2,7 @@
  * 组织列表页（Spec 035）：Profile 三入口 Organizations 进入。
  * 头部为灰 login 上 + 粗体标题下的样式；行点击进入组织主页。
  */
-import { OctIcon } from '../components/OctIcon';
+import { AppBar } from '../components/AppBar';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { OrgListPage, OrgSummary } from '../models/ProfileModels';
 import { ProfileListService } from '../services/ProfileListService';
@@ -120,33 +120,16 @@ export struct OrgListView {
 
   build() {
     Column() {
-      // 自绘头部：灰 login（上）+ 粗体标题（下）
-      Row({ space: 8 }) {
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
-        }
-        .width(44)
-        .height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
-        .focusable(true)
-        .onClick(() => {
+      // Profile 型两行头部：灰 login（上）+ 粗体标题（下）→ subtitleAbove
+      AppBar({
+        showBack: true,
+        title: $r('app.string.org_list_title'),
+        subtitle: this.headerLogin,
+        subtitleAbove: true,
+        onBack: (): void => {
           this.pathStack.pop();
-        })
-        Column({ space: 2 }) {
-          Text(this.headerLogin)
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-          Text($r('app.string.org_list_title'))
-            .fontSize($r('app.float.title_font_size'))
-            .fontWeight(600)
-            .fontColor($r('app.color.text_primary'))
         }
-        .alignItems(HorizontalAlign.Start)
-        Blank()
-      }
-      .width('100%')
-      .height(64)
-      .padding({ left: 0, right: 0 })
+      })
 
       PageShadowBar({ show: this.scrollShadow })
 

@@ -1,7 +1,7 @@
 /**
  * 仓库 Releases 页（Spec 029）：最新 Release 头卡（Latest release + What's Changed）+ All Releases。
  */
-import { OctIcon } from '../components/OctIcon';
+import { AppBar } from '../components/AppBar';
 import { MarkdownView } from '../components/MarkdownView';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { ReleaseItem, RepoReleasesPage, monthDayText } from '../models/RepoSubModels';
@@ -132,32 +132,16 @@ export struct RepoReleasesView {
 
   build() {
     Column() {
-      Row({ space: 8 }) {
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
-        }
-.width(44)
-.height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
-        .focusable(true)
-        .onClick(() => {
+      // 两行头部：owner（灰小字·上）+ Releases（黑粗体·下）→ subtitleAbove
+      AppBar({
+        showBack: true,
+        title: $r('app.string.repo_releases_title'),
+        subtitle: this.owner,
+        subtitleAbove: true,
+        onBack: (): void => {
           this.pathStack.pop();
-        })
-        Column({ space: 0 }) {
-          Text(this.owner)
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-          Text($r('app.string.repo_releases_title'))
-            .fontSize($r('app.float.title_font_size'))
-            .fontWeight(600)
-            .fontColor($r('app.color.text_primary'))
         }
-        .layoutWeight(1)
-        .alignItems(HorizontalAlign.Start)
-      }
-      .width('100%')
-      .height(56)
-      .padding({ left: 0, right: 0 })
+      })
 
       PageShadowBar({ show: this.scrollShadow })
 

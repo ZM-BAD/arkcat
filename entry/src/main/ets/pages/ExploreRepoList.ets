@@ -14,6 +14,7 @@ import { ExploreService } from '../services/ExploreService';
 import { friendlyError } from '../services/GitHttpClient';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
+import { AppBar } from '../components/AppBar';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { FilterDropdownChip, FilterDropdownOption } from '../components/FilterDropdownChip';
@@ -516,28 +517,14 @@ export struct ExploreRepoListView {
 
   build() {
     Column() {
-      // 自绘头部（二级页约定：NavDestination hideTitleBar，不设 .title() 防双标题）
-      Row() {
-        Row() {
-          OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
+      // 二级页约定：NavDestination hideTitleBar，不设 .title() 防双标题
+      AppBar({
+        showBack: true,
+        title: this.titleRes(),
+        onBack: (): void => {
+          this.pathStack.pop();
         }
-          .width(44)
-          .height(44)
-          .onClick(() => this.pathStack.pop())
-
-          Text(this.titleRes())
-            .fontSize($r('app.float.title_font_size'))
-            .fontWeight(600)
-            .fontColor($r('app.color.text_primary'))
-            .layoutWeight(1)
-
-          Row()
-            .width(44)
-            .height(44)
-        }
-        .width('100%')
-        .height(48)
-        .padding({ left: 12, right: 12 })
+      })
 
         if (this.kind === 'trending') {
           // 筛选行：横向可滑（收口批用户要求），chip 间距统一 8；激活时左侧出现漏斗+计数徽章

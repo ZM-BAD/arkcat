@@ -2,6 +2,7 @@
  * 仓库列表页（Spec 037）：通用（用户/组织，owner+mode 参数化）。
  * 三个筛选下拉（All/Language/Sort）均为真实筛选；行点击进仓库详情。
  */
+import { AppBar, AppBarAction, AppBarActionCfg } from '../components/AppBar';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { RepoListPage } from '../models/ProfileModels';
@@ -228,44 +229,21 @@ export struct RepositoriesListView {
 
   build() {
     Column() {
-      // 自绘头部：灰 owner（上）+ 粗体标题（下）+ 🔍
-      Row({ space: 8 }) {
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
-        }
-.width(44)
-.height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
-        .focusable(true)
-        .onClick(() => {
+      // 两行头部：灰 owner（上）+ 粗体标题（下）→ subtitleAbove + 搜索
+      AppBar({
+        showBack: true,
+        title: $r('app.string.repos_list_title'),
+        subtitle: this.owner,
+        subtitleAbove: true,
+        onBack: (): void => {
           this.pathStack.pop();
-        })
-        Column({ space: 2 }) {
-          Text(this.owner)
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-          Text($r('app.string.repos_list_title'))
-            .fontSize($r('app.float.title_font_size'))
-            .fontWeight(600)
-            .fontColor($r('app.color.text_primary'))
-        }
-        .alignItems(HorizontalAlign.Start)
-        Blank()
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 18, iconColor: $r('app.color.text_primary') })
-        }
-.width(44)
-.height(44)
-        .padding(6)
-        .accessibilityDescription($r('app.string.a11y_search'))
-        .focusable(true)
-        .onClick(() => {
-          this.pathStack.pushPathByName('search', '');
-        })
-      }
-      .width('100%')
-      .height(64)
-      .padding({ left: 0, right: 0 })
+        },
+        actions: [
+          new AppBarAction($r('app.media.oct_search_24'), (): void => {
+            this.pathStack.pushPathByName('search', '');
+          }, { iconColor: $r('app.color.text_primary'), a11y: $r('app.string.a11y_search') })
+        ]
+      })
 
       PageShadowBar({ show: this.scrollShadow })
 

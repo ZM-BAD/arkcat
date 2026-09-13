@@ -4,7 +4,7 @@
  * （无显示名整行灰只显 login），与 Stargazers 同款；整行点击进入用户主页。
  * 数据=node(id) 查 release 指定 content 的 reactors 分页（前 8 之外也能看全）。
  */
-import { OctIcon } from '../components/OctIcon';
+import { AppBar } from '../components/AppBar';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { StateView } from '../components/StateView';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
@@ -115,32 +115,15 @@ export struct ReactionUsersView {
 
   build() {
     Column() {
-      // 自绘头部：返回 + emoji（大字）+ Reactees（灰副标题，官方同款两行）
-      Row({ space: 8 }) {
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
-        }
-        .width(44)
-        .height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
-        .focusable(true)
-        .onClick(() => {
+      // 头部：emoji（大字）+ Reactees（灰副标题，官方同款两行）
+      AppBar({
+        showBack: true,
+        title: reactionEmoji(this.content),
+        subtitle: resText(this.getUIContext(), $r('app.string.reaction_reactees_title')),
+        onBack: (): void => {
           this.pathStack.pop();
-        })
-        Column({ space: 2 }) {
-          Text(reactionEmoji(this.content))
-            .fontSize(24)
-          Text(resText(this.getUIContext(), $r('app.string.reaction_reactees_title')))
-            .fontSize($r('app.float.body_font_size'))
-            .fontColor($r('app.color.text_secondary'))
         }
-        .alignItems(HorizontalAlign.Start)
-        .layoutWeight(1)
-        Blank()
-      }
-      .width('100%')
-      .height(60)
-      .padding({ left: 0, right: 0 })
+      })
 
       PageShadowBar({ show: this.scrollShadow })
 

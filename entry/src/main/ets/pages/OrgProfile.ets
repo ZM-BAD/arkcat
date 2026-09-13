@@ -3,6 +3,7 @@
  * 邮箱走 REST 兜底；README 源 = 组织 .github 仓库（取不到隐藏区块）。
  */
 import { promptAction } from '@kit.ArkUI';
+import { AppBar, AppBarAction, AppBarActionCfg } from '../components/AppBar';
 import { OctIcon } from '../components/OctIcon';
 import { MarkdownView } from '../components/MarkdownView';
 import { PageShadowBar } from '../components/PageShadowBar';
@@ -281,46 +282,20 @@ export struct OrgProfileView {
 
   build() {
     Column() {
-      // 顶栏：返回 + 分享 + ⋯（无标题）
-      Row({ space: 16 }) {
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
-        }
-.width(44)
-.height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
-        .focusable(true)
-        .onClick(() => {
+      AppBar({
+        showBack: true,
+        onBack: (): void => {
           this.pathStack.pop();
-        })
-        Blank()
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_share_android_16'), iconSize: 18, iconColor: $r('app.color.link_blue') })
-        }
-.width(44)
-.height(44)
-        .padding(6)
-        .accessibilityDescription($r('app.string.a11y_share'))
-        .focusable(true)
-        .onClick(() => {
-          shareLink(this.getUIContext(), userPageUrl(this.login), this.login);
-        })
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 18, iconColor: $r('app.color.link_blue') })
-            .rotate({ angle: 90 })
-        }
-.width(44)
-.height(44)
-        .padding(6)
-        .accessibilityDescription($r('app.string.a11y_more'))
-        .focusable(true)
-        .onClick(() => {
-          promptAction.showToast({ message: $r('app.string.home_feature_coming') });
-        })
-      }
-      .width('100%')
-      .height(48)
-      .padding({ left: 0, right: 0 })
+        },
+        actions: [
+          new AppBarAction($r('app.media.oct_share_android_16'), (): void => {
+            shareLink(this.getUIContext(), userPageUrl(this.login), this.login);
+          }, { iconColor: $r('app.color.link_blue'), a11y: $r('app.string.a11y_share') }),
+          new AppBarAction($r('app.media.oct_kebab_horizontal_16'), (): void => {
+            promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+          }, { rotate90: true, iconColor: $r('app.color.link_blue'), a11y: $r('app.string.a11y_more') })
+        ]
+      })
 
       PageShadowBar({ show: this.scrollShadow })
 

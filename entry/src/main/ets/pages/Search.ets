@@ -281,7 +281,7 @@ export struct SearchView {
     Column() {
       // 搜索栏（← / 输入框 / ✕ / ⋮ 竖三点蓝）
       Column() {
-        Row({ space: 8 }) {
+        Row() {
           Stack() {
             OctIcon({
               res: $r('app.media.oct_arrow_left_24'),
@@ -345,7 +345,7 @@ export struct SearchView {
         }
         .width('100%')
         .height(48)
-        .padding({ left: 0, right: 0 })
+        .padding({ left: 4, right: 4 })
 
       // 输入下划线（聚焦或已有输入时显示，官方样式）
       if (this.focused || this.keyword.trim() !== '') {

@@ -15,6 +15,7 @@ import {
 import { StateView } from '../components/StateView';
 import { friendlyError } from '../services/GitHttpClient';
 import { OctIcon } from '../components/OctIcon';
+import { AppBar, AppBarAction } from '../components/AppBar';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { InboxNotifyCard } from '../components/InboxNotifyCard';
 import { InboxFilterSheet, InboxRepoSheet } from '../components/InboxFilterSheets';
@@ -258,34 +259,23 @@ export struct InboxView {
 
   build() {
     Column() {
-      Row() {
-        Text($r('app.string.tab_inbox'))
-          .fontSize($r('app.float.title_font_size'))
-          .fontWeight(600)
-          .fontColor($r('app.color.text_primary'))
-        Blank()
-        Stack() {
-          OctIcon({
-            res: $r('app.media.oct_kebab_horizontal_16'),
-            iconSize: 18,
-            iconColor: $r('app.color.link_blue')
+      AppBar({
+        title: $r('app.string.tab_inbox'),
+        actions: [
+          new AppBarAction($r('app.media.oct_kebab_horizontal_16'), (): void => {}, {
+            rotate90: true,
+            a11y: $r('app.string.a11y_more'),
+            menu: [
+              {
+                value: $r('app.string.inbox_menu_refresh'),
+                action: (): void => this.refresh()
+              }
+            ]
           })
-          .rotate({ angle: 90 })
-        }
-        .width(44)
-        .height(44)
-        .accessibilityDescription($r('app.string.a11y_more'))
-        .focusable(true)
-        .bindMenu([
-          {
-            value: $r('app.string.inbox_menu_refresh'),
-            action: (): void => this.refresh()
-          }
-        ])
-        .padding(4)
-      }
-      .width('100%')
-      .padding({ left: 16, right: 16, top: 8 })
+        ]
+      })
+        // 原顶栏自带 top:8 呼吸空间（组件行高统一 48，不内置页级间距）
+        .margin({ top: 8 })
 
       PageShadowBar({ show: this.scrollShadow })
 

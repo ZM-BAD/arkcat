@@ -7,6 +7,7 @@ import { promptAction } from '@kit.ArkUI';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
+import { AppBar, AppBarAction, AppBarActionCfg } from '../components/AppBar';
 import { OctIcon } from '../components/OctIcon';
 import { StateView } from '../components/StateView';
 import { PageShadowBar } from '../components/PageShadowBar';
@@ -214,65 +215,24 @@ export struct CodeViewerView {
 
   build() {
     Column() {
-      // 自绘头部：← 文件名 + 分享/齿轮/更多
-      Row({ space: 8 }) {
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
-        }
-        .width(44)
-        .height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
-        .focusable(true)
-        .onClick(() => {
+      AppBar({
+        showBack: true,
+        // 可滚动路径模式展示全路径，否则展示文件名（与原头部一致）
+        title: this.scrollablePath ? this.filePath : this.fileName(),
+        onBack: (): void => {
           this.pathStack.pop();
-        })
-        if (this.scrollablePath) {
-          Scroll() {
-            Text(this.filePath)
-              .fontSize($r('app.float.title_font_size'))
-              .fontWeight(600)
-              .fontColor($r('app.color.text_primary'))
-              .maxLines(1)
-          }
-          .scrollable(ScrollDirection.Horizontal)
-          .scrollBar(BarState.Off)
-          .layoutWeight(1)
-        } else {
-          Text(this.fileName())
-            .fontSize($r('app.float.title_font_size'))
-            .fontWeight(600)
-            .fontColor($r('app.color.text_primary'))
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .layoutWeight(1)
-        }
-        OctIcon({ res: $r('app.media.oct_share_android_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
-          .margin({ left: 12 })
-        .responseRegion({ x: -12, y: -12, width: '220%', height: '220%' })
-        .accessibilityDescription($r('app.string.a11y_share'))
-        .focusable(true)
-          .onClick(() => {
+        },
+        actions: [
+          new AppBarAction($r('app.media.oct_share_android_16'), (): void => {
             shareLink(this.getUIContext(), blobPageUrl(this.owner, this.name, this.filePath), this.fileName());
-          })
-        OctIcon({ res: $r('app.media.oct_gear_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
-          .margin({ left: 12 })
-        .responseRegion({ x: -12, y: -12, width: '220%', height: '220%' })
-        .accessibilityDescription($r('app.string.a11y_settings'))
-        .focusable(true)
-          .onClick(() => {
+          }, { iconColor: $r('app.color.link_blue'), a11y: $r('app.string.a11y_share') }),
+          new AppBarAction($r('app.media.oct_gear_16'), (): void => {
             this.pathStack.pushPathByName('codeOptions', '');
-          })
-        OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
-          .rotate({ angle: 90 })
-          .margin({ left: 12 })
-          .responseRegion({ x: -12, y: -12, width: '220%', height: '220%' })
-          .accessibilityDescription($r('app.string.a11y_more'))
-          .focusable(true)
-          .bindMenu(this.menuItems())
-      }
-      .width('100%')
-      .height(60)
-      .padding({ left: 0, right: 0 })
+          }, { iconColor: $r('app.color.text_secondary'), a11y: $r('app.string.a11y_settings') }),
+          new AppBarAction($r('app.media.oct_kebab_horizontal_16'), (): void => {
+          }, { rotate90: true, iconColor: $r('app.color.link_blue'), a11y: $r('app.string.a11y_more'), menu: this.menuItems() })
+        ]
+      })
 
       PageShadowBar({ show: this.scrollShadow })
 

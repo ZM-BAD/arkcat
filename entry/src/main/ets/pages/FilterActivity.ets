@@ -93,7 +93,7 @@ export struct FilterActivityView {
       }
       .width('100%')
       .height(48)
-      .padding({ left: 12, right: 12 })
+      .padding({ left: 4, right: 4 })
 
       Scroll() {
         Column() {

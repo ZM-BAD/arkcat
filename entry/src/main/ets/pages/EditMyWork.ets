@@ -235,7 +235,7 @@ export struct EditMyWorkView {
       }
       .width('100%')
       .height(48)
-      .padding({ left: 0, right: 0 })
+      .padding({ left: 4, right: 4 })
 
       PageShadowBar({ show: this.scrollShadow })
 

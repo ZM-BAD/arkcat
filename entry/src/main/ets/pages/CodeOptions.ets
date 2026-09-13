@@ -5,6 +5,7 @@
 import { promptAction } from '@kit.ArkUI';
 import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
+import { AppBar } from '../components/AppBar';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import {
@@ -201,26 +202,13 @@ export struct CodeOptionsView {
 
   build() {
     Column() {
-      Row({ space: 8 }) {
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
-        }
-.width(44)
-.height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
-        .focusable(true)
-        .onClick(() => {
+      AppBar({
+        showBack: true,
+        title: $r('app.string.settings_code_options'),
+        onBack: (): void => {
           this.pathStack.pop();
-        })
-        Text($r('app.string.settings_code_options'))
-          .fontSize($r('app.float.title_font_size'))
-          .fontWeight(600)
-          .fontColor($r('app.color.text_primary'))
-        Blank()
-      }
-      .width('100%')
-      .height(48)
-      .padding({ left: 0, right: 0 })
+        }
+      })
 
       PageShadowBar({ show: this.scrollShadow })
 

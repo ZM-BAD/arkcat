@@ -2,7 +2,7 @@
  * 用户列表页（Spec 034）：Followers / Following 同组件两类参数。
  * 行：圆头像 + 显示名（粗体）/用户名（灰）/可选简介；整行点击进入用户主页。
  */
-import { OctIcon } from '../components/OctIcon';
+import { AppBar } from '../components/AppBar';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { UserListPage } from '../models/ProfileModels';
 import { UserSummary } from '../models/GitHubModels';
@@ -128,33 +128,14 @@ export struct UserListView {
 
   build() {
     Column() {
-      // 自绘头部：粗体 login + 灰副标题（Followers/Following）
-      Row({ space: 8 }) {
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
-        }
-        .width(44)
-        .height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
-        .focusable(true)
-        .onClick(() => {
+      AppBar({
+        showBack: true,
+        title: this.headerLogin,
+        subtitle: this.kind === 'following' ? $r('app.string.user_list_following') : $r('app.string.user_list_followers'),
+        onBack: (): void => {
           this.pathStack.pop();
-        })
-        Column({ space: 2 }) {
-          Text(this.headerLogin)
-            .fontSize($r('app.float.title_font_size'))
-            .fontWeight(600)
-            .fontColor($r('app.color.text_primary'))
-          Text(this.kind === 'following' ? $r('app.string.user_list_following') : $r('app.string.user_list_followers'))
-            .fontSize($r('app.float.body_font_size'))
-            .fontColor($r('app.color.text_secondary'))
         }
-        .alignItems(HorizontalAlign.Start)
-        Blank()
-      }
-      .width('100%')
-      .height(60)
-      .padding({ left: 0, right: 0 })
+      })
 
       PageShadowBar({ show: this.scrollShadow })
 

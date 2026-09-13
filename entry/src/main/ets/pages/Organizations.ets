@@ -7,7 +7,7 @@ import { WorkOrgItem, WorkOrgsPage } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
-import { OctIcon } from '../components/OctIcon';
+import { AppBar } from '../components/AppBar';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { resText } from '../utils/I18n';
 
@@ -144,30 +144,13 @@ export struct OrganizationsView {
 
   build() {
     Column() {
-      Row({ space: 8 }) {
-        Stack() {
-  OctIcon({
-          res: $r('app.media.oct_arrow_left_24'),
-          iconSize: 20,
-          iconColor: $r('app.color.text_primary')
-  })
-}
-.width(44)
-.height(44)
-        .accessibilityDescription($r('app.string.a11y_back'))
-        .focusable(true)
-.onClick((): void => {
-            this.pathStack.pop();
-          })
-        Text($r('app.string.nav_organizations_title'))
-          .fontSize($r('app.float.title_font_size'))
-          .fontWeight(600)
-          .fontColor($r('app.color.text_primary'))
-          .layoutWeight(1)
-      }
-      .width('100%')
-      .height(48)
-      .padding({ left: 0, right: 0 })
+      AppBar({
+        showBack: true,
+        title: $r('app.string.nav_organizations_title'),
+        onBack: (): void => {
+          this.pathStack.pop();
+        }
+      })
 
       PageShadowBar({ show: this.scrollShadow })
 
