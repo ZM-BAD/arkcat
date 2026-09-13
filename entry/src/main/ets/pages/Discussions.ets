@@ -317,6 +317,9 @@ export struct DiscussionsView {
     this.scope = 'created';
     this.unanswered = false;
     this.sortKey = 'new';
+    // Author/Label 计入徽标，清空时必须一并重置，否则清完徽标仍非 0
+    this.authorFilter = '';
+    this.labelFilter = '';
     this.refresh();
   }
 

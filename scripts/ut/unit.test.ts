@@ -559,6 +559,20 @@ test('filterReposByType 官方 8 项语义（Spec 021/037）', async () => {
   assert.equal(m.filterReposByType(all, 'weird').length, 6);
 });
 
+test('repoOrderFromKey 官方 Sort by 8 项 → orderBy 字段/方向（Spec 037）', async () => {
+  const m = await import('../../entry/src/main/ets/services/ProfileListService');
+  assert.deepEqual(m.repoOrderFromKey('pushed_desc'), { field: 'PUSHED_AT', direction: 'DESC' });
+  assert.deepEqual(m.repoOrderFromKey('pushed_asc'), { field: 'PUSHED_AT', direction: 'ASC' });
+  assert.deepEqual(m.repoOrderFromKey('created_desc'), { field: 'CREATED_AT', direction: 'DESC' });
+  assert.deepEqual(m.repoOrderFromKey('created_asc'), { field: 'CREATED_AT', direction: 'ASC' });
+  assert.deepEqual(m.repoOrderFromKey('name_asc'), { field: 'NAME', direction: 'ASC' });
+  assert.deepEqual(m.repoOrderFromKey('name_desc'), { field: 'NAME', direction: 'DESC' });
+  assert.deepEqual(m.repoOrderFromKey('stars_desc'), { field: 'STARGAZERS', direction: 'DESC' });
+  assert.deepEqual(m.repoOrderFromKey('stars_asc'), { field: 'STARGAZERS', direction: 'ASC' });
+  // 未知键回退默认 Recently pushed（脏值不得乱序）
+  assert.deepEqual(m.repoOrderFromKey('weird'), { field: 'PUSHED_AT', direction: 'DESC' });
+});
+
 test('buildNotificationsPath 过滤参数（Focused 参与模式）', () => {
   assert.equal(buildNotificationsPath(true, 30), '/notifications?all=true&per_page=30');
   assert.equal(buildNotificationsPath(false, 1), '/notifications?all=false&per_page=1');

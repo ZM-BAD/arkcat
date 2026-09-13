@@ -81,6 +81,8 @@ struct Index {
   @State viewerAvatarUrl: string = '';
   /** Spec 060：tab4「我的主页」刷新泵（切回该 Tab / 从其二级页返回时自增 → 静默重取） */
   @State profileTick: number = 0;
+  /** Explore 类型筛选页返回信号（Spec 056）：回到 Explore tab 时重读六类勾选、必要时重载动态流 */
+  @State exploreTick: number = 0;
   @State currentTab: number = 0;
   /** 软键盘弹出时隐藏底栏（搜索输入态；窗口 keyboardHeightChange 监听） */
   @State keyboardOn: boolean = false;
@@ -191,6 +193,12 @@ struct Index {
       // Spec 060：从二级页返回根页且当前停在 tab4 → 静默重取「我的主页」（本页内 star/关注等改动可见）
       if (routeName === '' && this.currentTab === 3) {
         this.profileTick += 1;
+      }
+      // Spec 056：离开 Filter Activity 页（SAVE 或返回）→ 通知 Explore 重读六类勾选（角标/动态流刷新）
+      const fromDest = info.from as uiObserver.NavDestinationInfo;
+      const fromName: string = fromDest.name !== undefined ? fromDest.name as string : '';
+      if (fromName === 'exploreActivityFilter') {
+        this.exploreTick += 1;
       }
     });
   }
@@ -1272,7 +1280,7 @@ struct Index {
       }
 
       TabContent() {
-        ExploreView({ token: this.token, pathStack: this.pathStack })
+        ExploreView({ token: this.token, pathStack: this.pathStack, exploreTick: this.exploreTick })
       }
 
       // Spec 060：tab4 = 当前账号个人主页（头像即 Tab 图标，与三 Tab 同为真 Tab）。

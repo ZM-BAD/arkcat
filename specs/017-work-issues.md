@@ -100,5 +100,6 @@ query WorkIssues($query: String!, $first: Int = 25, $after: String) {
 - 搜索结果节点必须 `... on Issue` 收敛类型；Search 对未登录/受限仓库自动过滤，无需额外处理。
 - 相对时间扩展：`timeParts` 增加 `year` 单位（≥12 个月），新增 `time_years_ago` key；IssuesList（007）同步支持，避免 switch 遗漏。
 - 入口复用 013 的 Issues 彩色图标（绿 `#2DA44E`）。
+- Repository 多选 chip 显示：未选=「Repository」、单选=「repo octicon + owner/name」、多选=「蓝底白字计数圆点 + Repositories」（与漏斗徽标同款计数样式）；State/Scope/Visibility 走通用 FilterDropdownChip，Organization/Repository/Sort 走 FilterSheetChip。
 
 - 模拟器实测：工作区 Issues 真实数据渲染（筛选行/状态图标/标签/相对时间含年粒度）；bindMenu 弹层为框架标准行为，筛选重查逻辑由构建串单测（workQueries_builders）覆盖。

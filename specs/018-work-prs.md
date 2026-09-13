@@ -97,6 +97,7 @@ query WorkPullRequests($query: String!, $first: Int = 25, $after: String) {
 
 - 搜索节点必须 `... on PullRequest` 收敛类型；`statusCheckRollup.state` 取 SUCCESS/FAILURE/PENDING/ERROR，ERROR 按 FAILURE 处理。
 - 入口复用 013 的 PR 彩色图标（蓝 `#3C78D8`）。
+- Repository 多选 chip 显示：未选=「Repository」、单选=「repo octicon + owner/name」、多选=「蓝底白字计数圆点 + Repositories」（与漏斗徽标同款计数样式）；State/Scope/Visibility 走通用 FilterDropdownChip，Organization/Repository/Sort 走 FilterSheetChip。
 - 与 027 的分工：027 为「仓库内 PR 列表」（Repo Detail 进入）；018 为「跨仓库工作区列表」，两者功能互不重叠。（008 为该能力的原始规划，已由 027 实现并 deprecated）
 
 - 模拟器实测：工作区 PR 页渲染通过；Checks 胶囊与审查数依赖真实数据，映射逻辑由单测覆盖。

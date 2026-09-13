@@ -178,7 +178,8 @@ export struct FilterDropdownChip {
 
 /**
  * 底部面板型筛选 chip（与 FilterDropdownChip 同款胶囊外形）：点击拉起页面 bindSheet 底部面板，
- * 面板内选择（官方 Trending 的 Language/Spoken、Repositories 的 Language 均为此型）。
+ * 面板内选择（官方 Trending 的 Language/Spoken、Repositories 的 Language/Sort、Work 的
+ * Organization/Repository/Sort 均为此型）。
  * 与下拉型的差异仅在于「点击去向」——本组件不自持弹层，激活态由调用方传入 active 决定。
  */
 @ComponentV2
@@ -186,13 +187,40 @@ export struct FilterSheetChip {
   /** chip 显示文本（未选中时由调用方传入占位文案） */
   @Param label: string = '';
   @Param active: boolean = false;
+  /** 前置图标（如仓库筛选单选时显示 repo octicon）；withIcon=false 时不渲染 */
+  @Param withIcon: boolean = false;
+  @Param iconRes: Resource = $r('app.media.oct_repo_16');
+  /** 前置计数徽标（如仓库多选「N Repositories」）；与漏斗徽标同款：蓝底白字圆点，>0 时优先于图标 */
+  @Param badgeCount: number = 0;
   @Event onTap: () => void = (): void => { };
 
   build() {
     Row() {
+      if (this.badgeCount > 0) {
+        Stack() {
+          Text(`${this.badgeCount}`)
+            .fontSize(12)
+            .fontColor(Color.White)
+        }
+        .width(18)
+        .height(18)
+        .borderRadius(9)
+        .backgroundColor($r('app.color.link_blue'))
+        .margin({ right: 6 })
+      } else if (this.withIcon) {
+        OctIcon({
+          res: this.iconRes,
+          iconSize: 14,
+          iconColor: this.active ? $r('app.color.link_blue') : $r('app.color.text_primary')
+        })
+          .margin({ right: 6 })
+      }
       Text(this.label)
         .fontSize($r('app.float.caption_font_size'))
         .fontColor(this.active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .constraintSize({ maxWidth: 220 })
       OctIcon({
         res: $r('app.media.oct_chevron_down_16'),
         iconSize: 12,

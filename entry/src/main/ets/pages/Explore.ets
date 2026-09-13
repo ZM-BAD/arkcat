@@ -6,7 +6,7 @@
  */
 import { common } from '@kit.AbilityKit';
 import { ExploreActivityEvent } from '../models/ExploreModels';
-import { readActivityKinds } from '../models/ActivityKinds';
+import { readActivityKinds, ACTIVITY_KIND_KEYS } from '../models/ActivityKinds';
 import { ExploreService } from '../services/ExploreService';
 import { friendlyError } from '../services/GitHttpClient';
 import { StateView } from '../components/StateView';
@@ -18,6 +18,8 @@ import { ExploreActivityCard } from '../components/ExploreActivityCard';
 export struct ExploreView {
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
+  /** Filter Activity 页返回信号（Index 递增）：重读六类勾选并刷新角标 */
+  @Param exploreTick: number = 0;
   @Local events: ExploreActivityEvent[] = [];
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
@@ -28,15 +30,39 @@ export struct ExploreView {
   @Local isRefreshing: boolean = false;
 
   aboutToAppear(): void {
-    const ctx = this.getUIContext().getHostContext() as common.Context | undefined;
-    this.activityKinds = readActivityKinds(ctx);
+    this.activityKinds = this.readKinds();
     this.load();
+  }
+
+  /** 读取已保存的 Activity 类型（Filter Activity 页 SAVE 后回页需重读，否则角标不刷新） */
+  private readKinds(): string[] {
+    const ctx = this.getUIContext().getHostContext() as common.Context | undefined;
+    return readActivityKinds(ctx);
   }
 
   /** Spec 049a：切换账号后 token 更新 → 用新 token 重拉 */
   @Monitor('token')
   onTokenChanged(): void {
     this.load();
+  }
+
+  /** Filter Activity 页返回：重读勾选（角标立即刷新）；勾选有变化才重载动态流 */
+  @Monitor('exploreTick')
+  onExploreTick(): void {
+    const kinds = this.readKinds();
+    let changed = kinds.length !== this.activityKinds.length;
+    if (!changed) {
+      for (const k of kinds) {
+        if (this.activityKinds.indexOf(k) < 0) {
+          changed = true;
+          break;
+        }
+      }
+    }
+    this.activityKinds = kinds;
+    if (changed) {
+      this.load();
+    }
   }
 
   private load(): void {
@@ -63,6 +89,16 @@ export struct ExploreView {
   /** Activity 类型筛选：Filter Activity 页（六类勾选 + SAVE，Spec 056 收口） */
   private openActivityFilter(): void {
     this.pathStack.pushPathByName('exploreActivityFilter', '');
+  }
+
+  /** 六类是否全选：有未选时图标右上角显示蓝点（表示筛选条件生效中） */
+  private allKindsSelected(): boolean {
+    for (const key of ACTIVITY_KIND_KEYS) {
+      if (this.activityKinds.indexOf(key) < 0) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /** Discover 入口行：彩色方标 + 标题（入参均为静态资源，无状态刷新问题） */
@@ -126,7 +162,19 @@ export struct ExploreView {
                   .fontColor($r('app.color.text_primary'))
                 Blank()
               Row() {
-                OctIcon({ res: $r('app.media.oct_filter_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
+                Stack() {
+                  OctIcon({ res: $r('app.media.oct_filter_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
+                  // 六类未全选 → 右上角蓝点（官方通知点语义：筛选条件生效中；6vp 落在图标右上角外缘）
+                  if (!this.allKindsSelected()) {
+                    Circle()
+                      .width(6)
+                      .height(6)
+                      .fill($r('app.color.link_blue'))
+                  }
+                }
+                .alignContent(Alignment.TopEnd)
+                .width(28)
+                .height(28)
               }
               .justifyContent(FlexAlign.End)
               .width(28)

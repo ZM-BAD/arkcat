@@ -88,6 +88,25 @@ export interface RepoOrder {
   direction: string;
 }
 
+/**
+ * 官方 Sort by 8 项 → 服务端 orderBy（Spec 037 仓库列表时；键为排序面板选项 key）。
+ * 未知键回退默认「Recently pushed」（PUSHED_AT DESC）。
+ */
+export function repoOrderFromKey(sortKey: string): RepoOrder {
+  const orders: Record<string, RepoOrder> = {
+    'pushed_desc': { field: 'PUSHED_AT', direction: 'DESC' },
+    'pushed_asc': { field: 'PUSHED_AT', direction: 'ASC' },
+    'created_desc': { field: 'CREATED_AT', direction: 'DESC' },
+    'created_asc': { field: 'CREATED_AT', direction: 'ASC' },
+    'name_asc': { field: 'NAME', direction: 'ASC' },
+    'name_desc': { field: 'NAME', direction: 'DESC' },
+    'stars_desc': { field: 'STARGAZERS', direction: 'DESC' },
+    'stars_asc': { field: 'STARGAZERS', direction: 'ASC' }
+  };
+  const order = orders[sortKey];
+  return order !== undefined ? order : { field: 'PUSHED_AT', direction: 'DESC' };
+}
+
 /** 常用语言色（REST 兜底无 language color 字段，数据色板见 models/LanguageColors.ets） */
 
 export class ProfileListService {
@@ -244,7 +263,9 @@ export class ProfileListService {
     } catch (e) {
       // read:org 缺失等场景 → REST 兜底（一页 100 + 客户端排序后客户端过滤）
       // 服务端 sort 映射（review G6：此前未传 sort，pushed/updated 静默失效变默认 created 序）
-      const sortMap: Record<string, string> = { 'PUSHED_AT': 'pushed', 'UPDATED_AT': 'updated', 'NAME': 'full_name' };
+      const sortMap: Record<string, string> = {
+        'PUSHED_AT': 'pushed', 'UPDATED_AT': 'updated', 'NAME': 'full_name', 'CREATED_AT': 'created'
+      };
       const sort = sortMap[order.field] ?? 'created';
       const dir = order.direction === 'ASC' ? 'asc' : 'desc';
       const resp = await restGet(`/orgs/${owner}/repos?per_page=${ORG_REST_PAGE_LIMIT}&sort=${sort}&direction=${dir}`, token);

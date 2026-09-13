@@ -157,7 +157,9 @@ export struct WorkFilterSelectSheet {
       } else {
         Scroll() {
           Column() {
-            ForEach(this.items, (item: FilterSheetItem) => this.sheetRow(item), (item: FilterSheetItem) => item.key)
+            // key 带上选中态：勾选后该行强制重建，否则行按静态 key 复用、蓝勾不刷新
+            ForEach(this.items, (item: FilterSheetItem) => this.sheetRow(item),
+              (item: FilterSheetItem) => `${item.key}_${item.selected ? 'on' : 'off'}`)
           }
         }
         .layoutWeight(1)

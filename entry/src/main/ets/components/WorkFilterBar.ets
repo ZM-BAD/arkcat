@@ -1,6 +1,6 @@
 /**
- * 工作区筛选行（Spec 017/018 共用）：State/Scope/Visibility 自绘下拉（选中蓝勾）+ Organization/Repository
- * 多选 Bottom Sheet（头像+搜索+蓝勾 toggle）+ Sort by 四组单选 Sheet（radio + Most reactions emoji）。
+ * 工作区筛选行（Spec 017/018 共用）：漏斗徽标 + State/Scope/Visibility 下拉（通用 FilterDropdownChip）
+ * + Organization/Repository 多选 Bottom Sheet（头像+搜索+蓝勾 toggle）+ Sort by 单选 Sheet。
  * 弹层内容组件化于 WorkFilterSelectSheet（org/repo 共用）/WorkFilterSortSheet，本组件保留
  * 状态管理与数据加载（emitChange/openOrgSheet 等）；任何变化经 onQueryChange 上抛，页面据此重查。
  * 空列表显示官方「Nothing to see here」（无组织/仓库或搜索无匹配时）。
@@ -12,6 +12,7 @@ import { WorkService } from '../services/WorkService';
 import { friendlyError } from '../services/GitHttpClient';
 import { ProfileListService } from '../services/ProfileListService';
 import { OrgListPage, OrgSummary } from '../models/ProfileModels';
+import { FilterDropdownChip, FilterDropdownOption, FilterSheetChip } from './FilterDropdownChip';
 import { WorkFilterSelectSheet, FilterSheetItem } from './WorkFilterSelectSheet';
 import { WorkFilterSortSheet, FILTER_REACTIONS } from './WorkFilterSortSheet';
 import { resText } from '../utils/I18n';
@@ -37,22 +38,10 @@ export function defaultWorkFilter(): WorkFilterState {
   return { state: 'open', scope: 'created', visibility: 'all', sortKey: 'newest', orgs: [], repos: [] };
 }
 
-/** 自绘下拉选项 */
-interface DropdownOption {
-  key: string;
-  label: string;
-}
-
-/** bindPopup 弹出状态事件 */
-interface PopupState {
-  isVisible: boolean;
-}
-
-/** 筛选 chip 参数（按引用传递，@Builder 传值参数不随状态刷新） */
-interface ChipState {
-  kind: string;
-  label: string;
-  active: boolean;
+/** 是否存在偏离默认的筛选（空态的「RESET ALL FILTERS」与「减少筛选」提示仅在有可重置项时显示） */
+export function isWorkFilterDirty(s: WorkFilterState): boolean {
+  return s.state !== 'open' || s.scope !== 'created' || s.visibility !== 'all'
+    || s.sortKey !== 'newest' || s.orgs.length > 0 || s.repos.length > 0;
 }
 
 @ComponentV2
@@ -60,6 +49,8 @@ export struct WorkFilterBar {
   @Param token: string = '';
   @Param stateOptions: WorkFilterOption[] = [];
   @Param scopeOptions: WorkFilterOption[] = [];
+  /** 外部复位信号（空态 RESET ALL FILTERS）：筛选状态在本组件内，页面只能靠递增本值驱动复位 */
+  @Param resetTick: number = 0;
   @Event onQueryChange: (s: WorkFilterState) => void = (s: WorkFilterState): void => { };
 
   @Local state: string = 'open';
@@ -68,8 +59,6 @@ export struct WorkFilterBar {
   @Local sortKey: string = 'newest';
   @Local selectedOrgs: string[] = [];
   @Local selectedRepos: string[] = [];
-  /** 当前打开的弹出下拉（'state' | 'scope' | 'visibility' | ''） */
-  @Local dropdownOpen: string = '';
   /** 弹层内容（'' | 'org' | 'repo' | 'sort'）：同一组件只挂一个 bindSheet，内部切换内容 */
   @Local sheetKind: string = '';
   @Local orgList: WorkOrgItem[] = [];
@@ -86,6 +75,12 @@ export struct WorkFilterBar {
 
   private stringOf(res: Resource): string {
     return resText(this.getUIContext(), res);
+  }
+
+  /** 空态 RESET ALL FILTERS → 与漏斗菜单 Clear all filters 走同一函数 */
+  @Monitor('resetTick')
+  onResetTick(): void {
+    this.resetFilters();
   }
 
   /** 当前筛选变化 → 上抛快照，页面据此重查 */
@@ -194,15 +189,18 @@ export struct WorkFilterBar {
     return this.stringOf($r('app.string.issues_sort_newest'));
   }
 
-  // ────────────────────────── 自绘下拉（State/Scope/Visibility） ──────────────────────────
+  // ────────────────────────── 下拉选项（State/Scope/Visibility，走通用 FilterDropdownChip） ──────────────────────────
 
-  private menuOptions(kind: string): DropdownOption[] {
-    if (kind === 'state') {
-      return this.stateOptions;
+  /** 页面传入的选项 → 通用下拉选项（结构一致，显式转换避免跨模块接口耦合） */
+  private toDropdownOptions(opts: WorkFilterOption[]): FilterDropdownOption[] {
+    const out: FilterDropdownOption[] = [];
+    for (const opt of opts) {
+      out.push({ key: opt.key, label: opt.label });
     }
-    if (kind === 'scope') {
-      return this.scopeOptions;
-    }
+    return out;
+  }
+
+  private visibilityOptions(): FilterDropdownOption[] {
     return [
       { key: 'all', label: this.stringOf($r('app.string.issues_filter_visibility_all')) },
       { key: 'private', label: this.stringOf($r('app.string.issues_filter_visibility_private')) },
@@ -210,99 +208,20 @@ export struct WorkFilterBar {
     ];
   }
 
-  private menuSelected(kind: string, key: string): boolean {
-    if (kind === 'state') {
-      return this.state === key;
+  /** 仓库 chip 文案：单选=owner/name（配 repo 图标），多选=Repositories（前缀蓝底计数徽标），未选=名称 */
+  private repoChipLabel(): string {
+    if (this.selectedRepos.length === 1) {
+      return this.selectedRepos[0];
     }
-    if (kind === 'scope') {
-      return this.scope === key;
+    if (this.selectedRepos.length > 1) {
+      return this.stringOf($r('app.string.work_filter_repositories'));
     }
-    return this.visibilityFilter === key;
+    return this.stringOf($r('app.string.work_filter_repository'));
   }
 
-  private onMenuPick(kind: string, key: string): void {
-    if (kind === 'state') {
-      this.state = key;
-    } else if (kind === 'scope') {
-      this.scope = key;
-    } else {
-      this.visibilityFilter = key;
-    }
-    this.dropdownOpen = '';
-    this.emitChange();
-  }
-
-  @Builder
-  dropdownCard(kind: string) {
-    Column() {
-      ForEach(this.menuOptions(kind), (opt: DropdownOption) => {
-        Row() {
-          Text(opt.label)
-            .fontSize($r('app.float.menu_font_size'))
-            .fontColor($r('app.color.text_primary'))
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .layoutWeight(1)
-          if (this.menuSelected(kind, opt.key)) {
-            OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 16, iconColor: $r('app.color.link_blue') })
-              .margin({ left: 8 })
-          }
-        }
-        .width('100%')
-        .height(52)
-        .padding({ left: 14, right: 14 })
-        .onClick((): void => this.onMenuPick(kind, opt.key))
-      }, (opt: DropdownOption) => `${kind}:${opt.key}`)
-    }
-    .padding({ top: 6, bottom: 6 })
-    .width(210)
-    .borderRadius(12)
-    .backgroundColor($r('app.color.card_background'))
-    .shadow({ radius: 24, color: $r('app.color.shadow_floating'), offsetY: 8 })
-  }
-
-  @Builder
-  filterChip($$: ChipState) {
-    Row() {
-      Text($$.label)
-        .fontSize($r('app.float.caption_font_size'))
-        .fontColor($$.active ? $r('app.color.link_blue') : $r('app.color.text_primary'))
-      OctIcon({
-        res: $r('app.media.oct_chevron_down_16'),
-        iconSize: 12,
-        iconColor: $$.active ? $r('app.color.link_blue') : $r('app.color.text_secondary')
-      })
-        .margin({ left: 8 })
-    }
-    .height(32)
-    .responseRegion({ x: 0, y: -6, width: '100%', height: '144%' })
-    .padding({ left: 8, right: 8 })
-    .borderRadius(16)
-    .backgroundColor($$.active ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
-    .margin({ right: 8 })
-    .border({ width: 1, color: $$.active ? $r('app.color.chip_active_border') : $r('app.color.border') })
-    .onClick((): void => {
-      if ($$.kind === 'org') {
-        this.openOrgSheet();
-      } else if ($$.kind === 'repo') {
-        this.openRepoSheet();
-      } else if ($$.kind === 'sort') {
-        this.sheetKind = 'sort';
-      } else {
-        this.dropdownOpen = this.dropdownOpen === $$.kind ? '' : $$.kind;
-      }
-    })
-    .bindPopup(this.dropdownOpen === $$.kind, {
-      builder: (): void => this.dropdownCard($$.kind),
-      placement: Placement.Bottom,
-      enableArrow: false,
-      mask: true,
-      onStateChange: (e: PopupState): void => {
-        if (!e.isVisible) {
-          this.dropdownOpen = '';
-        }
-      }
-    })
+  /** 仓库 chip 计数徽标（仅多选显示，口径与漏斗徽标一致：蓝底白字圆点） */
+  private repoChipBadge(): number {
+    return this.selectedRepos.length > 1 ? this.selectedRepos.length : 0;
   }
 
   // ────────────────────────── 筛选弹层（Organization/Repository 多选） ──────────────────────────
@@ -527,24 +446,58 @@ export struct WorkFilterBar {
             ])
           }
 
-          this.filterChip({ kind: 'state', label: this.stateLabel(), active: this.state !== 'open' })
-          this.filterChip({ kind: 'scope', label: this.scopeLabel(), active: this.scope !== 'created' })
-          this.filterChip({
-            kind: 'visibility',
+          // State / Scope / Visibility：通用下拉 chip（弹层宽度按最长项自适应，长文案不再截断）
+          FilterDropdownChip({
+            label: this.stateLabel(),
+            active: this.state !== 'open',
+            options: this.toDropdownOptions(this.stateOptions),
+            selectedKey: this.state,
+            onPick: (key: string): void => {
+              this.state = key;
+              this.emitChange();
+            }
+          })
+          FilterDropdownChip({
+            label: this.scopeLabel(),
+            active: this.scope !== 'created',
+            options: this.toDropdownOptions(this.scopeOptions),
+            selectedKey: this.scope,
+            onPick: (key: string): void => {
+              this.scope = key;
+              this.emitChange();
+            }
+          })
+          FilterDropdownChip({
             label: this.visibilityLabel(),
-            active: this.visibilityFilter !== 'all'
+            active: this.visibilityFilter !== 'all',
+            options: this.visibilityOptions(),
+            selectedKey: this.visibilityFilter,
+            onPick: (key: string): void => {
+              this.visibilityFilter = key;
+              this.emitChange();
+            }
           })
-          this.filterChip({
-            kind: 'org',
+          // Organization / Repository / Sort：sheet 型 chip
+          FilterSheetChip({
             label: this.stringOf($r('app.string.work_filter_organization')),
-            active: this.selectedOrgs.length > 0
+            active: this.selectedOrgs.length > 0,
+            onTap: (): void => this.openOrgSheet()
           })
-          this.filterChip({
-            kind: 'repo',
-            label: this.stringOf($r('app.string.work_filter_repository')),
-            active: this.selectedRepos.length > 0
+          FilterSheetChip({
+            label: this.repoChipLabel(),
+            active: this.selectedRepos.length > 0,
+            withIcon: this.selectedRepos.length === 1,
+            iconRes: $r('app.media.oct_repo_16'),
+            badgeCount: this.repoChipBadge(),
+            onTap: (): void => this.openRepoSheet()
           })
-          this.filterChip({ kind: 'sort', label: this.sortLabel(), active: this.sortKey !== 'newest' })
+          FilterSheetChip({
+            label: this.sortLabel(),
+            active: this.sortKey !== 'newest',
+            onTap: (): void => {
+              this.sheetKind = 'sort';
+            }
+          })
         }
       }
       .scrollable(ScrollDirection.Horizontal)

@@ -3,10 +3,44 @@
  * 标题行（✕ + 标题 + 🔍 切换内联搜索）+ 语言行列表（色点 + 语言名 + 选中蓝勾）。
  * 数据加载与筛选状态留在调用方（本组件只展示与上抛事件）；搜索框显隐/关键词为组件内部态，
  * 每次重新拉起即为干净状态。选中项再点一次=取消（清筛选）由调用方的 onPick 决定。
+ *
+ * 选中态刷新：每行是独立组件（@Param selected），且 ForEach key 带上选中标记——
+ * 面板内容在 bindSheet 内会被复用，若只用「@Builder 值参数 + 静态 key」，切换语言后蓝勾会卡旧值。
  */
 import { ExploreLanguage } from '../models/ExploreLanguages';
 import { OctIcon } from './OctIcon';
 import { resText } from '../utils/I18n';
+
+/** 语言行（独立组件：选中态经 @Param 刷新，规避 @Builder 值参数 + ForEach 复用卡旧值） */
+@ComponentV2
+struct LanguageOptionRow {
+  @Param lang: ExploreLanguage = { name: '', color: '' };
+  @Param selected: boolean = false;
+  @Event onPick: (name: string) => void = (name: string): void => { };
+
+  build() {
+    Row() {
+      Circle()
+        .width(12)
+        .height(12)
+        .fill(this.lang.color !== '' ? this.lang.color : $r('app.color.repo_language_unknown'))
+        // 色点与语言名之间的固定间隔（不加则紧贴）
+        .margin({ right: 16 })
+      Text(this.lang.name)
+        .fontSize($r('app.float.body_font_size'))
+        .fontColor($r('app.color.text_primary'))
+        .layoutWeight(1)
+      if (this.selected) {
+        OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 16, iconColor: $r('app.color.link_blue') })
+          .margin({ left: 8 })
+      }
+    }
+    .width('100%')
+    .height(56)
+    .padding({ left: 20, right: 16 })
+    .onClick((): void => this.onPick(this.lang.name))
+  }
+}
 
 @ComponentV2
 export struct LanguageFilterSheet {
@@ -61,26 +95,11 @@ export struct LanguageFilterSheet {
 
   @Builder
   langRow(lang: ExploreLanguage) {
-    Row() {
-      Circle()
-        .width(12)
-        .height(12)
-        .fill(lang.color !== '' ? lang.color : $r('app.color.repo_language_unknown'))
-        // 色点与语言名之间的固定间隔（不加则紧贴）
-        .margin({ right: 16 })
-      Text(lang.name)
-        .fontSize($r('app.float.body_font_size'))
-        .fontColor($r('app.color.text_primary'))
-        .layoutWeight(1)
-      if (this.selected === lang.name) {
-        OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 16, iconColor: $r('app.color.link_blue') })
-          .margin({ left: 8 })
-      }
-    }
-    .width('100%')
-    .height(56)
-    .padding({ left: 20, right: 16 })
-    .onClick((): void => this.onPick(lang.name))
+    LanguageOptionRow({
+      lang: lang,
+      selected: this.selected === lang.name,
+      onPick: (name: string): void => this.onPick(name)
+    })
   }
 
   build() {
@@ -106,7 +125,7 @@ export struct LanguageFilterSheet {
           if (this.filtered().length > 0) {
             ForEach(this.filtered(), (lang: ExploreLanguage) => {
               this.langRow(lang)
-            }, (lang: ExploreLanguage) => lang.name)
+            }, (lang: ExploreLanguage) => `${lang.name}_${this.selected === lang.name ? 'on' : 'off'}`)
           } else {
             Text($r('app.string.filter_no_results'))
               .fontSize($r('app.float.caption_font_size'))
@@ -118,6 +137,8 @@ export struct LanguageFilterSheet {
       }
       .layoutWeight(1)
       .scrollBar(BarState.Off)
+      // 内容不足一屏时顶对齐：Scroll 默认居中会把首行推离头部（留白上下各一半）
+      .align(Alignment.Top)
     }
     .width('100%')
     .height('100%')

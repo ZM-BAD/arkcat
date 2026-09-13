@@ -108,7 +108,8 @@ export struct InboxFilterSheet {
           selected: this.view === v,
           emoji: ''
         }, (): void => this.onSelectView(v))
-      }, (v: string) => v)
+        // key 带上选中态：切换后该行强制重建，否则行按静态 key 复用、蓝勾不刷新
+      }, (v: string) => `${v}_${this.view === v ? 'on' : 'off'}`)
       Divider()
         .color($r('app.color.divider'))
         .strokeWidth(1)
@@ -120,7 +121,7 @@ export struct InboxFilterSheet {
           selected: this.selectedReasons.indexOf(r.key) >= 0,
           emoji: r.emoji
         }, (): void => this.onToggleReason(r.key))
-      }, (r: ReasonOption) => r.key)
+      }, (r: ReasonOption) => `${r.key}_${this.selectedReasons.indexOf(r.key) >= 0 ? 'on' : 'off'}`)
     }
     .width('100%')
     .height('100%')
@@ -213,7 +214,8 @@ export struct InboxRepoSheet {
         Column() {
           ForEach(this.repos, (r: InboxRepoFilterItem) => {
             this.repoRow(r)
-          }, (r: InboxRepoFilterItem) => r.fullName)
+            // key 带上选中态：选中仓库后该行强制重建，否则行按静态 key 复用、蓝勾不刷新
+          }, (r: InboxRepoFilterItem) => `${r.fullName}_${this.selectedFullName === r.fullName && this.selectedActive ? 'on' : 'off'}`)
         }
       }
       .layoutWeight(1)

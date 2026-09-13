@@ -1001,6 +1001,10 @@
       "value": "可见性"
     },
     {
+      "name": "work_filter_repositories",
+      "value": "仓库"
+    },
+    {
       "name": "work_filter_organization",
       "value": "组织"
     },
@@ -1589,16 +1593,32 @@
       "value": "最近推送"
     },
     {
-      "name": "repos_sort_stars",
-      "value": "星标"
+      "name": "repos_sort_least_recent",
+      "value": "最久未推送"
     },
     {
-      "name": "repos_sort_name",
-      "value": "名称"
+      "name": "repos_sort_newest",
+      "value": "最新创建"
     },
     {
-      "name": "repos_sort_updated",
-      "value": "最近更新"
+      "name": "repos_sort_oldest",
+      "value": "最早创建"
+    },
+    {
+      "name": "repos_sort_name_asc",
+      "value": "名称升序"
+    },
+    {
+      "name": "repos_sort_name_desc",
+      "value": "名称降序"
+    },
+    {
+      "name": "repos_sort_most_stars",
+      "value": "星标最多"
+    },
+    {
+      "name": "repos_sort_least_stars",
+      "value": "星标最少"
     },
     {
       "name": "repos_sort_format",
@@ -1777,7 +1797,7 @@
       "value": "按仓库筛选"
     },
     {
-      "name": "issues_sort_title",
+      "name": "filter_sort_title",
       "value": "排序方式"
     },
     {

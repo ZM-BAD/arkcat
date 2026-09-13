@@ -6,7 +6,7 @@
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
-import { WorkFilterBar, WorkFilterOption, WorkFilterState, defaultWorkFilter } from '../components/WorkFilterBar';
+import { WorkFilterBar, WorkFilterOption, WorkFilterState, defaultWorkFilter, isWorkFilterDirty } from '../components/WorkFilterBar';
 import { WorkPrItem, WorkPrsPage } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
@@ -22,6 +22,8 @@ export struct WorkPrsView {
   /** 返回刷新 tick（review B13） */
   @Param returnTick: number = 0;
   @Local filterState: WorkFilterState = defaultWorkFilter();
+  /** 空态 RESET ALL FILTERS 的复位信号（递增即触发 WorkFilterBar 内部复位） */
+  @Local resetTick: number = 0;
   @Local prs: WorkPrItem[] = [];
   @Local cursor: string = '';
   @Local hasNextPage: boolean = false;
@@ -47,10 +49,14 @@ export struct WorkPrsView {
 
   /** 空态「RESET ALL FILTERS」：恢复默认筛选 + 退出就地搜索后重查（Spec 018 元素 14） */
   private resetFilters(): void {
-    this.filterState = defaultWorkFilter();
-    this.inSearch = false;
-    this.searchQuery = '';
-    this.refresh();
+    // 与漏斗菜单 Clear all filters 完全同口径：由 WorkFilterBar 内部复位并 emitChange（同时不动页内搜索）；
+    // 页面不能直接改 filterState —— 那只会改快照，chip/漏斗图标不会复位
+    this.resetTick += 1;
+  }
+
+  /** 空态是否显示重置入口：只看筛选是否偏离默认（页内搜索不计入，与徽标口径一致） */
+  private canResetFilters(): boolean {
+    return isWorkFilterDirty(this.filterState);
   }
 
   private refresh(): void {
@@ -381,6 +387,7 @@ export struct WorkPrsView {
         Column() {
           WorkFilterBar({
             token: this.token,
+            resetTick: this.resetTick,
             stateOptions: this.stateOptions(),
             scopeOptions: this.scopeOptions(),
             onQueryChange: (s: WorkFilterState): void => this.onQueryChange(s)
@@ -403,8 +410,9 @@ export struct WorkPrsView {
             WorkEmptyView({
               iconText: '🐱',
               title: $r('app.string.work_prs_empty'),
-              subtitle: $r('app.string.work_use_fewer_filters'),
-              button: $r('app.string.work_reset_all_filters'),
+              // 无筛选可重置时不显示「减少筛选」提示与 RESET ALL FILTERS（刚进页即空列表的场景）
+              subtitle: this.canResetFilters() ? $r('app.string.work_use_fewer_filters') : null,
+              button: this.canResetFilters() ? $r('app.string.work_reset_all_filters') : null,
               onButton: () => this.resetFilters()
             })
           }

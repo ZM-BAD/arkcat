@@ -119,20 +119,29 @@ export struct InboxView {
     }
   }
 
-  /** 激活筛选数（Issues/PR 列表同款漏斗徽标口径）：类型多选 + 仓库单选 */
+  /** 激活筛选数（全库统一口径）：视图（Saved/Done）+ 模式（Focused/Unread/Repo）+ 类型多选，各计 1 */
   private activeFilterCount(): number {
-    let c = this.reasonKeys.length;
-    if (this.filter === 'repo' && this.repoFilter !== '') {
+    let c = 0;
+    if (this.filter !== 'inbox') {
+      c++;
+    }
+    if (this.inboxView !== 'inbox') {
+      c++;
+    }
+    if (this.reasonKeys.length > 0) {
       c++;
     }
     return c;
   }
 
-  /** 清除全部筛选：类型清空、仓库单选取消并回 Inbox 视图 */
+  /** 清除全部筛选：视图/模式/多选/仓库全部回默认；与漏斗菜单 Clear all filters 同一函数 */
   private clearAllFilters(): void {
+    const needReload = this.filter !== 'inbox';
     this.reasonKeys = [];
-    if (this.filter === 'repo') {
-      this.filter = 'inbox';
+    this.repoFilter = '';
+    this.inboxView = 'inbox';
+    this.filter = 'inbox';
+    if (needReload) {
       this.refresh();
     } else {
       this.applyFilters();

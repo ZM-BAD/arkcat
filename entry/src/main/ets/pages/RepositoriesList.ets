@@ -1,18 +1,19 @@
 /**
  * 仓库列表页（Spec 037）：通用（用户/组织，owner+mode 参数化）。
- * 筛选三件：Type（官方 8 项下拉）+ Language（底部面板，全量语言清单）+ Sort（服务端排序），
+ * 筛选三件：Type（官方 8 项下拉）+ Language / Sort（底部面板：全量语言清单 / 官方 8 项排序），
  * 三者均为真实筛选；行点击进仓库详情。
  */
 import { AppBar, AppBarAction, AppBarActionCfg } from '../components/AppBar';
 import { FilterDropdownChip, FilterDropdownOption, FilterSheetChip } from '../components/FilterDropdownChip';
 import { LanguageFilterSheet } from '../components/LanguageFilterSheet';
+import { SortBySheet, SortSheetOption } from '../components/SortBySheet';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { RepoListPage } from '../models/ProfileModels';
 import { ExploreLanguage, PROGRAM_LANGUAGES, sortLanguages } from '../models/ExploreLanguages';
 import { RepoSummary } from '../models/GitHubModels';
 import { ExploreService } from '../services/ExploreService';
-import { ProfileListService, RepoOrder } from '../services/ProfileListService';
+import { ProfileListService, RepoOrder, repoOrderFromKey } from '../services/ProfileListService';
 import { StateView } from '../components/StateView';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { compactCount } from '../utils/Format';
@@ -37,9 +38,10 @@ export struct RepositoriesListView {
   /** Type 筛选（官方 8 项：all/archived/fork/mirror/private/public/source/template） */
   @Local typeFilter: string = 'all';
   @Local langFilter: string = '';
-  @Local sortField: string = 'PUSHED_AT';
-  /** 语言面板（''=关闭；全量语言经 GET /languages，失败降级内置子集） */
-  @Local langSheetOpen: boolean = false;
+  /** 排序键（官方 Sort by 8 项，见 repoOrderFromKey；默认 Recently pushed） */
+  @Local sortKey: string = 'pushed_desc';
+  /** 底部面板分派（''=关闭 | 'language' | 'sort'）：单 bindSheet 内切内容，规避多 bindSheet 只有最后一个生效 */
+  @Local sheetKind: string = '';
   @Local allLanguages: ExploreLanguage[] = [];
 
   aboutToAppear(): void {
@@ -112,7 +114,7 @@ export struct RepositoriesListView {
     this.refresh();
   }
 
-  /** 激活筛选数（Issues/Inbox 同款漏斗徽标口径）：Type + Language（Sort 是排序不计入） */
+  /** 激活筛选数（全库统一口径）：Select 类下拉取非默认值各计 1（含排序） */
   private activeFilterCount(): number {
     let c = 0;
     if (this.typeFilter !== 'all') {
@@ -121,21 +123,22 @@ export struct RepositoriesListView {
     if (this.langFilter !== '') {
       c++;
     }
+    if (this.sortKey !== 'pushed_desc') {
+      c++;
+    }
     return c;
   }
 
-  /** 清除全部筛选：Type 回 All、语言清空（Sort 是排序保留） */
+  /** 清除全部筛选：所有下拉回默认（含排序）；与漏斗菜单 Clear all filters 同一函数 */
   private clearAllFilters(): void {
     this.typeFilter = 'all';
     this.langFilter = '';
+    this.sortKey = 'pushed_desc';
     this.applyFilters();
   }
 
   private orderRef(): RepoOrder {
-    return {
-      field: this.sortField,
-      direction: this.sortField === 'NAME' ? 'ASC' : 'DESC'
-    };
+    return repoOrderFromKey(this.sortKey);
   }
 
   private stringOf(res: Resource): string {
@@ -151,16 +154,37 @@ export struct RepositoriesListView {
     return this.stringOf($r('app.string.repos_filter_all'));
   }
 
+  /** chip 文案：Sort: {当前排序项} */
   private sortLabel(): string {
-    let key: Resource = $r('app.string.repos_sort_stars');
-    if (this.sortField === 'PUSHED_AT') {
-      key = $r('app.string.repos_sort_recent');
-    } else if (this.sortField === 'NAME') {
-      key = $r('app.string.repos_sort_name');
-    } else if (this.sortField === 'UPDATED_AT') {
-      key = $r('app.string.repos_sort_updated');
+    let label = this.stringOf($r('app.string.repos_sort_recent'));
+    for (const opt of this.sortOptions()) {
+      if (opt.key === this.sortKey) {
+        label = opt.label;
+        break;
+      }
     }
-    return resText(this.getUIContext(), $r('app.string.repos_sort_format'), this.stringOf(key));
+    return resText(this.getUIContext(), $r('app.string.repos_sort_format'), label);
+  }
+
+  /** 官方 Sort by 8 项（4 组 × 2；isGroupStart 标在每组首项，即上一组之后插分隔带） */
+  private sortOptions(): SortSheetOption[] {
+    return [
+      { key: 'pushed_desc', label: this.stringOf($r('app.string.repos_sort_recent')) },
+      { key: 'pushed_asc', label: this.stringOf($r('app.string.repos_sort_least_recent')) },
+      { key: 'created_desc', label: this.stringOf($r('app.string.repos_sort_newest')), isGroupStart: true },
+      { key: 'created_asc', label: this.stringOf($r('app.string.repos_sort_oldest')) },
+      { key: 'name_asc', label: this.stringOf($r('app.string.repos_sort_name_asc')), isGroupStart: true },
+      { key: 'name_desc', label: this.stringOf($r('app.string.repos_sort_name_desc')) },
+      { key: 'stars_desc', label: this.stringOf($r('app.string.repos_sort_most_stars')), isGroupStart: true },
+      { key: 'stars_asc', label: this.stringOf($r('app.string.repos_sort_least_stars')) }
+    ];
+  }
+
+  /** 排序选择：更新排序键后重查（Sort 不计入激活筛选数） */
+  private pickSort(key: string): void {
+    this.sortKey = key;
+    this.sheetKind = '';
+    this.applyFilters();
   }
 
   /** 官方 Type 下拉 8 项（顺序与官方一致，Spec 021 同款口径） */
@@ -180,17 +204,8 @@ export struct RepositoriesListView {
   /** 语言选择：再点已选语言=取消筛选（Trending 同款），随后重查 */
   private pickLanguage(name: string): void {
     this.langFilter = this.langFilter === name ? '' : name;
-    this.langSheetOpen = false;
+    this.sheetKind = '';
     this.applyFilters();
-  }
-
-  private sortOptions(): FilterDropdownOption[] {
-    return [
-      { key: 'PUSHED_AT', label: this.stringOf($r('app.string.repos_sort_recent')) },
-      { key: 'STARGAZERS', label: this.stringOf($r('app.string.repos_sort_stars')) },
-      { key: 'NAME', label: this.stringOf($r('app.string.repos_sort_name')) },
-      { key: 'UPDATED_AT', label: this.stringOf($r('app.string.repos_sort_updated')) }
-    ];
   }
 
   /** 列表行：仓库名（私有带 lock）+ 描述 + 星数（实心）+ 语言 */
@@ -316,17 +331,15 @@ export struct RepositoriesListView {
           label: this.langFilter !== '' ? this.langFilter : this.stringOf($r('app.string.repos_filter_language')),
           active: this.langFilter !== '',
           onTap: (): void => {
-            this.langSheetOpen = true;
+            this.sheetKind = 'language';
           }
         })
-        FilterDropdownChip({
+        // Sort chip：同款 sheet 型（点击拉起 Sort by 面板；排序非筛选，chip 不置激活色）
+        FilterSheetChip({
           label: this.sortLabel(),
           active: false,
-          options: this.sortOptions(),
-          selectedKey: this.sortField,
-          onPick: (key: string): void => {
-            this.sortField = key;
-            this.applyFilters();
+          onTap: (): void => {
+            this.sheetKind = 'sort';
           }
         })
       }
@@ -386,29 +399,46 @@ export struct RepositoriesListView {
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
-    .bindSheet(this.langSheetOpen!!, this.languageSheet(), {
-      height: 540,
+    .bindSheet(this.sheetKind !== '', this.overlaySheet(), {
+      // Sort 面板 8 行 + 3 条分隔带需更高；Language 面板长列表固定 540
+      height: this.sheetKind === 'sort' ? 560 : 540,
       backgroundColor: $r('app.color.card_background'),
       // 关闭钮与标题行均自绘，避免默认 ✕ 与自绘按钮重叠
       showClose: false,
       // 交互式关闭（下滑/遮罩）后复位，否则表达式恒 true 再点 chip 拉不起来
       onDisappear: (): void => {
-        this.langSheetOpen = false;
+        this.sheetKind = '';
       }
     })
   }
 
-  /** 语言底部面板（Trending 同构：✕ + 标题 + 🔍 内联搜索 + 色点行列表） */
+  /** 底部面板分派（单 bindSheet 内按 sheetKind 切内容） */
   @Builder
-  languageSheet() {
-    LanguageFilterSheet({
-      title: $r('app.string.filter_language_title'),
-      languages: this.allLanguages,
-      selected: this.langFilter,
-      onPick: (name: string): void => this.pickLanguage(name),
-      onClose: (): void => {
-        this.langSheetOpen = false;
-      }
-    })
+  overlaySheet() {
+    if (this.sheetKind === 'language') {
+      LanguageFilterSheet({
+        title: $r('app.string.filter_language_title'),
+        languages: this.allLanguages,
+        selected: this.langFilter,
+        onPick: (name: string): void => this.pickLanguage(name),
+        onClose: (): void => {
+          this.sheetKind = '';
+        }
+      })
+    } else if (this.sheetKind === 'sort') {
+      SortBySheet({
+        title: $r('app.string.filter_sort_title'),
+        options: this.sortOptions(),
+        selectedKey: this.sortKey,
+        onPick: (key: string): void => this.pickSort(key),
+        onClose: (): void => {
+          this.sheetKind = '';
+        }
+      })
+    } else {
+      Column()
+        .width('100%')
+        .height('100%')
+    }
   }
 }

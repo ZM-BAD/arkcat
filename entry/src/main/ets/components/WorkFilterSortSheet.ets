@@ -140,7 +140,7 @@ export struct WorkFilterSortSheet {
         .width(44)
         .height(44)
         .onClick((): void => this.onClose())
-        Text($r('app.string.issues_sort_title'))
+        Text($r('app.string.filter_sort_title'))
           .fontSize($r('app.float.title_font_size'))
           .fontWeight(600)
           .fontColor($r('app.color.text_primary'))

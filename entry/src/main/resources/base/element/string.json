@@ -1001,6 +1001,10 @@
       "value": "Visibility"
     },
     {
+      "name": "work_filter_repositories",
+      "value": "Repositories"
+    },
+    {
       "name": "work_filter_organization",
       "value": "Organization"
     },
@@ -1621,16 +1625,32 @@
       "value": "Recently pushed"
     },
     {
-      "name": "repos_sort_stars",
-      "value": "Stars"
+      "name": "repos_sort_least_recent",
+      "value": "Least recently pushed"
     },
     {
-      "name": "repos_sort_name",
-      "value": "Name"
+      "name": "repos_sort_newest",
+      "value": "Newest"
     },
     {
-      "name": "repos_sort_updated",
-      "value": "Updated"
+      "name": "repos_sort_oldest",
+      "value": "Oldest"
+    },
+    {
+      "name": "repos_sort_name_asc",
+      "value": "Name ascending"
+    },
+    {
+      "name": "repos_sort_name_desc",
+      "value": "Name descending"
+    },
+    {
+      "name": "repos_sort_most_stars",
+      "value": "Most starred"
+    },
+    {
+      "name": "repos_sort_least_stars",
+      "value": "Least starred"
     },
     {
       "name": "repos_sort_format",
@@ -1809,7 +1829,7 @@
       "value": "Filter by repository"
     },
     {
-      "name": "issues_sort_title",
+      "name": "filter_sort_title",
       "value": "Sort by"
     },
     {
