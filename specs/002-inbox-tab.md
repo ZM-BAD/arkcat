@@ -34,10 +34,11 @@
 | --- | ------ | ------ | ------ | -------- | ------ | ------ |
 | 1 | 标题行 | Inbox 标题 | 纯展示 | ✅ 纯 UI | — | — |
 | 2 | 标题行右 | ⋯ 菜单 | 后续 Spec 提供 | ⚠️ | — | 菜单含 Refresh（刷新列表） |
-| 3 | 筛选行 | Inbox▾ pill | 全部通知 | ✅ | REST `GET /notifications?all=true&per_page=30` | 打开底部 sheet：视图单选（Inbox/Saved/Done）+ 类型多选（reason：assign/participating/mention/team_mention/review_requested）；Saved 视图恒空 |
-| 4 | 筛选行 | Focused pill | 参与类高价值通知 | ✅ | REST `GET /notifications?participating=true&per_page=30` | 官方 Focused 语义近似 participating |
-| 5 | 筛选行 | Unread pill | 仅未读 | ✅ | REST `GET /notifications?all=false&per_page=30` | — |
-| 6 | 筛选行 | Repository▾ pill | 按仓库过滤 | ✅ | 客户端过滤 | 打开底部 sheet：仓库搜索/计数/单选 |
+| 3 | 筛选行 | Inbox▾ pill | 全部通知 | ✅ | REST `GET /notifications?all=true&per_page=50` | 打开底部 sheet：视图单选（Inbox/Saved/Done）+ 类型多选（reason：assign/participating/mention/team_mention/review_requested）；Saved 视图恒空 |
+| 4 | 筛选行 | Focused pill | 参与类高价值通知 | ✅ | REST `GET /notifications?participating=true&per_page=50` | 官方 Focused 语义近似 participating |
+| 5 | 筛选行 | Unread pill | 仅未读 | ✅ | REST `GET /notifications?all=false&per_page=50` | — |
+| 6 | 筛选行 | Repository▾ pill | 按仓库过滤 | ✅ | 客户端过滤（`/notifications` 无 repository 参数，实测被忽略） | 打开底部 sheet：仓库搜索/计数/单选 |
+| 6b | 数据 | 通知分页 | 翻页/自动补拉 | ✅ | REST `page=N`（`per_page=50`） | reason/repo 为客户端过滤 → 空态自动补拉最多 5 页；满载推断 hasMore |
 | 7 | 卡片行1 | 仓库全名 · #编号 | 纯展示 | ✅ | `repository.full_name` + `subject.url` 提取 | 编号纯函数 |
 | 8 | 卡片行2 | 通知标题 | 纯展示 | ✅ | `subject.title` | 加粗，最多 2 行 |
 | 9 | 卡片行3 | 类型图标+摘要 | 类型展示 | ⚠️ | `subject.type` | 官方摘要(操作者)无公开 API，降级为类型+reason |
@@ -89,3 +90,4 @@ PATCH /notifications/threads/{thread_id}
 
 - 全部走 REST Notifications API；编号提取纯函数 `issueNumberFromUrl` 位于 GitHubModels（可单测）
 - 2026-08-31：官方布局对齐完成，截图验收通过
+- 筛选交互（默认值/dirty/徽标计数、RESET ≡ Clear all、服务端/客户端分工矩阵、空态自动补拉）统一见 **Spec 068**。

@@ -86,6 +86,7 @@ query IssuesList(
 | 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | Label 多选筛选 | GraphQL `labels` 参数需 `[String!]`，空数组传 null 即可 | 单选传 `[name]`，多选客户端二次过滤 |
+| Author/Assignee 筛选 | —（无边界） | **服务端 `filterBy{createdBy/assignee}`**（2026-09-13 实测支持，与 states/labels 正交）；下拉候选来自会话内累积的候选池（只增不减，避免选了一人后其他人从下拉消失） |
 
 ---
 
@@ -104,3 +105,5 @@ query IssuesList(
 - 作者行不实现：官方 App 的 Issue 列表卡无作者行，卡片保持整卡点击进详情。
 - 2026-08-31：实现合并自 feature/spec-00X 分支（--no-ff）至 develop，仪器测试 19/19 通过；真实数据类验收项需在应用内配置有效 GitHub PAT 后复核
 - 2026-08-31 真实数据验收：使用 GitHub PAT（模拟器实测）完成以上勾选项；未实测项见「备注」（详情跳转由 Spec 030/031 接管）
+- 筛选条最左的漏斗徽标**固定不随 chips 横向滑动**（2026-09-13 起）：外层 Row 内「徽标 + chips 的横向 Scroll(layoutWeight 1)」。
+- 筛选交互（默认值/dirty/徽标计数、RESET ≡ Clear all、服务端/客户端分工矩阵、空态自动补拉）统一见 **Spec 068**。

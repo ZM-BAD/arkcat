@@ -225,10 +225,10 @@ export struct PrDiffCard {
           })
           .bindPopup(this.menuOpen, {
             builder: (): void => this.fileMenu(),
-            placement: Placement.Bottom,
+            // 右缘对齐「⋯」钮；出屏避让交给框架内建策略（勿手算 offset 叠加，双重修正会把弹层推出屏幕）
+            placement: Placement.BottomRight,
             enableArrow: false,
             mask: true,
-            offset: { x: -82, y: -4 },
             onStateChange: (e: PopupState): void => {
               if (!e.isVisible) {
                 this.menuOpen = false;

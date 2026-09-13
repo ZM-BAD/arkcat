@@ -9,14 +9,14 @@
 
 ## 一、页面/功能概述
 
-Home My Work「Top Repositories」入口进入的仓库列表页，展示 viewer 的仓库按最近推送时间降序排列（近似官方「Top Repositories」）。筛选：8 项（All/Archived/Fork/Mirror/Private/Public/Source/Template，`All ⌄` 下拉，拉全量后客户端过滤）。行结构：左侧仓库头像（owner 头像），上/下两行 = 灰色小字 owner + 黑色大字仓库名；点击进入仓库详情（复用 006 路由）。数据源 `viewer.repositories`。
+Home My Work「Top Repositories」入口进入的仓库列表页，展示 viewer 的仓库按最近推送时间降序排列（近似官方「Top Repositories」）。筛选：8 项（All/Archived/Fork/Mirror/Private/Public/Source/Template，`All ⌄` 下拉；**6 项下推服务端**（archived/fork/source/private/public/all），Mirror/Template 客户端兜底；切换类型=重查并重置游标）。行结构：左侧仓库头像（owner 头像），上/下两行 = 灰色小字 owner + 黑色大字仓库名；点击进入仓库详情（复用 006 路由）。数据源 `viewer.repositories`。
 
 ---
 
 ## 二、整体 UI 结构
 
 1. 顶部 App Bar：← 返回、「Top Repositories」标题 + 右上 🔍 搜索（进全局搜索页）
-2. 筛选行：「All」仓库筛选下拉（8 项，客户端过滤）
+2. 筛选行：「All」仓库筛选下拉（8 项；可下推项走服务端，切换即重查）
 3. 仓库行（头像 + owner + name 两行）：◯ 头像 + 第一行 owner 灰色小字（ZM-BAD）+ 第二行仓库名大字（DAG-chat）；后续行同构（headroom 等），多行滚动
 4. 列表底部分页：Load more
 
@@ -28,7 +28,7 @@ Home My Work「Top Repositories」入口进入的仓库列表页，展示 viewer
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar 左 | ← 返回 | 回退 | ✅ | —（纯 UI） | — |
 | 2 | App Bar 中 | 「Top Repositories」标题 | 页面标题 | ✅ | —（纯 UI） | — |
-| 3 | 筛选行 | All 下拉（All/Archived/Fork/Mirror/Private/Public/Source/Template） | 仓库筛选（客户端过滤） | ✅ | `isArchived / isFork / isMirror / visibility / isTemplate`（拉全量后过滤） | 默认 All |
+| 3 | 筛选行 | All 下拉（All/Archived/Fork/Mirror/Private/Public/Source/Template） | 仓库筛选（服务端 6 项 + 客户端兜底） | ✅ | `viewer.repositories(isArchived:/isFork:/privacy:)`（实测支持）+ 客户端复核 `isMirror/isTemplate` | 默认 All；切换类型触发重查（重置游标） |
 | 4 | 仓库行 | 仓库头像 | 展示 | ✅ | `owner { avatarUrl }` | — |
 | 5 | 仓库行 | owner（灰色小字） | 展示 | ✅ | `owner { login }` | — |
 | 6 | 仓库行 | 仓库名（黑色大字） | 展示 | ✅ | `name` | — |
@@ -86,3 +86,4 @@ query WorkTopRepositories($first: Int = 50, $after: String) {
 - 头像缺失时（avatarUrl 空）用圆形底色占位（沿用 Home 头像兜底样式）。
 
 - 模拟器实测：Top Repositories 真实数据渲染（头像 + owner/name 两行）；点击进仓库详情未实机断言。
+- 筛选交互（默认值/dirty/徽标计数、RESET ≡ Clear all、服务端/客户端分工矩阵、空态自动补拉）统一见 **Spec 068**。

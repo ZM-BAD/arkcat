@@ -6,7 +6,7 @@
  * 同款外形的 sheet 型 chip 见 FilterSheetChip（点击拉起底部面板而非弹出卡片）。
  */
 import { common } from '@kit.AbilityKit';
-import { window } from '@kit.ArkUI';
+import { display, window } from '@kit.ArkUI';
 import { OctIcon } from './OctIcon';
 import { resText } from '../utils/I18n';
 
@@ -17,22 +17,10 @@ export interface FilterDropdownOption {
   isGroupStart?: boolean;
 }
 
-/** 估算 17fp 下字符串宽（vp）：CJK 按 17，其余按 9.0（官方 UIMenu 宽度 = 最长项 + 固定部分） */
-function estLabelWidth(label: string): number {
-  let w = 0;
-  for (let i = 0; i < label.length; i++) {
-    w += label.charCodeAt(i) > 0x2E7F ? 17 : 9;
-  }
-  return w;
-}
-
 /** bindPopup 弹出状态事件 */
 interface PopupState {
   isVisible: boolean;
 }
-
-/** 实例自增 id：同页多实例时唯一（getRectangleById 锚点） */
-let chipInstanceSeq: number = 0;
 
 @ComponentV2
 export struct FilterDropdownChip {
@@ -43,17 +31,30 @@ export struct FilterDropdownChip {
   @Param selectedKey: string = '';
   @Event onPick: (key: string) => void = (key: string): void => { };
   @Local open: boolean = false;
-  /** chip 实时宽度（onAreaChange 测量，用于 popup 左对齐） */
-  @Local chipWidth: number = 70;
-  /** 实例唯一 id（弹层屏幕内自适应锚点） */
-  private chipId: string = `filterchip_${chipInstanceSeq++}`;
-  /** 窗口宽度（vp；aboutToAppear 时缓存） */
+  /** 可用宽度（vp）：收窄菜单卡片用，必须取到值，否则弹层会跑出屏幕 */
   private windowWidthVp: number = 0;
 
   aboutToAppear(): void {
+    this.refreshWindowWidth();
+  }
+
+  /**
+   * 刷新可用宽度：先用**同步**的 display 宽兜底（弹层定位不能依赖异步结果，取不到时最易跑出屏幕），
+   * 再用异步的窗口宽精确覆盖（分屏/悬浮窗场景窗口比屏幕窄）。
+   */
+  private refreshWindowWidth(): void {
+    try {
+      const d = display.getDefaultDisplaySync();
+      this.windowWidthVp = this.getUIContext().px2vp(d.width);
+    } catch (e) {
+      // 取不到保持原值
+    }
     window.getLastWindow(this.getUIContext().getHostContext() as common.Context)
       .then((w: window.Window) => {
-        this.windowWidthVp = this.getUIContext().px2vp(w.getWindowProperties().windowRect.width);
+        const vp = this.getUIContext().px2vp(w.getWindowProperties().windowRect.width);
+        if (vp > 0) {
+          this.windowWidthVp = vp;
+        }
       })
       .catch(() => {
       });
@@ -102,32 +103,30 @@ export struct FilterDropdownChip {
     .shadow({ radius: 24, color: $r('app.color.shadow_floating'), offsetY: 8 })
   }
 
-  /** 官方 UIMenu 宽度 = 最长项文本宽 + 左右 padding 14+14 + 蓝勾 16 + 间距 8 */
+  /**
+   * 菜单宽度 = **实测**最长选项文本宽 + 左右 padding 14+14 + 蓝勾 16 + 间距 8。
+   * 用 getMeasureUtils().measureText 真实测量（按 row 同一字号 menu_font_size），
+   * 不再按字符估算——估算在中英混排时会明显偏宽，卡片显得空荡。
+   */
   private menuWidth(): number {
-    let maxW = 0;
+    const ui = this.getUIContext();
+    const utils = ui.getMeasureUtils();
+    let maxPx = 0;
     for (const opt of this.options) {
-      maxW = Math.max(maxW, estLabelWidth(opt.label));
-    }
-    return Math.max(136, maxW + 52);
-  }
-
-  /** 弹层水平偏移：左缘对齐 chip 左缘；右侧超屏时回收（自适应保留在屏幕内） */
-  private popupOffsetX(): number {
-    // bindPopup 默认水平居中于组件；左移半差使弹层左缘与 chip 左缘对齐
-    let x = (this.menuWidth() - this.chipWidth) / 2;
-    if (this.windowWidthVp > 0) {
-      try {
-        const rect = this.getUIContext().getComponentUtils().getRectangleById(this.chipId);
-        if (rect !== null && rect !== undefined) {
-          const chipLeft = this.getUIContext().px2vp(rect.windowOffset.x);
-          const maxLeft = this.windowWidthVp - this.menuWidth() - 8;
-          x += Math.min(0, maxLeft - chipLeft);
-        }
-      } catch (e) {
-        // 布局未就绪：仅按左缘对齐处理
+      const w = utils.measureText({
+        textContent: opt.label,
+        fontSize: $r('app.float.menu_font_size')
+      });
+      if (w > maxPx) {
+        maxPx = w;
       }
     }
-    return x;
+    const wanted = Math.max(96, Math.ceil(ui.px2vp(maxPx)) + 52);
+    // 宽度按可用宽度封顶：卡片本身不能宽过屏幕（长文案由行内 ellipsis 兜底）
+    if (this.windowWidthVp > 0) {
+      return Math.min(wanted, this.windowWidthVp - 16);
+    }
+    return wanted;
   }
 
   build() {
@@ -149,24 +148,19 @@ export struct FilterDropdownChip {
     .backgroundColor(this.active ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
     .margin({ right: 8 })
     .border({ width: 1, color: this.active ? $r('app.color.chip_active_border') : $r('app.color.border') })
-    .id(this.chipId)
-    .onAreaChange((_o: Area, n: Area): void => {
-      // Area.width 为 Length（string|number），归一化为 number 存储
-      if (typeof n.width === 'number') {
-        this.chipWidth = n.width;
-      } else if (n.width !== '' && n.width !== undefined) {
-        this.chipWidth = parseFloat(n.width as string);
-      }
-    })
     .onClick((): void => {
+      if (!this.open) {
+        this.refreshWindowWidth();
+      }
       this.open = !this.open;
     })
     .bindPopup(this.open, {
       builder: (): void => this.dropdownCard(),
-      placement: Placement.Bottom,
+      // 首选「弹层左缘对齐 chip 左缘、置于下方」；出屏避让交给框架内建策略
+      // （ArkUI popup 按可用空间自动调整位置，勿再手算 offset 叠加，双重修正会把弹层推出屏幕）。
+      placement: Placement.BottomLeft,
       enableArrow: false,
       mask: true,
-      offset: { x: this.popupOffsetX(), y: 0 },
       onStateChange: (e: PopupState): void => {
         if (!e.isVisible) {
           this.open = false;

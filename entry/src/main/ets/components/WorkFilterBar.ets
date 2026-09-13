@@ -405,10 +405,9 @@ export struct WorkFilterBar {
 
   build() {
     Column() {
-      Scroll() {
-        Row() {
-          // 漏斗徽标：激活筛选组数
-          if (this.activeFilterCount() > 0) {
+      Row() {
+        // 漏斗徽标：激活筛选组数（固定在筛选条最左，不随 chip 横向滚动）
+        if (this.activeFilterCount() > 0) {
             Row({ space: 4 }) {
               OctIcon({
                 res: $r('app.media.oct_filter_16'),
@@ -444,9 +443,12 @@ export struct WorkFilterBar {
                 action: (): void => this.resetFilters()
               }
             ])
-          }
+        }
 
-          // State / Scope / Visibility：通用下拉 chip（弹层宽度按最长项自适应，长文案不再截断）
+        // chips 滚动区：仅这一段随手指横向滑动
+        Scroll() {
+          Row() {
+            // State / Scope / Visibility：通用下拉 chip（弹层宽度按最长项自适应，长文案不再截断）
           FilterDropdownChip({
             label: this.stateLabel(),
             active: this.state !== 'open',
@@ -498,10 +500,14 @@ export struct WorkFilterBar {
               this.sheetKind = 'sort';
             }
           })
+          }
         }
+        .scrollable(ScrollDirection.Horizontal)
+        .scrollBar(BarState.Off)
+        .layoutWeight(1)
+        .align(Alignment.Start)
       }
-      .scrollable(ScrollDirection.Horizontal)
-      .scrollBar(BarState.Off)
+      .width('100%')
       .margin({ bottom: 12 })
     }
     .width('100%')

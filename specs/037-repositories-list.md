@@ -31,7 +31,7 @@
 | # | 位置 | 元素 | 功能 | 可行性 | GraphQL 接口 | 备注 |
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | App Bar | ← + login（灰，上）+ Repositories（粗体，下）+ 🔍 | 导航 | ✅ | —（纯 UI） | 自绘头部 hideTitleBar；🔍 → 现有 Search 页 |
-| 2 | 筛选条 | Type ▾ 下拉（All / Archived / Fork / Mirror / Private / Public / Source / Template） | 客户端过滤 | ✅ | `isArchived / isFork / isMirror / isPrivate / isTemplate`（随行返回） | 与 Spec 021 Top Repositories 同款官方 8 项；仅已加载页；私密仅对有权用户有效，越权为空 |
+| 2 | 筛选条 | Type ▾ 下拉（All / Archived / Fork / Mirror / Private / Public / Source / Template） | **服务端为主 + 客户端兜底** | ✅ | `repositories(isArchived:/isFork:/privacy:)`（实测支持）；Mirror/Template 无参数 → 客户端 | 6 项下推服务端（archived/fork/source/private/public/all）；Mirror/Template 与 source 的 mirror 部分由 `filterReposByType` 客户端复核 |
 | 3 | 筛选条 | Language 胶囊 → 底部面板（全量语言清单 + 内联搜索） | 客户端过滤 | ✅ | `primaryLanguage`；语言清单 GET /languages | 与 Spec 056 Trending 共用 LanguageFilterSheet 组件；仅已加载页；再点选中项=取消筛选 |
 | 4 | 筛选条 | Sort 胶囊 → 底部面板（Recently pushed / Least recently pushed / Newest / Oldest / Name ascending / Name descending / Most starred / Least starred） | 服务端排序 | ✅ | `orderBy { field: PUSHED_AT/CREATED_AT/NAME/STARGAZERS, direction: ASC/DESC }` | 默认 Recently pushed；Newest/Oldest = 创建时间 |
 | 5 | 筛选条 | 漏斗徽标 chip（激活筛选数 + Clear all filters） | 清除筛选 | ✅ | —（纯 UI） | 三个下拉取非默认值各计 1（含 Sort）；Clear all 与空态 RESET 同一函数：全部回默认 |
@@ -87,7 +87,9 @@ query UserRepositories($login: String!, $first: Int = 25, $after: String,
 | 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 私密仓库 | 越权访问无数据 | 「Private」选项对无权限用户自然返回空 + 空态提示 |
-| 类型/语言筛选仅作用已加载页 | `repositories` 连接无 privacy/filterByLanguage 参数（schema 已移除） | 客户端过滤（先语言后类型）；翻页追加后同样过滤 |
+| 语言筛选仅作用已加载页 | `repositories` 连接无 `filterByLanguage`（已移除）；`/search/repositories` 有 `language:` 但无 pushed 排序 + 1000 上限 | 客户端过滤；配合下方「空态自动补拉」缓解假空 |
+| Type 的 Mirror / Template | `repositories` 连接无 `isMirror`/`isTemplate` 参数（2026-09-13 实测） | 客户端过滤（其余 6 项已下推服务端） |
+| 客户端过滤页的「假空」 | 第一页可能全被过滤掉，服务端其实还有数据 | **空态自动补拉**：过滤后为空且还有下一页时自动续拉，最多 5 页（`utils/FilterLoading`）；仍空则在空态追加「已加载的内容中没有匹配」提示 |
 | 组织模式 GraphQL 失败 | read:org 缺失或接口异常 | REST `/orgs/{owner}/repos?per_page=100&sort=…&direction=…` 兜底（一页 100，无翻页；`pushed/updated/created/full_name` 服务端排、STARGAZERS 与 NAME 客户端排；筛选仍在客户端） |
 | 语言清单完整化 | GitHub 语种庞大 | 接 `GET /languages` 全量 833 项（免认证）；失败降级内置子集（常用 7 项置顶 + 字典序） |
 | 搜索框内联搜索（输入过滤） | 官方为页内搜索 | 本轮 🔍 跳现有 Search 页（Spec 015） |
@@ -113,6 +115,7 @@ query UserRepositories($login: String!, $first: Int = 25, $after: String,
 - Type 8 项 = 官方仓库筛选清单（与 Spec 021 Top Repositories 同款），i18n 共用 `repos_filter_all/archived/fork/mirror/private/public/source/template` 一套键；过滤语义见 `models/GitHubModels.filterReposByType`（source = 非 fork/镜像/归档）。
 - 语言面板 = 与 Spec 056 Trending 共用的 `components/LanguageFilterSheet`（✕ + 标题 + 🔍 内联搜索 + 色点行 + 选中蓝勾）；语言清单经 `ExploreService.fetchAllLanguages`（GET /languages）+ `sortLanguages`（常用 7 项置顶），失败降级 `PROGRAM_LANGUAGES`。
 - 排序面板 = `components/SortBySheet`（✕ + Sort by + 单选行 56vp + 组间 16vp 灰带 `heat_empty`；单选圆钮 20 描边/10 实心，选中蓝）；8 项键 → orderBy 映射见 `services/ProfileListService.repoOrderFromKey`。
-- 筛选交互统一口径（全库）：每个下拉有自己的默认值（可为空）；取非默认值即「有一项筛选条件」，漏斗徽标数字=条件个数（含排序）；徽标存在且列表为空时显示 RESET ALL FILTERS，其行为与漏斗菜单 Clear all filters 完全一致（所有下拉回默认 + 清多选 + 重查）。
+- 筛选交互统一口径（全库）：每个下拉有自己的默认值（可为空）；取非默认值即「有一项筛选条件」，漏斗徽标数字=条件个数（含排序）；徽标存在且列表为空时显示 RESET ALL FILTERS，其行为与漏斗菜单 Clear all filters 完全一致（所有下拉回默认 + 清多选 + 重查）；页内搜索不计入徽标、也不被两者清除。详见 Spec 068（筛选交互统一约定，全库跨页面）。
+- 服务端/客户端分工（2026-09-13 调研定案）：Type 6 项与 Sort 走服务端；Language 与 Mirror/Template 客户端 + 自动补拉兜底。
 - 两种筛选 chip 同款胶囊外形（高 32/圆角 16/12fp + chevron-down）：下拉型 `FilterDropdownChip`（自绘弹出卡片）、面板型 `FilterSheetChip`（点击拉起底部面板）；页面单 bindSheet + `sheetKind` 分派（同组件多 bindSheet 只有最后一个生效）。
 - i18n：`repos_list_title`、`repos_filter_all/archived/fork/mirror/private/public/source/template`、`repos_filter_language`、`repos_sort_recent/least_recent/newest/oldest/name_asc/name_desc/most_stars/least_stars`、`repos_sort_format`、`repos_list_empty`、`filter_language_title`、`filter_sort_title`、`filter_no_results`、`search_placeholder`、`work_clear_all_filters`。

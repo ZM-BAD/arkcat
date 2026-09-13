@@ -33,7 +33,8 @@ Home My Work「Projects」入口进入的 Projects 列表页，展示 viewer 可
 | 4 | App Bar 右 | ⋯ 更多 | 预留 | ✅ | —（纯 UI） | 点击提示 |
 | 5 | 筛选行 | 范围下拉（All projects / Owned by me） | 项目范围筛选 | ✅ | `viewer.projectsV2` + `owner { login }` 客户端过滤 | 默认 All projects |
 | 6 | 筛选行 | 状态下拉（Open / Closed / Template） | 状态筛选 | ✅ | `closed / template` 字段客户端过滤 | 默认 Open |
-| 7 | 筛选行 | Sort 排序下拉（8 项） | 排序 | ⚠️ | 客户端本地排序（viewedAt 本会话记录 / updatedAt / createdAt / title） | 8 项排序：Most/Least recently viewed（本会话浏览记录 viewedAt）、Updated/Newest/Oldest、Created/Newest/Oldest、Title/A-Z/Z-A |
+| 7 | 筛选行 | Sort 排序下拉（8 项） | 排序 | ⚠️ | 客户端本地排序（viewedAt 本会话记录 / updatedAt / createdAt / title） | 8 项排序：Most/Least recently viewed（本会话浏览记录 viewedAt）、Updated/Newest/Oldest、Created/Newest/Oldest、Title/A-Z/Z-A；`projectsV2(orderBy:)` 可下推 6 项（Most/Least viewed 本质是本地记录，无字段） |
+| 7b | 列表 | 空态自动补拉 | 缓解客户端筛选假空 | ✅ | `projectsV2` 游标分页 | 范围/状态/Sort 全客户端过滤 → 过滤后为空且还有下一页时自动续拉最多 5 页，仍空则附「已加载的内容中没有匹配」 |
 | 8 | Project 行 | 项目图标 + 标题 | 展示 | ✅ | `title` | — |
 | 9 | Project 行 | 编号 `#N` | 展示 | ✅ | `number` | — |
 | 10 | Project 行 | 状态 + 更新时间 | 展示 | ✅ | `closed / updatedAt` | 复用相对时间 |
@@ -93,3 +94,4 @@ query WorkProjects($first: Int = 30, $after: String) {
 - 筛选行与官方一致可横向溢出（长文案被截断），不强制换行。
 
 - 模拟器实测：Projects 页渲染通过；数据区当前展示错误态（本机 PAT 无 `read:project` scope，GitHub 返回官方引导文案），用户授权后自动可加载。
+- 筛选交互（默认值/dirty/徽标计数、RESET ≡ Clear all、服务端/客户端分工矩阵、空态自动补拉）统一见 **Spec 068**。

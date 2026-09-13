@@ -103,3 +103,5 @@ query WorkIssues($query: String!, $first: Int = 25, $after: String) {
 - Repository 多选 chip 显示：未选=「Repository」、单选=「repo octicon + owner/name」、多选=「蓝底白字计数圆点 + Repositories」（与漏斗徽标同款计数样式）；State/Scope/Visibility 走通用 FilterDropdownChip，Organization/Repository/Sort 走 FilterSheetChip。
 
 - 模拟器实测：工作区 Issues 真实数据渲染（筛选行/状态图标/标签/相对时间含年粒度）；bindMenu 弹层为框架标准行为，筛选重查逻辑由构建串单测（workQueries_builders）覆盖。
+- 筛选条最左的漏斗徽标**固定不随 chips 横向滑动**（2026-09-13 起）：外层 Row 内「徽标 + chips 的横向 Scroll(layoutWeight 1)」。
+- 筛选交互（默认值/dirty/徽标计数、RESET ≡ Clear all、服务端/客户端分工矩阵、空态自动补拉）统一见 **Spec 068**。

@@ -9,7 +9,7 @@
 
 ## 一、页面/功能概述
 
-仓库维度的 PR 列表（区别于 Spec 018 工作区跨仓库列表）。顶部副标题为仓库 owner，筛选行为漏斗徽标 + 状态下拉（All/Open/Closed/Merged）+ Label + Author + Assignee（Label 走 GraphQL，Author/Assignee 为客户端过滤）；行含状态图标、标题、`owner/repo #编号`、相对时间、Label 胶囊、Checks/评论数/作者头像。行点击进入 PR 详情（Spec 031）。
+仓库维度的 PR 列表（区别于 Spec 018 工作区跨仓库列表）。顶部副标题为仓库 owner，筛选行为漏斗徽标 + 状态下拉（All/Open/Closed/Merged）+ Label + Author + Assignee（Label 走 GraphQL；Author/Assignee **服务端无参数**——`pullRequests` 无 author/assignee、REST `/pulls` 忽略 `creator`——故保持客户端过滤 + 空态自动补拉）；行含状态图标、标题、`owner/repo #编号`、相对时间、Label 胶囊、Checks/评论数/作者头像。行点击进入 PR 详情（Spec 031）。
 
 ---
 
@@ -29,8 +29,8 @@
 | 3 | 筛选行 | 漏斗徽标（激活数） | 计数 | ✅ | —（纯 UI） | — |
 | 4 | 筛选行 | 状态下拉 All/Open/Closed/Merged | 状态筛选 | ✅ | `pullRequests(states:)` | 默认 All |
 | 5 | 筛选行 | Label 下拉 | 标签筛选 | ✅ | `pullRequests(labels:)` | 仓库标签枚举 |
-| 6 | 筛选行 | Author 下拉 | 作者筛选 | ⚠️ | 客户端过滤 | 取首屏作者集合 |
-| 7 | 筛选行 | Assignee 下拉 | 分配人筛选 | ⚠️ | 客户端过滤 | 取首屏 assignees 集合 |
+| 6 | 筛选行 | Author 下拉 | 作者筛选 | ⚠️ | **客户端过滤**（GraphQL/REST 均无该参数；see §五） | 候选取服务端返回的作者集合；空态自动补拉最多 5 页 |
+| 7 | 筛选行 | Assignee 下拉 | 分配人筛选 | ⚠️ | **客户端过滤**（同上） | 候选取服务端返回的 assignees；空态自动补拉最多 5 页 |
 | 8 | PR 行 | 状态图标 + 标题 + `#N` + 时间 | 展示 | ✅ | `state/merged/isDraft/createdAt` | 沿用 018 图标规范；draft 灰图标 oct_git_pull_request_draft_16 |
 | 9 | PR 行 | Label 胶囊 + Checks 胶囊 | 展示 | ✅ | `labels/statusCheckRollup` | — |
 | 10 | PR 行 | 💬 / 作者头像 | 展示 | ✅ | `comments/author` | — |
@@ -69,7 +69,7 @@ query RepoPullRequests($owner: String!, $name: String!, $states: [PullRequestSta
 
 | 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
-| Author/Assignee 服务端过滤 | GraphQL 无对应参数 | 客户端过滤 + 下拉来源=首屏数据，后续 Spec 扩展 |
+| Author/Assignee 服务端过滤 | `repository.pullRequests` 无 author/assignee 参数；REST `/repos/{o}/{r}/pulls` 忽略 `creator`（实测）；唯一出口 `/search/issues` 需换分页模型 + 补 `assignees/merged` 字段 + 吃 30 req/min 限流 | **保持客户端过滤** + 空态自动补拉最多 5 页（`utils/FilterLoading`）；若后续要求精确结果再评估 search 方案 |
 | 行内头像加载失败 | 网络异常 | 圆形底色占位 |
 
 ---
@@ -86,3 +86,4 @@ query RepoPullRequests($owner: String!, $name: String!, $states: [PullRequestSta
 ## 七、备注
 
 - 复用 018 的 PR 图标/Checks 胶囊逻辑；行深色配色统一走 Spec 026 语义色。
+- 筛选交互（默认值/dirty/徽标计数、RESET ≡ Clear all、服务端/客户端分工矩阵、空态自动补拉）统一见 **Spec 068**。

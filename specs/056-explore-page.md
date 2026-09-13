@@ -169,3 +169,4 @@ query ExploreRepoMeta {
   语言列表 = `GET /languages` 全量 833 项（失败降级内置子集），口语列表 = 内置常见子集（官方 App 走内部端点，详见边界表）
 - Language 面板（✕ + 标题 + 🔍 内联搜索 + 色点行）已组件化为 `components/LanguageFilterSheet`，与 Spec 037 仓库列表页共用；Spoken 面板仍为页内自绘（无第二处复用）
 - **Recommendations 行图标：有意偏离官方，不得改回（强调项）**——官方 App 该行用的是 `mark-github`，即 **GitHub logo 本体**；ArkCat 不引入任何 GitHub 官方徽标（spec 024 §五），故改用中性图标 `oct_graph_stacked_area_16`（黑底 `text_primary` + 白图标不变）。这是 Filter Activity 页六类中**唯一**与官方参考图不一致的位置，其余五类（megaphone / tag / star / repo / person-add）与官方一致。依据是 GitHub 品牌指南原文「Do not use any GitHub logo as the icon or logo for your business/organization」——第三方把 GitHub logo 用作自家界面元素会构成来源混淆，且 MIT 许可不覆盖 logo 类文件。后续按官方参考图复刻此页时，**不得**把该行改回 mark-github。
+- 筛选交互（默认值/dirty/徽标计数、RESET ≡ Clear all、服务端/客户端分工矩阵、空态自动补拉）统一见 **Spec 068**。

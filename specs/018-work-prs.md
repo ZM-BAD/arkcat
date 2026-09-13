@@ -101,3 +101,4 @@ query WorkPullRequests($query: String!, $first: Int = 25, $after: String) {
 - 与 027 的分工：027 为「仓库内 PR 列表」（Repo Detail 进入）；018 为「跨仓库工作区列表」，两者功能互不重叠。（008 为该能力的原始规划，已由 027 实现并 deprecated）
 
 - 模拟器实测：工作区 PR 页渲染通过；Checks 胶囊与审查数依赖真实数据，映射逻辑由单测覆盖。
+- 筛选交互（默认值/dirty/徽标计数、RESET ≡ Clear all、服务端/客户端分工矩阵、空态自动补拉）统一见 **Spec 068**。
