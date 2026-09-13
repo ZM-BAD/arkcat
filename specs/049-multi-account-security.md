@@ -6,7 +6,7 @@
 > ② Accounts 编辑态（Done/浅蓝勾+红色登出图标/Sign out all accounts 红行）
 > ③ Sign In 登录页（`+ ADD ACCOUNT` 的结果：黑色品牌按钮/Terms 链接）
 > 上游 Spec: 014（Settings）、005（Profile）、TokenStore（现状单 token）
-> 状态: draft（2026-09-02 规划；2026-09-08 按官方 3 图拍板交互；**拆 049a/049b：049a=账号管理器，049b=App Lock**）
+> 状态: implemented（2026-09-14 状态回写：049a 账号管理器已随 PR #43 合入 develop；049b App Lock 由 Spec 066 承接并已实现；多账号设备实测项留在第六章）
 
 ---
 

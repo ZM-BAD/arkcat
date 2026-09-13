@@ -3,7 +3,7 @@
 > BFS Level: 2
 > 关联截图: 无官方参考图——用户 2026-09-11 走查发现这几页顶栏仍是灰横向 ⋮、分享图标还是灰 share
 > 上游 Spec: 038（文件树）、011（代码查看器）、036（组织主页）、030（Issue 详情）、005（用户主页——竖三点惯例出处）、061（分享行为统一）
-> 状态: approved
+> 状态: implemented（2026-09-14 状态回写：顶栏 share-android 蓝 / kebab 竖三点口径已落 AppBar 全库）
 > 用户 2026-09-11 定调：File Tree / Code Viewer / Org Profile 三处**分享图标改用 GitHub 强调蓝的
 > share-android 变体**，顶栏的**灰横向三点改为蓝色竖三点**；同日追加要求 Issue 详情页一并照此办理
 > （并补 share 图标）——与全库头部惯例（005 / 015 / 016 / 031 等页均为 `kebab-horizontal` rotate 90 +
