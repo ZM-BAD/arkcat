@@ -2057,6 +2057,10 @@
       "value": "清除全部筛选"
     },
     {
+      "name": "filter_loaded_range_hint",
+      "value": "已加载的内容中没有匹配"
+    },
+    {
       "name": "filter_no_results",
       "value": "无匹配结果"
     },

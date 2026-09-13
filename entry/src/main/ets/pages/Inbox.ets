@@ -20,8 +20,12 @@ import { PageShadowBar } from '../components/PageShadowBar';
 import { InboxNotifyCard } from '../components/InboxNotifyCard';
 import { InboxFilterSheet, InboxRepoSheet } from '../components/InboxFilterSheets';
 import { resText } from '../utils/I18n';
+import { shouldAutoLoadMore, isLimitedRangeEmpty } from '../utils/FilterLoading';
 
 type InboxFilter = 'inbox' | 'focused' | 'unread' | 'repo';
+
+/** 通知每页条数（REST /notifications per_page 上限 50；reason 无服务端参数，靠多拉几页缓解假空） */
+const NOTIFICATIONS_PER_PAGE = 50;
 
 @ComponentV2
 export struct InboxView {
@@ -35,6 +39,13 @@ export struct InboxView {
   @Local repoFilters: InboxRepoFilterItem[] = [];
   @Local repoSearch: string = '';
   @Local repoSearchShow: boolean = false;
+  /** 通知分页：page=当前页；hasMorePages=上一页满载（REST 无 pageInfo，按满载推断） */
+  @Local page: number = 1;
+  @Local hasMorePages: boolean = true;
+  /** 空态自动补拉已用页数（reason/repo 为客户端过滤，防「假空」） */
+  @Local extraPages: number = 0;
+  /** 补拉/翻页进行中（Inbox 无触底加载入口，仅自动补拉用） */
+  @Local loadingMore: boolean = false;
   @Local items: NotificationItem[] = [];
   @Local rawItems: NotificationItem[] = [];
   @Local loading: boolean = true;
@@ -57,19 +68,55 @@ export struct InboxView {
   private refresh(): void {
     this.loading = true;
     this.errorMsg = '';
-    NotificationsService.fetchNotifications(this.token, this.filter !== 'unread', 30, this.filter === 'focused')
+    this.page = 1;
+    NotificationsService.fetchNotifications(this.token, this.filter !== 'unread',
+      NOTIFICATIONS_PER_PAGE, this.filter === 'focused', 1)
       .then((items: NotificationItem[]) => {
         this.rawItems = items;
+        this.hasMorePages = items.length >= NOTIFICATIONS_PER_PAGE;
         this.repoFilters = collectRepoFilters(items);
         this.applyFilters();
         this.loading = false;
         this.isRefreshing = false;
+        this.extraPages = 0;
+        this.autoLoadIfEmpty();
       })
       .catch((e: Error) => {
         this.errorMsg = friendlyError(this.getUIContext(), e);
         this.loading = false;
         this.isRefreshing = false;
       });
+  }
+
+  /** 翻页：追加下一页原始通知（reason/repo 客户端过滤需要更多原始数据时自动调用） */
+  private loadMore(): void {
+    if (!this.hasMorePages || this.loading || this.loadingMore) {
+      return;
+    }
+    this.loadingMore = true;
+    NotificationsService.fetchNotifications(this.token, this.filter !== 'unread',
+      NOTIFICATIONS_PER_PAGE, this.filter === 'focused', this.page + 1)
+      .then((items: NotificationItem[]) => {
+        this.page += 1;
+        this.rawItems = this.rawItems.concat(items);
+        this.hasMorePages = items.length >= NOTIFICATIONS_PER_PAGE;
+        this.repoFilters = collectRepoFilters(this.rawItems);
+        this.applyFilters();
+        this.loadingMore = false;
+        this.autoLoadIfEmpty();
+      })
+      .catch((e: Error) => {
+        this.errorMsg = friendlyError(this.getUIContext(), e);
+        this.loadingMore = false;
+      });
+  }
+
+  /** 过滤后为空且还有下一页 → 自动补拉（上限 5 页），防「假空」 */
+  private autoLoadIfEmpty(): void {
+    if (shouldAutoLoadMore(this.items.length, this.hasMorePages, this.extraPages)) {
+      this.extraPages += 1;
+      this.loadMore();
+    }
   }
 
   /** 本地过滤链（面板选择后无需重新请求，纯函数见 NotificationsService） */
@@ -419,7 +466,9 @@ export struct InboxView {
                 loading: this.loading,
                 error: this.errorMsg,
                 empty: !this.loading && this.errorMsg === '',
-                emptyText: this.emptyText()
+                emptyText: this.emptyText(),
+                emptySub: isLimitedRangeEmpty(this.items.length, this.hasMorePages)
+                  ? $r('app.string.filter_loaded_range_hint') : null
               })
             }
           }

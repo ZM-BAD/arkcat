@@ -13,6 +13,7 @@ import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { WorkEmptyView } from '../components/WorkEmptyView';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
+import { shouldAutoLoadMore, isLimitedRangeEmpty } from '../utils/FilterLoading';
 
 @ComponentV2
 export struct ProjectsView {
@@ -37,6 +38,8 @@ export struct ProjectsView {
   @Local scrollShadow: boolean = false;
   /** 触底加载更多（底部转圈指示） */
   @Local loadingMore: boolean = false;
+  /** 空态自动补拉已用页数（范围/Status/Sort 为客户端过滤，防「假空」） */
+  @Local extraPages: number = 0;
 
   aboutToAppear(): void {
     this.refresh();
@@ -54,6 +57,8 @@ export struct ProjectsView {
         this.applyFilters();
         this.loading = false;
         this.loadingMore = false;
+        this.extraPages = 0;
+        this.autoLoadIfEmpty();
       })
       .catch((e: Error) => {
         // Token scope 不足时给出可操作提示（GraphQL scopes 错误）而非裸接口错误
@@ -80,6 +85,7 @@ export struct ProjectsView {
         this.applyFilters();
         this.loading = false;
         this.loadingMore = false;
+        this.autoLoadIfEmpty();
       })
       .catch((e: Error) => {
         // Token scope 不足时给出可操作提示（GraphQL scopes 错误）而非裸接口错误
@@ -93,6 +99,14 @@ export struct ProjectsView {
   }
 
   /** 客户端范围+三态过滤（纯函数在 WorkModels，便于单测） */
+  /** 过滤后为空且还有下一页 → 自动补拉（上限 5 页），防「假空」 */
+  private autoLoadIfEmpty(): void {
+    if (shouldAutoLoadMore(this.filtered.length, this.hasNextPage, this.extraPages)) {
+      this.extraPages += 1;
+      this.loadMore();
+    }
+  }
+
   private applyFilters(): void {
     // 过滤意图 = 新的上下文：清掉翻页失败的遗留错误态（review E5）
     this.errorMsg = '';
@@ -399,7 +413,9 @@ export struct ProjectsView {
           } else {
             WorkEmptyView({
               iconText: '🐱',
-              title: $r('app.string.work_projects_empty')
+              title: $r('app.string.work_projects_empty'),
+              subtitle: isLimitedRangeEmpty(this.filtered.length, this.hasNextPage)
+                ? $r('app.string.filter_loaded_range_hint') : null
             })
           }
         }

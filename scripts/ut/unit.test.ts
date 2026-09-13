@@ -559,6 +559,32 @@ test('filterReposByType 官方 8 项语义（Spec 021/037）', async () => {
   assert.equal(m.filterReposByType(all, 'weird').length, 6);
 });
 
+test('FilterLoading：客户端筛选页的空态自动补拉判定', async () => {
+  const m = await import('../../entry/src/main/ets/utils/FilterLoading');
+  assert.equal(m.AUTO_LOAD_MAX_EXTRA_PAGES, 5);
+  // 有结果 / 没有下一页 → 不补拉
+  assert.equal(m.shouldAutoLoadMore(3, true, 0), false);
+  assert.equal(m.shouldAutoLoadMore(0, false, 0), false);
+  // 空且有下一页 → 补拉，直到上限
+  assert.equal(m.shouldAutoLoadMore(0, true, 0), true);
+  assert.equal(m.shouldAutoLoadMore(0, true, 4), true);
+  assert.equal(m.shouldAutoLoadMore(0, true, 5), false);
+  // 「已加载范围内无结果」：补拉结束仍空但服务端还有数据；拉到底则属真实空
+  assert.equal(m.isLimitedRangeEmpty(0, true), true);
+  assert.equal(m.isLimitedRangeEmpty(0, false), false);
+  assert.equal(m.isLimitedRangeEmpty(2, true), false);
+});
+
+test('buildNotificationsPath 分页参数（Spec 002 自动补拉）', () => {
+  // page=1 不拼参数（保持既有首屏路径与单测不变）
+  assert.equal(buildNotificationsPath(true, 50), '/notifications?all=true&per_page=50');
+  assert.equal(buildNotificationsPath(true, 50, false, 1), '/notifications?all=true&per_page=50');
+  // page>1 拼 page
+  assert.equal(buildNotificationsPath(false, 50, false, 3), '/notifications?all=false&per_page=50&page=3');
+  // Focused 模式：participating 取代 all（既有口径）
+  assert.equal(buildNotificationsPath(true, 50, true, 2), '/notifications?participating=true&per_page=50&page=2');
+});
+
 test('repoOrderFromKey 官方 Sort by 8 项 → orderBy 字段/方向（Spec 037）', async () => {
   const m = await import('../../entry/src/main/ets/services/ProfileListService');
   assert.deepEqual(m.repoOrderFromKey('pushed_desc'), { field: 'PUSHED_AT', direction: 'DESC' });

@@ -7,10 +7,15 @@ import { restGet, restPatch, graphql } from './GitHttpClient';
 import { mapNotifications, withPrMerged, NotificationItem } from '../models/GitHubModels';
 import { Json, JsonMap } from '../utils/Json';
 
-/** 构造通知列表请求路径（纯函数，便于单测；Spec 002 四筛选） */
-export function buildNotificationsPath(all: boolean, perPage: number, participating: boolean = false): string {
+/**
+ * 构造通知列表请求路径（纯函数，便于单测；Spec 002 四筛选）。
+ * page 仅在 >1 时拼入，避免影响既有单测与首屏路径。
+ */
+export function buildNotificationsPath(all: boolean, perPage: number, participating: boolean = false,
+  page: number = 1): string {
   const mode = participating ? `participating=${participating ? 'true' : 'false'}` : `all=${all ? 'true' : 'false'}`;
-  return `/notifications?${mode}&per_page=${perPage}`;
+  const pagePart = page > 1 ? `&page=${page}` : '';
+  return `/notifications?${mode}&per_page=${perPage}${pagePart}`;
 }
 
 /** PR 引用：属主/仓库名/编号（从 subject.url 解析） */
@@ -59,9 +64,9 @@ export class NotificationsService {
    * - all=false 仅未读（Unread）
    * - participating=true 参与类高价值（Focused）
    */
-  static async fetchNotifications(token: string, all: boolean, perPage: number = 30,
-    participating: boolean = false): Promise<NotificationItem[]> {
-    const resp = await restGet(buildNotificationsPath(all, perPage, participating), token);
+  static async fetchNotifications(token: string, all: boolean, perPage: number = 50,
+    participating: boolean = false, page: number = 1): Promise<NotificationItem[]> {
+    const resp = await restGet(buildNotificationsPath(all, perPage, participating, page), token);
     const items = mapNotifications(resp.body);
     return NotificationsService.enrichPrMerged(token, items);
   }

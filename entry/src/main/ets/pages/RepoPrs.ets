@@ -15,6 +15,7 @@ import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { WorkEmptyView } from '../components/WorkEmptyView';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
+import { shouldAutoLoadMore, isLimitedRangeEmpty } from '../utils/FilterLoading';
 
 @ComponentV2
 export struct RepoPrsView {
@@ -42,6 +43,8 @@ export struct RepoPrsView {
   @Local isRefreshing: boolean = false;
   /** 触底加载更多（底部转圈指示） */
   @Local loadingMore: boolean = false;
+  /** 空态自动补拉已用页数（author/assignee 为客户端过滤，防「假空」） */
+  @Local extraPages: number = 0;
 
   /** 返回刷新（review B13） */
   @Monitor('returnTick')
@@ -68,6 +71,8 @@ export struct RepoPrsView {
         this.loading = false;
         this.isRefreshing = false;
         this.loadingMore = false;
+        this.extraPages = 0;
+        this.autoLoadIfEmpty();
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
@@ -91,12 +96,21 @@ export struct RepoPrsView {
         this.applyFilters();
         this.loading = false;
         this.loadingMore = false;
+        this.autoLoadIfEmpty();
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
         this.loadingMore = false;
       });
+  }
+
+  /** 过滤后为空且还有下一页 → 自动补拉（上限 5 页），防「假空」 */
+  private autoLoadIfEmpty(): void {
+    if (shouldAutoLoadMore(this.shown.length, this.hasNextPage, this.extraPages)) {
+      this.extraPages += 1;
+      this.loadMore();
+    }
   }
 
   private applyFilters(): void {
@@ -400,7 +414,12 @@ export struct RepoPrsView {
           } else if (this.loading || this.errorMsg !== '') {
             StateView({ loading: this.loading, error: this.errorMsg, onRetry: () => this.refresh() })
           } else {
-            WorkEmptyView({ iconText: '🐱', title: $r('app.string.repo_prs_empty') })
+            WorkEmptyView({
+              iconText: '🐱',
+              title: $r('app.string.repo_prs_empty'),
+              subtitle: isLimitedRangeEmpty(this.shown.length, this.hasNextPage)
+                ? $r('app.string.filter_loaded_range_hint') : null
+            })
           }
         }
         .padding({ left: 16, right: 16, bottom: 16 })

@@ -60,13 +60,16 @@ const REPO_LIST_FIELDS = `
       } }
 `;
 
-// 注：当前 GitHub schema 的 repositories 连接不再支持 privacy/filterByLanguage 参数，
-// 语言与类型（官方 Type 8 项）筛选在客户端执行（类型标志随行返回）。
+// 注（2026-09-13 实测修正）：repositories 连接**支持** privacy/visibility/isArchived/isFork
+// （此前误记为已移除，导致 Type 6 项白走客户端）；**不支持** filterByLanguage，也没有 isMirror/isTemplate。
+// 故：Type 的可下推项走服务端（见 buildRepoTypeVars），语言、Mirror/Template 仍在客户端过滤。
 const ORG_REPOS_QUERY = `
 query OrgRepositories($login: String!, $first: Int = 25, $after: String,
-  $orderBy: RepositoryOrder) {
+  $orderBy: RepositoryOrder, $isArchived: Boolean, $isFork: Boolean,
+  $privacy: RepositoryPrivacy) {
   organization(login: $login) {
-    repositories(first: $first, after: $after, orderBy: $orderBy) {
+    repositories(first: $first, after: $after, orderBy: $orderBy,
+      isArchived: $isArchived, isFork: $isFork, privacy: $privacy) {
 ${REPO_LIST_FIELDS}
     }
   }
@@ -74,9 +77,11 @@ ${REPO_LIST_FIELDS}
 
 const USER_REPOS_QUERY = `
 query UserRepositories($login: String!, $first: Int = 25, $after: String,
-  $orderBy: RepositoryOrder) {
+  $orderBy: RepositoryOrder, $isArchived: Boolean, $isFork: Boolean,
+  $privacy: RepositoryPrivacy) {
   user(login: $login) {
-    repositories(first: $first, after: $after, orderBy: $orderBy) {
+    repositories(first: $first, after: $after, orderBy: $orderBy,
+      isArchived: $isArchived, isFork: $isFork, privacy: $privacy) {
 ${REPO_LIST_FIELDS}
     }
   }
@@ -224,7 +229,8 @@ export class ProfileListService {
   /** 通用仓库列表：GraphQL 优先；组织模式 GraphQL 失败（read:org 缺失）→ REST 一页 100 + 客户端筛选 */
   static async fetchRepoList(token: string, owner: string, mode: string, cursor: string,
     order: RepoOrder, lang: string, typeKey: string): Promise<RepoListPage> {
-    const page = await ProfileListService.fetchRepoListGql(token, owner, mode, cursor, order);
+    const page = await ProfileListService.fetchRepoListGql(token, owner, mode, cursor, order, typeKey);
+    // 客户端兜底过滤：服务端已下推的项会被再次命中（幂等），Mirror/Template 与语言靠它生效
     return ProfileListService.filterRepoPage(page, lang, typeKey);
   }
 
@@ -244,15 +250,53 @@ export class ProfileListService {
     };
   }
 
-  /** GraphQL 仓库列表（用户/组织；仅 orderBy 分页——schema 不再支持 filterByLanguage/privacy） */
+  /**
+   * Type 8 项 → 服务端 GraphQL 参数（实测可用项）；不可下推的项（mirror/template、
+   * 以及 source 的 mirror 部分）仍由 filterReposByType 在客户端兜底，语义保持一致。
+   */
+  private static buildRepoTypeVars(typeKey: string, variables: Record<string, Object>): void {
+    if (typeKey === 'archived') {
+      variables['isArchived'] = true;
+    } else if (typeKey === 'fork') {
+      variables['isFork'] = true;
+    } else if (typeKey === 'source') {
+      variables['isFork'] = false;
+      variables['isArchived'] = false;
+    } else if (typeKey === 'private') {
+      variables['privacy'] = 'PRIVATE';
+    } else if (typeKey === 'public') {
+      variables['privacy'] = 'PUBLIC';
+    }
+    // mirror / template / all：无可下推参数，交由客户端过滤
+  }
+
+  /** Type 8 项 → REST 兜底 type=（仅 4 项可映射；其余靠客户端过滤） */
+  private static repoRestType(typeKey: string): string {
+    if (typeKey === 'public') {
+      return 'public';
+    }
+    if (typeKey === 'private') {
+      return 'private';
+    }
+    if (typeKey === 'fork') {
+      return 'forks';
+    }
+    if (typeKey === 'source') {
+      return 'sources';
+    }
+    return 'all';
+  }
+
+  /** GraphQL 仓库列表（用户/组织；orderBy + 可下推的 Type 参数；语言/Mirror/Template 客户端过滤） */
   private static async fetchRepoListGql(token: string, owner: string, mode: string, cursor: string,
-    order: RepoOrder): Promise<RepoListPage> {
+    order: RepoOrder, typeKey: string): Promise<RepoListPage> {
     const variables: Record<string, Object> = { 'login': owner, 'first': 25 };
     if (cursor !== '') {
       variables['after'] = cursor;
     }
     const orderObj: Record<string, Object> = { 'field': order.field, 'direction': order.direction };
     variables['orderBy'] = orderObj;
+    ProfileListService.buildRepoTypeVars(typeKey, variables);
     if (mode !== 'org') {
       const data = await graphql(USER_REPOS_QUERY, variables, token);
       return ProfileListService.mapRepoListPage(data, 'user');
@@ -268,7 +312,9 @@ export class ProfileListService {
       };
       const sort = sortMap[order.field] ?? 'created';
       const dir = order.direction === 'ASC' ? 'asc' : 'desc';
-      const resp = await restGet(`/orgs/${owner}/repos?per_page=${ORG_REST_PAGE_LIMIT}&sort=${sort}&direction=${dir}`, token);
+      const restType = ProfileListService.repoRestType(typeKey);
+      const resp = await restGet(
+        `/orgs/${owner}/repos?per_page=${ORG_REST_PAGE_LIMIT}&type=${restType}&sort=${sort}&direction=${dir}`, token);
       return ProfileListService.mapOrgReposRest(resp.body, order);
     }
   }

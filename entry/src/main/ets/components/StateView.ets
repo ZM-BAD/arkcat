@@ -10,6 +10,8 @@ export struct StateView {
   @Param error: string = '';
   @Param empty: boolean = false;
   @Param emptyText: Resource = $r('app.string.state_empty');
+  /** 空态副文案（如「已加载范围内无匹配」）；null 不渲染 */
+  @Param emptySub: Resource | null = null;
   @Event onRetry: () => void = () => {};
 
   build() {
@@ -37,6 +39,12 @@ export struct StateView {
         Text(this.emptyText)
           .fontSize($r('app.float.body_font_size'))
           .fontColor($r('app.color.text_secondary'))
+        if (this.emptySub !== null) {
+          Text(this.emptySub)
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor($r('app.color.text_secondary'))
+            .textAlign(TextAlign.Center)
+        }
       }
     }
     .width('100%')

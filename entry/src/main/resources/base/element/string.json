@@ -2057,6 +2057,10 @@
       "value": "Clear all filters"
     },
     {
+      "name": "filter_loaded_range_hint",
+      "value": "No matches among the loaded items"
+    },
+    {
       "name": "filter_no_results",
       "value": "No results"
     },

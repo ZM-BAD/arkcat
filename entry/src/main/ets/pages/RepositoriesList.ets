@@ -18,6 +18,7 @@ import { StateView } from '../components/StateView';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { compactCount } from '../utils/Format';
 import { resText } from '../utils/I18n';
+import { shouldAutoLoadMore, isLimitedRangeEmpty } from '../utils/FilterLoading';
 
 @ComponentV2
 export struct RepositoriesListView {
@@ -43,6 +44,8 @@ export struct RepositoriesListView {
   /** 底部面板分派（''=关闭 | 'language' | 'sort'）：单 bindSheet 内切内容，规避多 bindSheet 只有最后一个生效 */
   @Local sheetKind: string = '';
   @Local allLanguages: ExploreLanguage[] = [];
+  /** 空态自动补拉已用页数（客户端过滤页防「假空」） */
+  @Local extraPages: number = 0;
 
   aboutToAppear(): void {
     this.loadLanguages();
@@ -75,6 +78,8 @@ export struct RepositoriesListView {
         this.loading = false;
         this.isRefreshing = false;
         this.loadingMore = false;
+        this.extraPages = 0;
+        this.autoLoadIfEmpty();
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
@@ -98,12 +103,21 @@ export struct RepositoriesListView {
         this.hasNextPage = page.hasNextPage;
         this.loading = false;
         this.loadingMore = false;
+        this.autoLoadIfEmpty();
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
         this.loading = false;
         this.loadingMore = false;
       });
+  }
+
+  /** 过滤后为空且还有下一页 → 自动补拉（上限 5 页），防「假空」 */
+  private autoLoadIfEmpty(): void {
+    if (shouldAutoLoadMore(this.repos.length, this.hasNextPage, this.extraPages)) {
+      this.extraPages += 1;
+      this.loadMore();
+    }
   }
 
   /** 筛选变更：重置列表后再查 */
@@ -370,10 +384,16 @@ export struct RepositoriesListView {
               onRetry: () => this.refresh()
             })
             if (!this.loading && this.errorMsg === '') {
-              Column() {
+              Column({ space: 6 }) {
                 Text($r('app.string.repos_list_empty'))
                   .fontSize($r('app.float.body_font_size'))
                   .fontColor($r('app.color.text_secondary'))
+                // 补拉到上限仍空但服务端还有数据 → 说明是「已加载范围内」无结果，避免误判为真的没有
+                if (isLimitedRangeEmpty(this.repos.length, this.hasNextPage)) {
+                  Text($r('app.string.filter_loaded_range_hint'))
+                    .fontSize($r('app.float.caption_font_size'))
+                    .fontColor($r('app.color.text_secondary'))
+                }
               }
               .layoutWeight(1)
               .justifyContent(FlexAlign.Center)

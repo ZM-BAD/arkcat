@@ -42,6 +42,12 @@ export struct IssuesListView {
   /** 顶栏内联搜索（Spec 063）：开启后标题区换成搜索框，列表按标题/编号本地过滤 */
   @Local searchOn: boolean = false;
   @Local searchQuery: string = '';
+  /**
+   * Author/Assignee 下拉候选池（只增不减）：二者已服务端筛选，若候选仍从当前结果聚合，
+   * 选了一个人之后其他人就会从下拉里消失、无法直接切换 → 用会话内累积的池子维持候选完整度。
+   */
+  @Local authorPool: string[] = [];
+  @Local assigneePool: string[] = [];
 
   private enterSearch(): void {
     this.searchOn = true;
@@ -72,12 +78,14 @@ export struct IssuesListView {
   private refresh(): void {
     this.loading = true;
     this.errorMsg = '';
-    IssuesService.fetchRepoIssues(this.token, this.owner, this.name, this.state, this.label, '')
+    IssuesService.fetchRepoIssues(this.token, this.owner, this.name, this.state, this.label, '',
+      this.author, this.assignee)
       .then((page: IssuesPage) => {
         this.all = page.issues;
         this.repoLabels = page.repoLabels;
         this.cursor = page.endCursor;
         this.hasNextPage = page.hasNextPage;
+        this.absorbFilterPools(page.issues);
         this.applyFilters();
         this.loading = false;
         this.isRefreshing = false;
@@ -97,11 +105,13 @@ export struct IssuesListView {
     }
     this.loading = true;
     this.loadingMore = true;
-    IssuesService.fetchRepoIssues(this.token, this.owner, this.name, this.state, this.label, this.cursor)
+    IssuesService.fetchRepoIssues(this.token, this.owner, this.name, this.state, this.label, this.cursor,
+        this.author, this.assignee)
       .then((page: IssuesPage) => {
         this.all = this.all.concat(page.issues);
         this.cursor = page.endCursor;
         this.hasNextPage = page.hasNextPage;
+        this.absorbFilterPools(page.issues);
         this.applyFilters();
         this.loading = false;
         this.loadingMore = false;
@@ -113,17 +123,14 @@ export struct IssuesListView {
       });
   }
 
-  /** 客户端过滤：Author/Assignee（Spec 027 边界）+ 顶栏搜索词（Spec 063） */
+  /**
+   * 客户端过滤：仅顶栏搜索词（Spec 063）。
+   * Author/Assignee 自 2026-09-13 起走服务端 filterBy（createdBy/assignee），不再本地过滤。
+   */
   private applyFilters(): void {
     const q = this.searchOn ? this.searchQuery.trim().toLowerCase() : '';
     const next: IssueSummary[] = [];
     for (const issue of this.all) {
-      if (this.author !== '' && issue.authorLogin !== this.author) {
-        continue;
-      }
-      if (this.assignee !== '' && issue.assignees.indexOf(this.assignee) < 0) {
-        continue;
-      }
       if (q !== '' && !this.matchQuery(issue, q)) {
         continue;
       }
@@ -160,29 +167,33 @@ export struct IssuesListView {
   }
 
   /** Author 下拉选项（首屏作者集合） */
-  private authorFilterOptions(): FilterDropdownOption[] {
-    const seen: Set<string> = new Set();
-    const options: FilterDropdownOption[] = [];
-    for (const issue of this.all) {
-      if (issue.authorLogin !== '' && !seen.has(issue.authorLogin)) {
-        seen.add(issue.authorLogin);
-        options.push({ key: issue.authorLogin, label: issue.authorLogin });
+  /** 把本页出现的 author/assignee 并入候选池（会话内只增不减） */
+  private absorbFilterPools(issues: IssueSummary[]): void {
+    for (const issue of issues) {
+      if (issue.authorLogin !== '' && this.authorPool.indexOf(issue.authorLogin) < 0) {
+        this.authorPool = this.authorPool.concat([issue.authorLogin]);
       }
+      for (const a of issue.assignees) {
+        if (this.assigneePool.indexOf(a) < 0) {
+          this.assigneePool = this.assigneePool.concat([a]);
+        }
+      }
+    }
+  }
+
+  private authorFilterOptions(): FilterDropdownOption[] {
+    const options: FilterDropdownOption[] = [];
+    for (const login of this.authorPool) {
+      options.push({ key: login, label: login });
     }
     return options;
   }
 
-  /** Assignee 下拉选项（首屏分配人集合） */
+  /** Assignee 下拉选项（会话内出现过的分配人集合） */
   private assigneeFilterOptions(): FilterDropdownOption[] {
-    const seen: Set<string> = new Set();
     const options: FilterDropdownOption[] = [];
-    for (const issue of this.all) {
-      for (const a of issue.assignees) {
-        if (!seen.has(a)) {
-          seen.add(a);
-          options.push({ key: a, label: a });
-        }
-      }
+    for (const login of this.assigneePool) {
+      options.push({ key: login, label: login });
     }
     return options;
   }
@@ -415,9 +426,8 @@ export struct IssuesListView {
       Refresh({ refreshing: $$this.isRefreshing }) {
       Scroll() {
         Column() {
-          Scroll() {
           Row() {
-            // 漏斗徽标：激活筛选组数（工作区同款；无激活时隐藏）
+            // 漏斗徽标：激活筛选组数（工作区同款；无激活时隐藏；固定在筛选条最左、不随 chip 横向滚动）
             if (this.activeFilterCount() > 0) {
               Row({ space: 4 }) {
                 OctIcon({
@@ -454,8 +464,11 @@ export struct IssuesListView {
                   action: (): void => this.clearAllFilters()
                 }
               ])
-            }
+          }
 
+          // chips 滚动区：仅这一段随手指横向滑动
+          Scroll() {
+            Row() {
             FilterDropdownChip({
               label: this.stateLabel(),
               active: this.state !== 'all',
@@ -477,7 +490,7 @@ export struct IssuesListView {
               active: this.author !== '',
               options: this.authorFilterOptions(),
               selectedKey: this.author,
-              onPick: (key: string): void => { this.author = this.author === key ? '' : key; this.applyFilters(); }
+              onPick: (key: string): void => { this.author = this.author === key ? '' : key; this.refresh(); }
             })
 
             FilterDropdownChip({
@@ -485,12 +498,16 @@ export struct IssuesListView {
               active: this.assignee !== '',
               options: this.assigneeFilterOptions(),
               selectedKey: this.assignee,
-              onPick: (key: string): void => { this.assignee = this.assignee === key ? '' : key; this.applyFilters(); }
+              onPick: (key: string): void => { this.assignee = this.assignee === key ? '' : key; this.refresh(); }
             })
-          }
+            }
           }
           .scrollable(ScrollDirection.Horizontal)
           .scrollBar(BarState.Off)
+          .layoutWeight(1)
+          .align(Alignment.Start)
+          }
+          .width('100%')
           .margin({ bottom: 12 })
 
           if (this.shown.length > 0) {

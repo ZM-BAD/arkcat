@@ -1,6 +1,7 @@
 /**
  * Issues 列表服务（Spec 007）。
  * Label 筛选按 Spec 边界：GraphQL labels 参数为单选 [name]，多选客户端二次过滤。
+ * Author/Assignee 走服务端 filterBy（实测 supported：createdBy/assignee，2026-09-13 起不再客户端过滤）。
  */
 import { graphql } from './GitHttpClient';
 import { IssuesPage, mapIssuesPage } from '../models/IssuesModels';
@@ -10,10 +11,11 @@ query IssuesList(
   $owner: String!, $name: String!,
   $states: [IssueState!] = [OPEN],
   $orderBy: IssueOrder = { field: CREATED_AT, direction: DESC },
-  $first: Int = 25, $after: String, $label: [String!]
+  $first: Int = 25, $after: String, $label: [String!], $filterBy: IssueFilters
 ) {
   repository(owner: $owner, name: $name) {
-    issues(states: $states, orderBy: $orderBy, first: $first, after: $after, labels: $label) {
+    issues(states: $states, orderBy: $orderBy, first: $first, after: $after, labels: $label,
+      filterBy: $filterBy) {
       totalCount
       pageInfo { hasNextPage endCursor }
       nodes {
@@ -49,9 +51,13 @@ export function repoIssueStates(state: string): string[] {
 }
 
 export class IssuesService {
-  /** 仓库内 Issue 列表（Spec 027）：状态集合 + Label + 游标 */
+  /**
+   * 仓库内 Issue 列表（Spec 027）：状态集合 + Label + Author/Assignee（服务端 filterBy）+ 游标。
+   * filterBy 与 states/labels 正交，分页语义不变。
+   */
   static async fetchRepoIssues(token: string, owner: string, name: string,
-    state: string, label: string, cursor: string): Promise<IssuesPage> {
+    state: string, label: string, cursor: string, author: string = '',
+    assignee: string = ''): Promise<IssuesPage> {
     const order: IssueOrderInput = { 'field': 'CREATED_AT', 'direction': 'DESC' };
     const variables: Record<string, Object> = {
       'owner': owner,
@@ -65,6 +71,16 @@ export class IssuesService {
     }
     if (label !== '') {
       variables['label'] = [label];
+    }
+    const filterBy: Record<string, Object> = {};
+    if (author !== '') {
+      filterBy['createdBy'] = author;
+    }
+    if (assignee !== '') {
+      filterBy['assignee'] = assignee;
+    }
+    if (author !== '' || assignee !== '') {
+      variables['filterBy'] = filterBy;
     }
     const data = await graphql(ISSUES_QUERY, variables, token);
     return mapIssuesPage(data);

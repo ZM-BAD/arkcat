@@ -11,6 +11,7 @@ import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { AppBar, AppBarAction, AppBarActionCfg } from '../components/AppBar';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { resText } from '../utils/I18n';
+import { shouldAutoLoadMore, isLimitedRangeEmpty } from '../utils/FilterLoading';
 
 @ComponentV2
 export struct TopRepositoriesView {
@@ -28,6 +29,8 @@ export struct TopRepositoriesView {
   @Local isRefreshing: boolean = false;
   /** 触底加载更多（底部转圈指示） */
   @Local loadingMore: boolean = false;
+  /** 空态自动补拉已用页数（客户端过滤页防「假空」，上限 AUTO_LOAD_MAX_EXTRA_PAGES） */
+  @Local extraPages: number = 0;
 
   aboutToAppear(): void {
     this.refresh();
@@ -36,7 +39,8 @@ export struct TopRepositoriesView {
   private refresh(): void {
     this.loading = true;
     this.errorMsg = '';
-    WorkService.fetchTopRepositories(this.token, '')
+    // Type 的可下推项走服务端（mirror/template 仍在客户端兜底过滤）
+    WorkService.fetchTopRepositories(this.token, '', this.filterKey)
       .then((page: WorkTopReposPage) => {
         this.repos = page.repos;
         this.cursor = page.endCursor;
@@ -44,6 +48,8 @@ export struct TopRepositoriesView {
         this.loading = false;
         this.isRefreshing = false;
         this.loadingMore = false;
+        this.extraPages = 0;
+        this.autoLoadIfEmpty();
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
@@ -59,13 +65,14 @@ export struct TopRepositoriesView {
     }
     this.loading = true;
     this.loadingMore = true;
-    WorkService.fetchTopRepositories(this.token, this.cursor)
+    WorkService.fetchTopRepositories(this.token, this.cursor, this.filterKey)
       .then((page: WorkTopReposPage) => {
         this.repos = this.repos.concat(page.repos);
         this.cursor = page.endCursor;
         this.hasNextPage = page.hasNextPage;
         this.loading = false;
         this.loadingMore = false;
+        this.autoLoadIfEmpty();
       })
       .catch((e: Error) => {
         this.errorMsg = e.message;
@@ -100,9 +107,17 @@ export struct TopRepositoriesView {
     return this.stringOf($r('app.string.repos_filter_all'));
   }
 
-  /** 8 项筛选维度客户端过滤（已拉取集合内） */
+  /** 8 项筛选维度客户端过滤（已拉取集合内；服务端已下推的项在此幂等复核） */
   private visibleRepos(): WorkTopRepoItem[] {
     return filterTopRepos(this.repos, this.filterKey);
+  }
+
+  /** 过滤后为空且还有下一页 → 自动补拉（上限 AUTO_LOAD_MAX_EXTRA_PAGES 页），防「假空」 */
+  private autoLoadIfEmpty(): void {
+    if (shouldAutoLoadMore(this.visibleRepos().length, this.hasNextPage, this.extraPages)) {
+      this.extraPages += 1;
+      this.loadMore();
+    }
   }
 
   @Builder
@@ -173,7 +188,10 @@ export struct TopRepositoriesView {
             options: this.filterOptions(),
             selectedKey: this.filterKey,
             onPick: (key: string): void => {
-              this.filterKey = key;
+              if (this.filterKey !== key) {
+                this.filterKey = key;
+                this.refresh();
+              }
             }
           })
           .margin({ bottom: 12 })
@@ -193,7 +211,9 @@ export struct TopRepositoriesView {
           } else {
             StateView({
               empty: true,
-              emptyText: $r('app.string.work_top_repos_empty')
+              emptyText: $r('app.string.work_top_repos_empty'),
+              emptySub: isLimitedRangeEmpty(this.visibleRepos().length, this.hasNextPage)
+                ? $r('app.string.filter_loaded_range_hint') : null
             })
           }
         }

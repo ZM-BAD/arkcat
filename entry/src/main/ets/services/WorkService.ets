@@ -175,9 +175,11 @@ query WorkProjects($first: Int = 30, $after: String) {
 }`;
 
 const WORK_TOP_REPOS_QUERY = `
-query WorkTopRepositories($first: Int = 50, $after: String) {
+query WorkTopRepositories($first: Int = 50, $after: String, $isArchived: Boolean, $isFork: Boolean,
+  $privacy: RepositoryPrivacy) {
   viewer {
-    repositories(first: $first, after: $after, orderBy: { field: PUSHED_AT, direction: DESC }) {
+    repositories(first: $first, after: $after, orderBy: { field: PUSHED_AT, direction: DESC },
+      isArchived: $isArchived, isFork: $isFork, privacy: $privacy) {
       totalCount
       pageInfo { hasNextPage endCursor }
       nodes {
@@ -296,10 +298,28 @@ export class WorkService {
   }
 
   /** Top Repositories（viewer.repositories 全量，8 项仓库筛选维度在客户端） */
-  static async fetchTopRepositories(token: string, cursor: string): Promise<WorkTopReposPage> {
+  /**
+   * Top Repositories（viewer.repositories）。typeKey 为空=不筛（筛选面板的候选列表用全量）；
+   * 传值时把可下推的 Type 项交给服务端（实测支持 isArchived/isFork/privacy），
+   * Mirror/Template 无可下推参数，仍由调用方客户端兜底。
+   */
+  static async fetchTopRepositories(token: string, cursor: string,
+    typeKey: string = ''): Promise<WorkTopReposPage> {
     const variables: Record<string, Object> = { 'first': 50 };
     if (cursor !== '') {
       variables['after'] = cursor;
+    }
+    if (typeKey === 'archived') {
+      variables['isArchived'] = true;
+    } else if (typeKey === 'fork') {
+      variables['isFork'] = true;
+    } else if (typeKey === 'source') {
+      variables['isFork'] = false;
+      variables['isArchived'] = false;
+    } else if (typeKey === 'private') {
+      variables['privacy'] = 'PRIVATE';
+    } else if (typeKey === 'public') {
+      variables['privacy'] = 'PUBLIC';
     }
     const data = await graphql(WORK_TOP_REPOS_QUERY, variables, token);
     return mapWorkTopReposPage(data);
