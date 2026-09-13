@@ -1829,6 +1829,10 @@
       "value": "Filter by repository"
     },
     {
+      "name": "work_search_repositories",
+      "value": "Search repositories"
+    },
+    {
       "name": "filter_sort_title",
       "value": "Sort by"
     },

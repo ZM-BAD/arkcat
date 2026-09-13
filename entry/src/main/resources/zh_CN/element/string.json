@@ -1797,6 +1797,10 @@
       "value": "按仓库筛选"
     },
     {
+      "name": "work_search_repositories",
+      "value": "搜索仓库"
+    },
+    {
       "name": "filter_sort_title",
       "value": "排序方式"
     },

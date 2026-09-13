@@ -355,9 +355,9 @@ export struct InboxView {
 
       PageShadowBar({ show: this.scrollShadow })
 
-      Scroll() {
         // 四个筛选 chip 内联渲染：@Builder 传值/$$ 引用参数均不随状态刷新（V2 坑，见 memory），
-        // 文本/激活态直接读 @Local 才能随筛选变化实时更新
+        // 文本/激活态直接读 @Local 才能随筛选变化实时更新。
+        // 外层 Row：漏斗徽标固定最左、不随 chip 横向滑动；chips 段单独横向滑动
         Row({ space: 8 }) {
           // 漏斗徽标：激活筛选组数（Issues/PR 列表同款；无激活时隐藏），点开菜单可一键清除
           if (this.activeFilterCount() > 0) {
@@ -393,19 +393,23 @@ export struct InboxView {
             ])
           }
 
+          // chips 滚动区：仅这一段随手指横向滑动
+          Scroll() {
+          Row({ space: 8 }) {
+          // 视图 chip：激活蓝只看自身值是否非默认（inboxView≠inbox），默认值不做激活色（Spec 068）
           Row() {
             Text(this.viewLabel())
               .fontSize($r('app.float.caption_font_size'))
-              .fontColor(this.filter === 'inbox' ? $r('app.color.link_blue') : $r('app.color.text_primary'))
+              .fontColor(this.inboxView !== 'inbox' ? $r('app.color.link_blue') : $r('app.color.text_primary'))
             OctIcon({
               res: $r('app.media.oct_chevron_down_16'),
               iconSize: 12,
-              iconColor: this.filter === 'inbox' ? $r('app.color.link_blue') : $r('app.color.text_secondary')
+              iconColor: this.inboxView !== 'inbox' ? $r('app.color.link_blue') : $r('app.color.text_secondary')
             })
               .margin({ left: 8 })
           }
           .filterPillStyle()
-          .backgroundColor(this.filter === 'inbox' ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
+          .backgroundColor(this.inboxView !== 'inbox' ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
           .onClick((): void => {
             this.sheetKind = 'filters';
           })
@@ -444,11 +448,14 @@ export struct InboxView {
           .onClick((): void => {
             this.sheetKind = 'repo';
           })
+          }
+          }
+          .scrollable(ScrollDirection.Horizontal)
+          .scrollBar(BarState.Off)
+          .layoutWeight(1)
+          .align(Alignment.Start)
         }
-      }
-      .scrollable(ScrollDirection.Horizontal)
-      .scrollBar(BarState.Off)
-      .padding({ left: 16, right: 16, bottom: 8 })
+        .padding({ left: 16, right: 16, bottom: 8 })
 
       Refresh({ refreshing: $$this.isRefreshing }) {
         Scroll() {

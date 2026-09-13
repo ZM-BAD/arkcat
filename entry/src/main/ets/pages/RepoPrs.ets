@@ -326,9 +326,8 @@ export struct RepoPrsView {
       Refresh({ refreshing: $$this.isRefreshing }) {
       Scroll() {
         Column() {
-          Scroll() {
           Row() {
-            // 漏斗徽标：激活筛选组数（工作区同款；无激活时隐藏）
+            // 漏斗徽标：激活筛选组数（工作区同款；无激活时隐藏；固定在筛选条最左、不随 chip 横向滚动）
             if (this.activeFilterCount() > 0) {
               Row({ space: 4 }) {
                 OctIcon({
@@ -367,6 +366,9 @@ export struct RepoPrsView {
               ])
             }
 
+            // chips 滚动区：仅这一段随手指横向滑动
+            Scroll() {
+            Row() {
             FilterDropdownChip({
               label: this.stateLabel(),
               active: this.state !== 'all',
@@ -398,10 +400,14 @@ export struct RepoPrsView {
               selectedKey: this.assignee,
               onPick: (key: string): void => { this.assignee = this.assignee === key ? '' : key; this.applyFilters(); }
             })
+            }
+            }
+            .scrollable(ScrollDirection.Horizontal)
+            .scrollBar(BarState.Off)
+            .layoutWeight(1)
+            .align(Alignment.Start)
           }
-          }
-          .scrollable(ScrollDirection.Horizontal)
-          .scrollBar(BarState.Off)
+          .width('100%')
           .margin({ bottom: 12 })
 
           if (this.shown.length > 0) {

@@ -9,6 +9,7 @@ import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
 import { WorkOrgItem, WorkTopRepoItem, WorkTopReposPage } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
+import { SearchService, SearchResultItem, SearchResultPage } from '../services/SearchService';
 import { friendlyError } from '../services/GitHttpClient';
 import { ProfileListService } from '../services/ProfileListService';
 import { OrgListPage, OrgSummary } from '../models/ProfileModels';
@@ -72,6 +73,11 @@ export struct WorkFilterBar {
   @Local repoSearch: string = '';
   @Local orgSearchShow: boolean = false;
   @Local repoSearchShow: boolean = false;
+  /** 仓库搜索（GitHub 全库 type: REPOSITORY）：输入防抖 400ms；序号防竞态（慢响应不覆盖新输入） */
+  @Local repoSearchResults: SearchResultItem[] = [];
+  @Local repoSearching: boolean = false;
+  private repoSearchTimer: number = -1;
+  private repoSearchSeq: number = 0;
 
   private stringOf(res: Resource): string {
     return resText(this.getUIContext(), res);
@@ -294,13 +300,48 @@ export struct WorkFilterBar {
       o.login.toLowerCase().includes(needle) || o.name.toLowerCase().includes(needle));
   }
 
-  private filteredRepos(): WorkTopRepoItem[] {
-    if (this.repoSearch === '') {
-      return this.repoList;
+  /**
+   * 仓库面板搜索输入：GitHub 全库真搜索（SearchService type: REPOSITORY），不再只过滤已加载行。
+   * 防抖 400ms；结果按 owner/name 字典序自上而下；请求按序号取新弃旧。
+   */
+  private onRepoSearchInput(v: string): void {
+    this.repoSearch = v;
+    if (this.repoSearchTimer >= 0) {
+      clearTimeout(this.repoSearchTimer);
+      this.repoSearchTimer = -1;
     }
-    const needle = this.repoSearch.toLowerCase();
-    return this.repoList.filter((r: WorkTopRepoItem) =>
-      r.name.toLowerCase().includes(needle) || r.ownerLogin.toLowerCase().includes(needle));
+    if (v.trim() === '') {
+      this.repoSearchSeq++;
+      this.repoSearching = false;
+      this.repoSearchResults = [];
+      return;
+    }
+    this.repoSearching = true;
+    const seq = ++this.repoSearchSeq;
+    this.repoSearchTimer = setTimeout((): void => {
+      SearchService.fetchSearchResults(this.token, 'repositories', v.trim())
+        .then((page: SearchResultPage) => {
+          if (seq !== this.repoSearchSeq) {
+            return;
+          }
+          const hits = page.items.slice();
+          hits.sort((a: SearchResultItem, b: SearchResultItem): number => {
+            const av = a.title.toLowerCase();
+            const bv = b.title.toLowerCase();
+            return av < bv ? -1 : (av > bv ? 1 : 0);
+          });
+          this.repoSearchResults = hits;
+          this.repoSearching = false;
+        })
+        .catch((_e: Error) => {
+          // 搜索失败按空结果呈现（保留输入态，用户可改词重试）
+          if (seq !== this.repoSearchSeq) {
+            return;
+          }
+          this.repoSearchResults = [];
+          this.repoSearching = false;
+        });
+    }, 400);
   }
 
   private toggleOrg(login: string): void {
@@ -335,14 +376,47 @@ export struct WorkFilterBar {
         selected: this.selectedOrgs.indexOf(o.login) >= 0
       }));
     }
-    return this.filteredRepos().map((r: WorkTopRepoItem): FilterSheetItem => ({
-      key: `${r.ownerLogin}/${r.name}`,
-      avatarUrl: r.ownerAvatar,
-      mainText: r.name,
-      subText: r.ownerLogin,
-      subOnTop: true,
-      selected: this.selectedRepos.indexOf(`${r.ownerLogin}/${r.name}`) >= 0
-    }));
+    // 搜索态：GitHub 全库搜索结果（title=owner/name）；空态/常态：已加载的 viewer 仓库
+    if (this.repoSearch.trim() !== '') {
+      return this.repoSearchResults.map((s: SearchResultItem): FilterSheetItem => {
+        const slash = s.title.indexOf('/');
+        const owner = slash > 0 ? s.title.substring(0, slash) : '';
+        const name = slash > 0 ? s.title.substring(slash + 1) : s.title;
+        return {
+          key: s.title,
+          avatarUrl: s.avatarUrl,
+          mainText: name,
+          subText: owner,
+          subOnTop: true,
+          selected: this.selectedRepos.indexOf(s.title) >= 0
+        };
+      });
+    }
+    // 常态：已选仓库置顶回显（含经搜索选出、不在已加载列表里的仓库），自己的仓库排除已选后排下方供选
+    const selectedItems: FilterSheetItem[] = this.selectedRepos.map((full: string): FilterSheetItem => {
+      const slash = full.indexOf('/');
+      const knownRepo = this.repoList.find((r: WorkTopRepoItem) => `${r.ownerLogin}/${r.name}` === full);
+      const knownHit = this.repoSearchResults.find((s: SearchResultItem) => s.title === full);
+      return {
+        key: full,
+        avatarUrl: knownRepo ? knownRepo.ownerAvatar : (knownHit ? knownHit.avatarUrl : ''),
+        mainText: slash > 0 ? full.substring(slash + 1) : full,
+        subText: slash > 0 ? full.substring(0, slash) : '',
+        subOnTop: true,
+        selected: true
+      };
+    });
+    const ownItems: FilterSheetItem[] = this.repoList
+      .filter((r: WorkTopRepoItem) => this.selectedRepos.indexOf(`${r.ownerLogin}/${r.name}`) < 0)
+      .map((r: WorkTopRepoItem): FilterSheetItem => ({
+        key: `${r.ownerLogin}/${r.name}`,
+        avatarUrl: r.ownerAvatar,
+        mainText: r.name,
+        subText: r.ownerLogin,
+        subOnTop: true,
+        selected: false
+      }));
+    return selectedItems.concat(ownItems);
   }
 
   /** 弹层分派（单个 bindSheet 内切换内容，规避同组件多 bindSheet 失效） */
@@ -373,7 +447,8 @@ export struct WorkFilterBar {
         title: $r('app.string.issues_filter_repo_title'),
         searchShow: this.repoSearchShow,
         searchText: this.repoSearch,
-        loading: this.repoListLoading,
+        searchPlaceholder: $r('app.string.work_search_repositories'),
+        loading: this.repoSearch.trim() !== '' ? this.repoSearching : this.repoListLoading,
         error: this.sheetLoadError,
         items: this.sheetItems('repo'),
         onPick: (key: string): void => this.toggleRepo(key),
@@ -385,7 +460,7 @@ export struct WorkFilterBar {
           this.repoSearchShow = !this.repoSearchShow;
         },
         onSearchChange: (v: string): void => {
-          this.repoSearch = v;
+          this.onRepoSearchInput(v);
         }
       })
     } else {

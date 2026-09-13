@@ -483,9 +483,8 @@ export struct ExploreRepoListView {
       })
 
         if (this.kind === 'trending') {
-          // 筛选行：横向可滑（收口批用户要求），chip 间距统一 8；激活时左侧出现漏斗+计数徽章
-          Scroll() {
-            Row({ space: 0 }) {
+          // 筛选行：漏斗徽章固定最左、不随 chip 横向滑动；chips 段横向可滑，chip 间距统一 8；激活时左侧出现漏斗+计数徽章
+          Row({ space: 0 }) {
               if (this.filterCount() > 0) {
                 // 漏斗徽章（沿 WorkFilterBar 官方化）：chip 底 + 描边轮廓 + 蓝图标 + 蓝圆计数
                 Row({ space: 4 }) {
@@ -516,9 +515,13 @@ export struct ExploreRepoListView {
                   action: (): void => this.clearAllFilters()
                 }])
               }
+
+              // chips 滚动区：仅这一段随手指横向滑动
+              Scroll() {
+                Row({ space: 0 }) {
               FilterDropdownChip({
                 label: this.stringOf(this.windowLabelRes()),
-                active: false,
+                active: this.windowKey !== 'today',
                 options: this.windowOptions(),
                 selectedKey: this.windowKey,
                 onPick: (key: string): void => {
@@ -541,13 +544,15 @@ export struct ExploreRepoListView {
               active: this.spoken !== '',
               onTap: (): void => this.openSheet('spoken')
             })
+                }
+              }
+              .scrollable(ScrollDirection.Horizontal)
+              .scrollBar(BarState.Off)
+              .layoutWeight(1)
+              .align(Alignment.Start)
             }
-            .padding({ left: 16, right: 16 })
-          }
-          .width('100%')
-          .scrollable(ScrollDirection.Horizontal)
-          .scrollBar(BarState.Off)
-          .padding({ bottom: 8 })
+            .width('100%')
+            .padding({ left: 16, right: 16, bottom: 8 })
         }
 
         PageShadowBar({ show: this.scrollShadow })

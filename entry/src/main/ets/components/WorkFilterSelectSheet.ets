@@ -1,7 +1,9 @@
 /**
- * 工作区筛选多选弹层（org/repo 共用，Spec 017/018）：标题行 + 可选搜索框 + 行列表（头像/两行文本/蓝勾）。
+ * 工作区筛选多选弹层（org/repo 共用，Spec 017/018）：标题行 + 行列表（头像/两行文本/蓝勾）。
  * 行数据由调用方映射为 FilterSheetItem（主副文本顺序与选中态均由调用方决定）；
  * 数据加载和筛选状态留在调用方，本组件只负责展示与上抛事件。
+ * 标题行双态（Spec 068）：常态=[✕ 标题 🔍]；搜索态=点 🔍 后标题**原地**变为搜索框
+ * （对已加载行做客户端过滤），左侧 ✕ 变 ←（回退=清空搜索词并退出搜索态）。
  */
 import { OctIcon } from './OctIcon';
 import { StateView } from './StateView';
@@ -25,6 +27,8 @@ export struct WorkFilterSelectSheet {
   @Require @Param title: Resource;
   @Param searchShow: boolean = false;
   @Param searchText: string = '';
+  /** 搜索态输入框占位文案（repo 面板传「Search repositories」，其余用通用占位） */
+  @Param searchPlaceholder: Resource = $r('app.string.search_placeholder');
   @Param loading: boolean = false;
   @Param error: string = '';
   @Param items: FilterSheetItem[] = [];
@@ -36,18 +40,6 @@ export struct WorkFilterSelectSheet {
 
   private stringOf(res: Resource): string {
     return resText(this.getUIContext(), res);
-  }
-
-  /** 弹层内联搜索框（点右上放大镜展开） */
-  @Builder
-  sheetSearch(value: string, onChange: (v: string) => void) {
-    TextInput({ placeholder: this.stringOf($r('app.string.search_placeholder')), text: value })
-      .height(40)
-      .fontSize($r('app.float.body_font_size'))
-      .margin({ left: 16, right: 16, bottom: 4 })
-      .borderRadius(6)
-      .backgroundColor($r('app.color.chip_bg'))
-      .onChange(onChange)
   }
 
   /** 弹层空态（官方「Nothing to see here」） */
@@ -126,27 +118,68 @@ export struct WorkFilterSelectSheet {
   build() {
     Column() {
       Row() {
+        // 搜索态=←（回退：清空搜索词并退出搜索态）；常态=✕（关闭弹层）
         Stack() {
-          OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
+          OctIcon({
+            res: this.searchShow ? $r('app.media.oct_arrow_left_24') : $r('app.media.oct_x_16'),
+            iconSize: 16,
+            iconColor: $r('app.color.text_primary')
+          })
         }
         .width(44)
         .height(44)
-        .onClick((): void => this.onClose())
-        Text(this.title)
-          .fontSize($r('app.float.title_font_size'))
-          .fontWeight(600)
-          .fontColor($r('app.color.text_primary'))
+        .onClick((): void => {
+          if (this.searchShow) {
+            this.onSearchChange('');
+            this.onSearchToggle();
+          } else {
+            this.onClose();
+          }
+        })
+        if (this.searchShow) {
+          // 标题原地变搜索框：对已加载/全库结果做客户端过滤；框内右侧 ✕ 一键清空搜索词
+          Stack({ alignContent: Alignment.End }) {
+            TextInput({ placeholder: this.stringOf(this.searchPlaceholder), text: this.searchText })
+              .height(40)
+              .fontSize($r('app.float.body_font_size'))
+              .width('100%')
+              .padding({ right: 34 })
+              .borderRadius(6)
+              .backgroundColor($r('app.color.chip_bg'))
+              .defaultFocus(true)
+              .onChange((v: string): void => this.onSearchChange(v))
+            if (this.searchText !== '') {
+              Stack() {
+                OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
+              }
+              .width(36)
+              .height(36)
+              .onClick((): void => this.onSearchChange(''))
+            }
+          }
           .layoutWeight(1)
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 16, iconColor: $r('app.color.link_blue') })
+          .margin({ right: 8 })
+        } else {
+          Text(this.title)
+            .fontSize($r('app.float.title_font_size'))
+            .fontWeight(600)
+            .fontColor($r('app.color.text_primary'))
+            .layoutWeight(1)
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 16, iconColor: $r('app.color.link_blue') })
+          }
+          .width(44)
+          .height(44)
+          .onClick((): void => this.onSearchToggle())
         }
-        .width(44)
-        .height(44)
-        .onClick((): void => this.onSearchToggle())
       }
       .padding({ left: 8, right: 8 })
+      // 搜索态：搜索框与下方列表之间的分隔线
       if (this.searchShow) {
-        this.sheetSearch(this.searchText, (v: string): void => this.onSearchChange(v))
+        Divider()
+          .strokeWidth(1)
+          .color($r('app.color.divider'))
+          .width('100%')
       }
       if (this.loading) {
         StateView({ loading: true })

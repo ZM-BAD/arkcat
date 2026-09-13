@@ -32,7 +32,8 @@
    - **必须在屏幕内**：出屏避让**交给 ArkUI 框架内建策略**（框架按可用空间自动调整气泡位置）——`bindPopup` 设 `placement: Placement.BottomLeft`（首选「弹层左缘对齐 chip 左缘、置于下方」），**不手算 offset**（offset 是叠加在框架避让结果之上的相对微调，再叠一层自算夹取会双重修正、把弹层推出屏幕，chip 被屏幕右缘裁切时最明显）；弹层宽度按可用宽度封顶（可用宽取**同步**来源：`display.getDefaultDisplaySync` 兜底 + 窗口宽覆盖），超长文案由行内 ellipsis 兜底；
    - **面板型** `FilterSheetChip`：点击拉起页面 `bindSheet` 底部面板；支持前置图标（单选仓库时显示 repo octicon）与**前置计数徽标**（多选仓库时显示"蓝底白字数字 + 复数名词"）；
    - **开关型**：无 chevron 的纯 toggle pill（Inbox 的 Focused/Unread、Discussions 的 Unanswered），激活态走 `chip_active_bg` + `link_blue`。
-4. **底部面板通用结构**：拖拽条（系统）→ 标题行（自绘 ✕ 44×44 + 标题 `title_font_size` 600）→ 细分隔线 → 可选的 🔍 内联搜索框（点标题行右侧放大镜展开）→ 选项行列表（可滚动）。
+   - **激活色口径（全形态通用）**：激活色**只表示「当前值 ≠ 默认值」**，与漏斗徽标的 dirty 口径同源——chip 当前值为默认值时**不做激活色**（保持中性 `chip_bg`/`text_primary`），即使它是当前生效视图（如 Inbox 视图 chip 默认 `Inbox` 不变蓝，切到 Saved/Done 才变蓝）；取非默认值时才亮激活蓝。
+4. **底部面板通用结构**：拖拽条（系统）→ 标题行**双态**（常态=自绘 ✕ 44×44 + 标题 `title_font_size` 600 + 右侧 🔍；点 🔍 进入**搜索态**：标题**原地**变搜索框——对已加载行做客户端过滤，占位文案按面板传入（仓库面板=`work_search_repositories`「Search repositories」），左侧 ✕ 变 **←**（回退=清空搜索词并退出搜索态），进入时自动聚焦）→ 选项行列表（可滚动）。
    - 选项行：下拉型面板 52vp 行高；语言/排序面板 56vp 行高；选中态为右侧蓝勾（多选）或蓝色单选圆钮（排序，20vp 描边 + 10vp 实心）；
    - 分组：排序面板为 4 组 × 2，组间插 **16vp 灰带**（`heat_empty`），组内不插；
    - 弹层底部留白 16vp；`Scroll` 内容**顶对齐**（`align(Alignment.Top)`，否则内容不足一屏时会被默认居中对齐、首行离头部很远）。

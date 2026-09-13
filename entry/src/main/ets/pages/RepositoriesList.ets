@@ -296,9 +296,9 @@ export struct RepositoriesListView {
 
       PageShadowBar({ show: this.scrollShadow })
 
-      // 筛选条：漏斗徽标（有激活筛选时）+ All / Language / Sort，整条横向可滑动
-      Scroll() {
+      // 筛选条：漏斗徽标（有激活筛选时，固定最左不随滑动）+ Type / Language / Sort，chips 段横向可滑动
       Row() {
+        // 漏斗徽标：固定在筛选条最左、不随 chip 横向滚动
         if (this.activeFilterCount() > 0) {
           Row({ space: 4 }) {
             OctIcon({
@@ -330,9 +330,12 @@ export struct RepositoriesListView {
             }
           ])
         }
+        // chips 滚动区：仅这一段随手指横向滑动
+        Scroll() {
+        Row() {
         FilterDropdownChip({
           label: this.typeLabel(),
-          active: false,
+          active: this.typeFilter !== 'all',
           options: this.typeOptions(),
           selectedKey: this.typeFilter,
           onPick: (key: string): void => {
@@ -348,18 +351,21 @@ export struct RepositoriesListView {
             this.sheetKind = 'language';
           }
         })
-        // Sort chip：同款 sheet 型（点击拉起 Sort by 面板；排序非筛选，chip 不置激活色）
+        // Sort chip：同款 sheet 型（点击拉起 Sort by 面板）；排序计入 dirty（A 拍板），非默认值亮激活蓝
         FilterSheetChip({
           label: this.sortLabel(),
-          active: false,
+          active: this.sortKey !== 'pushed_desc',
           onTap: (): void => {
             this.sheetKind = 'sort';
           }
         })
+        }
+        }
+        .scrollable(ScrollDirection.Horizontal)
+        .scrollBar(BarState.Off)
+        .layoutWeight(1)
+        .align(Alignment.Start)
       }
-      }
-      .scrollable(ScrollDirection.Horizontal)
-      .scrollBar(BarState.Off)
       .width('100%')
       .padding({ left: 16, right: 16, top: 2, bottom: 8 })
 
