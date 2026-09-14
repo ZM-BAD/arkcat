@@ -249,6 +249,26 @@
       "value": "Fork 失败：%1$s"
     },
     {
+      "name": "repo_fork_own_toast",
+      "value": "无法 Fork 自己的仓库。"
+    },
+    {
+      "name": "repo_unstar_title",
+      "value": "取消星标 %1$s"
+    },
+    {
+      "name": "repo_unstar_message",
+      "value": "取消星标会同时将该仓库从你的列表中移除"
+    },
+    {
+      "name": "repo_unstar_cancel",
+      "value": "取消"
+    },
+    {
+      "name": "repo_unstar_confirm",
+      "value": "取消星标"
+    },
+    {
       "name": "repo_issues_link",
       "value": "议题"
     },

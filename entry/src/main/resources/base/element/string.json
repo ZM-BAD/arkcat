@@ -249,6 +249,26 @@
       "value": "Fork failed: %1$s"
     },
     {
+      "name": "repo_fork_own_toast",
+      "value": "You can't fork your own repository."
+    },
+    {
+      "name": "repo_unstar_title",
+      "value": "Unstar %1$s"
+    },
+    {
+      "name": "repo_unstar_message",
+      "value": "Unstarring this repo will also remove it from your lists"
+    },
+    {
+      "name": "repo_unstar_cancel",
+      "value": "CANCEL"
+    },
+    {
+      "name": "repo_unstar_confirm",
+      "value": "UNSTAR"
+    },
+    {
       "name": "repo_issues_link",
       "value": "Issues"
     },
