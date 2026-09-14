@@ -53,8 +53,8 @@ ets/components/OctIcon.ets            # 统一样式入口
 | 13 | Starred 分组头 | 空星 | `☆` | `star-16` | ✅ | — |
 | 14 | My Work/建议 | Issues | `◷` | `issue-opened-16` | ✅ | — |
 | 15 | 旧 Issues 列表 | 已关闭 | `🟣` | `issue-closed-16` | ✅ | — |
-| 16 | 行状态 | 完成/合并 | `✔` | `check-circle-fill-16` | ✅ | completed/merged |
-| 17 | 行状态 | 未计划/关闭 | `⊘` / `✗` | `x-circle-16` | ✅ | not_planned/closed |
+| 16 | 行状态 | 已关闭 issue / 合并 PR | `🟣` / `⑂` | `issue-closed-16` / `git-merge-16` | ✅ | completed/merged |
+| 17 | 行状态 | 未计划 / 关闭（未合并）PR | `⊘` / `✗` | `skip-16` / `git-pull-request-closed-16` | ✅ | not_planned 用 skip；closed PR 原为 x-circle 灰，2026-09-14 以官方为准改红（DESIGN.md §10.1） |
 | 18 | My Work/建议 | Pull Requests | `⑂` | `git-pull-request-16` | ✅ | — |
 | 19 | My Work | Discussions | `❞` | `comment-discussion-16` | ✅ | — |
 | 20 | My Work | Projects | `▦` | `project-16` | ✅ | — |

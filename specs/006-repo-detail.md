@@ -42,7 +42,7 @@
 | 5 | 操作区 | STAR 大按钮 | Star/取消 | ✅ | `addStar/removeStar` | 已实现 |
 | 6 | 操作区 | fork 圆钮 | Fork | ✅ | `createFork` | 已实现 |
 | 7 | 操作区 | 🔔 圆钮 | 订阅 | ⚠️ | `updateSubscription` | 点击提示 |
-| 8 | 计数区 | Issues/PR/Actions/Releases 行 | 进入对应列表 | ✅ | `issues.totalCount/pullRequests.totalCount/actions.totalCount/releases.totalCount` | Actions 无 API 时显示 0 |
+| 8 | 计数区 | Issues/PR/Discussions/Actions/Releases 行 | 进入对应列表 | ✅ | `issues(states:OPEN).totalCount/pullRequests(states:OPEN).totalCount/hasDiscussionsEnabled+discussions.totalCount/releases.totalCount` | Issues/PR 计数=列表页默认筛选（State=Open）下的数量（2026-09-14 官方口径）；**Discussions 行仅仓库开启时显示**（`hasDiscussionsEnabled`；图标=`oct_comment_discussion_16` 与 Home 页 Discussions 同字形，色块口径与 Issues/PRs 行同构=**实底紫 `shortcut_purple_fg` + 白图标**，点入 repoDiscussions 路由）；**Actions 行无数字**（countRow 负数哨兵=无计数，点击 toast 占位） |
 | 10 | More 区 | Current branch main ✓ · CHANGE | 分支切换 | ⚠️ | `defaultBranchRef.name` | CHANGE 提示 |
 | 11 | 分支区 | Code/Commits 行 | 进入文件树/提交列表 | ✅ | — | 路由 Code（038）/ Commits（028） |
 | 13 | README | 富文本渲染 | 展示 | ✅ | `object(expression: "HEAD:README.md")` | REST /readme 官方 HTML + MarkdownView 直渲（040） |
@@ -58,8 +58,10 @@ query RepositoryDetail($owner: String!, $name: String!) {
     description
     stargazerCount
     forkCount
-    issues { totalCount }
-    pullRequests { totalCount }
+    openIssues: issues(states: OPEN) { totalCount }
+    openPullRequests: pullRequests(states: OPEN) { totalCount }
+    hasDiscussionsEnabled
+    discussions { totalCount }
     releases(first: 5) { totalCount nodes { tagName publishedAt isLatest } }
     defaultBranchRef { name }
     object(expression: "HEAD:README.md") { ... on Blob { text } }

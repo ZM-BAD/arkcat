@@ -38,7 +38,7 @@
 | 7 | 状态 Tab | All/Open/Closed 下拉 chip（FilterDropdownChip） | 切换 | ✅ | `states: [OPEN]` / `[CLOSED]` | — |
 | 8 | Issue 卡片 | Issue 标题 | 点击进入详情 | ✅ | `issue.title` | — |
 | 9 | Issue 卡片 | Issue 编号 `#N` | 展示 | ✅ | `issue.number` | — |
-| 10 | Issue 卡片 | Label 标签 | 点击筛选 | ✅ | `issue.labels { name color }` | — |
+| 10 | Issue 卡片 | Label 标签 | 点击筛选 | ✅ | `issue.labels { name color }` | `LabelPill` 胶囊（官方 IssueLabel 口径，DESIGN.md §10.2） |
 | 11 | Issue 卡片 | 时间 | 展示 | ✅ | `issue.createdAt` | — |
 | 12 | Issue 卡片 | 评论数 💬 | 展示 | ✅ | `issue.comments.totalCount` | — |
 | 13 | Issue 卡片 | 关联 PR 图标 🔀 | 展示 | ✅ | `timelineItems(CROSS_REFERENCED_EVENT)` | — |
@@ -74,7 +74,7 @@ query IssuesList(
         }
       }
     }
-    labels(first: 30) { nodes { name } }
+    labels(first: 30) { nodes { name color } }
   }
 }
 ```
@@ -87,6 +87,8 @@ query IssuesList(
 | ---- | ------ | ------------------- |
 | Label 多选筛选 | GraphQL `labels` 参数需 `[String!]`，空数组传 null 即可 | 单选传 `[name]`，多选客户端二次过滤 |
 | Author/Assignee 筛选 | —（无边界） | **服务端 `filterBy{createdBy/assignee}`**（2026-09-13 实测支持，与 states/labels 正交）；下拉候选来自会话内累积的候选池（只增不减，避免选了一人后其他人从下拉消失） |
+| Assignee 面板首行「Assigned to nobody」 | GraphQL `filterBy` 无「无人分配」语义，推不下去 | 哨兵值 `__none__`（登录名不含下划线不会撞真实候选）：服务端**不传** assignee，客户端按「无 assignees」本地筛；行样式=circle-slash 图标+文案（2026-09-14，官方口径）。已知限制：候选来自已加载集合，首屏可能「假空」 |
+| Milestone 面板首行「No milestone」 | 服务端无 milestone 参数（本就只能客户端筛） | 同款哨兵值 `__none__`：按「无里程碑」本地筛；行样式=circle-slash（2026-09-14，官方口径） |
 
 ---
 

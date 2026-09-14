@@ -33,7 +33,7 @@
    - **面板型** `FilterSheetChip`：点击拉起页面 `bindSheet` 底部面板；支持前置图标（单选仓库时显示 repo octicon）与**前置计数徽标**（多选仓库时显示"蓝底白字数字 + 复数名词"）；
    - **开关型**：无 chevron 的纯 toggle pill（Inbox 的 Focused/Unread、Discussions 的 Unanswered），激活态走 `chip_active_bg` + `link_blue`。
    - **激活色口径（全形态通用）**：激活色**只表示「当前值 ≠ 默认值」**，与漏斗徽标的 dirty 口径同源——chip 当前值为默认值时**不做激活色**（保持中性 `chip_bg`/`text_primary`），即使它是当前生效视图（如 Inbox 视图 chip 默认 `Inbox` 不变蓝，切到 Saved/Done 才变蓝）；取非默认值时才亮激活蓝。
-4. **底部面板通用结构**：拖拽条（系统）→ 标题行**双态**（常态=自绘 ✕ 44×44 + 标题 `title_font_size` 600 + 右侧 🔍；点 🔍 进入**搜索态**：标题**原地**变搜索框——对已加载行做客户端过滤，占位文案按面板传入（仓库面板=`work_search_repositories`「Search repositories」），左侧 ✕ 变 **←**（回退=清空搜索词并退出搜索态），进入时自动聚焦）→ 选项行列表（可滚动）。
+4. **底部面板通用结构**：拖拽条（系统）→ 标题行**双态**（常态=自绘 ✕ 44×44 + 标题 `title_font_size` 600 + 右侧 🔍；点 🔍 进入**搜索态**：标题**原地**变搜索框——对已加载行做客户端过滤，占位文案按面板传入（仓库面板=`work_search_repositories`「Search repositories」；仓库内 Issues 的 Label/Author/Assignee/Milestone 四面板=`filter_labels`/`filter_users`/`filter_users`/`filter_milestones`，官方措辞 Filter labels / Filter users / Filter milestones），面板标题同样按官方措辞=`repo_issues_filter_*_title`（Filter by label / Filter by author / Filter assignee / Filter by milestone），左侧 ✕ 变 **←**（回退=清空搜索词并退出搜索态），进入时自动聚焦）→ 选项行列表（可滚动）。
    - 选项行：下拉型面板 52vp 行高；语言/排序面板 56vp 行高；选中态为右侧蓝勾（多选）或蓝色单选圆钮（排序，20vp 描边 + 10vp 实心）；
    - 分组：排序面板为 4 组 × 2，组间插 **16vp 灰带**（`heat_empty`），组内不插；
    - 弹层底部留白 16vp；`Scroll` 内容**顶对齐**（`align(Alignment.Top)`，否则内容不足一屏时会被默认居中对齐、首行离头部很远）。
@@ -57,7 +57,7 @@
 | 6 | 筛选条 | chip 单选文案 | 显示具体值；仓库附带 repo octicon | ✅ | `WorkFilterBar.repoChipLabel` | 仓库名用 GitHub 规范写法 `owner/name` |
 | 7 | 筛选条 | chip 多选文案 | 计数徽标 + 复数名词（`N Repositories`） | ✅ | 同上 + `badgeCount` | 中文为「计数徽标 + 仓库」 |
 | 8 | 面板 | 标题行 | ✕ 44×44 + 标题 600；`showClose: false` | ✅ | `LanguageFilterSheet` / `SortBySheet` / `WorkFilterSelectSheet` 等 | 自绘关闭钮，避免与系统 ✕ 重叠 |
-| 9 | 面板 | 内联搜索框 | 高 40 / 圆角 6 / `chip_bg`；放大镜切换显隐 | ✅ | 同上 | 搜索词为面板内部态，每次拉起重置 |
+| 9 | 面板 | 内联搜索框 | 高 40 / 圆角 6 / `chip_bg`；放大镜切换显隐 | ✅ | 同上 + `pages/IssuesList.ets` 内联面板（仓库内 Issues 四面板） | 搜索词为面板内部态，每次拉起重置 |
 | 10 | 面板 | 选项行 | 52vp（下拉型）/ 56vp（语言、排序）；选中蓝勾或蓝圆钮 | ✅ | 同上 | 行组件化 + key 含选中态（见第七章坑位） |
 | 11 | 面板 | 组间灰带 | 16vp `heat_empty` 全宽 | ✅ | `SortBySheet.groupGap` | 分组面板（排序）专用 |
 | 12 | 空态 | RESET ALL FILTERS | 与 Clear all filters 同函数；仅 dirty 且空列表时显示 | ✅ | 各页 `canResetFilters()` | 不清理页内搜索 |
@@ -134,7 +134,7 @@
 **实现位置索引**
 
 - chip：`components/FilterDropdownChip.ets`（下拉型 `FilterDropdownChip` + 面板型 `FilterSheetChip`）
-- 面板：`components/LanguageFilterSheet.ets`（语言，Trending/仓库列表共用）、`components/SortBySheet.ets`（排序）、`components/WorkFilterSelectSheet.ets`（组织/仓库/作者/标签多选）、`components/WorkFilterSortSheet.ets`（工作区排序）、`components/InboxFilterSheets.ets`
+- 面板：`components/LanguageFilterSheet.ets`（语言，Trending/仓库列表共用）、`components/SortBySheet.ets`（排序）、`components/WorkFilterSelectSheet.ets`（组织/仓库/作者/标签多选）、`components/WorkFilterSortSheet.ets`（工作区排序）、`components/InboxFilterSheets.ets`、`pages/IssuesList.ets` 内联列表面板（仓库内 Issues 的 label/author/assignee/milestone，单 bindSheet 分派，双态标题同构）
 - 判定与过滤纯函数：`models/GitHubModels.filterReposByType`、`services/ProfileListService.repoOrderFromKey`、`utils/FilterLoading`
 - 复位信号：`components/WorkFilterBar.resetTick`（+ 页面 `@Local resetTick`）
 

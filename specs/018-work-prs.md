@@ -9,7 +9,7 @@
 
 ## 一、页面/功能概述
 
-Home My Work「Pull Requests」入口进入的跨仓库 PR 列表页。展示用户相关 PR（我创建/分配给我/提及我），按状态（All/Open/Closed/Merged）与可见性筛选，行内展示状态图标（merged 紫⑂ / open 绿⭘ / closed 灰✗）、Checks 状态胶囊（✓ Checks / ✗ Checks failed）、评论数与审查数。数据源 `search(type: ISSUE)` + `is:pr` 限定词；空态沿用官方风格 + RESET ALL FILTERS。
+Home My Work「Pull Requests」入口进入的跨仓库 PR 列表页。展示用户相关 PR（我创建/分配给我/提及我），按状态（All/Open/Closed/Merged）与可见性筛选，行内展示状态图标（merged 紫⑂ / open 绿⭘ / closed 红git-pull-request-closed）、Checks 状态胶囊（✓ Checks / ✗ Checks failed）、评论数与审查数。数据源 `search(type: ISSUE)` + `is:pr` 限定词；空态沿用官方风格 + RESET ALL FILTERS。
 
 ---
 
@@ -36,7 +36,7 @@ Home My Work「Pull Requests」入口进入的跨仓库 PR 列表页。展示用
 | 6 | 筛选行 | 状态下拉（Open/Merged/Closed/Queued/All） | 状态筛选 | ✅ | `is:open / is:merged / is:closed / is:queued` | 默认 All |
 | 7 | 筛选行 | 归属下拉（Created by me / Assigned to me / Mentioned / Review requested / Involved） | 归属筛选 | ✅ | `author:@me / assignee:@me / mentions:@me / review-requested:@me / involves:@me` | 默认 Created by me |
 | 8 | 筛选行 | 可见性下拉（All/Public/Private） | 可见性筛选 | ✅ | `is:public / is:private` | 默认 All |
-| 9 | PR 行 | 状态图标（merged 紫⑂ / open 绿⭘ / closed 灰✗ / draft 灰〇） | 状态展示 | ✅ | `state / merged / isDraft` | draft 灰图标 |
+| 9 | PR 行 | 状态图标（merged 紫⑂ / open 绿⭘ / closed 红✗ / draft 灰〇） | 状态展示 | ✅ | `state / merged / isDraft` | closed=danger 红 `git-pull-request-closed`（2026-09-14 以官方为准，DESIGN.md §10.1） |
 | 10 | PR 行 | `owner/repo #N` + 相对时间 | 仓库与时间 | ✅ | `repository.nameWithOwner / createdAt` | 年粒度 |
 | 11 | PR 行 | 标题（加粗，2 行截断） | 展示 | ✅ | `title` | — |
 | 12 | PR 行 | Checks 胶囊（✔ Checks / ✗ Checks failed / ✗ Checks pending） | CI 状态展示 | ✅ | `statusCheckRollup { state }` | Checks 非 SUCCESS 显示 ✗（oct_x_16 + warning）；pending 文案单独 |

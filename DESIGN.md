@@ -35,6 +35,35 @@
 - 对比度：文本 ≥ 4.5:1、UI 组件 ≥ 3:1（WCAG AA 硬门槛，验收必查）
 - 颜色**不得作为唯一信息载体**：状态变化必须配合图标/文字/形状（如 成功勾 + 绿色）
 
+### 1.1 数据色（API 返回的运行时颜色）
+
+GitHub API 返回一批**数据色**：仓库标签 `label.color`、语言 `languageColor`、成就徽章主题色等。
+官方行为是**直接渲染原始值**，它们不进设计令牌体系；硬编码颜色门禁（`scripts/check-hardcoded-colors.py`）对数据来源色豁免（运行时拼 `#hex` 是数据，不是设计令牌）。各数据色的暗色策略不同：
+
+| 数据色 | 亮色模式 | 暗色模式 | 说明 |
+| --- | --- | --- | --- |
+| Issue 标签 | 原色实底 + 黑白文字（按 §1.2 算法） | 原色 18% 透明底 + 同色相提亮文字 | 唯一有公式级官方规则的，见 §1.2 |
+| 语言点 | 原色直渲 | 原色直渲（不做变换，官方同） | 无色回退 `repo_language_unknown` |
+| 成就横幅 | 主题横幅图原样铺满 | 同左 | 唯一权威色源=官方横幅（spec 052） |
+
+### 1.2 Issue 标签文字黑白判定（官方公式）
+
+标签底色来自仓库自定义 hex，文字黑白由**感知光感**决定（官方给出的精确公式，唯一来源 primer/react IssueLabelToken）：
+
+- `PL = (0.2126×R + 0.7152×G + 0.0722×B) / 255`（官方原样公式，**不做** sRGB gamma 解码）
+- **阈值 = 0.6**：`PL < 0.6 → 白字，否则黑字`
+  > 阈值口径说明：primer/react 里亮色主题是 0.453、暗色主题是 0.6；**官方移动端亮暗两态实测均为 0.6**
+  > （2026-09-14 用真实仓库 10 个标签色逐一验证：0.453 只吻合 9/10，`#d876e3` PL=0.575 官方 App 为白字；
+  > 0.6 十个全部吻合）。ArkCat 按 0.6 落地。
+- **亮色模式**：背景=原色实底；近白标签（PL > 0.96）追加同色系发丝描边（同色相、亮度 −25、alpha=PL−0.96）
+- **暗色模式**：背景=原色 18% 透明度；文字=同色相提亮 `lightenBy = (0.6 − PL) × 100`（仅 PL < 0.6 时生效）；描边=提亮色 30% 透明
+- 实现位置：`utils/DataColors.ets`（纯函数 + 宿主单测，测试集即上述 10 色验证集）+ `components/LabelPill.ets`
+- 官方出处（可查证）：
+  - 组件页：<https://primer.style/product/components/label/>
+  - 胶囊造型源码（primer/css labels mixins）：<https://github.com/primer/css/blob/main/src/labels/mixins.scss>
+  - 颜色公式官方实现（primer/react，明暗两套 mixin）：<https://github.com/primer/react/blob/main/packages/react/src/Token/IssueLabelToken.module.css>
+  - web 端公式逆向分析（阈值 bug 讨论）：<https://firsching.ch/github_labels.html>
+
 ## 2. 间距（4px 网格）
 
 `SPACING_*`（4/8/12/16/24/32/48，见 `utils/PrimerTokens.ets`）。约定：
@@ -98,16 +127,53 @@
 - 渲染必须走 `OctIcon` 组件（统一尺寸/着色）；`fillColor` 等价 `fill="currentColor"` 语义；颜色用语义令牌
 - 品牌红线：不引入 GitHub 官方插画/logo（见成就徽章规范）
 
-## 10. 参考映射（Primer Web → ArkUI）
+## 10. 组件级官方规范（跨页面原语）
+
+> 页面骨架、chip/面板/搜索框等**官方 App 实测度量**的单一出处是对应 Spec（筛选体系见
+> [specs/068-filter-interaction.md](specs/068-filter-interaction.md)，App Bar 见 specs/067），本节收录**跨页面复用、有 Primer/octicons 官方约束**的原语；组件目录总入口：<https://primer.style/product/components/>。
 
 | Primer React | ArkUI 实现 | 备注 |
 | --- | --- | --- |
-| Button (variant) | `Button` 或自定义组件 | 参照官方 variant 语义 |
+| Button (variant) | `Button` 或自定义组件 | 参照官方 variant 语义；移动端高度口径见 §10.4 |
 | ActionList | `List` + `ListItem` | 注意 44px 行高、leading 图标 |
 | Dialog | `CustomDialog` | 浮层阴影 + 焦点管理 |
 | Stack | `Column` / `Row` / `Flex` | 原子布局 |
-| Avatar | `Image` + `borderRadius(FULL)` | 圆形裁剪 |
-| Label/Badge | `Badge` 或自绘 | 语义色 + 文字双通道 |
+| Avatar | `Image` + `borderRadius(FULL)` | 圆形裁剪，档位见 §10.3 |
+| Label/IssueLabel | `components/LabelPill.ets` | 造型与颜色算法见 §10.2 / §1.2 |
+
+### 10.1 Issue/PR 状态语义（StateLabel）
+
+官方以「**专用 octicon 字形 + 语义色**」双通道表达状态（StateLabel：用于渲染 issue/PR 状态）。
+全库唯一映射表如下；**禁止**各页自创字形/配色组合（曾因此出现关闭态 PR 误用灰色）：
+
+| 状态 | Octicon 字形 | 语义 | ArkCat 令牌（light/dark 双套） |
+| --- | --- | --- | --- |
+| open issue / open PR | `issue-opened` / `git-pull-request` | success 绿 | `success_text` |
+| closed issue（完成） | `issue-closed` | done 紫 | `shortcut_purple_fg` |
+| not planned issue | `skip` | muted 灰 | `text_secondary` |
+| draft PR | `git-pull-request-draft` | muted 灰 | `text_secondary` |
+| merged PR | `git-merge` | done 紫 | `shortcut_purple_fg` |
+| closed（未合并）PR | `git-pull-request-closed` | **danger 红** | `danger_text` |
+
+> 历史注：closed PR 曾按 2026-09-05 review B9 定为「灰色 + x-circle」，与官方不符；
+> 2026-09-14 以官方为准改为「红色 + `git-pull-request-closed`」。
+> 出处：StateLabel（组件目录 <https://primer.style/product/components/>）、octicons（<https://github.com/primer/octicons>）。
+
+### 10.2 IssueLabel（标签胶囊）
+
+- 造型（primer/css `labels-base`）：字号 12 半粗体；small=行高 18（总高≈20）左右内距 7；large=行高 22（总高≈24）左右内距 10；`border-radius: 2em` 全圆胶囊；1px 透明描边占位
+- 颜色规则见 §1.2（PL 公式 + 0.6 阈值 + 明暗两套渲染）
+- ArkCat 实现：`components/LabelPill.ets`（small=列表行内标签，large=筛选面板行）；出处：<https://github.com/primer/css/blob/main/src/labels/mixins.scss>
+
+### 10.3 Avatar
+
+- 一律正圆（`RADIUS_FULL`）；尺寸取官方档位 **16/20/24/32/40/48**（vp）：筛选面板行 40、顶栏/行内小头像 20，其余取最近档位，不发明中间值
+- 出处：Avatar（组件目录 <https://primer.style/product/components/>）
+
+### 10.4 Button（移动端口径）
+
+- Primer web 的 Button 高 32（默认）/40（large）；**移动端官方 App 实测主按钮高 ≈48**，ArkCat 取 `button_height=48vp`——这是移动端放大口径，**勿按 web 文档「修正」回 32/40**；圆角 `button_radius=6`（`RADIUS_MEDIUM`）
+- 出处：Button（组件目录 <https://primer.style/product/components/>）
 
 ## 11. 落地清单（评审批次核对项）
 

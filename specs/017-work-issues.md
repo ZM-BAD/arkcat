@@ -39,7 +39,7 @@ Home My Work「Issues」入口进入的跨仓库 Issue 列表页（区别于 007
 | 9 | Issue 行 | 状态图标（绿✔/紫✔/灰⊘） | 展示状态与关闭原因 | ✅ | `state / stateReason` | OPEN→绿；COMPLETED→紫；NOT_PLANNED→灰 |
 | 10 | Issue 行 | `owner/repo #N` + 相对时间 | 仓库与时间 | ✅ | `repository.nameWithOwner / createdAt` | 相对时间含年粒度（2y/5y） |
 | 11 | Issue 行 | 标题（加粗，2 行截断） | 展示 | ✅ | `title` | — |
-| 12 | Issue 行 | 标签胶囊 | 展示 | ✅ | `labels(first:5) { nodes { name color } }` | 标签真实色值实底+白字 |
+| 12 | Issue 行 | 标签胶囊 | 展示 | ✅ | `labels(first:5) { nodes { name color } }` | `LabelPill`：色值实底+黑白文字按感知光感 0.6 阈值（DESIGN.md §1.2） |
 | 13 | Issue 行 | 评论数 💬 N | 展示 | ✅ | `comments.totalCount` | — |
 | 14 | 空态 | 插图 + 标题 + 副文案 + RESET ALL FILTERS | 空态引导；重置筛选并可重查 | ✅ | —（纯 UI） | 插图用占位字形；RESET 走 resetFilters（恢复默认筛选 + 退出就地搜索后重查） |
 | 15 | 列表底部 | Load more 分页 | 翻页 | ✅ | `search.pageInfo` | — |
@@ -77,7 +77,7 @@ query WorkIssues($query: String!, $first: Int = 25, $after: String) {
 | ---- | ------ | ------------------- |
 | 官方「Status / Event」(里程碑/分配人) 筛选 | 截图未展示，MVP 不实现 | 仅提供状态/归属/可见性三组筛选，后续 Spec 扩展 |
 | 搜索结果计数（issueCount） | search 分页 count 仅供展示 | 列表不额外展示总数，与官方一致 |
-| 标签颜色映射 | GraphQL 返回十六进制色值 | 胶囊背景用标签真实色值（hex）实底 + 白字 |
+| 标签颜色映射 | GraphQL 返回十六进制色值 | `LabelPill` 胶囊：亮色实底+黑白字（PL 0.6 阈值）、暗色 18% 底+提亮字（DESIGN.md §1.2） |
 
 ---
 

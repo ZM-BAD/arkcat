@@ -27,11 +27,14 @@
 | 1 | App Bar | ← 返回 + 副标题 owner | 导航 | ✅ | —（纯 UI） | — |
 | 2 | App Bar | 🔍 搜索 / ＋ 新建 | 跳转/提示 | ✅ | —（纯 UI） | 复用路由 search |
 | 3 | 筛选行 | 漏斗徽标（激活数） | 计数 | ✅ | —（纯 UI） | — |
-| 4 | 筛选行 | 状态下拉 All/Open/Closed/Merged | 状态筛选 | ✅ | `pullRequests(states:)` | 默认 All |
-| 5 | 筛选行 | Label 下拉 | 标签筛选 | ✅ | `pullRequests(labels:)` | 仓库标签枚举 |
-| 6 | 筛选行 | Author 下拉 | 作者筛选 | ⚠️ | **客户端过滤**（GraphQL/REST 均无该参数；see §五） | 候选取服务端返回的作者集合；空态自动补拉最多 5 页 |
-| 7 | 筛选行 | Assignee 下拉 | 分配人筛选 | ⚠️ | **客户端过滤**（同上） | 候选取服务端返回的 assignees；空态自动补拉最多 5 页 |
-| 8 | PR 行 | 状态图标 + 标题 + `#N` + 时间 | 展示 | ✅ | `state/merged/isDraft/createdAt` | 沿用 018 图标规范；draft 灰图标 oct_git_pull_request_draft_16 |
+| 4 | 筛选行 | 状态下拉 All/Open/Closed/Merged | 状态筛选 | ✅ | `pullRequests(states:)` | **默认 Open**（2026-09-14 与官方/仓库内 Issues 对齐；非默认值计 dirty） |
+| 5 | 筛选行 | Label 底部面板 | 标签筛选 | ✅ | `pullRequests(labels:)` | 面板双态搜索 + LabelPill 胶囊（与 007 Issues 同款，Spec 068 §二.4） |
+| 6 | 筛选行 | Author 底部面板 | 作者筛选 | ⚠️ | **客户端过滤**（GraphQL/REST 均无该参数；see §五） | 面板双态搜索（占位 Filter users）；候选取服务端返回的作者集合；空态自动补拉最多 5 页 |
+| 7 | 筛选行 | Assignee 底部面板 | 分配人筛选 | ⚠️ | **客户端过滤**（同上） | 首行=官方「Assigned to nobody」（哨兵 `__none__` 筛无 assignees 行，circle-slash 图标）；空态自动补拉最多 5 页 |
+| 7a | 筛选行 | Milestone 底部面板 | 里程碑筛选 | ⚠️ | **客户端过滤**（`pullRequests` 无 milestone 参数） | 首行=官方「No milestone」（哨兵同上）；候选池从已加载 PR 聚合只增不减（2026-09-14 新增） |
+| 7b | 筛选行 | Reviews 底部面板（占位） | 评审筛选 | ⚠️ | —（待详设） | chip 先挂官方同款占位，点击 toast；**不计数 dirty**（无值） |
+| 7c | 筛选行 | Sort 底部面板 | 排序 | ✅ | `pullRequests(orderBy:)` | WorkFilterSortSheet 6 键 → `IssueOrder`（schema 中 pullRequests 复用 Issue 的排序类型；字段枚举同构，复用 `repoIssueOrder`）；排序计入 dirty |
+| 8 | PR 行 | 状态图标 + 标题 + `#N` + 时间 | 展示 | ✅ | `state/merged/isDraft/createdAt` | 沿用 018 图标规范；draft 灰图标 oct_git_pull_request_draft_16；closed=danger 红 `oct_git_pull_request_closed_16`（2026-09-14 以官方为准，DESIGN.md §10.1） |
 | 9 | PR 行 | Label 胶囊 + Checks 胶囊 | 展示 | ✅ | `labels/statusCheckRollup` | — |
 | 10 | PR 行 | 💬 / 作者头像 | 展示 | ✅ | `comments/author` | — |
 | 11 | 列表 | Load more 分页 | 翻页 | ✅ | `pullRequests.pageInfo` | 客户端过滤时首页 50 条 |
@@ -43,9 +46,9 @@
 ## 四、核心 GraphQL 片段
 
 ```graphql
-query RepoPullRequests($owner: String!, $name: String!, $states: [PullRequestState!], $labels: [String!], $first: Int = 50, $after: String) {
+query RepoPullRequests($owner: String!, $name: String!, $states: [PullRequestState!], $labels: [String!], $first: Int = 50, $after: String, $orderBy: IssueOrder!) {
   repository(owner: $owner, name: $name) {
-    pullRequests(states: $states, labels: $labels, first: $first, after: $after, orderBy: { field: UPDATED_AT, direction: DESC }) {
+    pullRequests(states: $states, labels: $labels, first: $first, after: $after, orderBy: $orderBy) {
       totalCount
       pageInfo { hasNextPage endCursor }
       nodes {

@@ -22,6 +22,7 @@ Settings → Share feedback 不再用浏览器：直接压栈到 App 内 Discuss
 1. 数据范围：仅 ZM-BAD/arkcat 的 discussions（repo: 搜索限定）
 2. 筛选行：无「归属」（created/assigned/…）chip；状态 / **Author / Label（新增，位置在状态与 Unanswered 之间）** / Unanswered / 排序保留
 3. Author/Label 为弹层选择（官方同款）：Author=用户行弹层（头像+login+name+搜索）；Label=彩色标签弹层（Unlabeled 行 + GitHub 色标签 chip + 搜索），qualifier 分别为 `author:login` 与 `label:"name"`/`no:label`（Unlabeled）；选项来源：Author=已加载讨论作者去重，Label=repository.labels 全集（首次打开弹层时拉取）
+4. **Category 为弹层选择（2026-09-14 官方同款，chip 位于 Author 与 Label 之间）**：标题「Filter by category」，双态头部（点 🔍 标题就地变搜索框，✕ 变 ←，框内 ✕ 清词）；行=emoji + 分类名 + 描述两行；qualifier=`category:名称`（**用分类名本身**，大小写不敏感、带空格/标点加引号——实测 deno：category:Q&A=458、category:"show and tell"=13、dash-slug 形式无效）；选项来源=`repository.discussionCategories`（首次打开拉取）；emoji 为 GitHub shortcode（':mega:'），经 `emojiFromShortcode` 映射 unicode（覆盖官方默认六分类）；计入漏斗徽标
 
 ---
 
@@ -34,6 +35,7 @@ Settings → Share feedback 不再用浏览器：直接压栈到 App 内 Discuss
 | 3 | Discussions 页 | 归属 chip 隐藏 | repo 模式不显示 | ✅ | 无 | 全局模式不受影响 |
 | 4 | 筛选行 | Author chip | 开作者弹层、author: 过滤 | ✅ | search(query: "… author:…") | 单仓库模式显示 |
 | 5 | 筛选行 | Label chip | 开标签弹层、label:/no:label 过滤 | ✅ | repository.labels + search | 同上；Unlabeled=no:label |
+| 5a | 筛选行 | Category chip | 开分类弹层、category: 过滤 | ✅ | `repository.discussionCategories` + search | 位于 Author 与 Label 之间；行=emoji+名称+描述 |
 
 > 可行性图例：✅ 可直接实现 ｜ ⚠️ 部分可行/降级 ｜ ❌ 不可实现
 
