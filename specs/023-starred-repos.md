@@ -98,3 +98,5 @@ query WorkStarred($first: Int = 30, $after: String) {
 - 他人视角（035 重构后 Profile Starred 入口带 login，官方实测两形态）：本人页保持 My lists 区（+ NEW/列表行/空态卡）+ 行内 ⋯ 不变；他人页显示「Lists」区（只读：无 + NEW/空态卡，数据 `user(login).lists`，服务端仅返回公开列表；行进只读列表详情，详情页隐藏 Edit/Delete、归属人取 `node.user`）；对方无 lists 时 Lists 区与 Starred 分组头均不显示，直接进仓库列表。
 
 - 模拟器实测：Starred 真实数据渲染（tokio-rs/tokio ★33k Rust 等）+ My lists 空态卡展示通过。
+- 2026-09-15：My lists 区加 `listsLoaded` 首拉门控——列表数据返回前整块留白，防「Create your first list」空态卡闪现后跳真列表的 UI 跳变；拉取失败置完成标记落回空态卡兜底。「Starred」分组头同思路加 `reposLoaded` 门控（本人页随仓库首拉完成出现，他人页仍按有 lists 才显示）。
+- 2026-09-15（口径升级）：My lists 区与 Starred 仓库列表改为**同帧渲染**——`ownPageReady`（仓库+列表均首拉完成）统一门控两区与分组头，就绪前整页 loading（仓库先到也等列表）；拉取失败同样置双标记放行错误重试界面。他人页口径不变。

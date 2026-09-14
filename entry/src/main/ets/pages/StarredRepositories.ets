@@ -25,6 +25,10 @@ export struct StarredRepositoriesView {
   /** 回页刷新信号：Index onShown 时自增，@Monitor 触发列表重取 */
   @Param listsTick: number = 0;
   @Local lists: WorkUserList[] = [];
+  /** 列表首拉是否完成：完成前 My lists 区整块留白，防「Create your first list」空态卡闪现后跳真列表 */
+  @Local listsLoaded: boolean = false;
+  /** 仓库首拉是否完成：完成前「Starred」分组头不渲染（防进场闪现；拉取失败也置位，随错误态显示） */
+  @Local reposLoaded: boolean = false;
   /** 当前打开 sheet 的仓库（membership 判断/切换用） */
   @Local sheetRepoId: string = '';
   /** 成员切换进行中（乐观更新期间防连点） */
@@ -69,6 +73,12 @@ export struct StarredRepositoriesView {
     return this.login === '' || this.login === this.currentLogin;
   }
 
+  /** 双区同时渲染的就绪口径：本人页=仓库与列表均首拉完成（仓库先到也等列表，防两段式出现）；
+   * 他人页无 My lists 区，只看仓库 */
+  private get ownPageReady(): boolean {
+    return !this.isOwnPage || (this.reposLoaded && this.listsLoaded);
+  }
+
   private refresh(): void {
     this.loading = true;
     this.errorMsg = '';
@@ -83,6 +93,7 @@ export struct StarredRepositoriesView {
         this.loading = false;
         this.isRefreshing = false;
         this.loadingMore = false;
+        this.reposLoaded = true;
         // 身份已明（currentLogin 到位）再拉 lists，本人/他人分支才不会判错
         this.fetchLists();
       })
@@ -91,6 +102,9 @@ export struct StarredRepositoriesView {
         this.loading = false;
         this.isRefreshing = false;
         this.loadingMore = false;
+        // 失败同样置双标记：否则 ownPageReady 永假，错误重试界面被 loading 挡住
+        this.reposLoaded = true;
+        this.listsLoaded = true;
       });
   }
 
@@ -127,9 +141,11 @@ export struct StarredRepositoriesView {
     fetcher
       .then((lists: WorkUserList[]) => {
         this.lists = lists;
+        this.listsLoaded = true;
       })
       .catch(() => {
-        // 列表拉取失败不影响仓库列表；sheet 内保留旧数据
+        // 列表拉取失败不影响仓库列表；sheet 内保留旧数据；置完成标记落回空态卡兜底
+        this.listsLoaded = true;
       });
   }
 
@@ -345,8 +361,9 @@ export struct StarredRepositoriesView {
       Refresh({ refreshing: $$this.isRefreshing }) {
       Scroll() {
         Column() {
-          // My lists 区仅本人页渲染（他人 Starred 页直接进 Starred 分组，对齐官方）
-          if (this.isOwnPage) {
+          // My lists 区仅本人页渲染（他人 Starred 页直接进 Starred 分组，对齐官方）；
+          // 随双区就绪一次性渲染（ownPageReady 门控），与下方仓库列表同帧出现
+          if (this.isOwnPage && this.ownPageReady) {
             // My lists 行（列表 API 后续 Spec，v1 展示行 + 空态卡）
             Row() {
               OctIcon({ res: $r('app.media.oct_list_unordered_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
@@ -454,8 +471,8 @@ export struct StarredRepositoriesView {
               .margin({ top: 8, bottom: 8 })
           }
 
-          // Starred 分组头（官方：他人页无 lists 时不显示区块头，直接进仓库列表）
-          if (this.isOwnPage || this.lists.length > 0) {
+          // Starred 分组头：本人页随双区就绪一次性出现；他人页有 lists 才显示（官方：无 lists 直接进仓库列表）
+          if (this.isOwnPage ? this.ownPageReady : this.lists.length > 0) {
             Row() {
               OctIcon({ res: $r('app.media.oct_star_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
               Text($r('app.string.home_work_starred'))
@@ -468,7 +485,14 @@ export struct StarredRepositoriesView {
             .height(40)
           }
 
-          if (this.shownRepos().length > 0) {
+          if (!this.ownPageReady) {
+            // 双区就绪前统一 loading（仓库先到也等列表），保证 My lists 与仓库列表同帧出现
+            StateView({
+              loading: true,
+              error: '',
+              onRetry: () => this.refresh()
+            })
+          } else if (this.shownRepos().length > 0) {
             ForEach(this.shownRepos(), (repo: WorkStarredRepoItem) => {
               StarredRepoRow({
                 repo: repo,
