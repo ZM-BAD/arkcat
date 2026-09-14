@@ -14,7 +14,7 @@
 - **头部**：业主头像+名字 / 仓库名 / 描述 / ★ stars · ⑂ forks
 - **操作区**：`STAR` 大按钮 + fork/铃铛两个圆形按钮
 - **计数入口**：Issues / Pull Requests / Actions / Releases（彩块 + 计数）
-- **More 折叠区**：Contributors / Watchers / License（见 053-055）；Current branch main ✓ / Code / Commits 为独立分支区卡片
+- **More 折叠区**：Contributors / Watchers / License（见 053-055），行尾右侧值与计数行同构（贡献者数 / Watchers 数 / 协议名，2026-09-14）；Current branch main ✓ / Code / Commits 为独立分支区卡片
 - **README**：官方 HTML 渲染（REST /readme + MarkdownView，040）
 
 ---
@@ -25,7 +25,7 @@
 2. 头部：👤 业主（ZM-BAD）+ 仓库名（headroom）+ 描述（Know when your AI is...）+ ★ 43 stars · ⑂ 3 forks
 3. 操作区：[ STAR ] 大按钮 + [⑂] fork 圆钮 + [🔔] 铃铛圆钮（← 操作区）
 4. 计数入口：🟩 Issues 1 / 🟦 Pull Requests 1 / 🟧 Actions 0 / ⬛ Releases 2（点击进列表，见 029）
-5. More 折叠区：··· More + ▾ 下拉（Contributors / Watchers / License，见 053-055）
+5. More 折叠区：··· More + ▾ 下拉（Contributors / Watchers / License，见 053-055），行尾右侧值=计数（协议名文字）右对齐
    - 分支区卡（独立于 More）：⑂ Current branch main ✓ + CHANGE · ▣ Code · ▤ Commits
 6. README：📖 官方 HTML 渲染（MarkdownView）
 
@@ -43,6 +43,7 @@
 | 6 | 操作区 | fork 圆钮 | Fork | ✅ | `createFork` | 已实现 |
 | 7 | 操作区 | 🔔 圆钮 | 订阅 | ⚠️ | `updateSubscription` | 点击提示 |
 | 8 | 计数区 | Issues/PR/Discussions/Actions/Releases 行 | 进入对应列表 | ✅ | `issues(states:OPEN).totalCount/pullRequests(states:OPEN).totalCount/hasDiscussionsEnabled+discussions.totalCount/releases.totalCount` | Issues/PR 计数=列表页默认筛选（State=Open）下的数量（2026-09-14 官方口径）；**Discussions 行仅仓库开启时显示**（`hasDiscussionsEnabled`；图标=`oct_comment_discussion_16` 与 Home 页 Discussions 同字形，色块口径与 Issues/PRs 行同构=**实底紫 `shortcut_purple_fg` + 白图标**，点入 repoDiscussions 路由）；**Actions 行无数字**（countRow 负数哨兵=无计数，点击 toast 占位） |
+| 9 | More 区 | Contributors/Watchers/License 行 | 进入对应页 + 行尾右侧值 | ✅ | `watchers.totalCount` / `licenseInfo.name`；贡献者数无 GraphQL 字段 | 右侧值与计数行同构右对齐（2026-09-14）：Contributors=贡献者数（REST `/contributors?per_page=1&anon=0` Link 头 last 页码，与 054 列表同口径；未加载/失败不显示数字）、Watchers=`watcherCount`、License=`licenseInfo.name`（无许可证行尾留空）；行内 label `layoutWeight(1)`、右侧值 `text_secondary` |
 | 10 | More 区 | Current branch main ✓ · CHANGE | 分支切换 | ⚠️ | `defaultBranchRef.name` | CHANGE 提示 |
 | 11 | 分支区 | Code/Commits 行 | 进入文件树/提交列表 | ✅ | — | 路由 Code（038）/ Commits（028） |
 | 13 | README | 富文本渲染 | 展示 | ✅ | `object(expression: "HEAD:README.md")` | REST /readme 官方 HTML + MarkdownView 直渲（040） |
@@ -75,6 +76,8 @@ query RepositoryDetail($owner: String!, $name: String!) {
 }
 ```
 
+> 贡献者计数（More 区 Contributors 行）GraphQL 无对应字段：REST `/repos/{owner}/{repo}/contributors?per_page=1&anon=0`，Link 头 `rel="last"` 页码即总数（复用 Explore `contributorCount` 纯函数）。
+
 ---
 
 ## 五、边界 / 不可行项
@@ -104,3 +107,4 @@ query RepositoryDetail($owner: String!, $name: String!) {
 
 - 原 Spec 006 的「文件列表/语言占比」从详情页收进 More 区（官方布局），GraphQL 查询保留
 - 2026-08-31：官方布局对齐完成，截图验收通过
+- 2026-09-14：More 区 Contributors/Watchers/License 行尾右侧值落地（计数/协议名，与计数行同构），见元素 9

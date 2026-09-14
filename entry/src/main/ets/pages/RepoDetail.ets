@@ -30,6 +30,8 @@ export struct RepoDetailView {
   @Local isRefreshing: boolean = false;
   @Local busy: boolean = false;
   @Local moreExpanded: boolean = false;
+  /** 贡献者总数（More 区 Contributors 行）：-1=未加载/失败，行尾不显示数字（与 countRow 负数哨兵同构） */
+  @Local contributorCount: number = -1;
   /** README 官方 HTML（REST /readme html+json；null=未加载） */
   @Local readmeResult: MarkdownFetchResult | null = null;
 
@@ -44,6 +46,7 @@ export struct RepoDetailView {
     this.loading = true;
     this.errorMsg = '';
     this.readmeResult = null;
+    this.loadContributorCount();
     RepoService.fetchRepoDetail(this.token, this.owner, this.name)
       .then((detail: RepoDetail) => {
         this.detail = detail;
@@ -55,6 +58,17 @@ export struct RepoDetailView {
         this.errorMsg = e.message;
         this.loading = false;
         this.isRefreshing = false;
+      });
+  }
+
+  /** 贡献者总数走 REST（GraphQL 无字段）：与详情主体并行拉取，失败保持 -1 不阻断页面 */
+  private loadContributorCount(): void {
+    RepoService.fetchContributorCount(this.token, this.owner, this.name)
+      .then((count: number) => {
+        this.contributorCount = count;
+      })
+      .catch(() => {
+        // 404（空仓库）/网络失败：Contributors 行不显示数字
       });
   }
 
@@ -370,6 +384,12 @@ export struct RepoDetailView {
           Text($r('app.string.repo_contributors'))
             .fontSize($r('app.float.body_font_size'))
             .fontColor($r('app.color.text_primary'))
+            .layoutWeight(1)
+          if (this.contributorCount >= 0) {
+            Text(`${this.contributorCount}`)
+              .fontSize($r('app.float.body_font_size'))
+              .fontColor($r('app.color.text_secondary'))
+          }
         }
         .width('100%')
         .height(48)
@@ -387,6 +407,10 @@ export struct RepoDetailView {
           Text($r('app.string.repo_watchers'))
             .fontSize($r('app.float.body_font_size'))
             .fontColor($r('app.color.text_primary'))
+            .layoutWeight(1)
+          Text(`${this.detail?.watcherCount ?? 0}`)
+            .fontSize($r('app.float.body_font_size'))
+            .fontColor($r('app.color.text_secondary'))
         }
         .width('100%')
         .height(48)
@@ -404,6 +428,13 @@ export struct RepoDetailView {
           Text($r('app.string.repo_license'))
             .fontSize($r('app.float.body_font_size'))
             .fontColor($r('app.color.text_primary'))
+            .layoutWeight(1)
+          if ((this.detail?.licenseName ?? '') !== '') {
+            Text(this.detail?.licenseName ?? '')
+              .fontSize($r('app.float.body_font_size'))
+              .fontColor($r('app.color.text_secondary'))
+              .maxLines(1)
+          }
         }
         .width('100%')
         .height(48)

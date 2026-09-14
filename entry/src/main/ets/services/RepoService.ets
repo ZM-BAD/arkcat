@@ -3,6 +3,7 @@
  * + Spec 054 社区列表（contributors/watchers）+ Spec 055 许可证。
  */
 import { graphql, restGet, ApiError } from './GitHttpClient';
+import { contributorCount } from './ExploreService';
 import { Json, JsonMap } from '../utils/Json';
 import { RepoDetail, mapRepoDetail } from '../models/RepoDetailModels';
 import { StargazerPage, ForkPage, PeoplePage, mapStargazerPage, mapForkPage, mapWatcherPage, mapContributorPage } from '../models/RepoSocialModels';
@@ -194,6 +195,16 @@ export class RepoService {
     }
     const meta = await fetchContributorMeta(token, restNodes);
     return mapContributorPage(restNodes, meta, pageNum);
+  }
+
+  /**
+   * 贡献者总数（详情页 More 区 Contributors 行右侧计数，2026-09-14）：
+   * GraphQL 无字段，REST per_page=1 走 Link 头 last 页码（与 054 列表 anon=0 口径一致）；
+   * 空仓库 404/204 由调用方降级为不显示数字。
+   */
+  static async fetchContributorCount(token: string, owner: string, name: string): Promise<number> {
+    const resp = await restGet(`/repos/${owner}/${name}/contributors?per_page=1&anon=0`, token);
+    return contributorCount(resp.body, resp.link ?? '');
   }
 
   /** License 信息（Spec 055）；仓库未声明许可证返回 null */
