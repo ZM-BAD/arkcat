@@ -5,6 +5,7 @@
  * Packages/Settings 按边界不展示；文件列表/语言占比收进 More（查询保留）。
  */
 import { promptAction } from '@kit.ArkUI';
+import { common } from '@kit.AbilityKit';
 import { RepoDetail, FileEntry, LanguageSlice } from '../models/RepoDetailModels';
 import { RepoService } from '../services/RepoService';
 import { MarkdownService, MarkdownFetchResult } from '../services/MarkdownService';
@@ -95,6 +96,27 @@ export struct RepoDetailView {
     this.pathStack.pushPathByName(name, param);
   }
 
+  /** 拉起系统浏览器（Profile/MarkdownView 同款 viewData want） */
+  private openExternal(uri: string): void {
+    const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext | undefined;
+    if (ctx === undefined) {
+      return;
+    }
+    ctx.startAbility({
+      action: 'ohos.want.action.viewData',
+      entities: ['entity.system.browsable'],
+      uri: uri
+    }).catch(() => {
+      // 无应用接住时静默，不打断浏览
+    });
+  }
+
+  /** 主页链接补全协议（GitHub 仓库 Homepage 允许只填 example.com） */
+  private homepageUri(): string {
+    const raw = this.detail?.homepageUrl ?? '';
+    return raw !== '' && !raw.startsWith('http://') && !raw.startsWith('https://') ? `https://${raw}` : raw;
+  }
+
   private onStar(): void {
     const detail = this.detail;
     if (detail === null || detail.repoId === '' || this.busy) {
@@ -113,6 +135,7 @@ export struct RepoDetailView {
           watcherCount: detail.watcherCount,
           viewerHasStarred: starred,
           licenseName: detail.licenseName,
+          homepageUrl: detail.homepageUrl,
           topics: detail.topics,
           readmeText: detail.readmeText,
           files: detail.files,
@@ -235,12 +258,26 @@ export struct RepoDetailView {
           .width('100%')
       }
 
+      // 主页链接行（bio 下，官方同位）：link 图标与个人 Profile 链接行同款，文字黑色，点击拉起浏览器
+      if ((this.detail?.homepageUrl ?? '') !== '') {
+        Row({ space: 6 }) {
+          OctIcon({ res: $r('app.media.oct_link_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
+          Text(this.detail?.homepageUrl ?? '')
+            .fontSize($r('app.float.body_font_size'))
+            .fontColor($r('app.color.text_primary'))
+            .maxLines(1)
+        }
+        .width('100%')
+        .margin({ top: 16 })
+        .onClick(() => this.openExternal(this.homepageUri()))
+      }
+
       Row({ space: 5 }) {
         Row({ space: 5 }) {
           OctIcon({ res: $r('app.media.oct_star_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
           Text(`${this.detail?.stargazerCount ?? 0}`)
             .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
+            .fontColor($r('app.color.text_primary'))
           Text($r('app.string.repo_stars_label'))
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))
@@ -261,7 +298,7 @@ export struct RepoDetailView {
           OctIcon({ res: $r('app.media.oct_repo_forked_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
           Text(`${this.detail?.forkCount ?? 0}`)
             .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
+            .fontColor($r('app.color.text_primary'))
           Text($r('app.string.repo_forks_label'))
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))

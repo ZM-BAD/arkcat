@@ -37,8 +37,8 @@
 | --- | ------ | ------ | ------ | -------- | ------------- | ------ |
 | 1 | 顶栏左 | ← 返回 | 回退 | ✅ 纯 UI | — | — |
 | 2 | 顶栏右 | ＋ / ··· | 新建/更多 | ⚠️ | — | 点击提示 |
-| 3 | 头部 | 业主头像+名/仓库名/描述 | 纯展示 | ✅ | `repository { owner { avatarUrl login } name description }` | — |
-| 4 | 头部 | ★ stars / ⑂ forks | 进入 Stargazers/Forks | ✅ | `stargazerCount/forkCount` | 点击进入（见 053） |
+| 3 | 头部 | 业主头像+名/仓库名/描述/主页链接 | 纯展示 + 链接行可点 | ✅ | `repository { owner { avatarUrl login } name description homepageUrl }` | 主页链接行在 bio 下（2026-09-14）：`oct_link_16` 图标与个人 Profile 链接行同款 + 文字 `text_primary` 单行，与 bio 间隔一行空档（margin 16+列距 8）；无链接不显示；点击拉起系统浏览器（协议缺失补 `https://`） |
+| 4 | 头部 | ★ stars / ⑂ forks | 进入 Stargazers/Forks | ✅ | `stargazerCount/forkCount` | 点击进入（见 053）；数字 `text_primary`（2026-09-14），图标/单位文字保持 `text_secondary` |
 | 5 | 操作区 | STAR 大按钮 | Star/取消 | ✅ | `addStar/removeStar` | 已实现 |
 | 6 | 操作区 | fork 圆钮 | Fork | ✅ | `createFork` | 已实现 |
 | 7 | 操作区 | 🔔 圆钮 | 订阅 | ⚠️ | `updateSubscription` | 点击提示 |
@@ -70,6 +70,7 @@ query RepositoryDetail($owner: String!, $name: String!) {
       totalSize edges { size node { name color } }
     }
     licenseInfo { name spdxId }
+    homepageUrl
     repositoryTopics(first: 10) { nodes { topic { name } } }
     object(expression: "HEAD:") { ... on Tree { entries { name type } } }
   }
@@ -108,3 +109,4 @@ query RepositoryDetail($owner: String!, $name: String!) {
 - 原 Spec 006 的「文件列表/语言占比」从详情页收进 More 区（官方布局），GraphQL 查询保留
 - 2026-08-31：官方布局对齐完成，截图验收通过
 - 2026-09-14：More 区 Contributors/Watchers/License 行尾右侧值落地（计数/协议名，与计数行同构），见元素 9
+- 2026-09-14：头部 bio 下主页链接行落地（link 图标 + 黑色链接文字 + 系统浏览器打开），见元素 3；stars/forks 数字改黑色，见元素 4

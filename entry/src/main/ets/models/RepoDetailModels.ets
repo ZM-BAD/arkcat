@@ -27,6 +27,8 @@ export interface RepoDetail {
   watcherCount: number;
   viewerHasStarred: boolean;
   licenseName: string;
+  /** 仓库主页链接（头部 bio 下链接行；空=不显示，2026-09-14） */
+  homepageUrl: string;
   topics: string[];
   readmeText: string;
   files: FileEntry[];
@@ -125,6 +127,7 @@ export function mapRepoDetail(data: JsonMap): RepoDetail {
     watcherCount: watchers ? Json.num(watchers, 'totalCount') : 0,
     viewerHasStarred: Json.bool(repo, 'viewerHasStarred'),
     licenseName: license ? Json.str(license, 'name') : '',
+    homepageUrl: Json.str(repo, 'homepageUrl'),
     topics: topics,
     readmeText: readmeObj ? Json.str(readmeObj, 'text') : '',
     files: files,

@@ -23,6 +23,8 @@ query RepositoryDetail($owner: String!, $name: String!) {
     watchers { totalCount }
     owner { avatarUrl login }
     licenseInfo { name spdxId }
+    # 详情页头部链接行（bio 下，2026-09-14）
+    homepageUrl
     repositoryTopics(first: 10) { nodes { topic { name } } }
     readme: object(expression: "HEAD:README.md") { ... on Blob { text } }
     readmeLower: object(expression: "HEAD:readme.md") { ... on Blob { text } }
