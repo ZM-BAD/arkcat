@@ -469,6 +469,42 @@
       "value": "Filter spoken languages"
     },
     {
+      "name": "filter_labels",
+      "value": "Filter labels"
+    },
+    {
+      "name": "filter_users",
+      "value": "Filter users"
+    },
+    {
+      "name": "filter_milestones",
+      "value": "Filter milestones"
+    },
+    {
+      "name": "repo_issues_filter_label_title",
+      "value": "Filter by label"
+    },
+    {
+      "name": "repo_issues_filter_author_title",
+      "value": "Filter by author"
+    },
+    {
+      "name": "repo_issues_filter_assignee_title",
+      "value": "Filter assignee"
+    },
+    {
+      "name": "repo_issues_filter_milestone_title",
+      "value": "Filter by milestone"
+    },
+    {
+      "name": "repo_issues_no_milestone",
+      "value": "No milestone"
+    },
+    {
+      "name": "repo_issues_assigned_nobody",
+      "value": "Assigned to nobody"
+    },
+    {
       "name": "explore_filter_spoken_title",
       "value": "Filter by spoken language"
     },
@@ -955,6 +991,10 @@
     {
       "name": "repo_actions",
       "value": "Actions"
+    },
+    {
+      "name": "repo_discussions",
+      "value": "Discussions"
     },
     {
       "name": "repo_releases",
@@ -2100,6 +2140,19 @@
       "name": "discussions_filter_by_label",
       "value": "Filter by label"
     },
+    {
+      "name": "discussions_filter_category",
+      "value": "Category"
+    },
+    {
+      "name": "discussions_filter_by_category",
+      "value": "Filter by category"
+    },
+    {
+      "name": "discussions_filter_categories",
+      "value": "Filter categories"
+    },
+
     {
       "name": "discussions_filter_unlabeled",
       "value": "Unlabeled"

@@ -1,13 +1,18 @@
 /**
  * 仓库内 PR 列表页（Spec 027）：Repo Detail → PRs Tab。
- * 筛选：状态（All/Open/Closed/Merged）+ Label（GraphQL）+ Author/Assignee（客户端过滤）。
+ * 筛选（2026-09-14 对齐仓库内 Issues 口径，Spec 068）：State 下拉（默认 Open）+ Label/Author/Assignee/Milestone
+ * 底部面板（双态搜索，与 IssuesList 同款；面板首行官方「空值」选项：Assigned to nobody / No milestone）
+ * + Sort 面板（WorkFilterSortSheet 6 键 → 服务端 PullRequestOrder，与 IssueOrder 同构复用 repoIssueOrder）
+ * + Reviews 面板占位（交互待详设）。Author/Assignee/Milestone 为客户端过滤 + 空态自动补拉。
  */
 import { promptAction } from '@kit.ArkUI';
 import { AppBar, AppBarAction, AppBarActionCfg } from '../components/AppBar';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
-import { FilterDropdownChip, FilterDropdownOption } from '../components/FilterDropdownChip';
-import { RepoPrItem, RepoPrsPage, filterPrsByAuthor, filterPrsByAssignee, repoPrIconKey } from '../models/RepoSubModels';
+import { LabelPill } from '../components/LabelPill';
+import { FilterDropdownChip, FilterDropdownOption, FilterSheetChip } from '../components/FilterDropdownChip';
+import { WorkFilterSortSheet } from '../components/WorkFilterSortSheet';
+import { RepoPrItem, RepoPrsPage, filterPrsByAuthor, filterPrsByAssignee, filterPrsByMilestone, repoPrIconKey } from '../models/RepoSubModels';
 import { WorkLabel } from '../models/WorkModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { StateView } from '../components/StateView';
@@ -15,7 +20,7 @@ import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { WorkEmptyView } from '../components/WorkEmptyView';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
-import { shouldAutoLoadMore, isLimitedRangeEmpty } from '../utils/FilterLoading';
+import { shouldAutoLoadMore, isLimitedRangeEmpty, NONE_FILTER_KEY } from '../utils/FilterLoading';
 
 @ComponentV2
 export struct RepoPrsView {
@@ -25,13 +30,25 @@ export struct RepoPrsView {
   @Param pathStack: NavPathStack = new NavPathStack();
   /** 返回刷新 tick（review B13） */
   @Param returnTick: number = 0;
-  @Local state: string = 'all';
+  /** State 默认=Open（2026-09-14 用户拍板与官方/仓库内 Issues 一致；取非默认值计 dirty） */
+  @Local state: string = 'open';
   @Local label: string = '';
   @Local author: string = '';
   @Local assignee: string = '';
+  /** Milestone（客户端过滤，值为里程碑标题；哨兵值=No milestone；候选池从已加载 PR 聚合只增不减） */
+  @Local milestone: string = '';
+  @Local milestonePool: string[] = [];
+  /** Sort（与仓库内 Issues 一致：WorkFilterSortSheet 6 键 → 服务端 PullRequestOrder） */
+  @Local sortKey: string = 'newest';
+  /** 弹层内容：单 bindSheet 内切换（label/author/assignee/milestone 列表 + sort） */
+  @Local sheetKind: string = '';
+  /** 面板搜索态（与 IssuesList 同款：点 🔍 标题就地变搜索框，回退/重开即复位） */
+  @Local sheetSearchShow: boolean = false;
+  @Local sheetSearchText: string = '';
   @Local all: RepoPrItem[] = [];
   @Local shown: RepoPrItem[] = [];
-  @Local labelOptions: string[] = [];
+  /** 仓库标签全集（带色：Label 面板 LabelPill 渲染用） */
+  @Local labelOptions: WorkLabel[] = [];
   @Local authorOptions: string[] = [];
   @Local assigneeOptions: string[] = [];
   @Local cursor: string = '';
@@ -59,12 +76,13 @@ export struct RepoPrsView {
   private refresh(): void {
     this.loading = true;
     this.errorMsg = '';
-    RepoSubService.fetchRepoPrs(this.token, this.owner, this.name, this.state, this.label, '')
+    RepoSubService.fetchRepoPrs(this.token, this.owner, this.name, this.state, this.label, '', this.sortKey)
       .then((page: RepoPrsPage) => {
         this.all = page.prs;
         this.labelOptions = page.labelOptions;
         this.authorOptions = page.authorOptions;
         this.assigneeOptions = page.assigneeOptions;
+        this.absorbMilestonePool(page.prs);
         this.cursor = page.endCursor;
         this.hasNextPage = page.hasNextPage;
         this.applyFilters();
@@ -88,11 +106,12 @@ export struct RepoPrsView {
     }
     this.loading = true;
     this.loadingMore = true;
-    RepoSubService.fetchRepoPrs(this.token, this.owner, this.name, this.state, this.label, this.cursor)
+    RepoSubService.fetchRepoPrs(this.token, this.owner, this.name, this.state, this.label, this.cursor, this.sortKey)
       .then((page: RepoPrsPage) => {
         this.all = this.all.concat(page.prs);
         this.cursor = page.endCursor;
         this.hasNextPage = page.hasNextPage;
+        this.absorbMilestonePool(page.prs);
         this.applyFilters();
         this.loading = false;
         this.loadingMore = false;
@@ -113,10 +132,26 @@ export struct RepoPrsView {
     }
   }
 
+  /** 里程碑候选池（只增不减）：从已加载 PR 聚合，避免选中后其他里程碑从下拉消失 */
+  private absorbMilestonePool(prs: RepoPrItem[]): void {
+    for (const pr of prs) {
+      if (pr.milestoneTitle !== '' && this.milestonePool.indexOf(pr.milestoneTitle) < 0) {
+        this.milestonePool = this.milestonePool.concat([pr.milestoneTitle]);
+      }
+    }
+  }
+
   private applyFilters(): void {
     let list: RepoPrItem[] = filterPrsByAuthor(this.all, this.author);
     list = filterPrsByAssignee(list, this.assignee);
+    list = filterPrsByMilestone(list, this.milestone);
     this.shown = list;
+  }
+
+  /** 筛选变更后统一入口：本地过滤 + 空结果自动补拉（客户端筛选防「假空」） */
+  private applyFiltersAndAutoLoad(): void {
+    this.applyFilters();
+    this.autoLoadIfEmpty();
   }
 
   private stringOf(res: Resource): string {
@@ -128,7 +163,8 @@ export struct RepoPrsView {
   }
 
   private activeFilterCount(): number {
-    let c = this.state === 'all' ? 0 : 1;
+    // 全库口径（Spec 068）：dirty = 当前值 ≠ 默认值；State 默认 Open，排序计入
+    let c = this.state === 'open' ? 0 : 1;
     if (this.label !== '') {
       c++;
     }
@@ -136,6 +172,12 @@ export struct RepoPrsView {
       c++;
     }
     if (this.assignee !== '') {
+      c++;
+    }
+    if (this.milestone !== '') {
+      c++;
+    }
+    if (this.sortKey !== 'newest') {
       c++;
     }
     return c;
@@ -162,7 +204,8 @@ export struct RepoPrsView {
     if (key === 'draft') {
       return $r('app.media.oct_git_pull_request_draft_16');
     }
-    return key === 'open' ? $r('app.media.oct_git_pull_request_16') : $r('app.media.oct_x_circle_16');
+    // 官方字形（DESIGN.md §10.1）：closed 未合并=git-pull-request-closed
+    return key === 'open' ? $r('app.media.oct_git_pull_request_16') : $r('app.media.oct_git_pull_request_closed_16');
   }
 
   private prColor(item: RepoPrItem): ResourceColor {
@@ -170,9 +213,9 @@ export struct RepoPrsView {
     if (key === 'merged') {
       return $r('app.color.shortcut_purple_fg');
     }
-    // draft 官方为灰色调（review B9）
+    // 官方语义（DESIGN.md §10.1）：open=success 绿 / draft=muted 灰 / closed=danger 红
     return key === 'open' ? $r('app.color.success_text')
-      : (key === 'draft' ? $r('app.color.text_secondary') : $r('app.color.text_tertiary'));
+      : (key === 'draft' ? $r('app.color.text_secondary') : $r('app.color.danger_text'));
   }
 
   private stateFilterOptions(): FilterDropdownOption[] {
@@ -184,39 +227,330 @@ export struct RepoPrsView {
     ];
   }
 
-  /** Label 下拉选项（仓库标签全集） */
+  /** Label 面板选项（仓库标签全集） */
   private labelFilterOptions(): FilterDropdownOption[] {
-    return this.labelOptions.map((l: string): FilterDropdownOption => ({ key: l, label: l }));
+    return this.labelOptions.map((l: WorkLabel): FilterDropdownOption => ({ key: l.name, label: l.name }));
   }
 
-  /** Author 下拉选项 */
+  /** 标签名 → 色（面板行 LabelPill 渲染用；池外标签回退无色灰） */
+  private labelColorByName(name: string): string {
+    const hit = this.labelOptions.find((l: WorkLabel): boolean => l.name === name);
+    return hit ? hit.color : '';
+  }
+
+  /** Author 面板选项 */
   private authorFilterOptions(): FilterDropdownOption[] {
     return this.authorOptions.map((a: string): FilterDropdownOption => ({ key: a, label: a }));
   }
 
-  /** Assignee 下拉选项 */
+  /** Assignee 面板选项（首行=官方「Assigned to nobody」） */
   private assigneeFilterOptions(): FilterDropdownOption[] {
-    return this.assigneeOptions.map((a: string): FilterDropdownOption => ({ key: a, label: a }));
+    const options: FilterDropdownOption[] = [];
+    options.push({ key: NONE_FILTER_KEY, label: this.stringOf($r('app.string.repo_issues_assigned_nobody')) });
+    for (const a of this.assigneeOptions) {
+      options.push({ key: a, label: a });
+    }
+    return options;
   }
 
-  /** 清空全部筛选（漏斗菜单） */
+  /** Milestone 面板选项（首行=官方「No milestone」） */
+  private milestoneFilterOptions(): FilterDropdownOption[] {
+    const options: FilterDropdownOption[] = [];
+    options.push({ key: NONE_FILTER_KEY, label: this.stringOf($r('app.string.repo_issues_no_milestone')) });
+    for (const m of this.milestonePool) {
+      options.push({ key: m, label: m });
+    }
+    return options;
+  }
+
+  /** Milestone chip 文案（哨兵值显示官方「No milestone」） */
+  private milestoneLabel(): string {
+    if (this.milestone === NONE_FILTER_KEY) {
+      return this.stringOf($r('app.string.repo_issues_no_milestone'));
+    }
+    return this.milestone !== '' ? this.milestone : this.stringOf($r('app.string.repo_issues_milestone'));
+  }
+
+  /** Assignee chip 文案（哨兵值显示官方「Assigned to nobody」） */
+  private assigneeChipLabel(): string {
+    if (this.assignee === NONE_FILTER_KEY) {
+      return this.stringOf($r('app.string.repo_issues_assigned_nobody'));
+    }
+    return this.assignee !== '' ? this.assignee : this.stringOf($r('app.string.repo_prs_assignee'));
+  }
+
+  /** Sort chip 文案（与仓库内 Issues 同款：Sort: <排序名>） */
+  private sortChipLabel(): string {
+    return resText(this.getUIContext(), $r('app.string.issues_filter_sort_prefix'), this.sortLabelCore());
+  }
+
+  private sortLabelCore(): string {
+    if (this.sortKey === 'oldest') {
+      return this.stringOf($r('app.string.issues_sort_oldest'));
+    }
+    if (this.sortKey === 'most_commented') {
+      return this.stringOf($r('app.string.issues_sort_most_commented'));
+    }
+    if (this.sortKey === 'least_commented') {
+      return this.stringOf($r('app.string.issues_sort_least_commented'));
+    }
+    if (this.sortKey === 'recently_updated') {
+      return this.stringOf($r('app.string.issues_sort_recently_updated'));
+    }
+    if (this.sortKey === 'least_recently_updated') {
+      return this.stringOf($r('app.string.issues_sort_least_recently_updated'));
+    }
+    return this.stringOf($r('app.string.issues_sort_newest'));
+  }
+
+  /** 当前面板标题（与仓库内 Issues 同款官方措辞） */
+  private currentListTitle(): Resource {
+    if (this.sheetKind === 'label') {
+      return $r('app.string.repo_issues_filter_label_title');
+    }
+    if (this.sheetKind === 'author') {
+      return $r('app.string.repo_issues_filter_author_title');
+    }
+    if (this.sheetKind === 'assignee') {
+      return $r('app.string.repo_issues_filter_assignee_title');
+    }
+    return $r('app.string.repo_issues_filter_milestone_title');
+  }
+
+  private currentListOptions(): FilterDropdownOption[] {
+    let base: FilterDropdownOption[] = [];
+    if (this.sheetKind === 'label') {
+      base = this.labelFilterOptions();
+    } else if (this.sheetKind === 'author') {
+      base = this.authorFilterOptions();
+    } else if (this.sheetKind === 'assignee') {
+      base = this.assigneeFilterOptions();
+    } else {
+      base = this.milestoneFilterOptions();
+    }
+    // 搜索态：对候选池客户端过滤（大小写不敏感包含匹配，空词=全量）
+    const q = this.sheetSearchText.trim().toLowerCase();
+    if (q === '') {
+      return base;
+    }
+    return base.filter((opt: FilterDropdownOption): boolean => opt.label.toLowerCase().includes(q));
+  }
+
+  /** 搜索态占位文案（与仓库内 Issues 一致） */
+  private sheetSearchPlaceholder(): Resource {
+    if (this.sheetKind === 'label') {
+      return $r('app.string.filter_labels');
+    }
+    if (this.sheetKind === 'author' || this.sheetKind === 'assignee') {
+      return $r('app.string.filter_users');
+    }
+    return $r('app.string.filter_milestones');
+  }
+
+  private currentListSelected(): string {
+    if (this.sheetKind === 'label') {
+      return this.label;
+    }
+    if (this.sheetKind === 'author') {
+      return this.author;
+    }
+    if (this.sheetKind === 'assignee') {
+      return this.assignee;
+    }
+    return this.milestone;
+  }
+
+  /** 打开列表面板：每次拉起复位搜索态，保证干净状态 */
+  private openListSheet(kind: string): void {
+    this.sheetSearchShow = false;
+    this.sheetSearchText = '';
+    this.sheetKind = kind;
+  }
+
+  /** 「空值」选项（No milestone / Assigned to nobody）：面板行渲染 circle-slash 图标 */
+  private isNoneOption(key: string): boolean {
+    return key === NONE_FILTER_KEY && (this.sheetKind === 'milestone' || this.sheetKind === 'assignee');
+  }
+
+  /** 单选即生效并关面板；再点选中项=取消（清筛选）。Label 走服务端重查，其余客户端过滤 */
+  private applyListPick(key: string): void {
+    const kind = this.sheetKind;
+    const picked = this.currentListSelected() === key ? '' : key;
+    if (kind === 'label') {
+      this.label = picked;
+      this.sheetKind = '';
+      this.refresh();
+    } else if (kind === 'author') {
+      this.author = picked;
+      this.sheetKind = '';
+      this.applyFiltersAndAutoLoad();
+    } else if (kind === 'assignee') {
+      this.assignee = picked;
+      this.sheetKind = '';
+      this.applyFiltersAndAutoLoad();
+    } else if (kind === 'milestone') {
+      this.milestone = picked;
+      this.sheetKind = '';
+      this.applyFiltersAndAutoLoad();
+    }
+  }
+
+  /** 弹层分派（单 bindSheet）：label/author/assignee/milestone 列表单选 + Sort 面板 */
+  @Builder
+  listSheet() {
+    if (this.sheetKind === 'label' || this.sheetKind === 'author'
+      || this.sheetKind === 'assignee' || this.sheetKind === 'milestone') {
+      Column() {
+        Row() {
+          // 搜索态=←（回退：清空搜索词并退出搜索态）；常态=✕（关闭弹层）
+          Stack() {
+            OctIcon({
+              res: this.sheetSearchShow ? $r('app.media.oct_arrow_left_24') : $r('app.media.oct_x_16'),
+              iconSize: 18,
+              iconColor: $r('app.color.text_primary')
+            })
+          }
+          .width(44)
+          .height(44)
+          .onClick((): void => {
+            if (this.sheetSearchShow) {
+              this.sheetSearchText = '';
+              this.sheetSearchShow = false;
+            } else {
+              this.sheetKind = '';
+            }
+          })
+          if (this.sheetSearchShow) {
+            // 标题原地变搜索框：对候选池客户端过滤；框内右端 ✕ 一键清空（与 IssuesList 同款交互）
+            Stack({ alignContent: Alignment.End }) {
+              TextInput({ placeholder: this.stringOf(this.sheetSearchPlaceholder()), text: this.sheetSearchText })
+                .height(40)
+                .fontSize($r('app.float.body_font_size'))
+                .width('100%')
+                .padding({ right: 34 })
+                .borderRadius(6)
+                .backgroundColor($r('app.color.chip_bg'))
+                .defaultFocus(true)
+                .onChange((v: string): void => {
+                  this.sheetSearchText = v;
+                })
+              if (this.sheetSearchText !== '') {
+                Stack() {
+                  OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
+                }
+                .width(36)
+                .height(36)
+                .onClick((): void => {
+                  this.sheetSearchText = '';
+                })
+              }
+            }
+            .layoutWeight(1)
+            .margin({ right: 8 })
+          } else {
+            Text(this.currentListTitle())
+              .fontSize($r('app.float.title_font_size'))
+              .fontWeight(600)
+              .fontColor($r('app.color.text_primary'))
+              .layoutWeight(1)
+            Stack() {
+              OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 18, iconColor: $r('app.color.link_blue') })
+            }
+            .width(44)
+            .height(44)
+            .onClick((): void => {
+              this.sheetSearchShow = true;
+            })
+          }
+        }
+        .padding({ left: 8, right: 8 })
+        Divider()
+          .color($r('app.color.divider'))
+          .strokeWidth(1)
+          .width('100%')
+        Scroll() {
+          Column() {
+            if (this.currentListOptions().length > 0) {
+              ForEach(this.currentListOptions(), (opt: FilterDropdownOption) => {
+                Row() {
+                  if (this.isNoneOption(opt.key)) {
+                    // 官方「空值」行：circle-slash 图标 + 文案
+                    Row({ space: 12 }) {
+                      OctIcon({ res: $r('app.media.oct_circle_slash_16'), iconSize: 16,
+                        iconColor: $r('app.color.text_secondary') })
+                      Text(opt.label)
+                        .fontSize($r('app.float.body_font_size'))
+                        .fontColor($r('app.color.text_primary'))
+                        .maxLines(1)
+                        .textOverflow({ overflow: TextOverflow.Ellipsis })
+                    }
+                    .alignItems(VerticalAlign.Center)
+                    .layoutWeight(1)
+                  } else if (this.sheetKind === 'label') {
+                    // Label 面板行：官方为彩色胶囊（DESIGN.md §10.2），选中勾仍在右缘
+                    LabelPill({ labelName: opt.label, colorHex: this.labelColorByName(opt.key), large: true })
+                    Blank()
+                  } else {
+                    Text(opt.label)
+                      .fontSize($r('app.float.body_font_size'))
+                      .fontColor($r('app.color.text_primary'))
+                      .layoutWeight(1)
+                      .maxLines(1)
+                      .textOverflow({ overflow: TextOverflow.Ellipsis })
+                  }
+                  if (this.currentListSelected() === opt.key) {
+                    OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 16, iconColor: $r('app.color.link_blue') })
+                      .margin({ left: 8 })
+                  }
+                }
+                .width('100%')
+                .height(56)
+                .padding({ left: 20, right: 16 })
+                .onClick((): void => this.applyListPick(opt.key))
+              }, (opt: FilterDropdownOption) => `${opt.key}_${this.currentListSelected() === opt.key ? 'on' : 'off'}`)
+            } else {
+              // 搜索无结果（与语言面板同款文案）
+              Text($r('app.string.filter_no_results'))
+                .fontSize($r('app.float.caption_font_size'))
+                .fontColor($r('app.color.text_secondary'))
+                .width('100%')
+                .padding({ left: 20, top: 16, bottom: 12 })
+            }
+          }
+        }
+        .layoutWeight(1)
+        .scrollBar(BarState.Off)
+        .align(Alignment.Top)
+      }
+      .width('100%')
+      .height('100%')
+      .backgroundColor($r('app.color.card_background'))
+    } else {
+      WorkFilterSortSheet({
+        sortKey: this.sortKey,
+        onPick: (key: string): void => {
+          if (this.sortKey !== key) {
+            this.sortKey = key;
+            this.refresh();
+          }
+          this.sheetKind = '';
+        },
+        onClose: (): void => {
+          this.sheetKind = '';
+        }
+      })
+    }
+  }
+
+  /** 清空全部筛选（漏斗菜单/空态 RESET 同函数，Spec 068 复位同口径）：State 回默认 Open */
   private clearAllFilters(): void {
-    this.state = 'all';
+    this.state = 'open';
     this.label = '';
     this.author = '';
     this.assignee = '';
+    this.milestone = '';
+    this.sortKey = 'newest';
     this.refresh();
-  }
-
-  @Builder
-  labelChip(label: WorkLabel) {
-    Text(label.name)
-      .fontSize(12)
-      .fontColor(Color.White)
-      .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-      .borderRadius(6)
-      .backgroundColor(label.color !== '' ? `#${label.color}` : $r('app.color.text_secondary'))
-      .margin({ right: 6 })
   }
 
   @Builder
@@ -244,7 +578,7 @@ export struct RepoPrsView {
           Scroll() {
             Row({ space: 8 }) {
               ForEach(item.labels, (label: WorkLabel) => {
-                this.labelChip(label)
+                LabelPill({ labelName: label.name, colorHex: label.color })
               }, (label: WorkLabel) => label.name)
               if (item.checksState === 'SUCCESS') {
                 Row({ space: 4 }) {
@@ -371,34 +705,54 @@ export struct RepoPrsView {
             Row() {
             FilterDropdownChip({
               label: this.stateLabel(),
-              active: this.state !== 'all',
+              // State 默认=Open：取非默认值才算 dirty 发蓝（与仓库内 Issues 同口径）
+              active: this.state !== 'open',
               options: this.stateFilterOptions(),
               selectedKey: this.state,
               onPick: (key: string): void => { this.state = key; this.refresh(); }
             })
 
-            FilterDropdownChip({
+            // Label/Author/Assignee/Milestone：底部面板（与仓库内 Issues 同款），单选即关、再点选中项=取消
+            FilterSheetChip({
               label: this.label === '' ? this.stringOf($r('app.string.repo_prs_label')) : this.label,
               active: this.label !== '',
-              options: this.labelFilterOptions(),
-              selectedKey: this.label,
-              onPick: (key: string): void => { this.label = this.label === key ? '' : key; this.refresh(); }
+              onTap: (): void => { this.openListSheet('label'); }
             })
 
-            FilterDropdownChip({
+            FilterSheetChip({
               label: this.author === '' ? this.stringOf($r('app.string.repo_prs_author')) : this.author,
               active: this.author !== '',
-              options: this.authorFilterOptions(),
-              selectedKey: this.author,
-              onPick: (key: string): void => { this.author = this.author === key ? '' : key; this.applyFilters(); }
+              onTap: (): void => { this.openListSheet('author'); }
             })
 
-            FilterDropdownChip({
-              label: this.assignee === '' ? this.stringOf($r('app.string.repo_prs_assignee')) : this.assignee,
+            FilterSheetChip({
+              label: this.assigneeChipLabel(),
               active: this.assignee !== '',
-              options: this.assigneeFilterOptions(),
-              selectedKey: this.assignee,
-              onPick: (key: string): void => { this.assignee = this.assignee === key ? '' : key; this.applyFilters(); }
+              onTap: (): void => { this.openListSheet('assignee'); }
+            })
+
+            FilterSheetChip({
+              label: this.milestoneLabel(),
+              active: this.milestone !== '',
+              onTap: (): void => { this.openListSheet('milestone'); }
+            })
+
+            // Reviews：面板占位（交互待详设，先挂官方同款 chip）
+            FilterSheetChip({
+              label: this.stringOf($r('app.string.search_reviews_badge')),
+              active: false,
+              onTap: (): void => {
+                promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+              }
+            })
+
+            // Sort：底部面板（与仓库内 Issues 同款 WorkFilterSortSheet）
+            FilterSheetChip({
+              label: this.sortChipLabel(),
+              active: this.sortKey !== 'newest',
+              onTap: (): void => {
+                this.sheetKind = 'sort';
+              }
             })
             }
             }
@@ -451,5 +805,15 @@ export struct RepoPrsView {
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
+    .bindSheet(this.sheetKind !== '', this.listSheet(), {
+      height: this.sheetKind === 'sort' ? 620 : 560,
+      backgroundColor: $r('app.color.bg_page'),
+      // 关闭钮自绘，避免默认 ✕ 重叠（全库 bindSheet 口径）
+      showClose: false,
+      // 交互关闭后复位，否则 isShow 表达式恒 true 弹层失效（review B3）
+      onDisappear: (): void => {
+        this.sheetKind = '';
+      }
+    })
   }
 }

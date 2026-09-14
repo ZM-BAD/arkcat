@@ -11,7 +11,8 @@ import {
   buildWorkIssuesQuery, buildWorkPrsQuery, buildWorkDiscussionsQuery,
   mapWorkIssuesPage, mapWorkPrsPage, mapWorkDiscussionsPage,
   mapWorkProjectsPage, mapWorkOrgsPage, mapWorkTopReposPage, mapWorkStarredPage,
-  mapWorkUserLists, mapWorkListDetail, RepoLabelItem, mapRepoLabels
+  mapWorkUserLists, mapWorkListDetail, RepoLabelItem, mapRepoLabels,
+  RepoCategoryItem, mapRepoCategories
 } from '../models/WorkModels';
 
 const VIEWER_LOGIN_QUERY = `
@@ -159,6 +160,13 @@ query RepoLabels($owner: String!, $name: String!) {
   }
 }`;
 
+const REPO_DISCUSSION_CATEGORIES_QUERY = `
+query RepoDiscussionCategories($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    discussionCategories(first: 25) { nodes { name description emoji } }
+  }
+}`;
+
 const WORK_PROJECTS_QUERY = `
 query WorkProjects($first: Int = 30, $after: String) {
   viewer {
@@ -268,9 +276,10 @@ export class WorkService {
 
   /** 工作区 Discussion 列表（search type: DISCUSSION；排序 Sort: New / Top 时间窗进服务端） */
   static async fetchDiscussions(token: string, state: string, scope: string, unanswered: boolean,
-    sortKey: string, cursor: string, repo: string = '', author: string = '', label: string = ''): Promise<WorkDiscussionsPage> {
+    sortKey: string, cursor: string, repo: string = '', author: string = '', label: string = '',
+    category: string = ''): Promise<WorkDiscussionsPage> {
     const variables: Record<string, Object> = {
-      'query': buildWorkDiscussionsQuery(state, scope, unanswered, sortKey, repo, author, label),
+      'query': buildWorkDiscussionsQuery(state, scope, unanswered, sortKey, repo, author, label, category),
       'first': 25
     };
     if (cursor !== '') {
@@ -285,6 +294,13 @@ export class WorkService {
     const variables: Record<string, Object> = { 'owner': owner, 'name': name };
     const data = await graphql(REPO_LABELS_QUERY, variables, token);
     return mapRepoLabels(data);
+  }
+
+  /** 仓库 Discussion 分类全集（Spec 065：Category 弹层；公开数据无 scope 要求） */
+  static async fetchDiscussionCategories(token: string, owner: string, name: string): Promise<RepoCategoryItem[]> {
+    const variables: Record<string, Object> = { 'owner': owner, 'name': name };
+    const data = await graphql(REPO_DISCUSSION_CATEGORIES_QUERY, variables, token);
+    return mapRepoCategories(data);
   }
 
   /** 工作区 Projects（viewer.projectsV2；三态/范围/排序均在客户端） */

@@ -6,11 +6,11 @@ import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { FilterDropdownChip, FilterDropdownOption } from '../components/FilterDropdownChip';
-import { WorkDiscussionItem, WorkDiscussionsPage, RepoLabelItem, mapRepoLabels } from '../models/WorkModels';
+import { WorkDiscussionItem, WorkDiscussionsPage, RepoLabelItem, RepoCategoryItem, mapRepoLabels, emojiFromShortcode } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { WorkFilterSelectSheet, FilterSheetItem } from '../components/WorkFilterSelectSheet';
+import { LabelPill } from '../components/LabelPill';
 import { StateView } from '../components/StateView';
-import { isLightHexColor } from '../services/SearchService';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { WorkEmptyView } from '../components/WorkEmptyView';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
@@ -30,7 +30,15 @@ export struct DiscussionsView {
   /** Author/Label 筛选（Spec 065，单仓库模式；label='none' 表示 Unlabeled） */
   @Local authorFilter: string = '';
   @Local labelFilter: string = '';
-  /** 弹层（'' | 'author' | 'label'）：单 bindSheet 内切换内容 */
+  /** Category 筛选（2026-09-14，单仓库模式；值=分类名） */
+  @Local categoryFilter: string = '';
+  /** 仓库 Discussion 分类全集（打开 Category 弹层时拉取一次） */
+  @Local repoCategories: RepoCategoryItem[] = [];
+  @Local categoriesLoading: boolean = false;
+  @Local categoriesError: string = '';
+  @Local categorySearchShow: boolean = false;
+  @Local categorySearch: string = '';
+  /** 弹层（'' | 'author' | 'category' | 'label'）：单 bindSheet 内切换内容 */
   @Local sheetKind: string = '';
   @Local authorSearchShow: boolean = false;
   @Local authorSearch: string = '';
@@ -65,7 +73,7 @@ export struct DiscussionsView {
     this.loading = true;
     this.errorMsg = '';
     WorkService.fetchDiscussions(this.token, this.state, this.scope, this.unanswered, this.sortKey, '', this.repo,
-      this.authorFilter, this.labelFilter)
+      this.authorFilter, this.labelFilter, this.categoryFilter)
       .then((page: WorkDiscussionsPage) => {
         if (mySeq !== this.seq) {
           return;
@@ -96,7 +104,7 @@ export struct DiscussionsView {
     this.loading = true;
     this.loadingMore = true;
     WorkService.fetchDiscussions(this.token, this.state, this.scope, this.unanswered, this.sortKey, this.cursor,
-      this.repo, this.authorFilter, this.labelFilter)
+      this.repo, this.authorFilter, this.labelFilter, this.categoryFilter)
       .then((page: WorkDiscussionsPage) => {
         if (mySeq !== this.seq) {
           return;
@@ -166,6 +174,9 @@ export struct DiscussionsView {
     if (this.repo !== '' && this.labelFilter !== '') {
       count++;
     }
+    if (this.repo !== '' && this.categoryFilter !== '') {
+      count++;
+    }
     if (this.unanswered) {
       count++;
     }
@@ -223,6 +234,49 @@ export struct DiscussionsView {
     this.authorSearchShow = false;
     this.authorSearch = '';
     this.sheetKind = 'author';
+  }
+
+  private openCategorySheet(): void {
+    this.categorySearchShow = false;
+    this.categorySearch = '';
+    this.sheetKind = 'category';
+  }
+
+  /** 打开 Category 弹层：分类只在首次打开时拉取（失败可重试） */
+  private openCategorySheetAndLoad(): void {
+    this.openCategorySheet();
+    if (this.repoCategories.length > 0 || this.categoriesLoading) {
+      return;
+    }
+    const ownerName = this.repoOwnerName();
+    this.categoriesLoading = true;
+    this.categoriesError = '';
+    WorkService.fetchDiscussionCategories(this.token, ownerName[0], ownerName[1])
+      .then((categories: RepoCategoryItem[]) => {
+        this.repoCategories = categories;
+        this.categoriesLoading = false;
+      })
+      .catch((e: Error) => {
+        this.categoriesError = e.message;
+        this.categoriesLoading = false;
+      });
+  }
+
+  /** Category 弹层可见分类：客户端搜索过滤（名称/描述） */
+  private shownCategories(): RepoCategoryItem[] {
+    const q = this.categorySearch.trim().toLowerCase();
+    if (q === '') {
+      return this.repoCategories;
+    }
+    return this.repoCategories.filter((c: RepoCategoryItem): boolean =>
+      c.name.toLowerCase().includes(q) || c.description.toLowerCase().includes(q));
+  }
+
+  /** 选分类：同键再点=取消 */
+  private pickCategory(name: string): void {
+    this.categoryFilter = this.categoryFilter === name ? '' : name;
+    this.sheetKind = '';
+    this.refresh();
   }
 
   /** 打开 Label 弹层：labels 只在首次打开时拉取（失败可重试） */
@@ -317,8 +371,9 @@ export struct DiscussionsView {
     this.scope = 'created';
     this.unanswered = false;
     this.sortKey = 'new';
-    // Author/Label 计入徽标，清空时必须一并重置，否则清完徽标仍非 0
+    // Author/Category/Label 计入徽标，清空时必须一并重置，否则清完徽标仍非 0
     this.authorFilter = '';
+    this.categoryFilter = '';
     this.labelFilter = '';
     this.refresh();
   }
@@ -408,6 +463,8 @@ export struct DiscussionsView {
           this.authorSearch = v;
         }
       })
+    } else if (this.sheetKind === 'category') {
+      this.categorySheet()
     } else if (this.sheetKind === 'label') {
       this.labelSheet()
     }
@@ -438,27 +495,157 @@ export struct DiscussionsView {
     .padding({ left: 8, right: 8 })
   }
 
+  /**
+   * 双态弹层头（官方口径，2026-09-14 统一）：常态=[✕ 标题 🔍]；搜索态=标题**原地**变搜索框
+   * （defaultFocus 自动聚焦），左侧 ✕ 变 ←（回退=清词退出搜索态），框内右端 ✕ 清词。
+   */
+  @Builder
+  dualStateSheetHeader(titleRes: Resource, searchShow: boolean, searchText: string,
+    onClose: () => void, onToggle: () => void, onSearch: (v: string) => void, onClear: () => void) {
+    Row() {
+      Stack() {
+        OctIcon({
+          res: searchShow ? $r('app.media.oct_arrow_left_24') : $r('app.media.oct_x_16'),
+          iconSize: 18,
+          iconColor: $r('app.color.text_primary')
+        })
+      }
+      .width(44)
+      .height(44)
+      .onClick((): void => {
+        if (searchShow) {
+          onClear();
+          onToggle();
+        } else {
+          onClose();
+        }
+      })
+      if (searchShow) {
+        Stack({ alignContent: Alignment.End }) {
+          TextInput({ text: searchText })
+            .height(40)
+            .fontSize($r('app.float.body_font_size'))
+            .width('100%')
+            .padding({ right: 34 })
+            .borderRadius(6)
+            .backgroundColor($r('app.color.chip_bg'))
+            .defaultFocus(true)
+            .onChange((v: string): void => onSearch(v))
+          if (searchText !== '') {
+            Stack() {
+              OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
+            }
+            .width(36)
+            .height(36)
+            .onClick((): void => onClear())
+          }
+        }
+        .layoutWeight(1)
+        .margin({ right: 8 })
+      } else {
+        Text(titleRes)
+          .fontSize($r('app.float.title_font_size'))
+          .fontWeight(600)
+          .fontColor($r('app.color.text_primary'))
+          .layoutWeight(1)
+        Stack() {
+          OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 18, iconColor: $r('app.color.link_blue') })
+        }
+        .width(44)
+        .height(44)
+        .onClick((): void => onToggle())
+      }
+    }
+    .padding({ left: 8, right: 8 })
+  }
+
+  /** Category 弹层：emoji + 名称 + 描述两行（客户端搜索过滤；选中蓝勾，与官方一致） */
+  @Builder
+  categorySheet() {
+    Column() {
+      this.dualStateSheetHeader($r('app.string.discussions_filter_by_category'), this.categorySearchShow,
+        this.categorySearch,
+        (): void => {
+          this.sheetKind = '';
+        }, (): void => {
+          this.categorySearchShow = !this.categorySearchShow;
+        }, (v: string): void => {
+          this.categorySearch = v;
+        }, (): void => {
+          this.categorySearch = '';
+        })
+      Divider().color($r('app.color.divider')).strokeWidth(1).width('100%')
+      if (this.categoriesLoading) {
+        StateView({ loading: true })
+      } else if (this.categoriesError !== '') {
+        StateView({ error: this.categoriesError, onRetry: (): void => this.openCategorySheetAndLoad() })
+      } else {
+        Scroll() {
+          Column() {
+            if (this.shownCategories().length > 0) {
+              ForEach(this.shownCategories(), (c: RepoCategoryItem) => {
+                Row({ space: 12 }) {
+                  Text(emojiFromShortcode(c.emoji))
+                    .fontSize(22)
+                    .width(32)
+                  Column({ space: 2 }) {
+                    Text(c.name)
+                      .fontSize($r('app.float.body_font_size'))
+                      .fontWeight(FontWeight.Medium)
+                      .fontColor($r('app.color.text_primary'))
+                      .maxLines(1)
+                      .textOverflow({ overflow: TextOverflow.Ellipsis })
+                    Text(c.description)
+                      .fontSize($r('app.float.caption_font_size'))
+                      .fontColor($r('app.color.text_secondary'))
+                      .maxLines(1)
+                      .textOverflow({ overflow: TextOverflow.Ellipsis })
+                  }
+                  .alignItems(HorizontalAlign.Start)
+                  .layoutWeight(1)
+                  if (this.categoryFilter === c.name) {
+                    OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
+                  }
+                }
+                .width('100%')
+                .height(64)
+                .padding({ left: 16, right: 16 })
+                .onClick((): void => this.pickCategory(c.name))
+              }, (c: RepoCategoryItem) => `${c.name}_${this.categoryFilter === c.name ? 'on' : 'off'}`)
+            } else {
+              Text($r('app.string.filter_no_results'))
+                .fontSize($r('app.float.caption_font_size'))
+                .fontColor($r('app.color.text_secondary'))
+                .width('100%')
+                .padding({ left: 20, top: 16, bottom: 12 })
+            }
+          }
+        }
+        .layoutWeight(1)
+        .scrollBar(BarState.Off)
+        .align(Alignment.Top)
+      }
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor($r('app.color.card_background'))
+  }
+
   /** Label 弹层：Unlabeled 行 + 彩色标签行（客户端搜索过滤；选中蓝勾） */
   @Builder
   labelSheet() {
     Column() {
-      this.sheetHeader($r('app.string.discussions_filter_by_label'), this.labelSearchShow,
+      this.dualStateSheetHeader($r('app.string.discussions_filter_by_label'), this.labelSearchShow,
+        this.labelSearch,
         (): void => {
           this.sheetKind = '';
         }, (): void => {
           this.labelSearchShow = !this.labelSearchShow;
+        }, (v: string): void => {
+          this.labelSearch = v;
+        }, (): void => {
+          this.labelSearch = '';
         })
-      if (this.labelSearchShow) {
-        TextInput({ text: this.labelSearch })
-          .height(40)
-          .fontSize($r('app.float.body_font_size'))
-          .margin({ left: 16, right: 16, bottom: 4 })
-          .borderRadius(6)
-          .backgroundColor($r('app.color.chip_bg'))
-          .onChange((v: string) => {
-            this.labelSearch = v;
-          })
-      }
       if (this.labelsLoading) {
         StateView({ loading: true })
       } else if (this.labelsError !== '') {
@@ -490,14 +677,8 @@ export struct DiscussionsView {
 
             ForEach(this.shownRepoLabels(), (label: RepoLabelItem) => {
               Row({ space: 12 }) {
-                // GitHub 标签 chip：仓库色底 + 按亮度取深/白字
-                Text(label.name)
-                  .fontSize($r('app.float.chip_font_size'))
-                  .fontWeight(600)
-                  .fontColor(isLightHexColor(label.color) ? $r('app.color.text_primary') : Color.White)
-                  .padding({ left: 10, right: 10, top: 3, bottom: 3 })
-                  .borderRadius(12)
-                  .backgroundColor(`#${label.color}`)
+                // GitHub 标签胶囊：统一 LabelPill（官方 IssueLabel 口径，DESIGN.md §10.2）
+                LabelPill({ labelName: label.name, colorHex: label.color, large: true })
                 Blank()
                 if (this.labelFilter === label.name) {
                   OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
@@ -713,6 +894,32 @@ export struct DiscussionsView {
               })
               .margin({ right: 8 })
               .onClick(() => this.openAuthorSheet())
+
+              // Category 筛选（官方位于 Author 与 Label 之间；值=分类名）
+              Row({ space: 4 }) {
+                Text(this.categoryFilter !== '' ? this.categoryFilter
+                  : this.stringOf($r('app.string.discussions_filter_category')))
+                  .fontSize($r('app.float.caption_font_size'))
+                  .fontColor(this.categoryFilter !== '' ? $r('app.color.link_blue') : $r('app.color.text_primary'))
+                  .maxLines(1)
+                  .textOverflow({ overflow: TextOverflow.Ellipsis })
+                OctIcon({
+                  res: $r('app.media.oct_chevron_down_16'),
+                  iconSize: 12,
+                  iconColor: this.categoryFilter !== '' ? $r('app.color.link_blue') : $r('app.color.text_secondary')
+                })
+              }
+              .height(32)
+              .responseRegion({ x: 0, y: -6, width: '100%', height: '144%' })
+              .padding({ left: 8, right: 8 })
+              .borderRadius(16)
+              .backgroundColor(this.categoryFilter !== '' ? $r('app.color.chip_active_bg') : $r('app.color.chip_bg'))
+              .border({
+                width: 1,
+                color: this.categoryFilter !== '' ? $r('app.color.chip_active_border') : $r('app.color.border')
+              })
+              .margin({ right: 8 })
+              .onClick(() => this.openCategorySheetAndLoad())
 
               Row({ space: 4 }) {
                 Text(this.labelFilter === 'none' ? this.stringOf($r('app.string.discussions_filter_unlabeled'))

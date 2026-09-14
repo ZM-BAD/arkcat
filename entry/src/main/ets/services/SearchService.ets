@@ -199,21 +199,6 @@ export function formatBigCount(n: number): string {
   return `${n}`;
 }
 
-/** label 色（GraphQL #RRGGBB）是否浅色（决定白底 pill 文字颜色；纯函数） */
-export function isLightHexColor(hex: string): boolean {
-  if (hex.length !== 6) {
-    return false;
-  }
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) {
-    return false;
-  }
-  const luma = 0.299 * r + 0.587 * g + 0.114 * b;
-  return luma > 160;
-}
-
 /** labels 连接 → SearchLabel[]（纯函数） */
 function mapSearchLabels(node: JsonMap, key: string): SearchLabel[] {
   const wrap = Json.obj(node, key);

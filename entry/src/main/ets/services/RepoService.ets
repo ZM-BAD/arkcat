@@ -39,6 +39,13 @@ query RepositoryDetail($owner: String!, $name: String!) {
     }
     issues { totalCount }
     pullRequests { totalCount }
+    # 详情页 Discussions 行：仓库开启 Discussions 才显示（2026-09-14）
+    hasDiscussionsEnabled
+    discussions { totalCount }
+    # 详情页 Issues/PRs 行的计数 = 列表页默认筛选（State=Open）下的数量（2026-09-14；
+    # Repository 无 openIssues 计数字段，用连接的 states 参数）
+    openIssues: issues(states: OPEN) { totalCount }
+    openPullRequests: pullRequests(states: OPEN) { totalCount }
     releases { totalCount }
   }
 }`;

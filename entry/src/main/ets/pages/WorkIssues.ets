@@ -6,6 +6,7 @@
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
+import { LabelPill } from '../components/LabelPill';
 import { WorkFilterBar, WorkFilterOption, WorkFilterState, defaultWorkFilter, isWorkFilterDirty } from '../components/WorkFilterBar';
 import { WorkIssueItem, WorkIssuesPage, WorkLabel } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
@@ -164,27 +165,17 @@ export struct WorkIssuesView {
     if (issue.iconKey === 'open') {
       return $r('app.media.oct_issue_opened_16');
     }
+    // 官方字形（DESIGN.md §10.1）：not planned=skip、closed=issue-closed
     return issue.iconKey === 'not_planned'
-      ? $r('app.media.oct_x_circle_16')
-      : $r('app.media.oct_check_circle_16');
+      ? $r('app.media.oct_skip_16')
+      : $r('app.media.oct_issue_closed_16');
   }
 
   private issueColor(issue: WorkIssueItem): ResourceColor {
     if (issue.iconKey === 'open') {
       return $r('app.color.success_text');
     }
-    return issue.iconKey === 'not_planned' ? $r('app.color.text_tertiary') : $r('app.color.shortcut_purple_fg');
-  }
-
-  @Builder
-  labelChip(label: WorkLabel) {
-    Text(label.name)
-      .fontSize(12)
-      .fontColor(Color.White)
-      .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-      .borderRadius(6)
-      .backgroundColor(label.color !== '' ? `#${label.color}` : $r('app.color.text_secondary'))
-      .margin({ right: 6 })
+    return issue.iconKey === 'not_planned' ? $r('app.color.text_secondary') : $r('app.color.shortcut_purple_fg');
   }
 
   @Builder
@@ -218,7 +209,7 @@ export struct WorkIssuesView {
         Scroll() {
           Row() {
             ForEach(issue.labels, (label: WorkLabel) => {
-              this.labelChip(label)
+              LabelPill({ labelName: label.name, colorHex: label.color })
             }, (label: WorkLabel) => label.name)
             if (issue.commentCount > 0) {
               Row({ space: 4 }) {

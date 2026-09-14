@@ -5,6 +5,7 @@
  */
 import { Json, JsonMap } from '../utils/Json';
 import { WorkLabel } from './WorkModels';
+import { NONE_FILTER_KEY } from '../utils/FilterLoading';
 
 /** 仓库内 PR 行 */
 export interface RepoPrItem {
@@ -22,6 +23,8 @@ export interface RepoPrItem {
   authorLogin: string;
   authorAvatar: string;
   assignees: string[];
+  /** 所属里程碑标题（无里程碑=''；Milestone 筛选客户端过滤用，与 IssuesList 同款） */
+  milestoneTitle: string;
 }
 
 export interface RepoPrsPage {
@@ -29,7 +32,8 @@ export interface RepoPrsPage {
   endCursor: string;
   totalCount: number;
   prs: RepoPrItem[];
-  labelOptions: string[];
+  /** 仓库标签全集（带色：Label 面板 LabelPill 渲染用） */
+  labelOptions: WorkLabel[];
   authorOptions: string[];
   assigneeOptions: string[];
 }
@@ -235,7 +239,35 @@ export function filterPrsByAuthor(prs: RepoPrItem[], author: string): RepoPrItem
 export function filterPrsByAssignee(prs: RepoPrItem[], assignee: string): RepoPrItem[] {
   const next: RepoPrItem[] = [];
   for (const pr of prs) {
+    // 哨兵值=「Assigned to nobody」（filterBy 推不下去，客户端筛无 assignees 行）
+    if (assignee === NONE_FILTER_KEY) {
+      if (pr.assignees.length === 0) {
+        next.push(pr);
+      }
+      continue;
+    }
     if (assignee === '' || pr.assignees.indexOf(assignee) >= 0) {
+      next.push(pr);
+    }
+  }
+  return next;
+}
+
+/** Milestone 客户端过滤（服务端无参数）：''=不筛；哨兵值=「No milestone」只留无里程碑行 */
+export function filterPrsByMilestone(prs: RepoPrItem[], milestone: string): RepoPrItem[] {
+  const next: RepoPrItem[] = [];
+  for (const pr of prs) {
+    if (milestone === '') {
+      next.push(pr);
+      continue;
+    }
+    if (milestone === NONE_FILTER_KEY) {
+      if (pr.milestoneTitle === '') {
+        next.push(pr);
+      }
+      continue;
+    }
+    if (pr.milestoneTitle === milestone) {
       next.push(pr);
     }
   }
@@ -355,6 +387,7 @@ export function mapRepoPr(raw: JsonMap): RepoPrItem {
   }
   const state = Json.str(raw, 'state');
   const merged = Json.bool(raw, 'merged');
+  const milestone = Json.obj(raw, 'milestone');
   return {
     id: Json.str(raw, 'id'),
     number: Json.num(raw, 'number'),
@@ -369,7 +402,8 @@ export function mapRepoPr(raw: JsonMap): RepoPrItem {
     checksState: checks !== null ? Json.str(checks, 'state') : '',
     authorLogin: author !== null ? Json.str(author, 'login') : '',
     authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : '',
-    assignees: assignees
+    assignees: assignees,
+    milestoneTitle: milestone !== null ? Json.str(milestone, 'title') : ''
   };
 }
 
@@ -393,10 +427,10 @@ export function mapRepoPrsPage(data: JsonMap): RepoPrsPage {
     }
   }
   const labelsWrap = Json.obj(repo, 'labels');
-  const labelOptions: string[] = [];
+  const labelOptions: WorkLabel[] = [];
   if (labelsWrap !== null) {
     for (const nodeItem of Json.arr(labelsWrap, 'nodes')) {
-      labelOptions.push(Json.str(nodeItem as JsonMap, 'name'));
+      labelOptions.push({ name: Json.str(nodeItem as JsonMap, 'name'), color: Json.str(nodeItem as JsonMap, 'color') });
     }
   }
   return {

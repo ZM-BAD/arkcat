@@ -10,14 +10,17 @@ import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
 import { FilterDropdownChip, FilterDropdownOption, FilterSheetChip } from '../components/FilterDropdownChip';
 import { WorkFilterSortSheet } from '../components/WorkFilterSortSheet';
+import { LabelPill } from '../components/LabelPill';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { IssueSummary, IssuesPage } from '../models/IssuesModels';
+import { WorkLabel } from '../models/WorkModels';
 import { IssuesService } from '../services/IssuesService';
 import { StateView } from '../components/StateView';
 import { WorkEmptyView } from '../components/WorkEmptyView';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
+import { NONE_FILTER_KEY } from '../utils/FilterLoading';
 
 @ComponentV2
 export struct IssuesListView {
@@ -39,9 +42,13 @@ export struct IssuesListView {
   @Local sortKey: string = 'newest';
   /** 弹层内容（'' | 'sort'）：单 bindSheet 内切换 */
   @Local sheetKind: string = '';
+  /** 弹层搜索态（与 Home Issues 工作区面板同款交互）：点 🔍 标题就地变搜索框，回退/重开即复位 */
+  @Local sheetSearchShow: boolean = false;
+  @Local sheetSearchText: string = '';
   @Local all: IssueSummary[] = [];
   @Local shown: IssueSummary[] = [];
-  @Local repoLabels: string[] = [];
+  /** 仓库标签全集（带色：Label 筛选面板 LabelPill 用） */
+  @Local repoLabels: WorkLabel[] = [];
   @Local cursor: string = '';
   @Local hasNextPage: boolean = false;
   @Local loading: boolean = true;
@@ -90,8 +97,9 @@ export struct IssuesListView {
   private refresh(): void {
     this.loading = true;
     this.errorMsg = '';
+    // 「无人分配」无法服务端下推（GraphQL filterBy 无此语义）：服务端不传 assignee，改客户端过滤
     IssuesService.fetchRepoIssues(this.token, this.owner, this.name, this.state, this.label, '',
-      this.author, this.assignee, this.sortKey)
+      this.author, this.assignee === NONE_FILTER_KEY ? '' : this.assignee, this.sortKey)
       .then((page: IssuesPage) => {
         this.all = page.issues;
         this.repoLabels = page.repoLabels;
@@ -118,7 +126,7 @@ export struct IssuesListView {
     this.loading = true;
     this.loadingMore = true;
     IssuesService.fetchRepoIssues(this.token, this.owner, this.name, this.state, this.label, this.cursor,
-        this.author, this.assignee, this.sortKey)
+        this.author, this.assignee === NONE_FILTER_KEY ? '' : this.assignee, this.sortKey)
       .then((page: IssuesPage) => {
         this.all = this.all.concat(page.issues);
         this.cursor = page.endCursor;
@@ -136,9 +144,10 @@ export struct IssuesListView {
   }
 
   /**
-   * 客户端过滤：顶栏搜索词（Spec 063）+ Milestone（服务端无 milestone 参数，只能本地筛；
-   * 候选来自已加载集合，选中必有匹配、无「假空」）。
-   * Author/Assignee 自 2026-09-13 起走服务端 filterBy（createdBy/assignee），不再本地过滤。
+   * 客户端过滤：顶栏搜索词（Spec 063）+ Milestone + 「无人分配」。
+   * Milestone/「No milestone」服务端无参数只能本地筛（候选来自已加载集合，选中必有匹配、无「假空」）；
+   * Author/Assignee 自 2026-09-13 起走服务端 filterBy（createdBy/assignee），
+   * 但「Assigned to nobody」filterBy 推不下去：该态服务端不传 assignee，改按「无 assignees」本地筛。
    */
   private applyFilters(): void {
     const q = this.searchOn ? this.searchQuery.trim().toLowerCase() : '';
@@ -147,7 +156,15 @@ export struct IssuesListView {
       if (q !== '' && !this.matchQuery(issue, q)) {
         continue;
       }
-      if (this.milestone !== '' && issue.milestoneTitle !== this.milestone) {
+      if (this.milestone === NONE_FILTER_KEY) {
+        // No milestone：只留没有里程碑的 issue
+        if (issue.milestoneTitle !== '') {
+          continue;
+        }
+      } else if (this.milestone !== '' && issue.milestoneTitle !== this.milestone) {
+        continue;
+      }
+      if (this.assignee === NONE_FILTER_KEY && issue.assignees.length > 0) {
         continue;
       }
       next.push(issue);
@@ -177,9 +194,20 @@ export struct IssuesListView {
   private labelFilterOptions(): FilterDropdownOption[] {
     const opts: FilterDropdownOption[] = [];
     for (const l of this.repoLabels) {
-      opts.push({ key: l, label: l });
+      opts.push({ key: l.name, label: l.name });
     }
     return opts;
+  }
+
+  /** 标签名 → 色（面板行 LabelPill 渲染用；池外标签回退无色灰） */
+  private labelColorByName(name: string): string {
+    const hit = this.repoLabels.find((l: WorkLabel): boolean => l.name === name);
+    return hit ? hit.color : '';
+  }
+
+  /** 「空值」选项（No milestone / Assigned to nobody）：面板行渲染 circle-slash 图标 */
+  private isNoneOption(key: string): boolean {
+    return key === NONE_FILTER_KEY && (this.sheetKind === 'milestone' || this.sheetKind === 'assignee');
   }
 
   /** 把本页出现的 author/assignee/milestone 并入候选池（会话内只增不减） */
@@ -207,18 +235,20 @@ export struct IssuesListView {
     return options;
   }
 
-  /** Assignee 下拉选项（会话内出现过的分配人集合） */
+  /** Assignee 下拉选项（首行=官方「Assigned to nobody」；会话内出现过的分配人集合） */
   private assigneeFilterOptions(): FilterDropdownOption[] {
     const options: FilterDropdownOption[] = [];
+    options.push({ key: NONE_FILTER_KEY, label: this.stringOf($r('app.string.repo_issues_assigned_nobody')) });
     for (const login of this.assigneePool) {
       options.push({ key: login, label: login });
     }
     return options;
   }
 
-  /** Milestone 下拉选项（会话内出现过的里程碑集合；再点选中项=取消） */
+  /** Milestone 下拉选项（首行=官方「No milestone」；会话内出现过的里程碑集合；再点选中项=取消） */
   private milestoneFilterOptions(): FilterDropdownOption[] {
     const options: FilterDropdownOption[] = [];
+    options.push({ key: NONE_FILTER_KEY, label: this.stringOf($r('app.string.repo_issues_no_milestone')) });
     for (const m of this.milestonePool) {
       options.push({ key: m, label: m });
     }
@@ -226,7 +256,18 @@ export struct IssuesListView {
   }
 
   private milestoneLabel(): string {
+    if (this.milestone === NONE_FILTER_KEY) {
+      return this.stringOf($r('app.string.repo_issues_no_milestone'));
+    }
     return this.milestone !== '' ? this.milestone : this.stringOf($r('app.string.repo_issues_milestone'));
+  }
+
+  /** Assignee chip 文案（哨兵值显示官方「Assigned to nobody」） */
+  private assigneeChipLabel(): string {
+    if (this.assignee === NONE_FILTER_KEY) {
+      return this.stringOf($r('app.string.repo_issues_assigned_nobody'));
+    }
+    return this.assignee !== '' ? this.assignee : this.stringOf($r('app.string.repo_prs_assignee'));
   }
 
   /** Sort chip 文案（与工作区同款：Sort: <排序名>） */
@@ -315,17 +356,6 @@ export struct IssuesListView {
   }
 
   @Builder
-  labelChip(label: string) {
-    Text(label)
-      .fontSize(12)
-      .fontColor(Color.White)
-      .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-      .borderRadius(6)
-      .backgroundColor($r('app.color.text_secondary'))
-      .margin({ right: 6 })
-  }
-
-  @Builder
   issueCard(issue: IssueSummary) {
     Column({ space: 6 }) {
       Row() {
@@ -349,9 +379,9 @@ export struct IssuesListView {
       Row({ space: 8 }) {
         Scroll() {
           Row({ space: 8 }) {
-            ForEach(issue.labels, (label: string) => {
-              this.labelChip(label)
-            }, (label: string) => label)
+            ForEach(issue.labels, (label: WorkLabel) => {
+              LabelPill({ labelName: label.name, colorHex: label.color })
+            }, (label: WorkLabel) => label.name)
             if (issue.commentCount > 0) {
               Row({ space: 4 }) {
                 OctIcon({ res: $r('app.media.oct_comment_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
@@ -395,31 +425,55 @@ export struct IssuesListView {
     })
   }
 
-  /** 当前列表面板的标题（label/author/assignee/milestone 共用一套列表面板结构） */
+  /** 当前列表面板的标题（官方措辞：Filter by label / Filter by author / Filter assignee / Filter by milestone） */
   private currentListTitle(): Resource {
     if (this.sheetKind === 'label') {
-      return $r('app.string.repo_prs_label');
+      return $r('app.string.repo_issues_filter_label_title');
     }
     if (this.sheetKind === 'author') {
-      return $r('app.string.repo_prs_author');
+      return $r('app.string.repo_issues_filter_author_title');
     }
     if (this.sheetKind === 'assignee') {
-      return $r('app.string.repo_prs_assignee');
+      return $r('app.string.repo_issues_filter_assignee_title');
     }
-    return $r('app.string.repo_issues_milestone');
+    return $r('app.string.repo_issues_filter_milestone_title');
   }
 
   private currentListOptions(): FilterDropdownOption[] {
+    let base: FilterDropdownOption[] = [];
     if (this.sheetKind === 'label') {
-      return this.labelFilterOptions();
+      base = this.labelFilterOptions();
+    } else if (this.sheetKind === 'author') {
+      base = this.authorFilterOptions();
+    } else if (this.sheetKind === 'assignee') {
+      base = this.assigneeFilterOptions();
+    } else {
+      base = this.milestoneFilterOptions();
     }
-    if (this.sheetKind === 'author') {
-      return this.authorFilterOptions();
+    // 搜索态：对候选池客户端过滤（大小写不敏感包含匹配，空词=全量）
+    const q = this.sheetSearchText.trim().toLowerCase();
+    if (q === '') {
+      return base;
     }
-    if (this.sheetKind === 'assignee') {
-      return this.assigneeFilterOptions();
+    return base.filter((opt: FilterDropdownOption): boolean => opt.label.toLowerCase().includes(q));
+  }
+
+  /** 搜索态占位文案（与官方一致：Label/Author/Assignee/Milestone 各按官方措辞） */
+  private sheetSearchPlaceholder(): Resource {
+    if (this.sheetKind === 'label') {
+      return $r('app.string.filter_labels');
     }
-    return this.milestoneFilterOptions();
+    if (this.sheetKind === 'author' || this.sheetKind === 'assignee') {
+      return $r('app.string.filter_users');
+    }
+    return $r('app.string.filter_milestones');
+  }
+
+  /** 打开列表弹层：每次拉起复位搜索态，保证干净状态 */
+  private openListSheet(kind: string): void {
+    this.sheetSearchShow = false;
+    this.sheetSearchText = '';
+    this.sheetKind = kind;
   }
 
   private currentListSelected(): string {
@@ -463,19 +517,66 @@ export struct IssuesListView {
       || this.sheetKind === 'assignee' || this.sheetKind === 'milestone') {
       Column() {
         Row() {
+          // 搜索态=←（回退：清空搜索词并退出搜索态）；常态=✕（关闭弹层）
           Stack() {
-            OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 18, iconColor: $r('app.color.text_primary') })
+            OctIcon({
+              res: this.sheetSearchShow ? $r('app.media.oct_arrow_left_24') : $r('app.media.oct_x_16'),
+              iconSize: 18,
+              iconColor: $r('app.color.text_primary')
+            })
           }
           .width(44)
           .height(44)
           .onClick((): void => {
-            this.sheetKind = '';
+            if (this.sheetSearchShow) {
+              this.sheetSearchText = '';
+              this.sheetSearchShow = false;
+            } else {
+              this.sheetKind = '';
+            }
           })
-          Text(this.currentListTitle())
-            .fontSize($r('app.float.title_font_size'))
-            .fontWeight(600)
-            .fontColor($r('app.color.text_primary'))
+          if (this.sheetSearchShow) {
+            // 标题原地变搜索框：对候选池客户端过滤；框内右端 ✕ 一键清空（与 Home Issues 工作区面板同款交互）
+            Stack({ alignContent: Alignment.End }) {
+              TextInput({ placeholder: this.stringOf(this.sheetSearchPlaceholder()), text: this.sheetSearchText })
+                .height(40)
+                .fontSize($r('app.float.body_font_size'))
+                .width('100%')
+                .padding({ right: 34 })
+                .borderRadius(6)
+                .backgroundColor($r('app.color.chip_bg'))
+                .defaultFocus(true)
+                .onChange((v: string): void => {
+                  this.sheetSearchText = v;
+                })
+              if (this.sheetSearchText !== '') {
+                Stack() {
+                  OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
+                }
+                .width(36)
+                .height(36)
+                .onClick((): void => {
+                  this.sheetSearchText = '';
+                })
+              }
+            }
             .layoutWeight(1)
+            .margin({ right: 8 })
+          } else {
+            Text(this.currentListTitle())
+              .fontSize($r('app.float.title_font_size'))
+              .fontWeight(600)
+              .fontColor($r('app.color.text_primary'))
+              .layoutWeight(1)
+            Stack() {
+              OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 18, iconColor: $r('app.color.link_blue') })
+            }
+            .width(44)
+            .height(44)
+            .onClick((): void => {
+              this.sheetSearchShow = true;
+            })
+          }
         }
         .padding({ left: 8, right: 8 })
         Divider()
@@ -484,24 +585,52 @@ export struct IssuesListView {
           .width('100%')
         Scroll() {
           Column() {
-            ForEach(this.currentListOptions(), (opt: FilterDropdownOption) => {
-              Row() {
-                Text(opt.label)
-                  .fontSize($r('app.float.body_font_size'))
-                  .fontColor($r('app.color.text_primary'))
-                  .layoutWeight(1)
-                  .maxLines(1)
-                  .textOverflow({ overflow: TextOverflow.Ellipsis })
-                if (this.currentListSelected() === opt.key) {
-                  OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 16, iconColor: $r('app.color.link_blue') })
-                    .margin({ left: 8 })
+            if (this.currentListOptions().length > 0) {
+              ForEach(this.currentListOptions(), (opt: FilterDropdownOption) => {
+                Row() {
+                  if (this.isNoneOption(opt.key)) {
+                    // 官方「空值」行：circle-slash 图标 + 文案
+                    Row({ space: 12 }) {
+                      OctIcon({ res: $r('app.media.oct_circle_slash_16'), iconSize: 16,
+                        iconColor: $r('app.color.text_secondary') })
+                      Text(opt.label)
+                        .fontSize($r('app.float.body_font_size'))
+                        .fontColor($r('app.color.text_primary'))
+                        .maxLines(1)
+                        .textOverflow({ overflow: TextOverflow.Ellipsis })
+                    }
+                    .alignItems(VerticalAlign.Center)
+                    .layoutWeight(1)
+                  } else if (this.sheetKind === 'label') {
+                    // Label 面板行：官方为彩色胶囊（DESIGN.md §10.2），选中勾仍在右缘
+                    LabelPill({ labelName: opt.label, colorHex: this.labelColorByName(opt.key), large: true })
+                    Blank()
+                  } else {
+                    Text(opt.label)
+                      .fontSize($r('app.float.body_font_size'))
+                      .fontColor($r('app.color.text_primary'))
+                      .layoutWeight(1)
+                      .maxLines(1)
+                      .textOverflow({ overflow: TextOverflow.Ellipsis })
+                  }
+                  if (this.currentListSelected() === opt.key) {
+                    OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 16, iconColor: $r('app.color.link_blue') })
+                      .margin({ left: 8 })
+                  }
                 }
-              }
-              .width('100%')
-              .height(56)
-              .padding({ left: 20, right: 16 })
-              .onClick((): void => this.applyListPick(opt.key))
-            }, (opt: FilterDropdownOption) => `${opt.key}_${this.currentListSelected() === opt.key ? 'on' : 'off'}`)
+                .width('100%')
+                .height(56)
+                .padding({ left: 20, right: 16 })
+                .onClick((): void => this.applyListPick(opt.key))
+              }, (opt: FilterDropdownOption) => `${opt.key}_${this.currentListSelected() === opt.key ? 'on' : 'off'}`)
+            } else {
+              // 搜索无结果（与语言面板同款文案）
+              Text($r('app.string.filter_no_results'))
+                .fontSize($r('app.float.caption_font_size'))
+                .fontColor($r('app.color.text_secondary'))
+                .width('100%')
+                .padding({ left: 20, top: 16, bottom: 12 })
+            }
           }
         }
         .layoutWeight(1)
@@ -679,25 +808,25 @@ export struct IssuesListView {
             FilterSheetChip({
               label: this.label === '' ? this.stringOf($r('app.string.repo_prs_label')) : this.label,
               active: this.label !== '',
-              onTap: (): void => { this.sheetKind = 'label'; }
+              onTap: (): void => { this.openListSheet('label'); }
             })
 
             FilterSheetChip({
               label: this.author === '' ? this.stringOf($r('app.string.repo_prs_author')) : this.author,
               active: this.author !== '',
-              onTap: (): void => { this.sheetKind = 'author'; }
+              onTap: (): void => { this.openListSheet('author'); }
             })
 
             FilterSheetChip({
-              label: this.assignee === '' ? this.stringOf($r('app.string.repo_prs_assignee')) : this.assignee,
+              label: this.assigneeChipLabel(),
               active: this.assignee !== '',
-              onTap: (): void => { this.sheetKind = 'assignee'; }
+              onTap: (): void => { this.openListSheet('assignee'); }
             })
 
             FilterSheetChip({
               label: this.milestoneLabel(),
               active: this.milestone !== '',
-              onTap: (): void => { this.sheetKind = 'milestone'; }
+              onTap: (): void => { this.openListSheet('milestone'); }
             })
 
             // Sort：底部面板（与工作区同款 WorkFilterSortSheet）

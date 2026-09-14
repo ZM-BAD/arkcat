@@ -30,7 +30,7 @@ query IssuesList(
         }
       }
     }
-    labels(first: 30) { nodes { name } }
+    labels(first: 30) { nodes { name color } }
   }
 }`;
 

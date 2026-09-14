@@ -98,7 +98,7 @@ export struct IssueDetailView {
       return $r('app.media.oct_issue_opened_16');
     }
     return this.detail?.stateReason === 'NOT_PLANNED'
-      ? $r('app.media.oct_x_circle_16')
+      ? $r('app.media.oct_skip_16')
       : $r('app.media.oct_issue_closed_16');
   }
 
@@ -106,7 +106,7 @@ export struct IssueDetailView {
     if (this.detail?.state === 'OPEN') {
       return $r('app.color.success_text');
     }
-    return this.detail?.stateReason === 'NOT_PLANNED' ? $r('app.color.text_tertiary') : $r('app.color.shortcut_purple_fg');
+    return this.detail?.stateReason === 'NOT_PLANNED' ? $r('app.color.text_secondary') : $r('app.color.shortcut_purple_fg');
   }
 
   /** MarkdownView 站内链接路由（正文/评论点击 GitHub 内部链接 → 对应页面） */

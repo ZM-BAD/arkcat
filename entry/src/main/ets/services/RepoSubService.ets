@@ -4,6 +4,7 @@
  */
 import { graphql, restGet } from './GitHttpClient';
 import { Json, JsonMap } from '../utils/Json';
+import { repoIssueOrder } from './IssuesService';
 import {
   RepoPrsPage, RepoCommitsPage, RepoReleasesPage, IssueDetailPage, PrDetailPage,
   mapRepoPrsPage, mapRepoCommitsPage, mapRepoReleasesPage, mapIssueDetail, mapPrDetail, mapPrCommits,
@@ -14,13 +15,14 @@ import { CommitDetailPage, mapCommitDetail } from '../models/PrDiffModels';
 import { parseDiffPatch } from '../utils/Diff';
 
 const REPO_PRS_QUERY = `
-query RepoPullRequests($owner: String!, $name: String!, $states: [PullRequestState!], $labels: [String!], $first: Int = 50, $after: String) {
+query RepoPullRequests($owner: String!, $name: String!, $states: [PullRequestState!], $labels: [String!], $first: Int = 50, $after: String, $orderBy: IssueOrder!) {
   repository(owner: $owner, name: $name) {
-    pullRequests(states: $states, labels: $labels, first: $first, after: $after, orderBy: { field: UPDATED_AT, direction: DESC }) {
+    pullRequests(states: $states, labels: $labels, first: $first, after: $after, orderBy: $orderBy) {
       totalCount
       pageInfo { hasNextPage endCursor }
       nodes {
         id number title state merged isDraft createdAt
+        milestone { title }
         labels(first: 8) { nodes { name color } }
         comments { totalCount }
         reviewRequests(first: 10) { totalCount }
@@ -29,7 +31,7 @@ query RepoPullRequests($owner: String!, $name: String!, $states: [PullRequestSta
         assignees(first: 10) { nodes { login } }
       }
     }
-    labels(first: 30) { nodes { name } }
+    labels(first: 30) { nodes { name color } }
   }
 }`;
 
@@ -288,9 +290,11 @@ export function repoPrsStates(states: string[] | null): string[] | null {
 }
 
 export class RepoSubService {
+  /** 仓库内 PR 列表：states/labels 服务端 + 排序（PullRequestOrder 与 IssueOrder 同构，复用 6 键映射） */
   static async fetchRepoPrs(token: string, owner: string, name: string,
-    state: string, label: string, cursor: string): Promise<RepoPrsPage> {
-    const variables: Record<string, Object> = { 'owner': owner, 'name': name, 'first': 50 };
+    state: string, label: string, cursor: string, sortKey: string = 'newest'): Promise<RepoPrsPage> {
+    const variables: Record<string, Object> = { 'owner': owner, 'name': name, 'first': 50,
+      'orderBy': repoIssueOrder(sortKey) };
     if (state === 'open') {
       variables['states'] = ['OPEN'];
     } else if (state === 'closed') {

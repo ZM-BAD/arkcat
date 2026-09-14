@@ -24,7 +24,8 @@ ETS_DIR = ROOT / 'entry/src/main/ets'
 
 # 数据色板白名单（相对 entry/src/main/ets 的文件名）
 ALLOWED = {'utils/CodeTheme.ets', 'models/LanguageColors.ets', 'utils/MarkdownPalette.ets',
-           'models/ExploreLanguages.ets', 'models/AchievementThemeColors.ets'}
+           'models/ExploreLanguages.ets', 'models/AchievementThemeColors.ets',
+           'utils/DataColors.ets', 'components/LabelPill.ets'}
 
 # 6 位（#RRGGBB）或 8 位（#AARRGGBB）
 HEX_RE = re.compile(r'#[0-9a-fA-F](?:[0-9a-fA-F]{5}|[0-9a-fA-F]{7})\b')

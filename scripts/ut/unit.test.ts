@@ -13,6 +13,7 @@ import { Json, JsonMap } from '../../entry/src/main/ets/utils/Json';
 import {
   timeParts, githubShortTime, compactCount, notificationTypeKey, TimeParts
 } from '../../entry/src/main/ets/utils/Format';
+import { NONE_FILTER_KEY } from '../../entry/src/main/ets/utils/FilterLoading';
 import { parseDiffPatch, fileBaseName } from '../../entry/src/main/ets/utils/Diff';
 import {
   defaultWorkSections, visibleWorkSections, workSectionsToStorage, workSectionsFromStorage,
@@ -20,7 +21,7 @@ import {
 } from '../../entry/src/main/ets/utils/WorkConfig';
 import {
   mapRepoCommit, mapRepoCommitsPage, mapPrCommits,
-  filterPrsByAuthor, filterPrsByAssignee, repoPrIconKey, RepoPrItem, mapIssueDetail,
+  filterPrsByAuthor, filterPrsByAssignee, filterPrsByMilestone, repoPrIconKey, RepoPrItem, mapIssueDetail,
   mapPrDetail, mapRepoReleasesPage, formatBytes
 } from '../../entry/src/main/ets/models/RepoSubModels';
 import { mapPrFiles, mapFilesCursor, applyRestPatch, PrFileItem } from '../../entry/src/main/ets/models/PrDiffModels';
@@ -29,7 +30,7 @@ import {
   filterByReasons, filterByInboxView, collectRepoFilters, NotificationItem, PrRef
 } from '../../entry/src/main/ets/services/NotificationsService';
 import {
-  buildQualifierInsert, pushSearchHistory, buildSearchQuery, formatBigCount, isLightHexColor,
+  buildQualifierInsert, pushSearchHistory, buildSearchQuery, formatBigCount,
   mapSearchNode, mapSearchResults, mapSearchOverview, buildCodeQuery
 } from '../../entry/src/main/ets/services/SearchService';
 import {
@@ -444,6 +445,23 @@ test('filterPrsByAssignee 分配人过滤', () => {
   assert.equal(filterPrsByAssignee(prs, 'carol').length, 1);
   assert.equal(filterPrsByAssignee(prs, '').length, 2);
   assert.equal(filterPrsByAssignee(prs, 'carolx').length, 0);
+  // 「Assigned to nobody」哨兵：只留无 assignees 行（2026-09-14 官方口径）
+  assert.equal(filterPrsByAssignee(prs, NONE_FILTER_KEY).length, 1);
+});
+
+test('filterPrsByMilestone 里程碑过滤（含 No milestone 哨兵）', () => {
+  const mk = (id: string, milestoneTitle: string): RepoPrItem => {
+    const pr = prRow(id, 'alice');
+    pr.milestoneTitle = milestoneTitle;
+    return pr;
+  };
+  const prs = [mk('1', 'v1.0'), mk('2', ''), mk('3', 'v1.0'), mk('4', '')];
+  // 空值=不筛
+  assert.equal(filterPrsByMilestone(prs, '').length, 4);
+  // 按标题
+  assert.equal(filterPrsByMilestone(prs, 'v1.0').length, 2);
+  // 「No milestone」哨兵：只留无里程碑行
+  assert.equal(filterPrsByMilestone(prs, NONE_FILTER_KEY).length, 2);
 });
 
 // ─────────────── PrDiffModels ───────────────
@@ -803,17 +821,13 @@ test('buildSearchQuery 各 kind qualifier 与 trim', () => {
   assert.equal(buildSearchQuery('code', '  cli  '), 'cli');
 });
 
-test('formatBigCount 与 isLightHexColor', () => {
+test('formatBigCount', () => {
   assert.equal(formatBigCount(0), '0');
   assert.equal(formatBigCount(999), '999');
   assert.equal(formatBigCount(72000), '72k');
   assert.equal(formatBigCount(9999), '10k');
   assert.equal(formatBigCount(2200000), '2.2m');
   assert.equal(formatBigCount(2000000), '2m');
-  assert.equal(isLightHexColor('F6F8FA'), true);
-  assert.equal(isLightHexColor('0C4462'), false);
-  assert.equal(isLightHexColor(''), false);
-  assert.equal(isLightHexColor('zzzzzz'), false);
 });
 
 test('buildCodeSnippet 词边界命中', () => {
@@ -1159,6 +1173,15 @@ test('WorkDiscussions：Author/Label qualifier 与映射（Spec 065）', async (
     'is:discussion repo:ZM-BAD/arkcat label:"A Welcome" sort:created-desc');
   assert.equal(m.buildWorkDiscussionsQuery('all', 'created', false, 'new', 'ZM-BAD/arkcat', '', 'none'),
     'is:discussion repo:ZM-BAD/arkcat no:label sort:created-desc');
+  // Category qualifier：单词直接跟，带空格/标点引号包裹（2026-09-14 实测 deno：category:Q&A=458、category:"show and tell"=13）
+  assert.equal(m.buildWorkDiscussionsQuery('all', 'created', false, 'new', 'denoland/deno', '', '', 'Q&A'),
+    'is:discussion repo:denoland/deno category:Q&A sort:created-desc');
+  assert.equal(m.buildWorkDiscussionsQuery('all', 'created', false, 'new', 'denoland/deno', '', '', 'Show and tell'),
+    'is:discussion repo:denoland/deno category:"Show and tell" sort:created-desc');
+  // emoji shortcode 转换（官方默认六分类）
+  assert.equal(m.emojiFromShortcode(':mega:'), '\u{1F4E3}');
+  assert.equal(m.emojiFromShortcode(':raised_hands:'), '\u{1F64C}');
+  assert.equal(m.emojiFromShortcode(':unknown_emoji:'), '');
   // 映射：作者 + 标签节点
   const item = m.mapDiscussion({
     id: 'd1', number: 3, title: 'T', state: 'OPEN', createdAt: '',
@@ -1195,4 +1218,55 @@ test('AppLock：偏好归一化（Spec 066）', async () => {
   assert.equal(m.KEY_APP_LOCK, 'app_lock_enabled');
   assert.equal(m.APP_LOCK_ENABLED_KEY, 'appLockEnabled');
   assert.equal(m.APP_LOCK_LOCKED_KEY, 'appLockLocked');
+});
+
+test('DataColors：感知光感官方公式（无 gamma 解码，DESIGN.md §1.2）', async () => {
+  const m = await import('../../entry/src/main/ets/utils/DataColors');
+  const bug = m.parseHexColor('d73a4a');
+  assert.notEqual(bug, null);
+  // (215*0.2126 + 58*0.7152 + 74*0.0722)/255 = 0.362876…
+  assert.ok(Math.abs(m.perceivedLightness(bug!) - 0.362876) < 0.0001);
+  // 非法输入
+  assert.equal(m.parseHexColor('xyz'), null);
+  assert.equal(m.parseHexColor(''), null);
+  // HSL 往返
+  assert.equal(m.hslToHex(m.rgbToHsl(bug!)), '#D73A4A');
+});
+
+test('DataColors：文字黑白 0.6 阈值（官方移动端口径，10 标签验证集）', async () => {
+  const m = await import('../../entry/src/main/ets/utils/DataColors');
+  // 白字组（PL < 0.6）
+  assert.equal(m.labelTextColor('d73a4a', 'light'), '#FFFFFF'); // bug 0.3629
+  assert.equal(m.labelTextColor('d876e3', 'light'), '#FFFFFF'); // question 0.5753 —— web 端 0.453 会误判黑字的关键样本
+  assert.equal(m.labelTextColor('7057ff', 'light'), '#FFFFFF'); // good first issue 0.4096
+  // 黑字组（PL ≥ 0.6）
+  assert.equal(m.labelTextColor('ededed', 'light'), '#000000'); // dependencies 0.9294
+  assert.equal(m.labelTextColor('a2eeef', 'light'), '#000000'); // enhancement 0.8703
+  assert.equal(m.labelTextColor('ffffff', 'light'), '#000000'); // wontfix 1.0
+});
+
+test('DataColors：亮色实底 / 暗色 18% 透明底', async () => {
+  const m = await import('../../entry/src/main/ets/utils/DataColors');
+  assert.equal(m.labelBackground('d73a4a', 'light'), '#D73A4A');
+  assert.equal(m.labelBackground('d73a4a', 'dark'), 'rgba(215,58,74,0.18)');
+  assert.equal(m.labelBackground('bad', 'light'), 'transparent');
+});
+
+test('DataColors：近白发丝描边（PL>0.96）与暗色 30% 描边', async () => {
+  const m = await import('../../entry/src/main/ets/utils/DataColors');
+  // wontfix #ffffff：PL=1.0 > 0.96 → 同色相 L−25 = #BFBFBF，alpha=0.04 → #0A…
+  assert.equal(m.labelBorder('ffffff', 'light'), '#0ABFBFBF');
+  // dependencies #ededed：PL 0.9294 ≤ 0.96 → 无描边
+  assert.equal(m.labelBorder('ededed', 'light'), '');
+  assert.equal(m.labelBorder('d73a4a', 'light'), '');
+  // 暗色：提亮文字色 30% 透明
+  assert.ok(m.labelBorder('d73a4a', 'dark').startsWith('#4D'));
+});
+
+test('DataColors：暗色提亮公式 lightenBy=(0.6−PL)×100', async () => {
+  const m = await import('../../entry/src/main/ets/utils/DataColors');
+  // d73a4a：PL=0.3629，HSL(353.9°,66.5%,52.7%) → L+23.71=76.45% → #EB9FA6
+  assert.equal(m.labelTextColor('d73a4a', 'dark'), '#EB9FA6');
+  // 近白标签暗色不提亮（switch=0）：保持原色
+  assert.equal(m.labelTextColor('ffffff', 'dark'), '#FFFFFF');
 });

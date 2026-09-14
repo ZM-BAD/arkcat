@@ -2,6 +2,7 @@
  * Issue 列表数据模型与映射（Spec 007）。
  */
 import { Json, JsonMap } from '../utils/Json';
+import { WorkLabel } from './WorkModels';
 
 /** Issue 卡片数据 */
 export interface IssueSummary {
@@ -11,7 +12,8 @@ export interface IssueSummary {
   state: string;
   createdAt: string;
   authorLogin: string;
-  labels: string[];
+  /** 标签（带色：LabelPill 渲染用，DESIGN.md §1.2 数据色） */
+  labels: WorkLabel[];
   commentCount: number;
   linkedPrCount: number;
   assignees: string[];
@@ -25,17 +27,18 @@ export interface IssuesPage {
   hasNextPage: boolean;
   endCursor: string;
   issues: IssueSummary[];
-  repoLabels: string[];
+  /** 仓库标签全集（带色：Label 筛选面板的 LabelPill 渲染用） */
+  repoLabels: WorkLabel[];
 }
 
 /** GraphQL repository.issues 节点 → IssueSummary */
 export function mapIssue(raw: JsonMap): IssueSummary {
   const author = Json.obj(raw, 'author');
   const labelsWrap = Json.obj(raw, 'labels');
-  const labels: string[] = [];
+  const labels: WorkLabel[] = [];
   if (labelsWrap !== null) {
     for (const nodeItem of Json.arr(labelsWrap, 'nodes')) {
-      labels.push(Json.str(nodeItem as JsonMap, 'name'));
+      labels.push({ name: Json.str(nodeItem as JsonMap, 'name'), color: Json.str(nodeItem as JsonMap, 'color') });
     }
   }
   const comments = Json.obj(raw, 'comments');
@@ -82,10 +85,10 @@ export function mapIssuesPage(data: JsonMap): IssuesPage {
     issues.push(mapIssue(nodeItem as JsonMap));
   }
   const labelsWrap = Json.obj(repo, 'labels');
-  const repoLabels: string[] = [];
+  const repoLabels: WorkLabel[] = [];
   if (labelsWrap !== null) {
     for (const nodeItem of Json.arr(labelsWrap, 'nodes')) {
-      repoLabels.push(Json.str(nodeItem as JsonMap, 'name'));
+      repoLabels.push({ name: Json.str(nodeItem as JsonMap, 'name'), color: Json.str(nodeItem as JsonMap, 'color') });
     }
   }
   return {

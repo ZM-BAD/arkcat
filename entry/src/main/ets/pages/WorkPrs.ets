@@ -162,7 +162,7 @@ export struct WorkPrsView {
     ];
   }
 
-  /** PR 状态图标（Spec 024：merged 紫 / open 绿 / closed 灰 / draft 灰 draft 字形，review B9） */
+  /** PR 状态图标（DESIGN.md §10.1：merged 紫 / open 绿 / closed 红 git-pull-request-closed / draft 灰） */
   private prIcon(item: WorkPrItem): Resource {
     if (item.iconKey === 'merged') {
       return $r('app.media.oct_git_merge_16');
@@ -170,14 +170,18 @@ export struct WorkPrsView {
     if (item.iconKey === 'draft') {
       return $r('app.media.oct_git_pull_request_draft_16');
     }
-    return item.iconKey === 'open' ? $r('app.media.oct_git_pull_request_16') : $r('app.media.oct_x_circle_16');
+    return item.iconKey === 'open' ? $r('app.media.oct_git_pull_request_16') : $r('app.media.oct_git_pull_request_closed_16');
   }
 
   private prColor(item: WorkPrItem): ResourceColor {
     if (item.iconKey === 'merged') {
       return $r('app.color.shortcut_purple_fg');
     }
-    return item.iconKey === 'open' ? $r('app.color.success_text') : $r('app.color.text_tertiary');
+    // 官方语义：open=success 绿 / draft=muted 灰 / closed=danger 红
+    if (item.iconKey === 'open') {
+      return $r('app.color.success_text');
+    }
+    return item.iconKey === 'draft' ? $r('app.color.text_secondary') : $r('app.color.danger_text');
   }
 
   /** Checks 胶囊文案（SUCCESS/FAILURE/PENDING；未知静默，图标由 checksIcon 提供） */

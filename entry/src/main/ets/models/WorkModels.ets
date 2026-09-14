@@ -297,7 +297,7 @@ export function discussionSortQualifier(sortKey: string): string {
  * 仓库讨论不应再叠加 author:@me 之类的个人过滤。
  * author/label：Author/Label 筛选 qualifier；label='none' 表示 Unlabeled（no:label）。 */
 export function buildWorkDiscussionsQuery(state: string, scope: string, unanswered: boolean,
-  sortKey: string, repo: string = '', author: string = '', label: string = ''): string {
+  sortKey: string, repo: string = '', author: string = '', label: string = '', category: string = ''): string {
   let query = 'is:discussion';
   if (state === 'open') {
     query += ' is:open';
@@ -317,6 +317,10 @@ export function buildWorkDiscussionsQuery(state: string, scope: string, unanswer
   } else if (label !== '') {
     // 带空格/冒号的标签名需引号包裹
     query += label.match(/[ :]/) !== null ? ` label:"${label}"` : ` label:${label}`;
+  }
+  if (category !== '') {
+    // category: 限定词用分类名本身（大小写不敏感；带空格/冒号需引号包裹，2026-09-14 实测）
+    query += category.match(/[ :]/) !== null ? ` category:"${category}"` : ` category:${category}`;
   }
   if (unanswered) {
     query += ' is:unanswered';
@@ -499,6 +503,73 @@ export function mapRepoLabels(data: JsonMap): RepoLabelItem[] {
     }
   }
   return result;
+}
+
+/** 仓库 Discussion 分类（Category 弹层，Spec 065） */
+export interface RepoCategoryItem {
+  name: string;
+  description: string;
+  /** GitHub shortcode 形式（如 ':mega:'），展示用 unicode 走 emojiFromShortcode */
+  emoji: string;
+}
+
+/** GraphQL discussionCategories 响应 → 分类清单 */
+export function mapRepoCategories(data: JsonMap): RepoCategoryItem[] {
+  const repo = Json.obj(data, 'repository');
+  const result: RepoCategoryItem[] = [];
+  const wrap = repo !== null ? Json.obj(repo, 'discussionCategories') : null;
+  if (wrap !== null) {
+    for (const nodeItem of Json.arr(wrap, 'nodes')) {
+      const c = nodeItem as JsonMap;
+      result.push({
+        name: Json.str(c, 'name'),
+        description: Json.str(c, 'description'),
+        emoji: Json.str(c, 'emoji')
+      });
+    }
+  }
+  return result;
+}
+
+/** GitHub shortcode → unicode emoji（覆盖官方默认六分类与常见项；未命中返回空串） */
+export function emojiFromShortcode(code: string): string {
+  if (code === ':mega:') {
+    return '\u{1F4E3}';
+  }
+  if (code === ':speech_balloon:') {
+    return '\u{1F4AC}';
+  }
+  if (code === ':bulb:') {
+    return '\u{1F4A1}';
+  }
+  if (code === ':ballot_box:') {
+    return '\u{1F5F3}';
+  }
+  if (code === ':pray:') {
+    return '\u{1F64F}';
+  }
+  if (code === ':raised_hands:') {
+    return '\u{1F64C}';
+  }
+  if (code === ':heart:') {
+    return '\u{2764}';
+  }
+  if (code === ':fire:') {
+    return '\u{1F525}';
+  }
+  if (code === ':rocket:') {
+    return '\u{1F680}';
+  }
+  if (code === ':tada:') {
+    return '\u{1F389}';
+  }
+  if (code === ':memo:') {
+    return '\u{1F4DD}';
+  }
+  if (code === ':eyes:') {
+    return '\u{1F440}';
+  }
+  return '';
 }
 
 /** search 响应 → WorkDiscussionsPage */

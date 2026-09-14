@@ -109,6 +109,8 @@ export struct RepoDetailView {
           viewerLogin: detail.viewerLogin,
           issueCount: detail.issueCount,
           prCount: detail.prCount,
+          hasDiscussions: detail.hasDiscussions,
+          discussionCount: detail.discussionCount,
           releaseCount: detail.releaseCount,
           defaultBranchRefName: detail.defaultBranchRefName
         };
@@ -163,6 +165,10 @@ export struct RepoDetailView {
 
   private openPrs(): void {
     this.pathStack.pushPathByName('repoPrs', `${this.owner}/${this.name}`);
+  }
+
+  private openDiscussions(): void {
+    this.pathStack.pushPathByName('repoDiscussions', `${this.owner}/${this.name}`);
   }
 
   private openReleases(): void {
@@ -312,9 +318,11 @@ export struct RepoDetailView {
         .fontWeight(FontWeight.Medium)
         .fontColor($r('app.color.text_primary'))
         .layoutWeight(1)
-      Text(`${count}`)
-        .fontSize($r('app.float.body_font_size'))
-        .fontColor($r('app.color.text_secondary'))
+      if (count >= 0) {
+        Text(`${count}`)
+          .fontSize($r('app.float.body_font_size'))
+          .fontColor($r('app.color.text_secondary'))
+      }
     }
     .width('100%')
     .height(48)
@@ -549,7 +557,13 @@ export struct RepoDetailView {
                 Divider().color($r('app.color.divider')).margin({ left: 72 })
                 this.countRow($r('app.media.oct_git_pull_request_16'), $r('app.color.link_blue'), $r('app.string.repo_pr_link'), this.detail.prCount, () => this.openPrs())
                 Divider().color($r('app.color.divider')).margin({ left: 72 })
-                this.countRow($r('app.media.oct_play_16'), $r('app.color.star_gold'), $r('app.string.repo_actions'), 0, () => this.comingSoon())
+                if (this.detail.hasDiscussions) {
+                  // 仓库开启 Discussions 才显示（icon 与 Home 页 Discussions 同款，官方顺序在 PRs 与 Actions 之间）
+                  this.countRow($r('app.media.oct_comment_discussion_16'), $r('app.color.shortcut_purple_fg'), $r('app.string.repo_discussions'), this.detail.discussionCount, () => this.openDiscussions())
+                  Divider().color($r('app.color.divider')).margin({ left: 72 })
+                }
+                // Actions 无对应 API：行内不显示数字（countRow 负数哨兵=无计数）
+                this.countRow($r('app.media.oct_play_16'), $r('app.color.star_gold'), $r('app.string.repo_actions'), -1, () => this.comingSoon())
                 Divider().color($r('app.color.divider')).margin({ left: 72 })
                 this.countRow($r('app.media.oct_tag_16'), $r('app.color.work_dark_bg'), $r('app.string.repo_releases'), this.detail.releaseCount, () => this.openReleases())
               }

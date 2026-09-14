@@ -6,8 +6,9 @@
  * 聚合页 compact=true（无徽章行）；单类页 compact=false。
  */
 import { OctIcon } from './OctIcon';
+import { LabelPill } from './LabelPill';
 import { compactCount, timeParts, githubShortTime } from '../utils/Format';
-import { SearchResultItem, SearchLabel, isLightHexColor } from '../services/SearchService';
+import { SearchResultItem, SearchLabel } from '../services/SearchService';
 import { resText } from '../utils/I18n';
 
 function shortTime(iso: string): string {
@@ -98,16 +99,32 @@ export struct IssuePrSearchRow {
     return this.item?.kind === 'pr';
   }
 
-  /** label 胶囊：GraphQL color 为底、白/黑文字（浅色 label 恒用固定深色字，不随主题——review F3） */
+  /** 状态图标/色（DESIGN.md §10.1 官方映射；搜索结果无 stateReason/draft 数据，按三态处理） */
+  private stateIcon(): Resource {
+    if (this.isPr()) {
+      if (this.item?.state === 'MERGED') {
+        return $r('app.media.oct_git_merge_16');
+      }
+      return this.item?.state === 'CLOSED' ? $r('app.media.oct_git_pull_request_closed_16')
+        : $r('app.media.oct_git_pull_request_16');
+    }
+    return this.item?.state === 'CLOSED' ? $r('app.media.oct_issue_closed_16') : $r('app.media.oct_issue_opened_16');
+  }
+
+  private stateColor(): ResourceColor {
+    if (this.isPr()) {
+      if (this.item?.state === 'MERGED') {
+        return $r('app.color.shortcut_purple_fg');
+      }
+      return this.item?.state === 'CLOSED' ? $r('app.color.danger_text') : $r('app.color.success_text');
+    }
+    return this.item?.state === 'CLOSED' ? $r('app.color.shortcut_purple_fg') : $r('app.color.success_text');
+  }
+
+  /** label 胶囊：统一走 LabelPill（官方 IssueLabel 口径，DESIGN.md §10.2） */
   @Builder
   labelPill(label: SearchLabel) {
-    Text(label.name)
-      .fontSize(12)
-      .fontWeight(FontWeight.Medium)
-      .fontColor(isLightHexColor(label.color) ? $r('app.color.label_light_fg') : Color.White)
-      .padding({ left: 10, right: 10, top: 4, bottom: 4 })
-      .borderRadius(12)
-      .backgroundColor(`#${label.color}`)
+    LabelPill({ labelName: label.name, colorHex: label.color })
   }
 
   @Builder
@@ -156,9 +173,9 @@ export struct IssuePrSearchRow {
   build() {
     Row({ space: 12 }) {
       OctIcon({
-        res: this.isPr() ? $r('app.media.oct_git_pull_request_16') : $r('app.media.oct_issue_opened_16'),
+        res: this.stateIcon(),
         iconSize: 24,
-        iconColor: $r('app.color.success_text')
+        iconColor: this.stateColor()
       })
       Column({ space: 5 }) {
         Row({ space: 8 }) {

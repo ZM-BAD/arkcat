@@ -36,8 +36,13 @@ export interface RepoDetail {
   ownerLogin: string;
   /** 当前登录者 login（stargazers 入口按归属分流：仅本人仓库可见，Spec 053） */
   viewerLogin: string;
+  /** Issues/PRs 行计数（=列表页默认筛选 State=Open 下的数量，2026-09-14 官方口径） */
   issueCount: number;
   prCount: number;
+  /** 仓库是否开启 Discussions（开启才显示 Discussions 行） */
+  hasDiscussions: boolean;
+  /** Discussions 总数（行右侧计数） */
+  discussionCount: number;
   releaseCount: number;
   defaultBranchRefName: string;
 }
@@ -104,8 +109,10 @@ export function mapRepoDetail(data: JsonMap): RepoDetail {
   const owner = Json.obj(repo, 'owner');
   const viewer = Json.obj(data, 'viewer');
   const viewerLogin = viewer ? Json.str(viewer, 'login') : '';
-  const issues = Json.obj(repo, 'issues');
-  const prs = Json.obj(repo, 'pullRequests');
+  // Issues/PRs 行计数 = 列表页默认筛选（State=Open）下的数量（openIssues/openPullRequests，2026-09-14）
+  const issues = Json.obj(repo, 'openIssues');
+  const prs = Json.obj(repo, 'openPullRequests');
+  const discussions = Json.obj(repo, 'discussions');
   const releasesRaw = Json.obj(repo, 'releases');
   const releaseCount = releasesRaw !== null ? Json.num(releasesRaw, 'totalCount') : 0;
   return {
@@ -128,6 +135,8 @@ export function mapRepoDetail(data: JsonMap): RepoDetail {
     viewerLogin: viewerLogin,
     issueCount: issues ? Json.num(issues, 'totalCount') : 0,
     prCount: prs ? Json.num(prs, 'totalCount') : 0,
+    hasDiscussions: Json.bool(repo, 'hasDiscussionsEnabled'),
+    discussionCount: discussions !== null ? Json.num(discussions, 'totalCount') : 0,
     releaseCount: releaseCount,
     defaultBranchRefName: branch ? Json.str(branch, 'name') : 'main'
   };

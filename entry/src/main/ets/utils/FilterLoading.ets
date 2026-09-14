@@ -12,6 +12,12 @@
 export const AUTO_LOAD_MAX_EXTRA_PAGES = 5;
 
 /**
+ * 「空值」筛选哨兵（No milestone / Assigned to nobody，2026-09-14 官方口径）。
+ * 值用双下划线：GitHub 登录名不允许下划线，不会与真实候选值冲突。
+ */
+export const NONE_FILTER_KEY = '__none__';
+
+/**
  * 是否应继续自动补拉。
  * @param visibleCount 当前过滤后可见条数
  * @param hasNextPage 服务端是否还有下一页
