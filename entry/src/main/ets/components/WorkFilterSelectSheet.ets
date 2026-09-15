@@ -49,7 +49,7 @@ export struct WorkFilterSelectSheet {
     Column() {
       Blank()
       Text($r('app.string.work_filter_nothing'))
-        .fontSize(20)
+        .fontSize($r('app.float.title_font_size'))
         .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
       Blank()

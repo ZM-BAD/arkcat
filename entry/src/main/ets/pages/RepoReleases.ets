@@ -152,12 +152,12 @@ export struct RepoReleasesView {
             // 最新版本头卡：标题=name（1.3.2），左对齐（走查修正二轮）
             Column({ space: 8 }) {
               Text(this.releases[0].name !== '' ? this.releases[0].name : this.releases[0].tagName)
-                .fontSize(32)
+                .fontSize($r('app.float.title_large_font_size'))
                 .fontWeight(600)
                 .fontColor($r('app.color.text_primary'))
               if (this.releases[0].isLatest) {
                 Text($r('app.string.releases_latest'))
-                  .fontSize(12)
+                  .fontSize($r('app.float.caption_font_size'))
                   .fontColor($r('app.color.success_text'))
                   .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                   .borderRadius(6)
@@ -175,7 +175,7 @@ export struct RepoReleasesView {
                 // 官方布局：作者名黑体 + released this + 具体日期（月名+日，走查修正六轮）
                 Text(this.releases[0].authorLogin)
                   .fontSize($r('app.float.caption_font_size'))
-                  .fontWeight(FontWeight.Bold)
+                  .fontWeight(FontWeight.Bold) // typography-exempt 走查定案：作者名黑体
                   .fontColor($r('app.color.text_primary'))
                 Text(resText(this.getUIContext(), $r('app.string.releases_released_this'),
                   monthDayText(this.releases[0].createdAt)))

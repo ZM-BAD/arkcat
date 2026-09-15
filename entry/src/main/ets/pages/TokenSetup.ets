@@ -168,7 +168,7 @@ export struct TokenSetup {
 
       Row({ space: 8 }) {
         Text(this.oauthInfo?.userCode ?? '')
-          .fontSize(24)
+          .fontSize(24) // typography-exempt OAuth user code 展示位
           .fontFamily('monospace')
           .fontWeight(600)
           .fontColor($r('app.color.text_primary'))

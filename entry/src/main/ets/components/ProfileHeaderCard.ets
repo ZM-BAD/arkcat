@@ -334,7 +334,7 @@ export struct ProfileHeaderCard {
       Row({ space: 8 }) {
         OctIcon({ res: $r('app.media.oct_plus_24'), iconSize: 16, iconColor: $r('app.color.link_blue') })
         Text($r('app.string.accounts_add'))
-          .fontSize(16)
+          .fontSize($r('app.float.sub_text_font_size'))
           .fontWeight(500)
           .fontColor($r('app.color.link_blue'))
       }

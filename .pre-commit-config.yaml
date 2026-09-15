@@ -55,6 +55,13 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
+      - id: hardcoded-fontsize
+        name: 禁止硬编码字号/字重（走 float.json；字重上限 600）
+        entry: python3 scripts/check-hardcoded-fontsize.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
       - id: ut-run
         name: 单元测试（宿主 node:test，esbuild 打包 ArkTS 纯函数链）
         entry: bash scripts/ut/run-local-tests.sh

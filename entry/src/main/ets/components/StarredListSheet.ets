@@ -90,7 +90,7 @@ export struct StarredListSheet {
           ForEach(STARRED_SUGGESTIONS, (item: Resource, index: number) => {
             Row({ space: 14 }) {
               Text(this.suggestionEmoji(index))
-                .fontSize(20)
+                .fontSize($r('app.float.title_font_size'))
               Text(this.stringOf(item))
                 .fontSize($r('app.float.body_font_size'))
                 .fontColor($r('app.color.text_primary'))

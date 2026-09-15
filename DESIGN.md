@@ -75,7 +75,8 @@ GitHub API 返回一批**数据色**：仓库标签 `label.color`、语言 `lang
 | 级别 | 字号/行高 | 字重 | 用途 |
 | --- | --- | --- | --- |
 | title-large | 32 / 48 | 600 | Hero 大字（特例，如 Release 版本号）；**页面标题走 title-medium 20** |
-| title-medium | 20 / 32 | 600 | 区块标题（Home/Files 等） |
+| title-medium | 20 / 32 | 600 | 页面标题 |
+| section-title | 18 / 28 | 600 | 区块标题（Home My Work/Favorites/Shortcuts 等；官方 App 实测层级：页头 > 区块头，2026-09-15 走查修正） |
 | body-large | 16 / 24 | 400 | 正文（强调处 500） |
 | body-medium | 14 / 20 | 400 | **默认正文**（列表/卡片主文本） |
 | caption | 12 / 16 | 400 | 标签、辅助文字、时间 |
@@ -83,6 +84,45 @@ GitHub API 返回一批**数据色**：仓库标签 `label.color`、语言 `lang
 - 现有 `resources/base/element/float.json` 的 `title/body/caption_font_size` 与此对应（已统一为 20/14/12）
 - 字体栈：HarmonyOS 默认（`HarmonyOS Sans`），**代码/行号用等宽**（`monospace`）
 - 行高对齐 4px 网格（1.5 倍字号即可）
+
+### 3.1 字号档位与官方出处（2026-09-15 补）
+
+官方 Primer 字号刻度（[primitives/typography](https://primer.style/product/primitives/typography/)）：
+xs **12** / sm **14** / md **16** / lg **20** / xl **32** / 2xl **40**（16px 根换算）；代码块固定 **13**。
+ArkCat 全量对应该刻度，落 `float.json`：
+
+| float token | fp | 官方档 | 用途 |
+| --- | --- | --- | --- |
+| `caption_font_size` | 12 | xs | 辅助文字、时间、chip 计数 |
+| `body_font_size` | 14 | sm | 默认正文（列表/卡片主文本） |
+| `code_font_size` | 13 | 官方代码块固定 13 | 代码片段/摘要等宽段 |
+| `sub_text_font_size` | 16 | md | 正文强调、次级标题 |
+| `chip_font_size` | 15 | 移动端官方 App 实测 | 筛选 chip（勿按 web 16 修正） |
+| `menu_font_size` | 17 | 移动端官方 App 实测（iOS body 档） | 弹层菜单行 |
+| `title_font_size` / `page_text_font_size` | 20 | lg | 页面标题 |
+| `section_title_font_size` | 18 | 官方 App 实测 | 区块标题（低于页面标题；Primer 无区域规定，以实测为准） |
+| `title_large_font_size` | 32 | xl | Hero 大字（Release 版本号） |
+
+**规则**：页面禁写 `fontSize(<数字>)` 字面量——`scripts/check-hardcoded-fontsize.py` 门禁已落地
+（pre-commit + CI），豁免行内标注 `// typography-exempt`；新增字号先落 token 再用。
+**装饰字形例外**：emoji 载体（空态大 emoji、reaction emoji、分类 emoji）与 OAuth user code 展示位
+不是常规排版文本，按容器视觉取值（40/30/24/22/32 等），不进排版刻度、不受本条约束。
+
+### 3.2 字重官方档（2026-09-15 补）
+
+官方字重（同上出处）：light **300** / normal **400** / medium **500** / semibold **600**——**没有 700 档**；
+web 端所有标题/强调上限即 semibold 600。ArkCat 对应：
+
+| 场景 | 字重 |
+| --- | --- |
+| 标题（页面/区块/Hero） | **600**（写数字 `fontWeight(600)`，`FontWeight.Bold`=700 禁用） |
+| 次强调/列表主文本 | 500（`FontWeight.Medium`） |
+| 正文/辅助 | 400（默认） |
+| 走查定案例外 | Release 详情/列表「作者名黑体」`FontWeight.Bold`、成就 Share 钮 Bold（2026-09-12~14 走查修正定案，勿回退） |
+
+- 同一脚本一并拦截 `FontWeight.Bold`/`fontWeight(700)`（豁免同上：行内 `// typography-exempt`）。
+
+- 层级不靠颜色硬撑：**勿把颜色作为主要强调手段**（官方 Typography 准则），层级优先用 字号/字重/布局 表达。
 
 ## 4. 圆角（Border Radius）
 
@@ -126,6 +166,26 @@ GitHub API 返回一批**数据色**：仓库标签 `label.color`、语言 `lang
 - 生产资源：`resources/base/media/oct_*.svg` 按需复制（命名 `oct_<name>_<size>.svg`）
 - 渲染必须走 `OctIcon` 组件（统一尺寸/着色）；`fillColor` 等价 `fill="currentColor"` 语义；颜色用语义令牌
 - 品牌红线：不引入 GitHub 官方插画/logo（见成就徽章规范）
+
+### 9.1 图标尺寸（2026-09-15 补）
+
+官方规则（[octicons 设计规范](https://primer.style/octicons/design-guidelines)）：
+每字形出 **16 与 24 两个设计版本**（各自网格、1.5px 统一描边）；**12 仅当 16 放不下才做**
+（如行内小勾、chip 计数位）。图标色跟随语义令牌（`fill=currentColor`），不用彩色图标表达状态
+（状态=字形+语义色，见 §10.1）。
+
+ArkCat 渲染档位（官方 App 实测 + 已走查定案，**新增图标必须取以下档位，禁发明新值**）：
+
+| 档位 | 用途 | 出处 |
+| --- | --- | --- |
+| 12 | chip 计数位、行内微图标（comment/eye/star 计数） | 官方 12 例外档 |
+| 14 | 标签行/紧凑行内 | 实测 |
+| 16 | 列表行、面板行、弹层选项（默认行内档） | 官方 16 主档 |
+| 18 | 弹层双态标题行（✕/←/🔍） | 实测 |
+| 20 | 顶栏/工具栏图标（App Bar 统一口径） | spec 067 |
+| 22 | 列表行主状态图标（issue/PR 状态） | 实测 |
+| 24 | 大按钮/空态/导航级 | 官方 24 主档 |
+| 例外 | 实底徽标内嵌白图标 10/15（A 口径）、成就时间线 dot 10、文件大图标 36 | 走查定案，勿扩散 |
 
 ## 10. 组件级官方规范（跨页面原语）
 

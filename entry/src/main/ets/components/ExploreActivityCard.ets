@@ -82,17 +82,17 @@ export struct ExploreActivityCard {
         Column({ space: 1 }) {
           Row({ space: 3 }) {
             Text(this.event.authorLogin)
-              .fontSize(14)
+              .fontSize($r('app.float.body_font_size'))
               .fontWeight(600)
               .fontColor($r('app.color.text_primary'))
             Text(this.stringOf($r('app.string.explore_contributed_to')))
-              .fontSize(14)
+              .fontSize($r('app.float.body_font_size'))
               .fontColor($r('app.color.text_secondary'))
           }
           .onClick(() => this.onOpenUser())
 
           Text(this.event.repoFullName)
-            .fontSize(14)
+            .fontSize($r('app.float.body_font_size'))
             .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
             .maxLines(1)
@@ -119,7 +119,7 @@ export struct ExploreActivityCard {
         Row({ space: 6 }) {
           OctIcon({ res: $r('app.media.oct_repo_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
           Text(this.event.repoFullName)
-            .fontSize(14)
+            .fontSize($r('app.float.body_font_size'))
             .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
             .maxLines(1)
@@ -131,7 +131,7 @@ export struct ExploreActivityCard {
           // 标题 + 徽章行（进 PR 详情）：Merged 徽章靠左，分支行 origin -> target 横向可滑
           Column({ space: 8 }) {
             Text(this.event.title)
-              .fontSize(16)
+              .fontSize($r('app.float.sub_text_font_size'))
               .fontWeight(600)
               .fontColor($r('app.color.text_primary'))
               .width('100%')
@@ -142,7 +142,7 @@ export struct ExploreActivityCard {
                   Row({ space: 4 }) {
                     OctIcon({ res: $r('app.media.oct_git_merge_16'), iconSize: 12, iconColor: Color.White })
                     Text($r('app.string.pr_merged_badge'))
-                      .fontSize(12)
+                      .fontSize($r('app.float.caption_font_size'))
                       .fontColor(Color.White)
                   }
                   .padding({ left: 8, right: 8, top: 3, bottom: 3 })
@@ -151,7 +151,7 @@ export struct ExploreActivityCard {
                 }
                 if (this.event.headRef !== '') {
                   Text(this.event.headRef)
-                    .fontSize(12)
+                    .fontSize($r('app.float.caption_font_size'))
                     .fontColor($r('app.color.shortcut_blue_fg'))
                     .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                     .borderRadius(2)
@@ -159,12 +159,12 @@ export struct ExploreActivityCard {
                 }
                 if (this.event.headRef !== '' && this.event.baseRef !== '') {
                   Text('->')
-                    .fontSize(12)
+                    .fontSize($r('app.float.caption_font_size'))
                     .fontColor($r('app.color.text_secondary'))
                 }
                 if (this.event.baseRef !== '') {
                   Text(this.event.baseRef)
-                    .fontSize(12)
+                    .fontSize($r('app.float.caption_font_size'))
                     .fontColor($r('app.color.shortcut_blue_fg'))
                     .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                     .borderRadius(2)
@@ -204,7 +204,7 @@ export struct ExploreActivityCard {
   summarySection() {
     Column({ space: 6 }) {
       Text($r('app.string.explore_summary'))
-        .fontSize(18)
+        .fontSize($r('app.float.section_title_font_size'))
         .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
         .width('100%')
@@ -223,7 +223,7 @@ export struct ExploreActivityCard {
             })
           Row({ space: 2 }) {
             Text($r('app.string.explore_read_more'))
-              .fontSize(13)
+              .fontSize($r('app.float.code_font_size'))
               .fontColor($r('app.color.text_primary'))
             OctIcon({ res: $r('app.media.oct_chevron_right_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
           }
@@ -257,13 +257,13 @@ export struct ExploreActivityCard {
           Text() {
             ForEach(line.segments, (seg: SummarySegment) => {
               Span(seg.text)
-                .fontSize(seg.isCode ? 13 : 14)
+                .fontSize(seg.isCode ? $r('app.float.code_font_size') : $r('app.float.body_font_size'))
                 .fontColor($r('app.color.text_primary'))
                 .fontFamily(seg.isCode ? 'monospace' : 'HarmonyOS Sans')
                 .backgroundColor(seg.isCode ? $r('app.color.chip_bg') : Color.Transparent)
             }, (seg: SummarySegment, sIdx: number) => `${idx}_${sIdx}`)
           }
-          .fontSize(14)
+          .fontSize($r('app.float.body_font_size'))
           .lineHeight(20)
           .layoutWeight(1)
         }

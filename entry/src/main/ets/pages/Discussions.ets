@@ -588,7 +588,7 @@ export struct DiscussionsView {
               ForEach(this.shownCategories(), (c: RepoCategoryItem) => {
                 Row({ space: 12 }) {
                   Text(emojiFromShortcode(c.emoji))
-                    .fontSize(22)
+                    .fontSize(22) // typography-exempt 分类 emoji
                     .width(32)
                   Column({ space: 2 }) {
                     Text(c.name)
@@ -812,7 +812,7 @@ export struct DiscussionsView {
                 })
                 Stack() {
                   Text(`${this.activeFilterCount()}`)
-                    .fontSize(12)
+                    .fontSize($r('app.float.caption_font_size'))
                     .fontColor(Color.White)
                 }
                 .width(18)

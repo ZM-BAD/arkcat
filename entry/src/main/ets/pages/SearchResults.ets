@@ -249,7 +249,7 @@ export struct SearchResultsView {
           .borderRadius(12)
           .backgroundColor($r('app.color.text_tertiary'))
         Text(g.repoFullName)
-          .fontSize(16)
+          .fontSize($r('app.float.sub_text_font_size'))
           .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
           .maxLines(1)
@@ -263,7 +263,7 @@ export struct SearchResultsView {
       ForEach(g.files, (f: CodeFileResult) => {
         Column() {
           Text(f.name)
-            .fontSize(16)
+            .fontSize($r('app.float.sub_text_font_size'))
             .fontWeight(600)
             .fontColor($r('app.color.text_primary'))
             .maxLines(1)

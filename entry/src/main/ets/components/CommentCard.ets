@@ -49,7 +49,7 @@ export struct CommentCard {
           .fontColor($r('app.color.text_secondary'))
         if (this.comment.viewerDidAuthor) {
           Text('⋯')
-            .fontSize(16)
+            .fontSize($r('app.float.sub_text_font_size'))
             .fontColor($r('app.color.text_secondary'))
             .width(28)
             .height(28)

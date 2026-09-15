@@ -46,7 +46,7 @@ export struct PrStatusCard {
   @Builder
   sectionTitle(text: string) {
     Text(text)
-      .fontSize(16)
+      .fontSize($r('app.float.sub_text_font_size'))
       .fontWeight(600)
       .fontColor($r('app.color.text_primary'))
       .width('100%')

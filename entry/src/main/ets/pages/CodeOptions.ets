@@ -223,7 +223,7 @@ export struct CodeOptionsView {
           if (this.overrideFont) {
             Row({ space: 12 }) {
               Text('A')
-                .fontSize(12)
+                .fontSize($r('app.float.caption_font_size'))
                 .fontColor($r('app.color.text_secondary'))
               Slider({ value: this.font, min: FONT_MIN, max: FONT_MAX, step: 1 })
                 .layoutWeight(1)
@@ -233,7 +233,7 @@ export struct CodeOptionsView {
                   this.saveSetting('code_font_size', value);
                 })
               Text('A')
-                .fontSize(20)
+                .fontSize($r('app.float.title_font_size'))
                 .fontColor($r('app.color.text_secondary'))
             }
             .width('100%')
@@ -254,7 +254,7 @@ export struct CodeOptionsView {
               OctIcon({ res: $r('app.media.oct_chevron_down_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
               Scroll() {
                 Text(SAMPLE_PATH)
-                  .fontSize(14)
+                  .fontSize($r('app.float.body_font_size'))
                   .fontColor($r('app.color.text_primary'))
               }
               .scrollable(ScrollDirection.Horizontal)

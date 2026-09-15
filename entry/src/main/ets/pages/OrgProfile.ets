@@ -134,7 +134,7 @@ export struct OrgProfileView {
           if (org.twitterUsername !== '') {
             Row({ space: 6 }) {
               Text('𝕏')
-                .fontSize(14)
+                .fontSize($r('app.float.body_font_size'))
                 .fontColor($r('app.color.text_secondary'))
               Text(`@${org.twitterUsername}`)
                 .fontSize($r('app.float.caption_font_size'))

@@ -193,7 +193,7 @@ export struct FilterSheetChip {
       if (this.badgeCount > 0) {
         Stack() {
           Text(`${this.badgeCount}`)
-            .fontSize(12)
+            .fontSize($r('app.float.caption_font_size'))
             .fontColor(Color.White)
         }
         .width(18)

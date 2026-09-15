@@ -328,7 +328,7 @@ export struct AchievementDetailView {
               .width('100%')
               .height(44)
               .fontSize($r('app.float.caption_font_size'))
-              .fontWeight(FontWeight.Bold)
+              .fontWeight(FontWeight.Bold) // typography-exempt 走查定案：Share 钮 Bold
               .fontColor(Color.White)
               .backgroundColor(Color.Transparent)
               .borderRadius($r('app.float.button_radius'))

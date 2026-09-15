@@ -15,11 +15,11 @@ export struct WorkEmptyView {
     Column({ space: 12 }) {
       if (this.iconText !== '') {
         Text(this.iconText)
-          .fontSize(40)
+          .fontSize(40) // typography-exempt 空态大 emoji（DESIGN.md §3.1 装饰字形）
           .margin({ top: 24 })
       }
       Text(this.title)
-        .fontSize(20)
+        .fontSize($r('app.float.title_font_size'))
         .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
         .textAlign(TextAlign.Center)

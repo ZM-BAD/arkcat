@@ -641,7 +641,7 @@ export struct IssuesListView {
                 })
                 Stack() {
                   Text(`${this.activeFilterCount()}`)
-                    .fontSize(12)
+                    .fontSize($r('app.float.caption_font_size'))
                     .fontColor(Color.White)
                 }
                 .width(18)

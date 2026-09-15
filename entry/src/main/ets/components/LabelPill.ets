@@ -41,7 +41,7 @@ export struct LabelPill {
     // 固定高度 + Row 默认垂直居中（ArkUI 的 lineHeight 行框会把字形顶偏，勿用 lineHeight 撑高）
     Row() {
       Text(this.labelName)
-        .fontSize(12)
+        .fontSize($r('app.float.caption_font_size'))
         // 官方 semibold≈600（PrimerTokens.FONT_WEIGHT_SEMIBOLD；ArkUI 无 Semibold 枚举，用数值）
         .fontWeight(600)
         .maxLines(1)

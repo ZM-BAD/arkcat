@@ -156,7 +156,7 @@ export struct AccountsView {
       Row({ space: 12 }) {
         OctIcon({ res: $r('app.media.oct_plus_24'), iconSize: 18, iconColor: $r('app.color.link_blue') })
         Text($r('app.string.accounts_add'))
-          .fontSize(16)
+          .fontSize($r('app.float.sub_text_font_size'))
           .fontWeight(500)
           .fontColor($r('app.color.link_blue'))
         Blank()
@@ -178,7 +178,7 @@ export struct AccountsView {
       Row({ space: 12 }) {
         OctIcon({ res: $r('app.media.oct_sign_out_16'), iconSize: 16, iconColor: $r('app.color.badge_red') })
         Text($r('app.string.accounts_sign_out_all'))
-          .fontSize(16)
+          .fontSize($r('app.float.sub_text_font_size'))
           .fontWeight(600)
           .fontColor($r('app.color.badge_red'))
         Blank()

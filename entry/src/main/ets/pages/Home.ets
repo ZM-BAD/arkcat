@@ -170,7 +170,7 @@ export struct HomeView {
   myWorkSection() {
     Row() {
       Text($r('app.string.home_my_work'))
-        .fontSize(18)
+        .fontSize($r('app.float.section_title_font_size'))
         .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
       Blank()
@@ -217,7 +217,7 @@ export struct HomeView {
   @Builder
   favoritesSection() {
     Text($r('app.string.home_favorites'))
-      .fontSize(18)
+      .fontSize($r('app.float.section_title_font_size'))
       .fontWeight(600)
       .fontColor($r('app.color.text_primary'))
       .width('100%')
@@ -250,7 +250,7 @@ export struct HomeView {
   @Builder
   shortcutsSection() {
     Text($r('app.string.home_shortcuts'))
-      .fontSize(18)
+      .fontSize($r('app.float.section_title_font_size'))
       .fontWeight(600)
       .fontColor($r('app.color.text_primary'))
       .width('100%')

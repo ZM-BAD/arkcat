@@ -142,7 +142,7 @@ export struct ListDetailView {
           .fontColor($r('app.color.text_primary'))
         if (repo.language !== '') {
           Text('●')
-            .fontSize(12)
+            .fontSize($r('app.float.caption_font_size'))
             .fontColor(repo.languageColor !== '' ? repo.languageColor : $r('app.color.text_secondary'))
           Text(repo.language)
             .fontSize($r('app.float.caption_font_size'))

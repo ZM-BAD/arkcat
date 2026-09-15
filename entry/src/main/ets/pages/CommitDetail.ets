@@ -179,7 +179,7 @@ export struct CommitDetailView {
   statsCard() {
     Column({ space: 4 }) {
       Text(resText(this.getUIContext(), $r('app.string.pr_files_changed'), this.detail !== null ? this.detail.files.length : 0))
-        .fontSize(16)
+        .fontSize($r('app.float.sub_text_font_size'))
         .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
       Row({ space: 12 }) {
@@ -337,7 +337,7 @@ export struct CommitDetailView {
                   .backgroundColor($r('app.color.heat_empty'))
               }
               Text(this.detail.authorLogin)
-                .fontSize(16)
+                .fontSize($r('app.float.sub_text_font_size'))
                 .fontColor($r('app.color.text_primary'))
             }
             .width('100%')

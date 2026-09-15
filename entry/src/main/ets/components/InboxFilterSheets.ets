@@ -64,7 +64,7 @@ export struct InboxFilterSheet {
     Row() {
       if ($$.emoji !== '') {
         Text($$.emoji)
-          .fontSize(24)
+          .fontSize(24) // typography-exempt 通知类型 emoji
           .width(32)
           .textAlign(TextAlign.Center)
           .margin({ right: 8 })
