@@ -35,6 +35,8 @@
 
 **核心原则**：用过 GitHub 官方 APP 的用户，打开 ArkCat 立即感受到「这就是换皮」，但底层全部使用纯血鸿蒙原生 ArkUI 组件。
 
+> **合规优先**：复刻在满足中国法律法规与上架合规要求（App 备案、内容合规等）的前提下进行；因合规必须的偏离逐项记录在对应 Spec 中。
+
 ---
 
 ## 🏗 技术方案
@@ -50,20 +52,21 @@
 - **架构：纯端侧直连 GitHub GraphQL API**，无 BFF/后端服务
 - 认证方式：**GitHub OAuth Device Flow**（主登录路径）+ PAT 兼容（客户端本地存储）
 - 路由：**Navigation**（`NavPathStack` + `navDestination`；二级页自绘 AppBar）
-- GraphQL Client：纯手工封装（自研轻量 GraphQL Client）
+- GraphQL Client：协议中立的可复用 HAR 库（[`graphql/`](graphql/)，使用规范见 [docs/graphql-usage.md](docs/graphql-usage.md)）
 
 ---
 
 ## ✨ 功能一览
 
-- **Home**：My Work 分区工作区（Issues / PRs / Discussions / Projects / Top Repos / Organizations / Starred，支持编辑排序与可见性）
+- **Home**：My Work 分区工作区（Issues / PRs / Discussions / Projects / Top Repos / Organizations / Starred，支持编辑排序与可见性，收藏与快捷方式个性化）
 - **Inbox**：通知收件箱（类型 / 仓库 / 视图筛选、阅读态、合并 PR 检测）
 - **Explore**：Trending / Awesome（语言、时间窗、口语筛选）
 - **个人主页**：账号页（仓库 / 星标 / 组织，多账号切换；底栏头像入口）
 - **仓库**：详情、PR / Commits / Releases 列表、Contributors / Watchers / License、README 与 Markdown 渲染、Stargazers / Forks、成就徽章
-- **PR**：详情、Files Changed（diff hunk、行号开关、Reviewed 勾选、文件评论）、提交列表、Checks / Reviews
-- **Issue**：详情、评论、反应（emoji 面板 / Reactees）、标签筛选
+- **PR**：详情、Files Changed（diff hunk、行号开关、Reviewed 勾选、文件评论）、提交列表、Checks / Reviews、审阅线程（评论 / 批准 / 请求修改）与合并（squash / merge / rebase）
+- **Issue**：详情、创建与编辑、评论、反应（emoji 面板 / Reactees）、标签筛选
 - **搜索**：六类结果（Code / Repos / Issues / PRs / People / Orgs）、qualifier 快捷词、最近搜索
+- **创建**：Issue / PR 创建表单（模板、元数据 chips）、两步建仓（名称可用性检查、README / .gitignore / license）
 - **全局**：三态暗黑模式、中英双语、GitHub Primer 视觉、下拉刷新与触底加载、GitHub 相对时间
 
 > 各功能详细设计与进度见 [`specs/`](specs/)（完整索引：[specs/README.md](specs/README.md)）。
@@ -115,5 +118,5 @@ devecocli build                   # 构建 debug HAP
 
 版权所有 © 2026 周铭
 
-- 项目代码：[GPL-3.0](./LICENSE)
+- 项目代码：[GPL-3.0-only](./LICENSE)
 - 图标（Octicons，位于 [`assets/octicons/`](assets/octicons/README.md)）：MIT 许可 —— 详见 [`assets/octicons/LICENSE`](assets/octicons/LICENSE)

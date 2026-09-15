@@ -35,6 +35,8 @@
 
 **Core Principle**: Users who've used the official GitHub APP will open ArkCat and immediately feel "this is a reskin", but underneath it's all native Pure HarmonyOS ArkUI components.
 
+> **Compliance first**: the recreation is carried out within the bounds of Chinese laws and app-store requirements (ICP filing, content compliance); compliance-driven deviations are documented per feature in [`specs/`](specs/).
+
 ---
 
 ## 🏗 Technical Solution
@@ -50,20 +52,21 @@
 - **Architecture: Client-side direct connection to GitHub GraphQL API**, no BFF/backend
 - Auth: **GitHub OAuth Device Flow** (primary login) with PAT compatibility (stored locally)
 - Routing: **Navigation** (`NavPathStack` + `navDestination`; secondary pages use self-drawn AppBar)
-- GraphQL Client: Hand-rolled lightweight implementation
+- GraphQL Client: Protocol-neutral reusable HAR library ([`graphql/`](graphql/), usage guide in [docs/graphql-usage.md](docs/graphql-usage.md))
 
 ---
 
 ## ✨ Features
 
-- **Home**: My Work workspace (Issues / PRs / Discussions / Projects / Top Repos / Organizations / Starred — editable order & visibility)
+- **Home**: My Work workspace (Issues / PRs / Discussions / Projects / Top Repos / Organizations / Starred — editable order & visibility, Favorites & Shortcuts personalization)
 - **Inbox**: notification inbox (type / repository / view filters, read state, merged-PR detection)
 - **Explore**: Trending / Awesome (language, date window, spoken-language filters)
 - **Profile**: account page (repositories / starred / organizations, multi-account switching; bottom-bar avatar entry)
 - **Repositories**: detail, PR / Commits / Releases lists, Contributors / Watchers / License, README & Markdown rendering, Stargazers / Forks, achievement badges
-- **Pull Requests**: detail, Files Changed (diff hunks, line numbers toggle, reviewed checkboxes, file comments), commits, Checks / Reviews
-- **Issues**: detail, comments, reactions (emoji panel / Reactees), label filters
+- **Pull Requests**: detail, Files Changed (diff hunks, line numbers toggle, reviewed checkboxes, file comments), commits, Checks / Reviews, review threads (comment / approve / request changes) and merge (squash / merge / rebase)
+- **Issues**: detail, creation & editing, comments, reactions (emoji panel / Reactees), label filters
 - **Search**: six result types (Code / Repos / Issues / PRs / People / Orgs), qualifier chips, recent searches
+- **Create**: new Issue / PR forms (templates, metadata chips), two-step repository creation (name availability check, README / .gitignore / license)
 - **Global**: three-state dark mode, English & Simplified Chinese, GitHub Primer design, pull-to-refresh & infinite scroll, GitHub relative timestamps
 
 > Detailed design & progress for each feature live in [`specs/`](specs/) (full index: [specs/README.md](specs/README.md)).
@@ -115,5 +118,5 @@ devecocli build                   # build debug HAP
 
 Copyright © 2026 周铭
 
-- Project code: [GPL-3.0](./LICENSE)
+- Project code: [GPL-3.0-only](./LICENSE)
 - Icons (Octicons, under [`assets/octicons/`](assets/octicons/README.md)): MIT License — see [`assets/octicons/LICENSE`](assets/octicons/LICENSE)

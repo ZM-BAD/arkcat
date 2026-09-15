@@ -22,7 +22,7 @@
 ## 二、技术栈与约定
 
 ### 2.1 核心技术
-- **UI**：ArkUI 原生组件（不用三方 UI 库）；**网络**：`@kit.NetworkKit` 自封装 GraphQL Client
+- **UI**：ArkUI 原生组件（不用三方 UI 库），新页面优先复用 `components/` 现有组件（台账与路线图：[docs/ui-components.md](docs/ui-components.md)）；**网络**：`@kit.NetworkKit` + 协议中立 GraphQL HAR 库 `graphql/`（用法见 §7.1）
 - **状态管理**：V2（`@ComponentV2` / `@Local`，API 18+；简单页面可用 V1）
 - **路由**：Navigation（`NavPathStack` + `navDestination` 模式，见 `pages/Index.ets`）
 - **设计规范**：GitHub Primer（[DESIGN.md](DESIGN.md) 为唯一依据；色值/尺寸/字号/圆角/阴影必须用官方令牌——颜色走 resources base/dark 双套 color.json，其余走 `utils/PrimerTokens.ets` 常量，禁止硬编码随意数值）
@@ -56,10 +56,10 @@
 - 开发流程：develop 切 `feature/<name>`（或 `fix/<name>`）→ 自测于 feature → squash 并 develop → 集成回归在 develop
 
 ### 5.2 Commit 规范
-遵循 [Conventional Commits](https://www.conventionalcommits.org/)，type：`feat fix docs style refactor perf test build ci chore revert`。
+遵循 [Conventional Commits](https://www.conventionalcommits.org/)，type：`feat fix docs style refactor perf test build ci chore revert`；描述用中文（type 英文），且勿以大写拉丁词开头（commitlint subject-case 会拒）。
 
 ### 5.3 Git Hooks
-安装：`bash scripts/install-hooks.sh`。优先 pre-commit 框架（`.pre-commit-config.yaml`：check-spec.sh / markdownlint / 硬编码颜色 / gitleaks / trailing whitespace / 宿主单测）；commit-msg 走 commitlint（`.commitlintrc.json`）；`.githooks/` 为无 pre-commit 环境回退。
+安装：`bash scripts/install-hooks.sh`。优先 pre-commit 框架（`.pre-commit-config.yaml`：check-spec.sh / markdownlint / 硬编码颜色 / 硬编码字号 / gitleaks / trailing whitespace / 宿主单测）；commit-msg 走 commitlint（`.commitlintrc.json`）；`.githooks/` 为无 pre-commit 环境回退。
 
 ---
 
@@ -72,11 +72,12 @@
 | 文件结构 / Spec 编号 | CI | ✅ 是 |
 | Secret 泄漏（gitleaks） | pre-commit + CI | ✅ 是（CI 2026-09-01 起） |
 | UI 硬编码颜色（#RRGGBB） | pre-commit + CI | ✅ 是 |
+| UI 硬编码字号/字重（fontSize 字面量、FontWeight.Bold/700） | pre-commit + CI | ✅ 是 |
 | 宿主单元测试（node:test） | pre-commit + CI | ✅ 是 |
 | Primer 样式 Review（[docs/primer-review-rules.md](docs/primer-review-rules.md)） | Code Review（人工走查，机械条目逐步下沉 scripts/） | ✅ 是（评审退回） |
 | HarmonyOS 构建 | 本地 | 本地阻断 |
 
-CI（GitHub Actions）：**spec-lint** / **commit-lint** / **structure-check**（含 Spec 编号连续）/ **hardcoded-colors** / **gitleaks** / **unit-tests**；**harmony-build** 与 **official-local-test** 当前 `if: false` 禁用（私仓 macOS runner 计费 ×10，仓库转 public 后恢复，构建暂由本地兜底）。
+CI（GitHub Actions）：**spec-lint** / **commit-lint** / **structure-check**（含 Spec 编号连续）/ **hardcoded-colors**（含字号检查）/ **gitleaks** / **unit-tests**；**harmony-build**、**official-local-test**、**official-local-test-windows** 当前 `if: false` 禁用（私仓 runner 计费，macOS/Windows 流水线均暂停，仓库转 public 后恢复，构建暂由本地兜底）。
 
 ---
 
@@ -84,7 +85,7 @@ CI（GitHub Actions）：**spec-lint** / **commit-lint** / **structure-check**�
 
 > **「合规优先的体验级复刻」**（用户 2026-09-11 定调）——在满足中国法律法规与上架合规要求（App 备案、内容与生成式 AI 合规、网络可达性等）的前提下，**最大程度还原**官方 App 的信息架构、页面层级、导航模式与交互反馈逻辑；不复刻平台特有控件样式。底层全部原生 ArkUI。
 > **偏离纪律**：因**合规**或平台能力差异必须偏离官方的，在对应 Spec 第七章记录理由与替代方案；**无合规理由的偏离应避免**——以「还原度」为默认，而不是以「少做事」为默认。
-> **样式红线**：页面骨架必须复用现有模式（自绘 AppBar/RepoCard/列表卡等），禁自创布局风格；图标必须走 OctIcon 组件；颜色一律官方 token（resources color.json / PrimerTokens），`entry/src/main/ets` 禁止直接写 `#RRGGBB`（`scripts/check-hardcoded-colors.py` 门禁，数据色板文件豁免）。
+> **样式红线**：页面骨架必须复用现有模式（自绘 AppBar/RepoCard/列表卡等），禁自创布局风格；图标必须走 OctIcon 组件；颜色一律官方 token（resources color.json / PrimerTokens），`entry/src/main/ets` 禁止直接写 `#RRGGBB`（`scripts/check-hardcoded-colors.py` 门禁，数据色板文件豁免）；字号/字重一律官方档，禁 fontSize 数字字面量与 FontWeight.Bold/700（`scripts/check-hardcoded-fontsize.py` 门禁，豁免须行内 `// typography-exempt` 注记）。
 > **Review 规则**：Primer 样式逐条核对清单见 [docs/primer-review-rules.md](docs/primer-review-rules.md)——〔机械〕条目下沉 `scripts/` 门禁，〔人工〕条目 code review 走查。
 
 ---

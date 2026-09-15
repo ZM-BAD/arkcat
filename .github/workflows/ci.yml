@@ -141,7 +141,7 @@ jobs:
   harmony-build:
     name: HarmonyOS Build (debug HAP)
     runs-on: macos-latest
-    if: false  # 私仓计费暂停；public 后恢复（handoff.md 2026-09-08 有记录）
+    if: false  # 私仓 runner 计费暂停；仓库转 public 后恢复
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -239,7 +239,7 @@ jobs:
   official-local-test:
     name: Official Local Test (macOS)
     runs-on: macos-latest
-    if: false  # 私仓计费暂停；public 后恢复（首跑已验证通过）
+    if: false  # 私仓 runner 计费暂停；仓库转 public 后恢复（首跑已验证通过）
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -288,7 +288,7 @@ jobs:
   official-local-test-windows:
     name: Official Local Test (Windows)
     runs-on: windows-latest
-    if: false  # 私仓计费暂停；public 后恢复（首跑已验证通过）
+    if: false  # 私仓 runner 计费暂停；仓库转 public 后恢复（首跑已验证通过）
     steps:
       - name: Checkout
         uses: actions/checkout@v7
