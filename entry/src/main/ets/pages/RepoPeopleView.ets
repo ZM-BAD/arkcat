@@ -4,13 +4,13 @@
  * （56 圆头像/粗体显示名/灰 login/两行 bio，整行点击进入用户主页）。
  */
 import { AppBar } from '../components/AppBar';
-import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { UserSummary } from '../models/GitHubModels';
 import { PeoplePage } from '../models/RepoSocialModels';
 import { RepoService } from '../services/RepoService';
 import { StateView } from '../components/StateView';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
+import { UserRow } from '../components/UserRow';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -104,52 +104,18 @@ export struct RepoPeopleView {
     return resText(this.getUIContext(), res);
   }
 
-  /** 列表行（与 Stargazers 一致：无操作按钮，简洁列表） */
+  /** 列表行（与 Stargazers 一致：无操作按钮，简洁列表；空头像走组件内 person 兜底） */
   @Builder
   userRow(user: UserSummary) {
-    Row({ space: 12 }) {
-      Stack() {
-        Image(user.avatarUrl)
-          .width(56)
-          .height(56)
-          .borderRadius(28)
-          .backgroundColor($r('app.color.heat_empty'))
-        if (user.avatarUrl === '') {
-          OctIcon({ res: $r('app.media.oct_person_16'), iconSize: 28, iconColor: $r('app.color.text_secondary') })
-        }
+    UserRow({
+      avatarUrl: user.avatarUrl,
+      name: user.name,
+      login: user.login,
+      bio: user.bio,
+      fallbackIcon: true,
+      onOpen: (): void => {
+        this.pathStack.pushPathByName('userProfile', user.login);
       }
-      .width(56)
-      .height(56)
-      Column({ space: 3 }) {
-        if (user.name !== '') {
-          Text(user.name)
-            .fontSize($r('app.float.body_font_size'))
-            .fontWeight(600)
-            .fontColor($r('app.color.text_primary'))
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-        }
-        Text(user.login)
-          .fontSize($r('app.float.body_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-        if (user.bio !== '') {
-          Text(user.bio)
-            .fontSize($r('app.float.body_font_size'))
-            .fontColor($r('app.color.text_primary'))
-            .maxLines(2)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .lineHeight(20)
-        }
-      }
-      .alignItems(HorizontalAlign.Start)
-      .layoutWeight(1)
-    }
-    .width('100%')
-    .padding({ left: 16, right: 16, top: 10, bottom: 10 })
-    .onClick(() => {
-      this.pathStack.pushPathByName('userProfile', user.login);
     })
   }
 

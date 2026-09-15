@@ -13,6 +13,7 @@ import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { WorkEmptyView } from '../components/WorkEmptyView';
+import { CountChip } from '../components/CountChip';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
@@ -212,15 +213,7 @@ export struct WorkIssuesView {
               LabelPill({ labelName: label.name, colorHex: label.color })
             }, (label: WorkLabel) => label.name)
             if (issue.commentCount > 0) {
-              Row({ space: 4 }) {
-                OctIcon({ res: $r('app.media.oct_comment_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
-                Text(`${issue.commentCount}`)
-                  .fontSize($r('app.float.caption_font_size'))
-                  .fontColor($r('app.color.text_secondary'))
-              }
-              .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-              .borderRadius(12)
-              .backgroundColor($r('app.color.chip_bg'))
+              CountChip({ icon: $r('app.media.oct_comment_16'), text: `${issue.commentCount}` })
             }
           }
           .constraintSize({ minWidth: '100%' })

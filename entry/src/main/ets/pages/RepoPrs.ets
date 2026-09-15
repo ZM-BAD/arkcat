@@ -21,6 +21,8 @@ import { WorkEmptyView } from '../components/WorkEmptyView';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 import { shouldAutoLoadMore, isLimitedRangeEmpty, NONE_FILTER_KEY } from '../utils/FilterLoading';
+import { FilterOptionSheet } from '../components/FilterOptionSheet';
+import { CountChip } from '../components/CountChip';
 
 @ComponentV2
 export struct RepoPrsView {
@@ -367,10 +369,6 @@ export struct RepoPrsView {
     this.sheetKind = kind;
   }
 
-  /** 「空值」选项（No milestone / Assigned to nobody）：面板行渲染 circle-slash 图标 */
-  private isNoneOption(key: string): boolean {
-    return key === NONE_FILTER_KEY && (this.sheetKind === 'milestone' || this.sheetKind === 'assignee');
-  }
 
   /** 单选即生效并关面板；再点选中项=取消（清筛选）。Label 走服务端重查，其余客户端过滤 */
   private applyListPick(key: string): void {
@@ -395,136 +393,32 @@ export struct RepoPrsView {
     }
   }
 
-  /** 弹层分派（单 bindSheet）：label/author/assignee/milestone 列表单选 + Sort 面板 */
+  /** 弹层分派（单 bindSheet）：label/author/assignee/milestone 列表单选（FilterOptionSheet，与 IssuesList 同组件）+ Sort 面板 */
   @Builder
   listSheet() {
     if (this.sheetKind === 'label' || this.sheetKind === 'author'
       || this.sheetKind === 'assignee' || this.sheetKind === 'milestone') {
-      Column() {
-        Row() {
-          // 搜索态=←（回退：清空搜索词并退出搜索态）；常态=✕（关闭弹层）
-          Stack() {
-            OctIcon({
-              res: this.sheetSearchShow ? $r('app.media.oct_arrow_left_24') : $r('app.media.oct_x_16'),
-              iconSize: 18,
-              iconColor: $r('app.color.text_primary')
-            })
-          }
-          .width(44)
-          .height(44)
-          .onClick((): void => {
-            if (this.sheetSearchShow) {
-              this.sheetSearchText = '';
-              this.sheetSearchShow = false;
-            } else {
-              this.sheetKind = '';
-            }
-          })
-          if (this.sheetSearchShow) {
-            // 标题原地变搜索框：对候选池客户端过滤；框内右端 ✕ 一键清空（与 IssuesList 同款交互）
-            Stack({ alignContent: Alignment.End }) {
-              TextInput({ placeholder: this.stringOf(this.sheetSearchPlaceholder()), text: this.sheetSearchText })
-                .height(40)
-                .fontSize($r('app.float.body_font_size'))
-                .width('100%')
-                .padding({ right: 34 })
-                .borderRadius(6)
-                .backgroundColor($r('app.color.chip_bg'))
-                .defaultFocus(true)
-                .onChange((v: string): void => {
-                  this.sheetSearchText = v;
-                })
-              if (this.sheetSearchText !== '') {
-                Stack() {
-                  OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
-                }
-                .width(36)
-                .height(36)
-                .onClick((): void => {
-                  this.sheetSearchText = '';
-                })
-              }
-            }
-            .layoutWeight(1)
-            .margin({ right: 8 })
-          } else {
-            Text(this.currentListTitle())
-              .fontSize($r('app.float.title_font_size'))
-              .fontWeight(600)
-              .fontColor($r('app.color.text_primary'))
-              .layoutWeight(1)
-            Stack() {
-              OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 18, iconColor: $r('app.color.link_blue') })
-            }
-            .width(44)
-            .height(44)
-            .onClick((): void => {
-              this.sheetSearchShow = true;
-            })
-          }
+      FilterOptionSheet({
+        title: this.currentListTitle(),
+        searchPlaceholder: this.sheetSearchPlaceholder(),
+        options: this.currentListOptions(),
+        selectedKey: this.currentListSelected(),
+        rowKind: this.sheetKind === 'label' ? 'label' : 'plain',
+        noneRow: this.sheetKind === 'milestone' || this.sheetKind === 'assignee',
+        labelColorOf: (key: string): string => this.labelColorByName(key),
+        searchShow: this.sheetSearchShow,
+        searchText: this.sheetSearchText,
+        onPick: (key: string): void => this.applyListPick(key),
+        onClose: (): void => {
+          this.sheetKind = '';
+        },
+        onSearchToggle: (): void => {
+          this.sheetSearchShow = !this.sheetSearchShow;
+        },
+        onSearchChange: (v: string): void => {
+          this.sheetSearchText = v;
         }
-        .padding({ left: 8, right: 8 })
-        Divider()
-          .color($r('app.color.divider'))
-          .strokeWidth(1)
-          .width('100%')
-        Scroll() {
-          Column() {
-            if (this.currentListOptions().length > 0) {
-              ForEach(this.currentListOptions(), (opt: FilterDropdownOption) => {
-                Row() {
-                  if (this.isNoneOption(opt.key)) {
-                    // 官方「空值」行：circle-slash 图标 + 文案
-                    Row({ space: 12 }) {
-                      OctIcon({ res: $r('app.media.oct_circle_slash_16'), iconSize: 16,
-                        iconColor: $r('app.color.text_secondary') })
-                      Text(opt.label)
-                        .fontSize($r('app.float.body_font_size'))
-                        .fontColor($r('app.color.text_primary'))
-                        .maxLines(1)
-                        .textOverflow({ overflow: TextOverflow.Ellipsis })
-                    }
-                    .alignItems(VerticalAlign.Center)
-                    .layoutWeight(1)
-                  } else if (this.sheetKind === 'label') {
-                    // Label 面板行：官方为彩色胶囊（DESIGN.md §10.2），选中勾仍在右缘
-                    LabelPill({ labelName: opt.label, colorHex: this.labelColorByName(opt.key), large: true })
-                    Blank()
-                  } else {
-                    Text(opt.label)
-                      .fontSize($r('app.float.body_font_size'))
-                      .fontColor($r('app.color.text_primary'))
-                      .layoutWeight(1)
-                      .maxLines(1)
-                      .textOverflow({ overflow: TextOverflow.Ellipsis })
-                  }
-                  if (this.currentListSelected() === opt.key) {
-                    OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 16, iconColor: $r('app.color.link_blue') })
-                      .margin({ left: 8 })
-                  }
-                }
-                .width('100%')
-                .height(56)
-                .padding({ left: 20, right: 16 })
-                .onClick((): void => this.applyListPick(opt.key))
-              }, (opt: FilterDropdownOption) => `${opt.key}_${this.currentListSelected() === opt.key ? 'on' : 'off'}`)
-            } else {
-              // 搜索无结果（与语言面板同款文案）
-              Text($r('app.string.filter_no_results'))
-                .fontSize($r('app.float.caption_font_size'))
-                .fontColor($r('app.color.text_secondary'))
-                .width('100%')
-                .padding({ left: 20, top: 16, bottom: 12 })
-            }
-          }
-        }
-        .layoutWeight(1)
-        .scrollBar(BarState.Off)
-        .align(Alignment.Top)
-      }
-      .width('100%')
-      .height('100%')
-      .backgroundColor($r('app.color.card_background'))
+      })
     } else {
       WorkFilterSortSheet({
         sortKey: this.sortKey,
@@ -581,27 +475,16 @@ export struct RepoPrsView {
                 LabelPill({ labelName: label.name, colorHex: label.color })
               }, (label: WorkLabel) => label.name)
               if (item.checksState === 'SUCCESS') {
-                Row({ space: 4 }) {
-                  OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 12, iconColor: $r('app.color.success_text') })
-                  Text(this.stringOf($r('app.string.work_pr_checks')))
-                    .fontSize($r('app.float.caption_font_size'))
-                    .fontColor($r('app.color.text_primary'))
-                }
-                .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-                .borderRadius(12)
-                .border({ width: 1, color: $r('app.color.divider') })
-                .backgroundColor(Color.Transparent)
+                CountChip({
+                  icon: $r('app.media.oct_check_16'),
+                  iconColor: $r('app.color.success_text'),
+                  text: this.stringOf($r('app.string.work_pr_checks')),
+                  textColor: $r('app.color.text_primary'),
+                  outlined: true
+                })
               }
               if (item.commentCount > 0) {
-                Row({ space: 4 }) {
-                  OctIcon({ res: $r('app.media.oct_comment_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
-                  Text(`${item.commentCount}`)
-                    .fontSize($r('app.float.caption_font_size'))
-                    .fontColor($r('app.color.text_secondary'))
-                }
-                .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-                .borderRadius(12)
-                .backgroundColor($r('app.color.chip_bg'))
+                CountChip({ icon: $r('app.media.oct_comment_16'), text: `${item.commentCount}` })
               }
             }
             .constraintSize({ minWidth: '100%' })

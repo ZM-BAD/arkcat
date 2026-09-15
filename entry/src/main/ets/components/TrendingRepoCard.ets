@@ -5,6 +5,7 @@
  * 点击分区为同层兄弟（横幅/内容 → repoDetail，contributors 行 → 贡献者页，按钮独立），
  * 规避 ClickEvent 无 stopPropagation 的冒泡误触（沿 010 批定案拆分模式）。
  */
+import { LanguageDot } from './LanguageDot';
 import { promptAction } from '@kit.ArkUI';
 import { RepoSummary } from '../models/GitHubModels';
 import { RepoService } from '../services/RepoService';
@@ -112,10 +113,7 @@ export struct TrendingRepoCard {
           }
           if (this.repo.primaryLanguage !== '') {
             Row({ space: 6 }) {
-              Circle()
-                .width(10)
-                .height(10)
-                .fill(this.repo.languageColor !== '' ? this.repo.languageColor : $r('app.color.repo_language_unknown'))
+              LanguageDot({ colorHex: this.repo.languageColor, dotSize: 10 })
               Text(this.repo.primaryLanguage)
                 .fontSize($r('app.float.body_font_size'))
                 .fontWeight(600)

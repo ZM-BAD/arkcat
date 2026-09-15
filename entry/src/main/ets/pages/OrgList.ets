@@ -146,22 +146,13 @@ export struct OrgListView {
           }
           .width('100%')
         } else {
-          Column() {
-            StateView({
-              loading: this.loading,
-              error: this.errorMsg,
-              onRetry: () => this.refresh()
-            })
-            if (!this.loading && this.errorMsg === '') {
-              Column() {
-                Text($r('app.string.org_list_empty'))
-                  .fontSize($r('app.float.body_font_size'))
-                  .fontColor($r('app.color.text_secondary'))
-              }
-              .layoutWeight(1)
-              .justifyContent(FlexAlign.Center)
-            }
-          }
+          StateView({
+            loading: this.loading,
+            error: this.errorMsg,
+            empty: !this.loading && this.errorMsg === '',
+            emptyText: $r('app.string.org_list_empty'),
+            onRetry: () => this.refresh()
+          })
           .width('100%')
           .height('100%')
         }

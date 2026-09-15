@@ -11,6 +11,7 @@ import { PageShadowBar } from '../components/PageShadowBar';
 import { WorkStarredPage, WorkStarredRepoItem, WorkUserList } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
+import { SectionHeaderRow, UserListRow } from '../components/SectionRows';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { StarredRepoRow } from '../components/StarredRepoRow';
 import { StarredListSheet, STARRED_SUGGESTIONS } from '../components/StarredListSheet';
@@ -365,40 +366,24 @@ export struct StarredRepositoriesView {
           // 随双区就绪一次性渲染（ownPageReady 门控），与下方仓库列表同帧出现
           if (this.isOwnPage && this.ownPageReady) {
             // My lists 行（列表 API 后续 Spec，v1 展示行 + 空态卡）
-            Row() {
-              OctIcon({ res: $r('app.media.oct_list_unordered_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
-              Text($r('app.string.work_starred_my_lists'))
-                .fontSize($r('app.float.body_font_size'))
-                .fontColor($r('app.color.text_primary'))
-                .margin({ left: 10 })
-              Blank()
-              Text($r('app.string.work_starred_new'))
-                .fontSize($r('app.float.body_font_size'))
-                .fontColor($r('app.color.link_blue'))
-                .responseRegion({ x: -6, y: -7, width: '130%', height: '147%' })
-                .onClick(() => this.pathStack.pushPathByName('createList', ''))
-            }
-            .width('100%')
-            .height(44)
+            SectionHeaderRow({
+              icon: $r('app.media.oct_list_unordered_16'),
+              title: $r('app.string.work_starred_my_lists'),
+              actionText: $r('app.string.work_starred_new'),
+              onAction: (): void => {
+                this.pathStack.pushPathByName('createList', '');
+              }
+            })
 
             if (this.lists.length > 0) {
               // 已建列表：名称 + 数量（点击进列表详情）
               ForEach(this.lists, (list: WorkUserList) => {
-                Row() {
-                  Text(list.name)
-                    .fontSize($r('app.float.body_font_size'))
-                    .fontColor($r('app.color.text_primary'))
-                    .layoutWeight(1)
-                    .maxLines(1)
-                    .textOverflow({ overflow: TextOverflow.Ellipsis })
-                  Text(compactCount(list.itemCount))
-                    .fontSize($r('app.float.caption_font_size'))
-                    .fontColor($r('app.color.text_secondary'))
-                }
-                .width('100%')
-                .height(48)
-                .onClick((): void => {
-                  this.pathStack.pushPathByName('listDetail', list.id);
+                UserListRow({
+                  name: list.name,
+                  count: compactCount(list.itemCount),
+                  onOpen: (): void => {
+                    this.pathStack.pushPathByName('listDetail', list.id);
+                  }
                 })
                 // key 含 itemCount：切换后计数重新渲染（同 key 复用 => 显示陈旧数量）
               }, (list: WorkUserList) => `${list.id}_${list.itemCount}`)
@@ -435,33 +420,19 @@ export struct StarredRepositoriesView {
               .margin({ top: 8, bottom: 8 })
           } else if (this.lists.length > 0) {
             // 他人 Lists 区（Spec 023 他人视角，对齐官方）：只读——无 + NEW/空态卡，行进只读列表详情
-            Row() {
-              OctIcon({ res: $r('app.media.oct_list_unordered_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
-              Text($r('app.string.work_starred_lists_title'))
-                .fontSize($r('app.float.body_font_size'))
-                .fontColor($r('app.color.text_primary'))
-                .margin({ left: 10 })
-            }
-            .width('100%')
-            .height(44)
+            SectionHeaderRow({
+              icon: $r('app.media.oct_list_unordered_16'),
+              title: $r('app.string.work_starred_lists_title')
+            })
 
             ForEach(this.lists, (list: WorkUserList) => {
-              Row() {
-                Text(list.name)
-                  .fontSize($r('app.float.body_font_size'))
-                  .fontColor($r('app.color.text_primary'))
-                  .layoutWeight(1)
-                  .maxLines(1)
-                  .textOverflow({ overflow: TextOverflow.Ellipsis })
-                Text(compactCount(list.itemCount))
-                  .fontSize($r('app.float.caption_font_size'))
-                  .fontColor($r('app.color.text_secondary'))
-              }
-              .width('100%')
-              .height(48)
-              .onClick((): void => {
-                // `|0` 归属标记：他人列表，详情页隐藏 Edit/Delete（路由参数约定见 Index listDetailDestination）
-                this.pathStack.pushPathByName('listDetail', `${list.id}|0`);
+              UserListRow({
+                name: list.name,
+                count: compactCount(list.itemCount),
+                onOpen: (): void => {
+                  // `|0` 归属标记：他人列表，详情页隐藏 Edit/Delete（路由参数约定见 Index listDetailDestination）
+                  this.pathStack.pushPathByName('listDetail', `${list.id}|0`);
+                }
               })
               // key 含 itemCount：切换后计数重新渲染（同 key 复用 => 显示陈旧数量）
             }, (list: WorkUserList) => `${list.id}_${list.itemCount}`)
@@ -473,16 +444,14 @@ export struct StarredRepositoriesView {
 
           // Starred 分组头：本人页随双区就绪一次性出现；他人页有 lists 才显示（官方：无 lists 直接进仓库列表）
           if (this.isOwnPage ? this.ownPageReady : this.lists.length > 0) {
-            Row() {
-              OctIcon({ res: $r('app.media.oct_star_16'), iconSize: 18, iconColor: $r('app.color.text_secondary') })
-              Text($r('app.string.home_work_starred'))
-                .fontSize(16)
-                .fontWeight(FontWeight.Medium)
-                .fontColor($r('app.color.text_primary'))
-                .margin({ left: 10 })
-            }
-            .width('100%')
-            .height(40)
+            SectionHeaderRow({
+              icon: $r('app.media.oct_star_16'),
+              iconSize: 18,
+              title: $r('app.string.home_work_starred'),
+              titleFontSize: 16,
+              titleBold: true,
+              rowHeight: 40
+            })
           }
 
           if (!this.ownPageReady) {

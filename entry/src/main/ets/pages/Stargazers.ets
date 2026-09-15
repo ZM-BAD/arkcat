@@ -10,6 +10,7 @@ import { StargazerPage } from '../models/RepoSocialModels';
 import { RepoService } from '../services/RepoService';
 import { StateView } from '../components/StateView';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
+import { UserRow } from '../components/UserRow';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -87,42 +88,14 @@ export struct StargazersView {
   /** 列表行（与 UserList 一致：无操作按钮，简洁列表） */
   @Builder
   userRow(user: UserSummary) {
-    Row({ space: 12 }) {
-      Image(user.avatarUrl)
-        .width(56)
-        .height(56)
-        .borderRadius(28)
-        .backgroundColor($r('app.color.heat_empty'))
-      Column({ space: 3 }) {
-        if (user.name !== '') {
-          Text(user.name)
-            .fontSize($r('app.float.body_font_size'))
-            .fontWeight(600)
-            .fontColor($r('app.color.text_primary'))
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-        }
-        Text(user.login)
-          .fontSize($r('app.float.body_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-        if (user.bio !== '') {
-          Text(user.bio)
-            .fontSize($r('app.float.body_font_size'))
-            .fontColor($r('app.color.text_primary'))
-            .maxLines(2)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .lineHeight(20)
-        }
+    UserRow({
+      avatarUrl: user.avatarUrl,
+      name: user.name,
+      login: user.login,
+      bio: user.bio,
+      onOpen: (): void => {
+        this.pathStack.pushPathByName('userProfile', user.login);
       }
-      .alignItems(HorizontalAlign.Start)
-      .layoutWeight(1)
-    }
-    .width('100%')
-    .padding({ left: 16, right: 16, top: 10, bottom: 10 })
-    .onClick(() => {
-      this.pathStack.pushPathByName('userProfile', user.login);
     })
   }
 
@@ -153,22 +126,13 @@ export struct StargazersView {
           .padding({ left: 0, right: 0 })
           .width('100%')
         } else {
-          Column() {
-            StateView({
-              loading: this.loading,
-              error: this.errorMsg,
-              onRetry: () => this.refresh()
-            })
-            if (!this.loading && this.errorMsg === '') {
-              Column() {
-                Text(this.stringOf($r('app.string.social_stargazers_empty')))
-                  .fontSize($r('app.float.body_font_size'))
-                  .fontColor($r('app.color.text_secondary'))
-              }
-              .layoutWeight(1)
-              .justifyContent(FlexAlign.Center)
-            }
-          }
+          StateView({
+            loading: this.loading,
+            error: this.errorMsg,
+            empty: !this.loading && this.errorMsg === '',
+            emptyText: $r('app.string.social_stargazers_empty'),
+            onRetry: () => this.refresh()
+          })
           .width('100%')
           .height('100%')
         }

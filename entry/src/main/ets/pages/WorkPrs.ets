@@ -12,6 +12,7 @@ import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { WorkEmptyView } from '../components/WorkEmptyView';
+import { CountChip } from '../components/CountChip';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
@@ -243,42 +244,19 @@ export struct WorkPrsView {
 
         Row({ space: 8 }) {
           if (item.checksState !== '') {
-            Row({ space: 4 }) {
-              OctIcon({
-                res: this.checksIcon(item.checksState),
-                iconSize: 12,
-                iconColor: this.checksColor(item.checksState)
-              })
-              Text(this.checksLabel(item.checksState))
-                .fontSize($r('app.float.caption_font_size'))
-                .fontColor($r('app.color.text_primary'))
-            }
-            .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-            .borderRadius(12)
-            .border({ width: 1, color: $r('app.color.divider') })
-            .backgroundColor(Color.Transparent)
+            CountChip({
+              icon: this.checksIcon(item.checksState),
+              iconColor: this.checksColor(item.checksState),
+              text: this.checksLabel(item.checksState),
+              textColor: $r('app.color.text_primary'),
+              outlined: true
+            })
           }
           if (item.commentCount > 0) {
-            Row({ space: 4 }) {
-              OctIcon({ res: $r('app.media.oct_comment_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
-              Text(`${item.commentCount}`)
-                .fontSize($r('app.float.caption_font_size'))
-                .fontColor($r('app.color.text_secondary'))
-            }
-            .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-            .borderRadius(12)
-            .backgroundColor($r('app.color.chip_bg'))
+            CountChip({ icon: $r('app.media.oct_comment_16'), text: `${item.commentCount}` })
           }
           if (item.reviewCount > 0) {
-            Row({ space: 4 }) {
-              OctIcon({ res: $r('app.media.oct_eye_16'), iconSize: 12, iconColor: $r('app.color.text_secondary') })
-              Text(`${item.reviewCount}`)
-                .fontSize($r('app.float.caption_font_size'))
-                .fontColor($r('app.color.text_secondary'))
-            }
-            .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-            .borderRadius(12)
-            .backgroundColor($r('app.color.chip_bg'))
+            CountChip({ icon: $r('app.media.oct_eye_16'), text: `${item.reviewCount}` })
           }
         }
         .width('100%')
