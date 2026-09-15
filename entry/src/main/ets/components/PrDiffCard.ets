@@ -55,7 +55,7 @@ export struct PrDiffCard {
     Row({ space: 10 }) {
       OctIcon({ res: iconRes, iconSize: 16, iconColor: color })
       Text(label)
-        .fontSize(14)
+        .fontSize($r('app.float.body_font_size'))
         .fontColor(color)
     }
     .width('100%')
@@ -99,7 +99,7 @@ export struct PrDiffCard {
         Text(this.lineNoText(line))
           .width(32)
           .fontFamily('monospace')
-          .fontSize(12)
+          .fontSize($r('app.float.caption_font_size'))
           .textAlign(TextAlign.End)
           .fontColor($r('app.color.text_tertiary'))
           .padding({ right: 6 })
@@ -107,13 +107,13 @@ export struct PrDiffCard {
       Text(line.kind === 'add' ? '+' : (line.kind === 'del' ? '-' : ' '))
         .width(20)
         .fontFamily('monospace')
-        .fontSize(12)
+        .fontSize($r('app.float.caption_font_size'))
         .textAlign(TextAlign.Center)
         .fontColor(line.kind === 'add' ? $r('app.color.diff_add_fg')
           : (line.kind === 'del' ? $r('app.color.diff_del_fg') : $r('app.color.text_secondary')))
       Text(line.text)
         .fontFamily('monospace')
-        .fontSize(12)
+        .fontSize($r('app.float.caption_font_size'))
         .fontColor(line.kind === 'add' ? $r('app.color.diff_add_fg')
           : (line.kind === 'del' ? $r('app.color.diff_del_fg') : $r('app.color.text_primary')))
         .maxLines(4)
@@ -142,7 +142,7 @@ export struct PrDiffCard {
         .width(38)
         Text(hunk.header)
           .fontFamily('monospace')
-          .fontSize(12)
+          .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.diff_hunk_head_fg'))
           .layoutWeight(1)
       }
@@ -177,7 +177,7 @@ export struct PrDiffCard {
               Row() {
                 Text(this.item.path)
                   .fontFamily('monospace')
-                  .fontSize(12)
+                  .fontSize($r('app.float.caption_font_size'))
                   .fontColor($r('app.color.text_primary'))
               }
             }

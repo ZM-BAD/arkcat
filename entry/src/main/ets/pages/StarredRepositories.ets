@@ -391,7 +391,7 @@ export struct StarredRepositoriesView {
               // Create your first list 空态卡
               Column({ space: 12 }) {
                 Text($r('app.string.work_starred_first_list_title'))
-                  .fontSize(20)
+                  .fontSize($r('app.float.title_font_size'))
                   .fontWeight(600)
                   .fontColor($r('app.color.text_primary'))
                   .textAlign(TextAlign.Center)

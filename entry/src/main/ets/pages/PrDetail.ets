@@ -99,7 +99,7 @@ export struct PrDetailView {
   @Builder
   sectionTitle(text: string) {
     Text(text)
-      .fontSize(16)
+      .fontSize($r('app.float.sub_text_font_size'))
       .fontWeight(600)
       .fontColor($r('app.color.text_primary'))
       .width('100%')
@@ -209,7 +209,7 @@ export struct PrDetailView {
             // 标题 + 徽章
             Column({ space: 8 }) {
               Text(this.detail.title)
-                .fontSize(20)
+                .fontSize($r('app.float.title_font_size'))
                 .fontWeight(600)
                 .fontColor($r('app.color.text_primary'))
                 .width('100%')
@@ -224,7 +224,7 @@ export struct PrDetailView {
                       Row({ space: 4 }) {
                         OctIcon({ res: $r('app.media.oct_git_merge_16'), iconSize: 12, iconColor: Color.White })
                         Text($r('app.string.pr_merged_badge'))
-                          .fontSize(12)
+                          .fontSize($r('app.float.caption_font_size'))
                           .fontColor(Color.White)
                       }
                       .padding({ left: 8, right: 8, top: 3, bottom: 3 })
@@ -233,17 +233,17 @@ export struct PrDetailView {
                     }
                     if (this.detail.headRefName !== '') {
                       Text(this.detail.headRefName)
-                        .fontSize(12)
+                        .fontSize($r('app.float.caption_font_size'))
                         .fontColor($r('app.color.shortcut_blue_fg'))
                         .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                         .borderRadius(2)
                         .backgroundColor($r('app.color.shortcut_blue_bg'))
                       if (this.detail.baseRefName !== '') {
                         Text('→')
-                          .fontSize(12)
+                          .fontSize($r('app.float.caption_font_size'))
                           .fontColor($r('app.color.text_primary'))
                         Text(this.detail.baseRefName)
-                          .fontSize(12)
+                          .fontSize($r('app.float.caption_font_size'))
                           .fontColor($r('app.color.shortcut_blue_fg'))
                           .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                           .borderRadius(2)

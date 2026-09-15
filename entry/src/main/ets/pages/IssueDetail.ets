@@ -220,7 +220,7 @@ export struct IssueDetailView {
             if (this.detail !== null) {
             Column({ space: 8 }) {
               Text(this.detail.title)
-                .fontSize(20)
+                .fontSize($r('app.float.title_font_size'))
                 .fontWeight(600)
                 .fontColor($r('app.color.text_primary'))
                 .width('100%')
@@ -254,7 +254,7 @@ export struct IssueDetailView {
             .margin({ bottom: 12 })
 
             Text(resText(this.getUIContext(), $r('app.string.issue_detail_comments'), this.detail.commentCount))
-              .fontSize(16)
+              .fontSize($r('app.float.sub_text_font_size'))
               .fontWeight(FontWeight.Medium)
               .fontColor($r('app.color.text_primary'))
               .width('100%')

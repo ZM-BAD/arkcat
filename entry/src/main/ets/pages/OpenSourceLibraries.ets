@@ -53,7 +53,7 @@ export struct OpenSourceLibrariesView {
     Column({ space: 12 }) {
       Text(entry.name)
         .fontSize($r('app.float.title_font_size'))
-        .fontWeight(700)
+        .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
         .width('100%')
       Text(entry.licenseName)

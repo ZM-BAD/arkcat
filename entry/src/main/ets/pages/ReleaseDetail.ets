@@ -204,7 +204,7 @@ export struct ReleaseDetailView {
         // Latest 徽章=绿字淡绿底细描边，与 RepoReleases 头卡同款（官方对齐，走查修正八轮）
         if (this.detail.isLatest) {
           Text($r('app.string.releases_latest'))
-            .fontSize(12)
+            .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.success_text'))
             .padding({ left: 6, right: 6, top: 2, bottom: 2 })
             .borderRadius(6)
@@ -213,7 +213,7 @@ export struct ReleaseDetailView {
         }
         if (this.detail.isDraft) {
           Text(this.stringOf($r('app.string.release_draft_badge')))
-            .fontSize(12)
+            .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))
             .padding({ left: 8, right: 8, top: 3, bottom: 3 })
             .borderRadius(12)
@@ -221,7 +221,7 @@ export struct ReleaseDetailView {
         }
         if (this.detail.isPrerelease) {
           Text(this.stringOf($r('app.string.release_prerelease_badge')))
-            .fontSize(12)
+            .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.warning_text'))
             .padding({ left: 8, right: 8, top: 3, bottom: 3 })
             .borderRadius(12)
@@ -319,8 +319,8 @@ export struct ReleaseDetailView {
             // 版本头卡：大标题=release name（如 1.3.2），tag（v1.3.2）降为小字（走查修正）
             Column({ space: 8 }) {
               Text(this.detail.name !== '' ? this.detail.name : this.detail.tagName)
-                .fontSize(32)
-                .fontWeight(FontWeight.Bold)
+                .fontSize($r('app.float.title_large_font_size'))
+                .fontWeight(600)
                 .fontColor($r('app.color.text_primary'))
                 .width('100%')
               this.badgeRow()
@@ -335,7 +335,7 @@ export struct ReleaseDetailView {
                 // 与列表页头卡同款：作者名黑体 + released this + 具体日期（走查修正六轮）
                 Text(this.detail.authorLogin)
                   .fontSize($r('app.float.caption_font_size'))
-                  .fontWeight(FontWeight.Bold)
+                  .fontWeight(FontWeight.Bold) // typography-exempt 走查定案：作者名黑体
                   .fontColor($r('app.color.text_primary'))
                 Text(resText(this.getUIContext(), $r('app.string.releases_released_this'),
                   monthDayText(this.detail.publishedAt !== ''
@@ -421,7 +421,7 @@ export struct ReleaseDetailView {
             // 下载任务
             if (this.tasks.length > 0) {
               Text(this.stringOf($r('app.string.pr_changes_title')))
-                .fontSize(16)
+                .fontSize($r('app.float.sub_text_font_size'))
                 .fontWeight(FontWeight.Medium)
                 .fontColor($r('app.color.text_primary'))
                 .width('100%')

@@ -47,6 +47,18 @@
     {
       "name": "menu_font_size",
       "value": "17fp"
+    },
+    {
+      "name": "section_title_font_size",
+      "value": "18fp"
+    },
+    {
+      "name": "code_font_size",
+      "value": "13fp"
+    },
+    {
+      "name": "title_large_font_size",
+      "value": "32fp"
     }
   ]
 }

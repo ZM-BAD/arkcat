@@ -177,10 +177,10 @@ jobs:
           if-no-files-found: error
 
   # ──────────────────────────────────────────
-  # Job 5: 样式门禁——禁止 UI 硬编码颜色（与 pre-commit 对齐）
+  # Job 5: 样式门禁——禁止 UI 硬编码颜色/字号/字重（与 pre-commit 对齐）
   # ──────────────────────────────────────────
   hardcoded-colors:
-    name: Hardcoded Colors
+    name: Hardcoded Colors & Font Sizes
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -188,6 +188,9 @@ jobs:
 
       - name: Check hardcoded colors
         run: python3 scripts/check-hardcoded-colors.py
+
+      - name: Check hardcoded font sizes & weights
+        run: python3 scripts/check-hardcoded-fontsize.py
 
   # ──────────────────────────────────────────
   # Job 6: Secret 泄漏检测（gitleaks；与本地 pre-commit gate 对齐）

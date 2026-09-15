@@ -22,6 +22,10 @@ echo ""
 echo "🎨 检查硬编码颜色..."
 python3 scripts/check-hardcoded-colors.py || exit 1
 
+# 3.1 排版门禁：禁止硬编码字号/字重（与 pre-commit 框架的 hardcoded-fontsize 一致）
+echo "🔤 检查硬编码字号/字重..."
+python3 scripts/check-hardcoded-fontsize.py || exit 1
+
 echo ""
 
 # 4. 检查是否有未解决的 TODO/FIXME 在已暂存文件中（仅警告）

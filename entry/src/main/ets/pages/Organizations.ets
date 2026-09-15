@@ -94,7 +94,7 @@ export struct OrganizationsView {
           .backgroundColor($r('app.color.heat_empty'))
       } else {
         Text('◯')
-          .fontSize(32)
+          .fontSize(32) // typography-exempt 空头像 ◯ 字形
           .width(40)
           .height(40)
           .borderRadius(20)
@@ -103,7 +103,7 @@ export struct OrganizationsView {
       }
       Column({ space: 2 }) {
         Text(org.name)
-          .fontSize(16)
+          .fontSize($r('app.float.sub_text_font_size'))
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.text_primary'))
           .maxLines(1)
@@ -131,7 +131,7 @@ export struct OrganizationsView {
     Column() {
       Blank()
       Text($r('app.string.work_orgs_empty'))
-        .fontSize(20)
+        .fontSize($r('app.float.title_font_size'))
         .fontWeight(600)
         .fontColor($r('app.color.text_primary'))
         .textAlign(TextAlign.Center)

@@ -99,7 +99,7 @@ export struct CodeSearchCard {
               .height(10)
               .fill($r('app.color.link_blue'))
             Text(this.badgeText())
-              .fontSize(14)
+              .fontSize($r('app.float.body_font_size'))
               .fontColor($r('app.color.text_primary'))
           }
           .padding({ left: 12, right: 14, top: 6, bottom: 6 })
@@ -144,7 +144,7 @@ export struct CodeSearchCard {
           Text(this.expanded
             ? resText(this.getUIContext(), $r('app.string.search_show_less_matches'))
             : resText(this.getUIContext(), $r('app.string.search_show_more_matches'), this.file.snippet.more.length))
-            .fontSize(14)
+            .fontSize($r('app.float.body_font_size'))
             .fontColor($r('app.color.text_secondary'))
         }
         .width('100%')

@@ -122,7 +122,7 @@ export struct ReactionBar {
     Column({ space: 12 }) {
       if (this.sheetKind === 'users') {
         Text(this.stringOf($r('app.string.reaction_users_title')))
-          .fontSize(14)
+          .fontSize($r('app.float.body_font_size'))
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.text_primary'))
           .width('100%')
@@ -157,7 +157,7 @@ export struct ReactionBar {
         }
       } else {
         Text(this.stringOf($r('app.string.reaction_panel_title')))
-          .fontSize(14)
+          .fontSize($r('app.float.body_font_size'))
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.text_primary'))
           .width('100%')
@@ -166,7 +166,7 @@ export struct ReactionBar {
           Row({ space: 8 }) {
             ForEach(REACTION_META, (m: ReactionMeta) => {
               Text(m.emoji)
-                .fontSize(24)
+                .fontSize(24) // typography-exempt reaction emoji
                 .width(44)
                 .height(44)
                 .textAlign(TextAlign.Center)
@@ -194,7 +194,7 @@ export struct ReactionBar {
       ForEach(RELEASE_REACTION_META, (m: ReactionMeta) => {
         GridItem() {
           Text(m.emoji)
-            .fontSize(30)
+            .fontSize(30) // typography-exempt reaction 汇总 emoji
             .width(72)
             .height(56)
             .textAlign(TextAlign.Center)
@@ -221,7 +221,7 @@ export struct ReactionBar {
         ForEach(REACTION_META, (m: ReactionMeta) => {
           GridItem() {
             Text(m.emoji)
-              .fontSize(30)
+              .fontSize(30) // typography-exempt reaction 汇总 emoji
               .width(72)
               .height(56)
               .textAlign(TextAlign.Center)
@@ -345,7 +345,7 @@ export struct ReactionBar {
         }, (g: ReactionGroup) => g.content + '_' + g.count + (g.viewerHasReacted ? '_r' : ''))
         if (!this.smileyTrigger && this.mirror.length < REACTION_META.length) {
           Text('+')
-            .fontSize(16)
+            .fontSize($r('app.float.sub_text_font_size'))
             .fontColor($r('app.color.text_secondary'))
             .width(28)
             .height(28)
