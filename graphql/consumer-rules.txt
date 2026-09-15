@@ -1,0 +1,29 @@
+# HAR consumer 混淆规则：宿主开启代码混淆时，本库导出的公共 API 符号保持原名。
+# （本库自身 release 混淆当前 enable=false；开启前需过一轮 release 构建验证。）
+
+# 导出类/函数/接口名
+-keep-global-name
+  ApiError
+  GraphQLClient
+  GraphQLClientConfig
+  GraphQLRequestOptions
+  HttpClient
+  HttpResponse
+  HttpRequestOptions
+  getHeader
+  retryDelayMs
+  Json
+  JsonMap
+  Page
+  readConnectionPage
+  fetchAllPages
+  DEFAULT_MAX_PAGES
+  escapeGraphQLString
+  aliasField
+  aliasQueryDocument
+  AliasArg
+  RequestSequencer
+  withFallback
+  runBounded
+  RateLimitInfo
+  readRateLimit

@@ -100,6 +100,22 @@ CI（GitHub Actions）：**spec-lint** / **commit-lint** / **structure-check**�
 7. **Spec 先行** — 改代码前先确认对应 Spec 是否已 approve
 8. **不要膨胀 README** — 详细文档放 `specs/`，README 保持精简
 
+### 7.1 GraphQL 调用规范（graphql HAR 库，2026-09-15 起）
+
+> 完整规范见 [docs/graphql-usage.md](docs/graphql-usage.md)。Coding Agent 写网络相关代码前必读。
+
+- **通道**：GraphQL 一律经服务层 `graphql(query, variables, token)`（`services/GitHttpClient.ets`，
+  底层 `graphql/` HAR 库）；页面禁止 `http.createHttp()`（白名单仅 OAuth/Download/Achievements 三个 service）。
+- **查询书写**：document 只定义在 service 层，静态常量优先；动态值走 `variables`；
+  单请求多 alias 的批量查询必须用库 `aliasField` + `aliasQueryDocument`（自动转义），**禁止裸内插与手写转义**。
+- **分页**：cursor 走 `variables['after']`；响应提取用 `readConnectionPage`；续拉用 `fetchAllPages`
+  （hasNextPage 判停、默认 10 页上限），不要手写 while 翻页循环。
+- **错误**：GraphQL 错误恒 HTTP 200；语义映射表在适配层（`GitHttpClient.mapGitHubErrorType`，
+  429/403/404/422/401）注入库 mapper，业务侧按 `ApiError.code` 分支；用户文案一律 `friendlyError`，禁裸 `e.message` 直出。
+- **编排原语**：软失败 `withFallback`、竞态守卫 `RequestSequencer`、有界并发 `runBounded`——用库原语，不手写。
+- **库边界**：`graphql/` 内禁 UI/资源/i18n；GitHub 特有知识（端点/REST 路径/Accept 媒体类型）只放适配层。
+- **测试**：相关纯函数进宿主单测（`scripts/ut/unit.test.ts`，bash scripts/ut/run-local-tests.sh）。
+
 ---
 
 ## 八、常用命令（Commands）

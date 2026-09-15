@@ -3,10 +3,13 @@ build/
 /.hvigor/
 /node_modules/
 /oh_modules/
+entry/oh_modules/
+graphql/oh_modules/
 /local.properties
 entry/.test/
 # DevEco Previewer 产物（IDE 生成，机器本地）
 entry/.preview/
+graphql/.preview/
 
 # 编辑器
 .idea/
@@ -56,3 +59,6 @@ skills/
 
 # 品牌草稿（Logo 设计工作稿 + 走查证据，未定稿前不入库）
 /docs/brand-draft/
+
+# hvigor 生成物（HAR 模块根，构建时自动重建）
+graphql/BuildProfile.ets

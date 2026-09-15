@@ -1,0 +1,16 @@
+{
+  "name": "graphql",
+  "version": "1.0.0",
+  "description": "HarmonyOS NEXT 原生 GraphQL 客户端库：NetworkKit 传输 + 错误语义映射 + cursor 分页 + alias 批量查询构造",
+  "main": "./src/main/ets/Index.ets",
+  "author": "zm_bad",
+  "license": "GPL-3.0-only",
+  "keywords": [
+    "graphql",
+    "harmonyos",
+    "arkts",
+    "network",
+    "http-client"
+  ],
+  "dependencies": {}
+}

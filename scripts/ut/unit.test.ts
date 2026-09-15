@@ -890,8 +890,8 @@ test('pullRefFromUrl 与 buildPullStatesQuery/mapPullMerged', () => {
   const refA: PrRef = { owner: 'a', name: 'b', number: 8 };
   const refB: PrRef = { owner: 'c', name: 'd', number: 9 };
   const q = buildPullStatesQuery([refA, refB]);
-  assert.ok(q.indexOf('t0:repository(owner:"a", name:"b")') >= 0);
-  assert.ok(q.indexOf('t1:repository(owner:"c", name:"d")') >= 0);
+  assert.ok(q.indexOf('t0: repository(owner: "a", name: "b")') >= 0);
+  assert.ok(q.indexOf('t1: repository(owner: "c", name: "d")') >= 0);
   const merged = mapPullMerged({
     't0': { 'issueOrPullRequest': { 'merged': true } },
     't1': { 'issueOrPullRequest': { 'merged': false } },
@@ -1269,4 +1269,161 @@ test('DataColors：暗色提亮公式 lightenBy=(0.6−PL)×100', async () => {
   assert.equal(m.labelTextColor('d73a4a', 'dark'), '#EB9FA6');
   // 近白标签暗色不提亮（switch=0）：保持原色
   assert.equal(m.labelTextColor('ffffff', 'dark'), '#FFFFFF');
+});
+
+// ===== graphql 库（HAR 模块）纯函数测试：宿主直跑真库源码（build-ut.mjs 裸包名映射） =====
+import {
+  escapeGraphQLString, aliasField, aliasQueryDocument,
+  readConnectionPage, fetchAllPages,
+  RequestSequencer, withFallback, runBounded,
+  readRateLimit, retryDelayMs
+} from '../../graphql/src/main/ets/Index';
+import { mapGitHubErrorType } from '../../entry/src/main/ets/services/GitHttpClient';
+
+test('escapeGraphQLString：反斜杠/双引号/换行/回车', () => {
+  assert.equal(escapeGraphQLString('a\\b'), 'a\\\\b');
+  assert.equal(escapeGraphQLString('say "hi"'), 'say \\"hi\\"');
+  assert.equal(escapeGraphQLString('line1\nline2'), 'line1 line2');
+  assert.equal(escapeGraphQLString('a\rb'), 'a b');
+  assert.equal(escapeGraphQLString('plain'), 'plain');
+});
+
+test('aliasField：字符串转义加引号 / 数值直插', () => {
+  assert.equal(aliasField('r0', 'repository', [
+    { 'name': 'owner', 'value': 'a' }, { 'name': 'name', 'value': 'b' }
+  ], 'openGraphImageUrl'),
+    'r0: repository(owner: "a", name: "b") { openGraphImageUrl }');
+  assert.equal(
+    aliasField('r0', 'repository', [
+      { 'name': 'owner', 'value': 'o' }, { 'name': 'name', 'value': 'n' }
+    ], 'pullRequest(number: 8) { id }'),
+    'r0: repository(owner: "o", name: "n") { pullRequest(number: 8) { id } }');
+  assert.equal(aliasField('u0', 'user', [{ 'name': 'login', 'value': 42 }], 'login'),
+    'u0: user(login: 42) { login }');
+  // 含引号的恶意串被转义，不会破坏 document 结构
+  assert.ok(aliasField('r1', 'repository', [
+    { 'name': 'owner', 'value': 'a" } invalid' }, { 'name': 'name', 'value': 'b' }
+  ], 'id').includes('\\" } invalid'));
+});
+
+test('aliasQueryDocument：具名/匿名 query', () => {
+  assert.equal(aliasQueryDocument('Op', ['a', 'b']), 'query Op {\n  a\n  b\n}');
+  assert.equal(aliasQueryDocument('', ['x']), 'query {\n  x\n}');
+});
+
+test('readConnectionPage：nodes/edges/缺失节点三态', () => {
+  const nodesConn: JsonMap = {
+    'pageInfo': { 'hasNextPage': true, 'endCursor': 'cur1' },
+    'nodes': [{ 'id': '1' }, { 'id': '2' }]
+  };
+  const p1 = readConnectionPage(nodesConn, (n) => Json.str(n, 'id'));
+  assert.deepEqual(p1.items, ['1', '2']);
+  assert.equal(p1.hasNextPage, true);
+  assert.equal(p1.endCursor, 'cur1');
+  const edgesConn: JsonMap = {
+    'pageInfo': { 'hasNextPage': false, 'endCursor': '' },
+    'edges': [{ 'node': { 'id': '9' } }]
+  };
+  const p2 = readConnectionPage(edgesConn, (n) => Json.str(n, 'id'), true);
+  assert.deepEqual(p2.items, ['9']);
+  assert.equal(p2.hasNextPage, false);
+  const p3 = readConnectionPage(null, (n) => Json.str(n, 'id'));
+  assert.deepEqual(p3.items, []);
+  assert.equal(p3.hasNextPage, false);
+  // 缺 pageInfo：不抛错，按无下一页处理
+  const p4 = readConnectionPage({ 'nodes': [] } as JsonMap, (n) => Json.str(n, 'id'));
+  assert.equal(p4.hasNextPage, false);
+});
+
+test('fetchAllPages：游标链式续拉 / hasNextPage 判停 / maxPages 上限', async () => {
+  // 三页数据，hasNextPage 判停（末页 endCursor 非空也不再多打）
+  const pages: Record<string, string[]> = { 'null': ['a'], 'cur1': ['b'], 'cur2': ['c'] };
+  const next: Record<string, string> = { 'null': 'cur1', 'cur1': 'cur2', 'cur2': '' };
+  const more: Record<string, boolean> = { 'null': true, 'cur1': true, 'cur2': false };
+  const seen: string[] = [];
+  const got = await fetchAllPages<string>(async (cursor) => {
+    const key = cursor === null ? 'null' : cursor;
+    seen.push(key);
+    return { items: pages[key], hasNextPage: more[key], endCursor: next[key] };
+  });
+  assert.deepEqual(got, ['a', 'b', 'c']);
+  assert.deepEqual(seen, ['null', 'cur1', 'cur2']);
+  // maxPages=2：第三页不再拉
+  const seen2: string[] = [];
+  await fetchAllPages<string>(async (cursor) => {
+    const key = cursor === null ? 'null' : cursor;
+    seen2.push(key);
+    return { items: pages[key], hasNextPage: true, endCursor: next[key] };
+  }, 2);
+  assert.equal(seen2.length, 2);
+  // fetchPage 内降级（catch 返回终止页）：已取页保留、不再续拉
+  const got3 = await fetchAllPages<string>(async (cursor) => {
+    if (cursor !== null) {
+      return { items: [], hasNextPage: false, endCursor: '' };
+    }
+    return { items: ['only'], hasNextPage: true, endCursor: 'x' };
+  });
+  assert.deepEqual(got3, ['only']);
+});
+
+test('mapGitHubErrorType：GitHub 错误词汇表（适配层注入库 mapper）', () => {
+  assert.equal(mapGitHubErrorType('RATE_LIMITED'), 429);
+  assert.equal(mapGitHubErrorType('FORBIDDEN'), 403);
+  assert.equal(mapGitHubErrorType('INSUFFICIENT_SCOPE'), 403);
+  assert.equal(mapGitHubErrorType('ACCESS_DENIED'), 403);
+  assert.equal(mapGitHubErrorType('NOT_FOUND'), 404);
+  assert.equal(mapGitHubErrorType('UNPROCESSABLE'), 422);
+  assert.equal(mapGitHubErrorType('VALIDATION'), 422);
+  assert.equal(mapGitHubErrorType('UNAUTHORIZED'), 401);
+  assert.equal(mapGitHubErrorType('UNKNOWN_TYPE'), 200);
+});
+
+test('RequestSequencer：旧请求按序号丢弃', () => {
+  const seq = new RequestSequencer();
+  const first = seq.begin();
+  assert.ok(seq.isCurrent(first));
+  const second = seq.begin();
+  assert.ok(seq.isCurrent(second));
+  assert.ok(!seq.isCurrent(first));
+});
+
+test('withFallback：失败返回兜底值', async () => {
+  assert.equal(await withFallback(Promise.resolve(7), 0), 7);
+  assert.equal(await withFallback(Promise.reject(new Error('x')), 0), 0);
+});
+
+test('runBounded：分批并行且保序', async () => {
+  const order: number[] = [];
+  const got = await runBounded<number, string>([1, 2, 3, 4, 5], 2, async (n) => {
+    order.push(n);
+    return `v${n}`;
+  });
+  assert.deepEqual(got, ['v1', 'v2', 'v3', 'v4', 'v5']);
+  assert.equal(order.length, 5);
+});
+
+test('readRateLimit：标准头/缺失头/非法值三态', () => {
+  const info = readRateLimit({
+    'x-ratelimit-limit': '5000',
+    'x-ratelimit-remaining': '4999',
+    'x-ratelimit-reset': '1757900000',
+    'x-ratelimit-resource': 'graphql'
+  });
+  assert.equal(info?.limit, 5000);
+  assert.equal(info?.remaining, 4999);
+  assert.equal(info?.reset, 1757900000);
+  assert.equal(info?.resource, 'graphql');
+  // 缺头 → null（非 GitHub 响应）
+  assert.equal(readRateLimit({ 'content-type': 'application/json' }), null);
+  // 非法值 → null
+  assert.equal(readRateLimit({ 'x-ratelimit-limit': 'abc', 'x-ratelimit-remaining': '1' }), null);
+});
+
+test('retryDelayMs：500ms 起步指数退避、4s 封顶', () => {
+  assert.equal(retryDelayMs(0), 500);
+  assert.equal(retryDelayMs(1), 1000);
+  assert.equal(retryDelayMs(2), 2000);
+  assert.equal(retryDelayMs(3), 4000);
+  assert.equal(retryDelayMs(4), 4000);
+  assert.equal(retryDelayMs(10), 4000);
 });

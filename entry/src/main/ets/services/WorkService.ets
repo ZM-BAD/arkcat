@@ -4,6 +4,7 @@
  * Projects/TopRepos/Orgs/Starred 走 viewer 连接。
  */
 import { graphql } from './GitHttpClient';
+import { fetchAllPages, Page } from 'graphql';
 import { Json, JsonMap } from '../utils/Json';
 import {
   WorkIssuesPage, WorkPrsPage, WorkDiscussionsPage, WorkProjectsPage,
@@ -371,24 +372,33 @@ export class WorkService {
     for (const list of lists) {
       // items(first:100) 只取首页：成员不全会导致勾选态错判 + 全量替换 mutation 误删成员。
       // 初始查询已带 pageInfo，从其游标续拉（复核修正：不再重拉 page1）
-      let after = list.repoCursor;
-      let more = list.repoHasNext;
-      let guard = 0;
-      while (more && guard < 10) {
-        guard += 1;
-        const variables: Record<string, Object> = { 'id': list.id, 'after': after };
-        const pageData = await graphql(USER_LIST_ITEMS_QUERY, variables, token);
-        const node = Json.obj(pageData, 'node') ?? ({} as JsonMap);
-        const itemsWrap = Json.obj(node, 'items') ?? ({} as JsonMap);
-        for (const item of Json.arr(itemsWrap, 'nodes')) {
-          const id = Json.str(item as JsonMap, 'id');
-          if (id !== '' && !list.repoIds.includes(id)) {
+      if (list.repoHasNext) {
+        const firstCursor = list.repoCursor;
+        const extraIds = await fetchAllPages<string>(async (cursor): Promise<Page<string>> => {
+          const after = cursor !== null ? cursor : firstCursor;
+          const variables: Record<string, Object> = { 'id': list.id, 'after': after };
+          const pageData = await graphql(USER_LIST_ITEMS_QUERY, variables, token);
+          const node = Json.obj(pageData, 'node') ?? ({} as JsonMap);
+          const itemsWrap = Json.obj(node, 'items') ?? ({} as JsonMap);
+          const ids: string[] = [];
+          for (const item of Json.arr(itemsWrap, 'nodes')) {
+            const id = Json.str(item as JsonMap, 'id');
+            if (id !== '') {
+              ids.push(id);
+            }
+          }
+          const pageInfo = Json.obj(itemsWrap, 'pageInfo') ?? ({} as JsonMap);
+          return {
+            items: ids,
+            hasNextPage: Json.bool(pageInfo, 'hasNextPage'),
+            endCursor: Json.str(pageInfo, 'endCursor')
+          };
+        });
+        for (const id of extraIds) {
+          if (!list.repoIds.includes(id)) {
             list.repoIds.push(id);
           }
         }
-        const pageInfo = Json.obj(itemsWrap, 'pageInfo') ?? ({} as JsonMap);
-        more = Json.bool(pageInfo, 'hasNextPage');
-        after = Json.str(pageInfo, 'endCursor');
       }
     }
     return lists;

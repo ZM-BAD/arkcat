@@ -4,6 +4,7 @@
  * Trending/Awesome 官方无公开 API，REST search 近似（Spec 056 边界）。
  */
 import { ApiError, RawResponse, graphql, restGet } from './GitHttpClient';
+import { aliasField, aliasQueryDocument } from 'graphql';
 import {
   ActivityPrRef, ExploreActivityEvent, mapActivityEvents, mapActivityEventsWithDetails
 } from '../models/ExploreModels';
@@ -20,23 +21,20 @@ query ViewerLogin {
 export const TRENDING_WINDOW_DAYS = 7;
 const SEARCH_PER_PAGE = 25;
 
-/** GraphQL 字符串注入转义（alias 查询为拼接构造） */
-function gqlEscape(value: string): string {
-  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, ' ');
-}
-
 /** 事件详情 alias 查询：r0..rN 一次批量取标题/正文/作者/反应组 */
 export function buildPrDetailsQuery(refs: ActivityPrRef[]): string {
   const parts: string[] = [];
   for (let i = 0; i < refs.length; i++) {
     const slash = refs[i].repoFullName.indexOf('/');
-    const owner = gqlEscape(refs[i].repoFullName.substring(0, slash));
-    const name = gqlEscape(refs[i].repoFullName.substring(slash + 1));
-    parts.push(`r${i}: repository(owner: "${owner}", name: "${name}") { ` +
-      `pullRequest(number: ${refs[i].number}) { id title body merged headRefName baseRefName ` +
-      `author { login avatarUrl } reactionGroups { content viewerHasReacted reactors { totalCount } } } }`);
+    const owner = refs[i].repoFullName.substring(0, slash);
+    const name = refs[i].repoFullName.substring(slash + 1);
+    parts.push(aliasField(`r${i}`, 'repository', [
+      { 'name': 'owner', 'value': owner },
+      { 'name': 'name', 'value': name }
+    ], `pullRequest(number: ${refs[i].number}) { id title body merged headRefName baseRefName ` +
+      `author { login avatarUrl } reactionGroups { content viewerHasReacted reactors { totalCount } } }`));
   }
-  return `query ExploreActivity {\n  ${parts.join('\n  ')}\n}`;
+  return aliasQueryDocument('ExploreActivity', parts);
 }
 
 /** 横幅图/Star 状态 alias 查询：r0..rN 一批补 openGraphImageUrl + viewerHasStarred */
@@ -47,11 +45,14 @@ export function buildRepoMetaQuery(repos: RepoSummary[]): string {
     if (slash <= 0) {
       continue;
     }
-    const owner = gqlEscape(repos[i].nameWithOwner.substring(0, slash));
-    const name = gqlEscape(repos[i].nameWithOwner.substring(slash + 1));
-    parts.push(`r${i}: repository(owner: "${owner}", name: "${name}") { openGraphImageUrl viewerHasStarred }`);
+    const owner = repos[i].nameWithOwner.substring(0, slash);
+    const name = repos[i].nameWithOwner.substring(slash + 1);
+    parts.push(aliasField(`r${i}`, 'repository', [
+      { 'name': 'owner', 'value': owner },
+      { 'name': 'name', 'value': name }
+    ], 'openGraphImageUrl viewerHasStarred'));
   }
-  return `query ExploreRepoMeta {\n  ${parts.join('\n  ')}\n}`;
+  return aliasQueryDocument('ExploreRepoMeta', parts);
 }
 
 /** 搜索结果 + GraphQL 元信息合并（alias 为 null / 查询不命中时保留 REST 原值） */

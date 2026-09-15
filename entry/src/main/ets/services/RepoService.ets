@@ -3,6 +3,7 @@
  * + Spec 054 社区列表（contributors/watchers）+ Spec 055 许可证。
  */
 import { graphql, restGet, ApiError } from './GitHttpClient';
+import { aliasField, aliasQueryDocument } from 'graphql';
 import { contributorCount } from './ExploreService';
 import { Json, JsonMap } from '../utils/Json';
 import { RepoDetail, mapRepoDetail } from '../models/RepoDetailModels';
@@ -229,11 +230,12 @@ async function fetchContributorMeta(token: string, restNodes: JsonMap[]): Promis
   if (logins.length === 0) {
     return new Map<string, JsonMap>();
   }
-  let query = 'query ContributorsMeta {\n';
+  const parts: string[] = [];
   for (let i = 0; i < logins.length; i++) {
-    query += `u${i}: user(login: "${logins[i]}") { login name bio avatarUrl }\n`;
+    // login 来自 GitHub API 本就仅含安全字符，转义由库内 aliasField 统一兜底
+    parts.push(aliasField(`u${i}`, 'user', [{ 'name': 'login', 'value': logins[i] }], 'login name bio avatarUrl'));
   }
-  query += '}';
+  const query = aliasQueryDocument('ContributorsMeta', parts);
   try {
     const data = await graphql(query, null, token);
     const meta = new Map<string, JsonMap>();

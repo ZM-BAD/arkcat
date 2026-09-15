@@ -3,6 +3,7 @@
  * 仓库内 PR 列表 / Commits / Releases / Issue 详情 / PR 详情。
  */
 import { graphql, restGet } from './GitHttpClient';
+import { fetchAllPages, Page } from 'graphql';
 import { Json, JsonMap } from '../utils/Json';
 import { repoIssueOrder } from './IssuesService';
 import {
@@ -438,25 +439,32 @@ export class RepoSubService {
     // 实测末页 endCursor 仍非空，用游标判停会多打一次空页；上限 10 页防极端长 PR 拖死加载）
     const dataFiles = Json.obj(Json.obj(Json.obj(Json.obj(data, 'repository') ?? ({} as JsonMap),
       'pullRequest') ?? ({} as JsonMap), 'files') ?? ({} as JsonMap), 'pageInfo') ?? ({} as JsonMap);
-    let more = Json.bool(dataFiles, 'hasNextPage');
-    let cursor = mapFilesCursor(data);
-    let guard = 0;
-    while (more && guard < 10) {
-      guard += 1;
-      try {
-        const nextVars: Record<string, Object> = { 'owner': owner, 'name': name, 'number': number, 'filesCursor': cursor };
-        const nextData = await graphql(PR_FILES_PAGE_QUERY, nextVars, token);
-        const nextPr = Json.obj(Json.obj(nextData, 'repository') ?? ({} as JsonMap), 'pullRequest') ?? ({} as JsonMap);
-        const nextFiles = Json.obj(nextPr, 'files') ?? ({} as JsonMap);
-        for (const node of Json.arr(nextFiles, 'nodes')) {
-          page.files.push(mapFileNode(node as JsonMap));
+    if (Json.bool(dataFiles, 'hasNextPage')) {
+      const firstCursor = mapFilesCursor(data);
+      const moreFiles = await fetchAllPages<PrFileItem>(async (cursor): Promise<Page<PrFileItem>> => {
+        try {
+          const c = cursor !== null ? cursor : firstCursor;
+          const nextVars: Record<string, Object> = { 'owner': owner, 'name': name, 'number': number, 'filesCursor': c };
+          const nextData = await graphql(PR_FILES_PAGE_QUERY, nextVars, token);
+          const nextPr = Json.obj(Json.obj(nextData, 'repository') ?? ({} as JsonMap), 'pullRequest') ?? ({} as JsonMap);
+          const nextFiles = Json.obj(nextPr, 'files') ?? ({} as JsonMap);
+          const nextItems: PrFileItem[] = [];
+          for (const node of Json.arr(nextFiles, 'nodes')) {
+            nextItems.push(mapFileNode(node as JsonMap));
+          }
+          const pageInfo = Json.obj(nextFiles, 'pageInfo') ?? ({} as JsonMap);
+          return {
+            items: nextItems,
+            hasNextPage: Json.bool(pageInfo, 'hasNextPage'),
+            endCursor: Json.str(pageInfo, 'endCursor')
+          };
+        } catch (e) {
+          // 第 2+ 页失败降级为已取得的前 100 文件，不整页报错（复核修正）
+          return { items: [], hasNextPage: false, endCursor: '' };
         }
-        const pageInfo = Json.obj(nextFiles, 'pageInfo') ?? ({} as JsonMap);
-        more = Json.bool(pageInfo, 'hasNextPage');
-        cursor = Json.str(pageInfo, 'endCursor');
-      } catch (e) {
-        // 第 2+ 页失败降级为已取得的前 100 文件，不整页报错（复核修正）
-        break;
+      });
+      for (const f of moreFiles) {
+        page.files.push(f);
       }
     }
     try {
@@ -488,7 +496,6 @@ export class RepoSubService {
     return page;
   }
 
-  /** 发布评论（subjectId = Issue/PR 节点 id；成功后调用方刷新列表）
   /** 发布评论（subjectId = Issue/PR 节点 id；成功后调用方刷新列表） */
   static async addComment(token: string, subjectId: string, body: string): Promise<void> {
     const variables: Record<string, Object> = { 'subjectId': subjectId, 'body': body };

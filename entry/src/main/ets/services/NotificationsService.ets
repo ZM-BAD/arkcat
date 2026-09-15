@@ -4,6 +4,7 @@
  * 用单次 GraphQL 别名查询批量探测（merged 显示紫色 merge 图标，见 Inbox 卡片）。
  */
 import { restGet, restPatch, graphql } from './GitHttpClient';
+import { aliasField, aliasQueryDocument } from 'graphql';
 import { mapNotifications, withPrMerged, NotificationItem } from '../models/GitHubModels';
 import { Json, JsonMap } from '../utils/Json';
 
@@ -34,15 +35,17 @@ export function pullRefFromUrl(url: string): PrRef | null {
   return { owner: m[1], name: m[2], number: parseInt(m[3], 10) };
 }
 
-/** 单请求多 alias：每个 PR 一个 t{i}: repository(...){issueOrPullRequest(...)} */
+/** 单请求多 alias：每个 PR 一个 t{i}: repository(...){issueOrPullRequest(...)}（owner/name 经库内转义） */
 export function buildPullStatesQuery(refs: PrRef[]): string {
-  let fields = '';
+  const parts: string[] = [];
   for (let i = 0; i < refs.length; i++) {
     const ref = refs[i];
-    fields += `t${i}:repository(owner:"${ref.owner}", name:"${ref.name}")` +
-      `{ issueOrPullRequest(number:${ref.number}){ ... on PullRequest{ merged } ... on Issue{ state } } }\n`;
+    parts.push(aliasField(`t${i}`, 'repository', [
+      { 'name': 'owner', 'value': ref.owner },
+      { 'name': 'name', 'value': ref.name }
+    ], `issueOrPullRequest(number: ${ref.number}) { ... on PullRequest{ merged } ... on Issue{ state } }`));
   }
-  return `query {\n${fields}}`;
+  return aliasQueryDocument('', parts);
 }
 
 /** 别名查询结果 → merged 布尔数组（与 refs 同序；节点缺失默认 false） */

@@ -52,5 +52,9 @@
         },
       ],
     },
+    {
+      name: 'graphql',
+      srcPath: './graphql',
+    },
   ],
 }

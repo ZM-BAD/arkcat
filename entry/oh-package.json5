@@ -5,5 +5,7 @@
   "main": "",
   "author": "zm_bad",
   "license": "GPL-3.0-only",
-  "dependencies": {}
+  "dependencies": {
+    "graphql": "file:../graphql"
+  }
 }

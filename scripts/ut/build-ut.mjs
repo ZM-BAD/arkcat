@@ -19,6 +19,8 @@ const KIT_STUBS = {
   '@kit.AssetStoreKit': resolve(HERE, 'stubs/asset-store-kit.js'),
   '@kit.ShareKit': resolve(HERE, 'stubs/share-kit.js'),
   '@kit.PerformanceAnalysisKit': resolve(HERE, 'stubs/performance-analysis-kit.js'),
+  // 裸包名 graphql（HAR 库）→ 直接映射到库源码 Index，宿主 UT 跑真库逻辑而非桩
+  'graphql': resolve(ROOT, 'graphql/src/main/ets/Index.ets'),
   '@kit.UserAuthenticationKit': resolve(HERE, 'stubs/user-authentication-kit.js')
 };
 

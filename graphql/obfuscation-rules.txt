@@ -1,0 +1,4 @@
+# Define project specific obfuscation rules here.
+# You can include the obfuscation configuration files in the current module's build-profile.json5.
+#
+# For a library, keep default (obfuscation disabled) until symbols are verified.
