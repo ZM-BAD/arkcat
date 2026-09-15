@@ -5,6 +5,7 @@
  */
 import { graphql } from './GitHttpClient';
 import { IssuesPage, mapIssuesPage } from '../models/IssuesModels';
+import { FRAG_PAGE_INFO } from './GqlFragments';
 
 const ISSUES_QUERY = `
 query IssuesList(
@@ -17,7 +18,7 @@ query IssuesList(
     issues(states: $states, orderBy: $orderBy, first: $first, after: $after, labels: $label,
       filterBy: $filterBy) {
       totalCount
-      pageInfo { hasNextPage endCursor }
+      ${FRAG_PAGE_INFO}
       nodes {
         id number title state createdAt
         author { login }

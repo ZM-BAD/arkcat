@@ -5,6 +5,7 @@
  * 状态管理与数据加载（emitChange/openOrgSheet 等）；任何变化经 onQueryChange 上抛，页面据此重查。
  * 空列表显示官方「Nothing to see here」（无组织/仓库或搜索无匹配时）。
  */
+import { RequestSequencer } from 'graphql';
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
 import { WorkOrgItem, WorkTopRepoItem, WorkTopReposPage } from '../models/WorkModels';
@@ -77,7 +78,8 @@ export struct WorkFilterBar {
   @Local repoSearchResults: SearchResultItem[] = [];
   @Local repoSearching: boolean = false;
   private repoSearchTimer: number = -1;
-  private repoSearchSeq: number = 0;
+  /** 仓库面板搜索竞态守卫（库原语） */
+  private repoSearchSeq: RequestSequencer = new RequestSequencer();
 
   private stringOf(res: Resource): string {
     return resText(this.getUIContext(), res);
@@ -311,17 +313,17 @@ export struct WorkFilterBar {
       this.repoSearchTimer = -1;
     }
     if (v.trim() === '') {
-      this.repoSearchSeq++;
+      this.repoSearchSeq.begin();
       this.repoSearching = false;
       this.repoSearchResults = [];
       return;
     }
     this.repoSearching = true;
-    const seq = ++this.repoSearchSeq;
+    const seq = this.repoSearchSeq.begin();
     this.repoSearchTimer = setTimeout((): void => {
       SearchService.fetchSearchResults(this.token, 'repositories', v.trim())
         .then((page: SearchResultPage) => {
-          if (seq !== this.repoSearchSeq) {
+          if (!this.repoSearchSeq.isCurrent(seq)) {
             return;
           }
           const hits = page.items.slice();
@@ -335,7 +337,7 @@ export struct WorkFilterBar {
         })
         .catch((_e: Error) => {
           // 搜索失败按空结果呈现（保留输入态，用户可改词重试）
-          if (seq !== this.repoSearchSeq) {
+          if (!this.repoSearchSeq.isCurrent(seq)) {
             return;
           }
           this.repoSearchResults = [];

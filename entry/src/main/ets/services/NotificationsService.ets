@@ -4,7 +4,7 @@
  * 用单次 GraphQL 别名查询批量探测（merged 显示紫色 merge 图标，见 Inbox 卡片）。
  */
 import { restGet, restPatch, graphql } from './GitHttpClient';
-import { aliasField, aliasQueryDocument } from 'graphql';
+import { aliasField, aliasQueryDocument, withFallback } from 'graphql';
 import { mapNotifications, withPrMerged, NotificationItem } from '../models/GitHubModels';
 import { Json, JsonMap } from '../utils/Json';
 
@@ -89,11 +89,12 @@ export class NotificationsService {
     if (prRefs.length === 0) {
       return items;
     }
-    let merged: boolean[] = [];
-    try {
-      const data = await graphql(buildPullStatesQuery(prRefs), {} as Record<string, Object>, token);
-      merged = mapPullMerged(data, prRefs.length);
-    } catch (e) {
+    // merged 探测属展示增强：软失败为 null（=探测失败，条目原样返回）
+    const merged: boolean[] | null = await withFallback(
+      graphql(buildPullStatesQuery(prRefs), {} as Record<string, Object>, token)
+        .then((data: JsonMap): boolean[] => mapPullMerged(data, prRefs.length)),
+      null);
+    if (merged === null) {
       return items;
     }
     // 按原顺序回填：仅 PR 条目被替换，非 PR 原样

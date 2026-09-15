@@ -19,9 +19,11 @@
 
 - **GraphQL 主通道**：服务层内 `graphql(query, variables, token)`；token 显式传参（多账号场景不持有会话态）。
 - **REST 兜底**：`restGet/restPost/restPatch`，返回 `RawResponse{code, body, link?}`（Link 分页头已解出，大小写不敏感）。
+  `restGet` 幂等，网络层瞬态失败自动重试 1 次（500ms 退避）；写操作不重试。
 - 页面/组件**禁止** `http.createHttp()`。白名单例外仅三个：`OAuthService`（token 端点）、
   `DownloadService`（下载流）、`AchievementsService`（外部 CDN）。
 - 新增 Accept 媒体类型（raw/html/text-match 等）写在调用点常量，经 `restGet(path, token, accept)` 传入。
+- **限流可观测**：`readRateLimit(headers)` 解析 `x-ratelimit-*`；429 时 `ApiError.retryAfter` 带 Retry-After 秒数。
 
 ## 3. 错误语义（必读）
 
@@ -37,6 +39,8 @@
 
 - 查询 document **只定义在 service 层**，静态模板字符串常量优先；models/pages 层零定义。
 - 动态值一律走 `variables`（含 cursor、login、owner/name）。
+- 跨服务共用片段统一引用 `services/GqlFragments.ets`（`FRAG_PAGE_INFO`/`FRAG_VIEWER_LOGIN`），
+  以 `${常量}` 内插进查询模板；新片段先落该文件再使用，**禁止**在多个 service 重复书写同一段子查询。
 - 确需拼接 document 的场景（单请求多 alias 批量查询）**必须**用库原语：
   - `aliasField(alias, field, AliasArg[], inner)`——string 实参自动转义加引号、number 直插；
   - `aliasQueryDocument(opName, parts)` 包裹成完整 document（opName 传 `''` 为匿名 query）；
@@ -62,6 +66,9 @@
 | `runBounded(items, batch, task)` | 有界并发池（批间串行、批内并行） | 全量 `Promise.all` |
 
 新代码一律用库原语；存量手写模式随批收敛。
+- `GraphQLRequestOptions.retries` / `HttpRequestOptions.retries`：网络层失败（code 0）指数退避重试
+  （`retryDelayMs` 500ms→4s 封顶），**默认 0**——只对幂等读请求开启，写操作永不重试。
+- `GraphQLClientConfig.tokenProvider`：宿主注入默认令牌提供者（单请求 `options.token` 优先）。
 
 ## 7. 库边界与测试要求
 

@@ -73,7 +73,7 @@ export async function graphql(query: string, variables: Record<string, Object> |
   return graphqlClient.query(query, variables, { 'token': token });
 }
 
-/** REST GET */
+/** REST GET（幂等：网络层瞬态失败自动重试 1 次，500ms 退避） */
 export async function restGet(path: string, token: string, accept?: string): Promise<RawResponse> {
   const headers = baseHeaders(token);
   if (accept !== undefined) {
@@ -82,7 +82,8 @@ export async function restGet(path: string, token: string, accept?: string): Pro
   const resp = await HttpClient.request({
     'method': http.RequestMethod.GET,
     'url': `${GITHUB_API}${path}`,
-    'headers': headers
+    'headers': headers,
+    'retries': 1
   });
   return toRawResponse(resp);
 }

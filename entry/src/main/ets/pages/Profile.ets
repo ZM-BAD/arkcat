@@ -6,6 +6,7 @@
  * Spec 060：本页复用为底栏 tab4 根页（当前账号，showBack=false）；他人主页仍由 userProfile 路由压栈进入。
  * 顶栏两行标题（灰小字 login + 粗体 name）：下滑头卡滚出视野后出现，本人/他人主页一致。
  */
+import { RequestSequencer } from 'graphql';
 import { promptAction } from '@kit.ArkUI';
 import { UserProfile } from '../models/ProfileModels';
 import { isSelfProfile } from '../models/ProfileModels';
@@ -58,7 +59,8 @@ export struct ProfileView {
   /** 勋章图片 URL 列表（官方 CDN，AchievementsService 抓取） */
   @Local achievements: string[] = [];
   /** 请求代际：切号/换 login 后旧响应直接丢弃（防旧账号数据覆盖新账号） */
-  private reqSeq: number = 0;
+  /** 请求竞态守卫：旧请求回调按序号丢弃（库原语） */
+  private reqSeq: RequestSequencer = new RequestSequencer();
 
   aboutToAppear(): void {
     this.refresh();
@@ -90,15 +92,14 @@ export struct ProfileView {
     if (this.login === '') {
       return;
     }
-    this.reqSeq += 1;
-    const seq: number = this.reqSeq;
+    const seq: number = this.reqSeq.begin();
     if (!silent) {
       this.loading = true;
       this.errorMsg = '';
     }
     ProfileService.fetchProfile(this.token, this.login)
       .then((profile: UserProfile) => {
-        if (seq !== this.reqSeq) {
+        if (!this.reqSeq.isCurrent(seq)) {
           return;
         }
         this.profile = profile;
@@ -108,14 +109,14 @@ export struct ProfileView {
         // 组织计数独立拉取（review G8）
         ProfileService.fetchOrgCount(this.token, this.login)
           .then((count: number) => {
-            if (seq !== this.reqSeq) {
+            if (!this.reqSeq.isCurrent(seq)) {
               return;
             }
             this.orgCount = count;
           });
       })
       .catch((e: Error) => {
-        if (seq !== this.reqSeq) {
+        if (!this.reqSeq.isCurrent(seq)) {
           return;
         }
         this.isRefreshing = false;
@@ -127,13 +128,13 @@ export struct ProfileView {
     // 勋章无 GraphQL 字段：HTML 抓取独立于主查询，失败仅隐藏勋章行
     AchievementsService.fetch(this.login)
       .then((urls: string[]) => {
-        if (seq !== this.reqSeq) {
+        if (!this.reqSeq.isCurrent(seq)) {
           return;
         }
         this.achievements = urls;
       })
       .catch(() => {
-        if (seq !== this.reqSeq) {
+        if (!this.reqSeq.isCurrent(seq)) {
           return;
         }
         this.achievements = [];

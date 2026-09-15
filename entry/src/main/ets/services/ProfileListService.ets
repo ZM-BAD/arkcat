@@ -9,12 +9,14 @@
  * 客户端语言/排序。Pinned（仅 GraphQL 供给）失败时清空隐藏。
  */
 import { graphql, restGet } from './GitHttpClient';
+import { withFallback } from 'graphql';
 import { Json, JsonMap } from '../utils/Json';
 import {
   UserListPage, OrgListPage, OrgProfile, OrgSummary, RepoListPage, mapUserListPage
 } from '../models/ProfileModels';
 import { RepoSummary, filterReposByType, mapRepo } from '../models/GitHubModels';
 import { LANGUAGE_COLORS } from '../models/LanguageColors';
+import { FRAG_PAGE_INFO } from './GqlFragments';
 
 const ORG_REST_PAGE_LIMIT = 100;
 
@@ -22,7 +24,7 @@ const USER_FOLLOWERS_QUERY = `
 query UserFollowers($login: String!, $first: Int = 25, $after: String) {
   user(login: $login) {
     followers(first: $first, after: $after) {
-      pageInfo { hasNextPage endCursor }
+      ${FRAG_PAGE_INFO}
       nodes { login name bio avatarUrl }
     }
   }
@@ -32,7 +34,7 @@ const USER_FOLLOWING_QUERY = `
 query UserFollowing($login: String!, $first: Int = 25, $after: String) {
   user(login: $login) {
     following(first: $first, after: $after) {
-      pageInfo { hasNextPage endCursor }
+      ${FRAG_PAGE_INFO}
       nodes { login name bio avatarUrl }
     }
   }
@@ -52,7 +54,7 @@ query OrgPinned($login: String!) {
 }`;
 
 const REPO_LIST_FIELDS = `
-      pageInfo { hasNextPage endCursor }
+      ${FRAG_PAGE_INFO}
       nodes { ... on Repository {
         id name nameWithOwner description stargazerCount forkCount isPrivate
         isArchived isFork isMirror isTemplate
@@ -190,23 +192,24 @@ export class ProfileListService {
     return org;
   }
 
-  /** 组织 Pinned：GraphQL（pinnedItems 权限受限时返回空 → 页面隐藏区块） */
+  /** 组织 Pinned：GraphQL（pinnedItems 权限受限时返回空 → 页面隐藏区块）；装饰性数据软失败为空列表 */
   private static async fetchOrgPinned(token: string, login: string): Promise<RepoSummary[]> {
+    const raw = ProfileListService.fetchOrgPinnedRaw(token, login);
+    return withFallback(raw, []);
+  }
+
+  private static async fetchOrgPinnedRaw(token: string, login: string): Promise<RepoSummary[]> {
     const variables: Record<string, Object> = { 'login': login };
-    try {
-      const data = await graphql(ORG_PINNED_QUERY, variables, token);
-      const orgNode = Json.obj(data, 'organization') ?? ({} as JsonMap);
-      const pinnedRaw = Json.obj(orgNode, 'pinnedItems');
-      const pinned: RepoSummary[] = [];
-      if (pinnedRaw !== null) {
-        for (const node of Json.arr(pinnedRaw, 'nodes')) {
-          pinned.push(mapRepo(node as JsonMap));
-        }
+    const data = await graphql(ORG_PINNED_QUERY, variables, token);
+    const orgNode = Json.obj(data, 'organization') ?? ({} as JsonMap);
+    const pinnedRaw = Json.obj(orgNode, 'pinnedItems');
+    const pinned: RepoSummary[] = [];
+    if (pinnedRaw !== null) {
+      for (const node of Json.arr(pinnedRaw, 'nodes')) {
+        pinned.push(mapRepo(node as JsonMap));
       }
-      return pinned;
-    } catch (e) {
-      return [];
     }
+    return pinned;
   }
 
   /** 组织 README：.github 仓库 profile/README.md（官方组织主页内容）→ 根 README.md 兜底；404 → '' */

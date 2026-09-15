@@ -5,6 +5,7 @@
  *   每区块 3 条预览 + 「See X more Y results」链接 → 单类结果页（searchResults）
  * - 区块间细分割线；区块首（Code）不画上分隔线
  */
+import { RequestSequencer } from 'graphql';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { StateView } from '../components/StateView';
@@ -45,7 +46,8 @@ export struct SearchOverviewView {
   }
 
   /** 竞态序号：连续搜索丢弃过期响应（review E4） */
-  private seq: number = 0;
+  /** 请求竞态守卫：旧请求回调按序号丢弃（库原语，勿手写 ++seq） */
+  private reqSeq: RequestSequencer = new RequestSequencer();
 
   private load(): void {
     const q = this.query.trim();
@@ -53,13 +55,13 @@ export struct SearchOverviewView {
       this.pathStack.pop();
       return;
     }
-    const mySeq = ++this.seq;
+    const mySeq = this.reqSeq.begin();
     this.loading = true;
     this.errorMsg = '';
     this.loaded = false;
     SearchService.fetchOverview(this.token, q)
       .then((d: SearchOverviewData) => {
-        if (mySeq !== this.seq) {
+        if (!this.reqSeq.isCurrent(mySeq)) {
           return;
         }
         this.data = d;
@@ -71,7 +73,7 @@ export struct SearchOverviewView {
         SearchHistoryStore.remember(this.getUIContext().getHostContext(), this.login, q);
       })
       .catch((e: Error) => {
-        if (mySeq !== this.seq) {
+        if (!this.reqSeq.isCurrent(mySeq)) {
           return;
         }
         this.errorMsg = e.message;

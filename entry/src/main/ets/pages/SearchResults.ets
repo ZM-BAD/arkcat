@@ -5,6 +5,7 @@
  * - code → REST /search/code（文件分组卡 + Show more 文件分页）
  * - 行版式与聚合页共用：SearchRows.ets / CodeSearchCard.ets
  */
+import { RequestSequencer } from 'graphql';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { StateView } from '../components/StateView';
@@ -49,7 +50,8 @@ export struct SearchResultsView {
   }
 
   /** 竞态序号：改词/快速翻页丢弃过期响应（review E4） */
-  private seq: number = 0;
+  /** 请求竞态守卫：旧请求回调按序号丢弃（库原语，勿手写 ++seq） */
+  private reqSeq: RequestSequencer = new RequestSequencer();
 
   private loadFirst(): void {
     // 空词回车守卫：直接打接口只会得到裸错误（review E15）
@@ -58,7 +60,7 @@ export struct SearchResultsView {
       return;
     }
     const q = this.query.trim();
-    const mySeq = ++this.seq;
+    const mySeq = this.reqSeq.begin();
     this.loading = true;
     this.errorMsg = '';
     this.items = [];
@@ -71,7 +73,7 @@ export struct SearchResultsView {
     if (this.kind === 'code') {
       SearchService.fetchCodeResults(this.token, this.query, 1)
         .then((page: CodeSearchPage) => {
-          if (mySeq !== this.seq) {
+          if (!this.reqSeq.isCurrent(mySeq)) {
             return;
           }
           this.codeFiles = page.files;
@@ -84,7 +86,7 @@ export struct SearchResultsView {
           SearchHistoryStore.remember(this.getUIContext().getHostContext(), this.login, q);
         })
         .catch((e: Error) => {
-          if (mySeq !== this.seq) {
+          if (!this.reqSeq.isCurrent(mySeq)) {
             return;
           }
           this.errorMsg = e.message;
@@ -96,7 +98,7 @@ export struct SearchResultsView {
     }
     SearchService.fetchSearchResults(this.token, this.kind as SearchEntryKind, this.query)
       .then((page: SearchResultPage) => {
-        if (mySeq !== this.seq) {
+        if (!this.reqSeq.isCurrent(mySeq)) {
           return;
         }
         this.items = page.items;
@@ -109,7 +111,7 @@ export struct SearchResultsView {
         SearchHistoryStore.remember(this.getUIContext().getHostContext(), this.login, q);
       })
       .catch((e: Error) => {
-        if (mySeq !== this.seq) {
+        if (!this.reqSeq.isCurrent(mySeq)) {
           return;
         }
         this.errorMsg = e.message;
@@ -124,12 +126,12 @@ export struct SearchResultsView {
     if (this.loading) {
       return;
     }
-    const mySeq = ++this.seq;
+    const mySeq = this.reqSeq.begin();
     this.loading = true;
     if (this.kind === 'code') {
       SearchService.fetchCodeResults(this.token, this.query, this.codePage + 1)
         .then((page: CodeSearchPage) => {
-          if (mySeq !== this.seq) {
+          if (!this.reqSeq.isCurrent(mySeq)) {
             return;
           }
           this.codePage += 1;
@@ -140,7 +142,7 @@ export struct SearchResultsView {
           this.loading = false;
         })
         .catch((e: Error) => {
-          if (mySeq !== this.seq) {
+          if (!this.reqSeq.isCurrent(mySeq)) {
             return;
           }
           // 翻页失败不打翻整页：仅当尚无任何结果才进错误态（review E3）
@@ -156,7 +158,7 @@ export struct SearchResultsView {
     }
     SearchService.fetchSearchResults(this.token, this.kind as SearchEntryKind, this.query, this.cursor)
       .then((page: SearchResultPage) => {
-        if (mySeq !== this.seq) {
+        if (!this.reqSeq.isCurrent(mySeq)) {
           return;
         }
         this.items = this.items.concat(page.items);
@@ -165,7 +167,7 @@ export struct SearchResultsView {
         this.loading = false;
       })
       .catch((e: Error) => {
-        if (mySeq !== this.seq) {
+        if (!this.reqSeq.isCurrent(mySeq)) {
           return;
         }
         // 翻页失败不打翻整页（review E3）

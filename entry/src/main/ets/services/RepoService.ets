@@ -3,16 +3,17 @@
  * + Spec 054 社区列表（contributors/watchers）+ Spec 055 许可证。
  */
 import { graphql, restGet, ApiError } from './GitHttpClient';
-import { aliasField, aliasQueryDocument } from 'graphql';
+import { aliasField, aliasQueryDocument, withFallback } from 'graphql';
 import { contributorCount } from './ExploreService';
 import { Json, JsonMap } from '../utils/Json';
 import { RepoDetail, mapRepoDetail } from '../models/RepoDetailModels';
 import { StargazerPage, ForkPage, PeoplePage, mapStargazerPage, mapForkPage, mapWatcherPage, mapContributorPage } from '../models/RepoSocialModels';
 import { LicenseInfo, mapLicenseInfo } from '../models/RepoLicenseModels';
+import { FRAG_PAGE_INFO, FRAG_VIEWER_LOGIN } from './GqlFragments';
 
 const REPO_QUERY = `
 query RepositoryDetail($owner: String!, $name: String!) {
-  viewer { login }
+  ${FRAG_VIEWER_LOGIN}
   repository(owner: $owner, name: $name) {
     id
     name
@@ -74,7 +75,7 @@ query RepoStargazers($owner: String!, $name: String!, $first: Int = 50, $after: 
   repository(owner: $owner, name: $name) {
     stargazers(first: $first, after: $after,
       orderBy: { field: STARRED_AT, direction: DESC }) {
-      pageInfo { hasNextPage endCursor }
+      ${FRAG_PAGE_INFO}
       nodes { login name bio avatarUrl }
     }
   }
@@ -84,7 +85,7 @@ const FORKS_QUERY = `
 query RepoForks($owner: String!, $name: String!, $first: Int = 50, $after: String) {
   repository(owner: $owner, name: $name) {
     forks(first: $first, after: $after) {
-      pageInfo { hasNextPage endCursor }
+      ${FRAG_PAGE_INFO}
       nodes {
         name description stargazerCount
         primaryLanguage { name color }
@@ -99,7 +100,7 @@ const WATCHERS_QUERY = `
 query RepoWatchers($owner: String!, $name: String!, $first: Int = 50, $after: String) {
   repository(owner: $owner, name: $name) {
     watchers(first: $first, after: $after) {
-      pageInfo { hasNextPage endCursor }
+      ${FRAG_PAGE_INFO}
       nodes { login name bio avatarUrl }
     }
   }
@@ -236,18 +237,18 @@ async function fetchContributorMeta(token: string, restNodes: JsonMap[]): Promis
     parts.push(aliasField(`u${i}`, 'user', [{ 'name': 'login', 'value': logins[i] }], 'login name bio avatarUrl'));
   }
   const query = aliasQueryDocument('ContributorsMeta', parts);
-  try {
-    const data = await graphql(query, null, token);
-    const meta = new Map<string, JsonMap>();
-    for (let i = 0; i < logins.length; i++) {
-      const item: Object | undefined = data[`u${i}`];
-      if (item !== undefined && item !== null) {
-        meta.set(logins[i], item as JsonMap);
-      }
+  // 元信息补全失败：降级 REST-only（login+头像），不阻断列表
+  return withFallback(fetchContributorMetaRaw(token, query, logins), new Map<string, JsonMap>());
+}
+
+async function fetchContributorMetaRaw(token: string, query: string, logins: string[]): Promise<Map<string, JsonMap>> {
+  const data = await graphql(query, null, token);
+  const meta = new Map<string, JsonMap>();
+  for (let i = 0; i < logins.length; i++) {
+    const item: Object | undefined = data[`u${i}`];
+    if (item !== undefined && item !== null) {
+      meta.set(logins[i], item as JsonMap);
     }
-    return meta;
-  } catch (e) {
-    // 元信息补全失败：降级 REST-only（login+头像），不阻断列表
-    return new Map<string, JsonMap>();
   }
+  return meta;
 }

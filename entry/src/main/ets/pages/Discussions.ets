@@ -2,6 +2,7 @@
  * 工作区 Discussion 列表页（Spec 019）：跨仓库 Discussions（search type: DISCUSSION）。
  * 状态/归属下拉 + Unanswered 快捷标 + 分类胶囊。
  */
+import { RequestSequencer } from 'graphql';
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
@@ -66,16 +67,17 @@ export struct DiscussionsView {
   }
 
   /** 竞态序号：快速切换筛选时丢弃过期响应（review E4） */
-  private seq: number = 0;
+  /** 请求竞态守卫：旧请求回调按序号丢弃（库原语，勿手写 ++seq） */
+  private reqSeq: RequestSequencer = new RequestSequencer();
 
   private refresh(): void {
-    const mySeq = ++this.seq;
+    const mySeq = this.reqSeq.begin();
     this.loading = true;
     this.errorMsg = '';
     WorkService.fetchDiscussions(this.token, this.state, this.scope, this.unanswered, this.sortKey, '', this.repo,
       this.authorFilter, this.labelFilter, this.categoryFilter)
       .then((page: WorkDiscussionsPage) => {
-        if (mySeq !== this.seq) {
+        if (!this.reqSeq.isCurrent(mySeq)) {
           return;
         }
         this.discussions = page.discussions;
@@ -86,7 +88,7 @@ export struct DiscussionsView {
         this.loadingMore = false;
       })
       .catch((e: Error) => {
-        if (mySeq !== this.seq) {
+        if (!this.reqSeq.isCurrent(mySeq)) {
           return;
         }
         this.errorMsg = e.message;
@@ -100,13 +102,13 @@ export struct DiscussionsView {
     if (!this.hasNextPage || this.loading || this.loadingMore) {
       return;
     }
-    const mySeq = ++this.seq;
+    const mySeq = this.reqSeq.begin();
     this.loading = true;
     this.loadingMore = true;
     WorkService.fetchDiscussions(this.token, this.state, this.scope, this.unanswered, this.sortKey, this.cursor,
       this.repo, this.authorFilter, this.labelFilter, this.categoryFilter)
       .then((page: WorkDiscussionsPage) => {
-        if (mySeq !== this.seq) {
+        if (!this.reqSeq.isCurrent(mySeq)) {
           return;
         }
         this.discussions = this.discussions.concat(page.discussions);
@@ -116,7 +118,7 @@ export struct DiscussionsView {
         this.loadingMore = false;
       })
       .catch((e: Error) => {
-        if (mySeq !== this.seq) {
+        if (!this.reqSeq.isCurrent(mySeq)) {
           return;
         }
         this.errorMsg = e.message;

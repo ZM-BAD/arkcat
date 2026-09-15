@@ -14,13 +14,14 @@ import {
 import { PrFilesPage, PrFileItem, mapPrFiles, applyRestPatch, mapFilesCursor, mapFileNode } from '../models/PrDiffModels';
 import { CommitDetailPage, mapCommitDetail } from '../models/PrDiffModels';
 import { parseDiffPatch } from '../utils/Diff';
+import { FRAG_PAGE_INFO } from './GqlFragments';
 
 const REPO_PRS_QUERY = `
 query RepoPullRequests($owner: String!, $name: String!, $states: [PullRequestState!], $labels: [String!], $first: Int = 50, $after: String, $orderBy: IssueOrder!) {
   repository(owner: $owner, name: $name) {
     pullRequests(states: $states, labels: $labels, first: $first, after: $after, orderBy: $orderBy) {
       totalCount
-      pageInfo { hasNextPage endCursor }
+      ${FRAG_PAGE_INFO}
       nodes {
         id number title state merged isDraft createdAt
         milestone { title }
@@ -44,7 +45,7 @@ query RepoCommits($owner: String!, $name: String!, $first: Int = 40, $after: Str
         ... on Commit {
           history(first: $first, after: $after) {
             totalCount
-            pageInfo { hasNextPage endCursor }
+            ${FRAG_PAGE_INFO}
             nodes {
               oid messageHeadline committedDate
               author { name avatarUrl user { login } }
@@ -62,7 +63,7 @@ query PrCommits($owner: String!, $name: String!, $number: Int!, $first: Int = 40
   repository(owner: $owner, name: $name) {
     pullRequest(number: $number) {
       commits(first: $first, after: $after) {
-        pageInfo { hasNextPage endCursor }
+        ${FRAG_PAGE_INFO}
         nodes {
           commit {
             oid messageHeadline committedDate
@@ -93,7 +94,7 @@ query RepoReleases($owner: String!, $name: String!, $first: Int = 30, $after: St
   repository(owner: $owner, name: $name) {
     releases(first: $first, after: $after, orderBy: { field: CREATED_AT, direction: DESC }) {
       totalCount
-      pageInfo { hasNextPage endCursor }
+      ${FRAG_PAGE_INFO}
       nodes { id name tagName isLatest createdAt description author { login avatarUrl } }
     }
   }
@@ -135,7 +136,7 @@ query ReactionUsers($id: ID!, $first: Int = 50, $after: String) {
         content
         reactors(first: $first, after: $after) {
           totalCount
-          pageInfo { hasNextPage endCursor }
+          ${FRAG_PAGE_INFO}
           nodes {
             ... on User { login name avatarUrl }
             ... on Bot { login avatarUrl }
@@ -157,7 +158,7 @@ query IssueDetail($owner: String!, $name: String!, $number: Int!, $first: Int = 
       labels(first: 10) { nodes { name } }
       comments(first: $first, after: $after) {
         totalCount
-        pageInfo { hasNextPage endCursor }
+        ${FRAG_PAGE_INFO}
         nodes {
           id body bodyHTML createdAt
           author { login avatarUrl }
@@ -205,7 +206,7 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!, $after: 
       }
       comments(first: 20, after: $after) {
         totalCount
-        pageInfo { hasNextPage endCursor }
+        ${FRAG_PAGE_INFO}
         nodes {
           id body bodyHTML createdAt
           author { login avatarUrl }
@@ -237,7 +238,7 @@ query PullRequestFiles($owner: String!, $name: String!, $number: Int!) {
       deletions
       files(first: 100) {
         totalCount
-        pageInfo { hasNextPage endCursor }
+        ${FRAG_PAGE_INFO}
         nodes { path additions deletions }
       }
     }
@@ -251,7 +252,7 @@ query PullRequestFilesPage($owner: String!, $name: String!, $number: Int!, $file
     pullRequest(number: $number) {
       files(first: 100, after: $filesCursor) {
         totalCount
-        pageInfo { hasNextPage endCursor }
+        ${FRAG_PAGE_INFO}
         nodes { path additions deletions }
       }
     }

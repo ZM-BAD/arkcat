@@ -9,8 +9,10 @@
 import { common } from '@kit.AbilityKit';
 import { preferences } from '@kit.ArkData';
 import { graphql, restGet, ApiError } from './GitHttpClient';
+import { withFallback } from 'graphql';
 import { CodeFileResult, CodeSearchPage, CodeSearchService } from './CodeSearchService';
 import { Json, JsonMap } from '../utils/Json';
+import { FRAG_PAGE_INFO } from './GqlFragments';
 
 /** 首页/建议行类型（与 SEARCH_SUGGESTION_TYPES 一致） */
 export type SearchEntryKind = 'code' | 'repositories' | 'issues' | 'prs' | 'people' | 'orgs';
@@ -97,7 +99,7 @@ query SearchAll($query: String!, $type: SearchType!, $first: Int = 20, $after: S
     repositoryCount
     issueCount
     userCount
-    pageInfo { hasNextPage endCursor }
+    ${FRAG_PAGE_INFO}
     nodes {
       ... on Repository {
         __typename
@@ -568,13 +570,8 @@ export class SearchService {
     }
     query += `) {${fields} }`;
     // 头像补全属装饰性数据：任一仓库已删/改名（索引滞后）返回 200+errors 会整单抛出，
-    // 这里 catch 降级为空头像，不击穿搜索主流程（review G3）
-    let data: JsonMap | null = null;
-    try {
-      data = await graphql(query, variables, token);
-    } catch (e) {
-      return avatarMap;
-    }
+    // 软失败降级为空头像，不击穿搜索主流程（review G3）
+    const data: JsonMap | null = await withFallback(graphql(query, variables, token), null);
     if (data === null) {
       return avatarMap;
     }

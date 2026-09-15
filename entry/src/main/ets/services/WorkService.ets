@@ -6,6 +6,7 @@
 import { graphql } from './GitHttpClient';
 import { fetchAllPages, Page } from 'graphql';
 import { Json, JsonMap } from '../utils/Json';
+import { FRAG_PAGE_INFO, FRAG_VIEWER_LOGIN } from './GqlFragments';
 import {
   WorkIssuesPage, WorkPrsPage, WorkDiscussionsPage, WorkProjectsPage,
   WorkOrgsPage, WorkTopReposPage, WorkStarredPage, WorkUserList, WorkListDetail,
@@ -18,7 +19,7 @@ import {
 
 const VIEWER_LOGIN_QUERY = `
 query ViewerLogin {
-  viewer { login }
+  ${FRAG_VIEWER_LOGIN}
 }`;
 
 const CREATE_LIST_MUTATION = `
@@ -34,7 +35,7 @@ query ViewerLists($first: Int = 50) {
         id name description
         items(first: 100) {
           totalCount
-          pageInfo { hasNextPage endCursor }
+          ${FRAG_PAGE_INFO}
           nodes { ... on Repository { id } }
         }
       }
@@ -64,7 +65,7 @@ query UserListItems($id: ID!, $after: String) {
     ... on UserList {
       items(first: 100, after: $after) {
         totalCount
-        pageInfo { hasNextPage endCursor }
+        ${FRAG_PAGE_INFO}
         nodes { ... on Repository { id } }
       }
     }
@@ -109,7 +110,7 @@ const WORK_ISSUES_QUERY = `
 query WorkIssues($query: String!, $first: Int = 25, $after: String) {
   search(query: $query, type: ISSUE, first: $first, after: $after) {
     issueCount
-    pageInfo { hasNextPage endCursor }
+    ${FRAG_PAGE_INFO}
     nodes {
       ... on Issue {
         id number title state stateReason createdAt
@@ -124,7 +125,7 @@ query WorkIssues($query: String!, $first: Int = 25, $after: String) {
 const WORK_PRS_QUERY = `
 query WorkPullRequests($query: String!, $first: Int = 25, $after: String) {
   search(query: $query, type: ISSUE, first: $first, after: $after) {
-    pageInfo { hasNextPage endCursor }
+    ${FRAG_PAGE_INFO}
     nodes {
       ... on PullRequest {
         id number title state merged isDraft createdAt
@@ -140,7 +141,7 @@ query WorkPullRequests($query: String!, $first: Int = 25, $after: String) {
 const WORK_DISCUSSIONS_QUERY = `
 query WorkDiscussions($query: String!, $first: Int = 25, $after: String) {
   search(query: $query, type: DISCUSSION, first: $first, after: $after) {
-    pageInfo { hasNextPage endCursor }
+    ${FRAG_PAGE_INFO}
     nodes {
       ... on Discussion {
         id number title createdAt
@@ -174,7 +175,7 @@ query WorkProjects($first: Int = 30, $after: String) {
     login
     projectsV2(first: $first, after: $after) {
       totalCount
-      pageInfo { hasNextPage endCursor }
+      ${FRAG_PAGE_INFO}
       nodes {
         title number closed template createdAt updatedAt
         owner { ... on Organization { login } ... on User { login } }
@@ -190,7 +191,7 @@ query WorkTopRepositories($first: Int = 50, $after: String, $isArchived: Boolean
     repositories(first: $first, after: $after, orderBy: { field: PUSHED_AT, direction: DESC },
       isArchived: $isArchived, isFork: $isFork, privacy: $privacy) {
       totalCount
-      pageInfo { hasNextPage endCursor }
+      ${FRAG_PAGE_INFO}
       nodes {
         id name nameWithOwner isArchived isFork isMirror isTemplate visibility
         owner { login avatarUrl }
@@ -204,7 +205,7 @@ query WorkOrganizations($first: Int = 50, $after: String) {
   viewer {
     organizations(first: $first, after: $after) {
       totalCount
-      pageInfo { hasNextPage endCursor }
+      ${FRAG_PAGE_INFO}
       nodes { login name avatarUrl }
     }
   }
@@ -217,7 +218,7 @@ query WorkStarred($first: Int = 30, $after: String) {
     starredRepositories(first: $first, after: $after,
       orderBy: { field: STARRED_AT, direction: DESC }) {
       totalCount
-      pageInfo { hasNextPage endCursor }
+      ${FRAG_PAGE_INFO}
       nodes {
         id name nameWithOwner description stargazerCount
         owner { login avatarUrl }
@@ -230,13 +231,13 @@ query WorkStarred($first: Int = 30, $after: String) {
 // 用户星标（Spec 035：Profile Starred 入口，任意用户 profile 可看）
 const USER_STARRED_QUERY = `
 query UserStarred($login: String!, $first: Int = 30, $after: String) {
-  viewer { login }
+  ${FRAG_VIEWER_LOGIN}
   user(login: $login) {
     login
     starredRepositories(first: $first, after: $after,
       orderBy: { field: STARRED_AT, direction: DESC }) {
       totalCount
-      pageInfo { hasNextPage endCursor }
+      ${FRAG_PAGE_INFO}
       nodes {
         id name nameWithOwner description stargazerCount
         owner { login avatarUrl }

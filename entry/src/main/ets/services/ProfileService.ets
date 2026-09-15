@@ -3,12 +3,14 @@
  * Packages Tab 无公开 API 不展示；Projects 按边界跳过。
  */
 import { graphql } from './GitHttpClient';
+import { withFallback } from 'graphql';
 import { Json, JsonMap } from '../utils/Json';
 import { UserProfile, mapUserProfile } from '../models/ProfileModels';
+import { FRAG_VIEWER_LOGIN } from './GqlFragments';
 
 const PROFILE_QUERY = `
 query UserProfile($login: String!) {
-  viewer { login }
+  ${FRAG_VIEWER_LOGIN}
   user(login: $login) {
     id
     avatarUrl
@@ -66,15 +68,16 @@ export class ProfileService {
 
   /** 组织计数独立查询（review G8）：失败/缺 scope 置 0，不阻塞主页 */
   static async fetchOrgCount(token: string, login: string): Promise<number> {
-    try {
-      const variables: Record<string, Object> = { 'login': login };
-      const data = await graphql(ORG_COUNT_QUERY, variables, token);
-      const user = Json.obj(data, 'user') ?? ({} as JsonMap);
-      const orgs = Json.obj(user, 'organizations') ?? ({} as JsonMap);
-      return Json.num(orgs, 'totalCount');
-    } catch (e) {
-      return 0;
-    }
+    // 装饰性计数：软失败为 0（badge 不显示），不阻断 Profile 主查询
+    return withFallback(ProfileService.fetchOrgCountRaw(token, login), 0);
+  }
+
+  private static async fetchOrgCountRaw(token: string, login: string): Promise<number> {
+    const variables: Record<string, Object> = { 'login': login };
+    const data = await graphql(ORG_COUNT_QUERY, variables, token);
+    const user = Json.obj(data, 'user') ?? ({} as JsonMap);
+    const orgs = Json.obj(user, 'organizations') ?? ({} as JsonMap);
+    return Json.num(orgs, 'totalCount');
   }
 
   /** Follow/Unfollow；返回操作后的目标关注态 */

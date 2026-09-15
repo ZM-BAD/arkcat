@@ -4,17 +4,18 @@
  * Trending/Awesome 官方无公开 API，REST search 近似（Spec 056 边界）。
  */
 import { ApiError, RawResponse, graphql, restGet } from './GitHttpClient';
-import { aliasField, aliasQueryDocument } from 'graphql';
+import { aliasField, aliasQueryDocument, withFallback } from 'graphql';
 import {
   ActivityPrRef, ExploreActivityEvent, mapActivityEvents, mapActivityEventsWithDetails
 } from '../models/ExploreModels';
 import { RepoSummary } from '../models/GitHubModels';
 import { ExploreLanguage, programLanguageColor } from '../models/ExploreLanguages';
 import { Json, JsonMap } from '../utils/Json';
+import { FRAG_VIEWER_LOGIN } from './GqlFragments';
 
 const VIEWER_LOGIN_QUERY = `
 query ViewerLogin {
-  viewer { login }
+  ${FRAG_VIEWER_LOGIN}
 }`;
 
 /** Trending 筛选窗口（官方 Today/This week/This month → 天数；官方算法无 API，Spec 056 近似） */
@@ -244,9 +245,10 @@ export class ExploreService {
     if (repos.length === 0) {
       return repos;
     }
-    const metaTask: Promise<Object> = graphql(buildRepoMetaQuery(repos), null, token)
-      .then((data: JsonMap): RepoSummary[] => mapRepoMeta(repos, data))
-      .catch((_e: Error): RepoSummary[] => repos);
+    const metaTask: Promise<Object> = withFallback(
+      graphql(buildRepoMetaQuery(repos), null, token)
+        .then((data: JsonMap): RepoSummary[] => mapRepoMeta(repos, data)),
+      repos);
     const countTask: Promise<Object> = fetchContributorCounts(token, repos);
     const results = await Promise.all([metaTask, countTask]);
     const merged = results[0] as RepoSummary[];
