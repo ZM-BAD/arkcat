@@ -5,6 +5,7 @@
  * - PersonSearchRow / OrgSearchRow：大头像 + 黑粗显示名 + 灰 login（无 @）+ 黑 bio（无 followers）
  * 聚合页 compact=true（无徽章行）；单类页 compact=false。
  */
+import { LanguageDotRow } from './LanguageDot';
 import { OctIcon } from './OctIcon';
 import { LabelPill } from './LabelPill';
 import { compactCount, timeParts, githubShortTime } from '../utils/Format';
@@ -67,15 +68,7 @@ export struct RepoSearchRow {
               .fontColor($r('app.color.text_secondary'))
           }
           if (this.item !== null && this.item.language !== '') {
-            Row({ space: 4 }) {
-              Circle()
-                .width(9)
-                .height(9)
-                .fill(this.item.languageColor !== '' ? this.item.languageColor : $r('app.color.repo_language_unknown'))
-              Text(this.item.language)
-                .fontSize($r('app.float.caption_font_size'))
-                .fontColor($r('app.color.text_secondary'))
-            }
+            LanguageDotRow({ language: this.item.language, colorHex: this.item.languageColor, dotSize: 9 })
           }
         }
         .width('100%')

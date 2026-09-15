@@ -3,6 +3,7 @@
  * Home（Pinned）、Profile（Repos/Stars）、Explore（Topic 结果）复用。
  * isPinned=true：官方 Pinned 卡片形态（属主头像+用户名 / 仅仓库名 / 黄星+语言 dot），无 Fork 行。
  */
+import { LanguageDotRow } from './LanguageDot';
 import { RepoSummary } from '../models/GitHubModels';
 import { OctIcon } from './OctIcon';
 import { resText } from '../utils/I18n';
@@ -84,15 +85,7 @@ export struct RepoCard {
         .textOverflow({ overflow: TextOverflow.Ellipsis })
         .layoutWeight(1)
       if (!this.isPinned && this.repo !== null && this.repo.primaryLanguage !== '') {
-        Row({ space: 4 }) {
-          Circle()
-            .width(10)
-            .height(10)
-            .fill(this.repo.languageColor !== '' ? this.repo.languageColor : $r('app.color.repo_language_unknown'))
-          Text(this.repo.primaryLanguage)
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-        }
+        LanguageDotRow({ language: this.repo.primaryLanguage, colorHex: this.repo.languageColor })
       }
     }
     .width('100%')

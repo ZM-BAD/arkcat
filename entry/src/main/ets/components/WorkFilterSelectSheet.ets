@@ -7,6 +7,7 @@
  */
 import { OctIcon } from './OctIcon';
 import { StateView } from './StateView';
+import { SheetHeader } from './SheetHeader';
 import { resText } from '../utils/I18n';
 
 /** 弹层行数据（key=逻辑键：org 为 login，repo 为 owner/name，供回调与 ForEach） */
@@ -117,70 +118,15 @@ export struct WorkFilterSelectSheet {
 
   build() {
     Column() {
-      Row() {
-        // 搜索态=←（回退：清空搜索词并退出搜索态）；常态=✕（关闭弹层）
-        Stack() {
-          OctIcon({
-            res: this.searchShow ? $r('app.media.oct_arrow_left_24') : $r('app.media.oct_x_16'),
-            iconSize: 16,
-            iconColor: $r('app.color.text_primary')
-          })
-        }
-        .width(44)
-        .height(44)
-        .onClick((): void => {
-          if (this.searchShow) {
-            this.onSearchChange('');
-            this.onSearchToggle();
-          } else {
-            this.onClose();
-          }
-        })
-        if (this.searchShow) {
-          // 标题原地变搜索框：对已加载/全库结果做客户端过滤；框内右侧 ✕ 一键清空搜索词
-          Stack({ alignContent: Alignment.End }) {
-            TextInput({ placeholder: this.stringOf(this.searchPlaceholder), text: this.searchText })
-              .height(40)
-              .fontSize($r('app.float.body_font_size'))
-              .width('100%')
-              .padding({ right: 34 })
-              .borderRadius(6)
-              .backgroundColor($r('app.color.chip_bg'))
-              .defaultFocus(true)
-              .onChange((v: string): void => this.onSearchChange(v))
-            if (this.searchText !== '') {
-              Stack() {
-                OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
-              }
-              .width(36)
-              .height(36)
-              .onClick((): void => this.onSearchChange(''))
-            }
-          }
-          .layoutWeight(1)
-          .margin({ right: 8 })
-        } else {
-          Text(this.title)
-            .fontSize($r('app.float.title_font_size'))
-            .fontWeight(600)
-            .fontColor($r('app.color.text_primary'))
-            .layoutWeight(1)
-          Stack() {
-            OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 16, iconColor: $r('app.color.link_blue') })
-          }
-          .width(44)
-          .height(44)
-          .onClick((): void => this.onSearchToggle())
-        }
-      }
-      .padding({ left: 8, right: 8 })
-      // 搜索态：搜索框与下方列表之间的分隔线
-      if (this.searchShow) {
-        Divider()
-          .strokeWidth(1)
-          .color($r('app.color.divider'))
-          .width('100%')
-      }
+      SheetHeader({
+        title: this.title,
+        searchShow: this.searchShow,
+        searchText: this.searchText,
+        searchPlaceholder: this.searchPlaceholder,
+        onClose: (): void => this.onClose(),
+        onSearchToggle: (): void => this.onSearchToggle(),
+        onSearchChange: (v: string): void => this.onSearchChange(v)
+      })
       if (this.loading) {
         StateView({ loading: true })
       } else if (this.error !== '') {

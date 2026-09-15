@@ -9,6 +9,7 @@ import { UserSummary } from '../models/GitHubModels';
 import { ProfileListService } from '../services/ProfileListService';
 import { StateView } from '../components/StateView';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
+import { UserRow } from '../components/UserRow';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -86,43 +87,15 @@ export struct UserListView {
   /** 列表行（用户列表专用样式：无操作按钮） */
   @Builder
   userRow(user: UserSummary) {
-    Row({ space: 12 }) {
-      Image(user.avatarUrl)
-        .width(56)
-        .height(56)
-        .borderRadius(28)
-        .backgroundColor($r('app.color.heat_empty'))
-      Column({ space: 3 }) {
-        // 有显示名：粗体显示名 + 灰用户名；无显示名：仅灰用户名（截图样式）
-        if (user.name !== '') {
-          Text(user.name)
-            .fontSize($r('app.float.body_font_size'))
-            .fontWeight(600)
-            .fontColor($r('app.color.text_primary'))
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-        }
-        Text(user.login)
-          .fontSize($r('app.float.body_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-        if (user.bio !== '') {
-          Text(user.bio)
-            .fontSize($r('app.float.body_font_size'))
-            .fontColor($r('app.color.text_primary'))
-            .maxLines(2)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .lineHeight(20)
-        }
+    UserRow({
+      avatarUrl: user.avatarUrl,
+      name: user.name,
+      login: user.login,
+      bio: user.bio,
+      verticalPadding: 8,
+      onOpen: (): void => {
+        this.pathStack.pushPathByName('userProfile', user.login);
       }
-      .alignItems(HorizontalAlign.Start)
-      .layoutWeight(1)
-    }
-    .width('100%')
-    .padding({ left: 16, right: 16, top: 8, bottom: 8 })
-    .onClick(() => {
-      this.pathStack.pushPathByName('userProfile', user.login);
     })
   }
 
@@ -153,17 +126,10 @@ export struct UserListView {
               StateView({
                 loading: this.loading,
                 error: this.errorMsg,
+                empty: !this.loading && this.errorMsg === '',
+                emptyText: $r('app.string.user_list_empty'),
                 onRetry: () => this.refresh()
               })
-              if (!this.loading && this.errorMsg === '') {
-                Column() {
-                  Text($r('app.string.user_list_empty'))
-                    .fontSize($r('app.float.body_font_size'))
-                    .fontColor($r('app.color.text_secondary'))
-                }
-                .layoutWeight(1)
-                .justifyContent(FlexAlign.Center)
-              }
             }
           }
           .width('100%')

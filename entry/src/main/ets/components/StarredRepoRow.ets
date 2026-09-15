@@ -77,9 +77,9 @@ export struct StarredRepoRow {
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_primary'))
         if (this.repo.language !== '') {
-          Text('●')
-            .fontSize(12)
-            .fontColor(this.repo.languageColor !== '' ? this.repo.languageColor : $r('app.color.text_secondary'))
+          // 与左侧 star 同规格：dot-fill 图标 + iconSize 12（走查拍板：圆点须与 star 图标等大）
+          OctIcon({ res: $r('app.media.oct_dot_fill_16'), iconSize: 12,
+            iconColor: this.repo.languageColor !== '' ? this.repo.languageColor : $r('app.color.repo_language_unknown') })
           Text(this.repo.language)
             .fontSize($r('app.float.caption_font_size'))
             .fontColor($r('app.color.text_secondary'))

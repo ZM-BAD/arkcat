@@ -8,6 +8,7 @@ import { AppBar } from '../components/AppBar';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { StateView } from '../components/StateView';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
+import { UserRow } from '../components/UserRow';
 import { ReactionUser, ReactionUsersPage, reactionEmoji } from '../models/RepoSubModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { resText } from '../utils/I18n';
@@ -82,34 +83,13 @@ export struct ReactionUsersView {
   /** 列表行（与 Stargazers 一致：56 圆头像/粗体显示名/灰 login，无 bio） */
   @Builder
   userRow(user: ReactionUser) {
-    Row({ space: 12 }) {
-      Image(user.avatarUrl)
-        .width(56)
-        .height(56)
-        .borderRadius(28)
-        .backgroundColor($r('app.color.heat_empty'))
-      Column({ space: 3 }) {
-        if (user.name !== '') {
-          Text(user.name)
-            .fontSize($r('app.float.body_font_size'))
-            .fontWeight(600)
-            .fontColor($r('app.color.text_primary'))
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-        }
-        Text(user.login)
-          .fontSize($r('app.float.body_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
+    UserRow({
+      avatarUrl: user.avatarUrl,
+      name: user.name,
+      login: user.login,
+      onOpen: (): void => {
+        this.pathStack.pushPathByName('userProfile', user.login);
       }
-      .alignItems(HorizontalAlign.Start)
-      .layoutWeight(1)
-    }
-    .width('100%')
-    .padding({ left: 16, right: 16, top: 10, bottom: 10 })
-    .onClick(() => {
-      this.pathStack.pushPathByName('userProfile', user.login);
     })
   }
 
