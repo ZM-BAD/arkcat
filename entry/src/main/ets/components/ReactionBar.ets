@@ -2,7 +2,8 @@
  * 反应条（Spec 041）：reactionGroups 渲染（emoji+count），点击 emoji add/remove，
  * 点击 count 展开用户列表；「+」打开 8 种官方 reaction 选择面板。
  * mutation 成功后本地翻转（flipReactionGroups），刷新由父级 onChanged 驱动。
- * smileyTrigger（release 详情官方变体）：圆轮廓笑脸触发钮 + 居中六宫格弹层（6 种正向反应）。
+ * smileyTrigger（release 详情官方变体）：圆轮廓笑脸触发钮 + 居中六宫格弹层（6 种正向反应）；
+ * 配 pickerFull 时弹层换 8 种全集 2×4（PR/Issue 正文卡）。
  */
 import { promptAction } from '@kit.ArkUI';
 import { ReactionGroup, ReactionUser, ReactionMeta, REACTION_META, RELEASE_REACTION_META,
@@ -22,6 +23,8 @@ export struct ReactionBar {
   @Param smileyTrigger: boolean = false;
   /** 笑脸精简态（Explore 信息流卡，Spec 056）：仅笑脸按钮，点击直达选择面板 */
   @Param smileyOnly: boolean = false;
+  /** 笑脸弹层用 8 种全集（PR/Issue 正文卡；release 变体维持 6 种正向子集） */
+  @Param pickerFull: boolean = false;
   /** mutation 成功回调（父级远期刷新；即时翻转由组件本地完成） */
   @Event onChanged: () => void = (): void => { };
   /** release 变体长按芯片：跳 Reactees 整页（评论变体保持底部 sheet） */
@@ -243,6 +246,16 @@ export struct ReactionBar {
     .scrollBar(BarState.Off)
   }
 
+  /** 笑脸触发的弹层分派：release 变体 6 种正向；pickerFull（正文卡）= 8 种全集 2×4 宫格 */
+  @Builder
+  smileyPicker() {
+    if (this.pickerFull) {
+      this.activityPickerPanel()
+    } else {
+      this.releasePickerPanel()
+    }
+  }
+
   /** 观察者是否已有任一反应（笑脸高亮，Spec 056） */
   private viewerReacted(): boolean {
     return this.mirror.some((g: ReactionGroup): boolean => g.viewerHasReacted);
@@ -312,7 +325,7 @@ export struct ReactionBar {
           .responseRegion({ x: -4, y: -4, width: '128%', height: '128%' })
           .accessibilityDescription($r('app.string.a11y_reaction_add'))
           .bindPopup($$this.pickerOpen, {
-            builder: this.releasePickerPanel(),
+            builder: this.smileyPicker(),
             placement: Placement.Bottom,
             popupColor: $r('app.color.card_background'),
             radius: 12,
@@ -364,9 +377,10 @@ export struct ReactionBar {
     .width('100%')
     .bindSheet($$this.sheetOpen, this.sheetPanel(), {
       height: 300,
+      detents: [300, SheetSize.LARGE],
       showClose: false,
       backgroundColor: $r('app.color.bg_page'),
-      dragBar: false,
+      dragBar: true,
       onDisappear: () => {
         this.sheetKind = '';
       }

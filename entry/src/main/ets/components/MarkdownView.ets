@@ -148,7 +148,10 @@ export struct MarkdownView {
         if (Number.isNaN(px)) {
           return;
         }
-        const vp = Math.max(this.getUIContext().px2vp(px), 1);
+        // ArkWeb 的 scrollHeight 单位是 CSS px：文档视口宽=device-width（= 组件 vp 宽），
+        // 即 1 CSS px = 1 vp，直接当 vp 用。再折一次 px2vp 会按屏幕密度（模拟器 3.5x）缩小
+        // 容器高 → Web 只显示内容开头一小截，其余被裁（预览/评论卡实测）。
+        const vp = Math.max(px, 1);
         this.contentHeight = vp;
         // about:blank 首测 scrollHeight=0：无内容不做折叠决策，防误清折叠态（review F2）
         if (px > 0 && vp <= COLLAPSE_HEIGHT) {

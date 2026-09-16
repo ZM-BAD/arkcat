@@ -20,6 +20,8 @@ export interface RepoPrItem {
   commentCount: number;
   reviewCount: number;
   checksState: string;
+  /** Checks 通过数（rollup contexts 总数）。已入库备用：官方列表卡「绿圈勾 + N」口径未解（N 与 checks 总数对不上），UI 暂不展示 */
+  checksCount: number;
   authorLogin: string;
   authorAvatar: string;
   assignees: string[];
@@ -159,6 +161,8 @@ export interface RepoComment {
   createdAt: string;
   authorLogin: string;
   authorAvatar: string;
+  /** 作者是 Bot（GraphQL author.__typename = Bot）：官方显示 `login[bot]` */
+  authorIsBot: boolean;
   /** 仅本人显示编辑/删除（GraphQL viewerDidAuthor） */
   viewerDidAuthor: boolean;
   reactions: ReactionGroup[];
@@ -186,8 +190,238 @@ export interface IssueDetailPage {
 
 /** Checks 列表行（statusCheckRollup.contexts：CheckRun/StatusContext 归一化） */
 export interface StatusCheckItem {
+  /** ForEach key（同名 check 可来自不同 suite/app，name 不足以唯一——映射时按序号定型） */
+  key: string;
   name: string;
   state: string;
+}
+
+/** PR 审阅卡行（Spec 042）：reviews(first) nodes 归一化 */
+export interface PrReview {  id: string;
+  /** APPROVED / CHANGES_REQUESTED / COMMENTED / DISMISSED / PENDING */
+  state: string;
+  body: string;
+  bodyHTML: string;
+  submittedAt: string;
+  authorLogin: string;
+  authorAvatar: string;
+  /** 作者是 Bot（author.__typename = Bot）：官方显示 `login[bot]`（与 CommentCard 同口径） */
+  authorIsBot: boolean;
+  viewerDidAuthor: boolean;
+}
+
+/** Review thread 内评论行（无 reactionGroups，区别于会话区 RepoComment） */
+export interface ReviewThreadComment {
+  id: string;
+  body: string;
+  bodyHTML: string;
+  createdAt: string;
+  authorLogin: string;
+  authorAvatar: string;
+  /** 作者是 Bot（author.__typename = Bot）：官方显示 `login[bot]`（与 CommentCard 同口径） */
+  authorIsBot: boolean;
+  viewerDidAuthor: boolean;
+}
+
+/** Review thread（Spec 042）：diff 行内评论集合；line=0 表示文件级 thread */
+export interface ReviewThread {
+  id: string;
+  path: string;
+  line: number;
+  isResolved: boolean;
+  isOutdated: boolean;
+  /** viewer 可否切换 resolve（权限由服务端判定） */
+  viewerCanResolve: boolean;
+  viewerCanUnresolve: boolean;
+  comments: ReviewThreadComment[];
+  commentsTotal: number;
+}
+
+/** Bot 登录名显示口径：GraphQL Bot 的 login 不带后缀，官方 UI 显示 `login[bot]` */
+export function actorDisplayLogin(login: string, isBot: boolean): string {
+  return isBot && login !== '' ? `${login}[bot]` : login;
+}
+
+/** 时间轴事件行文案段（官方口径：人物/对象用主色加粗，其余弱化灰） */
+export interface PhraseSeg {
+  text: string;
+  emphasis: boolean;
+}
+
+/**
+ * 拆 i18n 模板 `%1$s added the %2$s label` → 段序列（占位段 emphasis=true，供加粗上色）。
+ * 纯函数：只认 `%N$s`（N 为 1-9），其它字符原样；占位序号越界时整段按普通文本处理。
+ */
+export function phraseSegments(template: string, args: string[]): PhraseSeg[] {
+  const out: PhraseSeg[] = [];
+  let plain = '';
+  let i = 0;
+  while (i < template.length) {
+    const isPlaceholder = template.charAt(i) === '%' && i + 3 < template.length
+      && template.charAt(i + 2) === '$' && template.charAt(i + 3) === 's';
+    if (isPlaceholder) {
+      const idx = template.charCodeAt(i + 1) - 48;
+      if (idx >= 1 && idx <= args.length) {
+        if (plain !== '') {
+          out.push({ text: plain, emphasis: false });
+          plain = '';
+        }
+        out.push({ text: args[idx - 1], emphasis: true });
+        i += 4;
+        continue;
+      }
+    }
+    plain += template.charAt(i);
+    i += 1;
+  }
+  if (plain !== '') {
+    out.push({ text: plain, emphasis: false });
+  }
+  return out;
+}
+
+/**
+ * 会话时间轴节点（Spec 031 重设计：官方 Conversation = 一条左侧竖线的时间轴）。
+ * 不同 kind 渲染不同行：commit/label/assign 等事件行 vs comment/review 整卡。
+ */
+export interface TimelineNode {
+  /** commit | comment | review | labeled | unlabeled | assigned | unassigned |
+   *  review_requested | review_request_removed | merged | closed | reopened | draft | ready */
+  kind: string;
+  /** 节点 id（ForEach key 用；评论/审阅另拼可变数据） */
+  id: string;
+  /** 节点时间（官方事件行时间戳口径待定，UI 暂未渲染） */
+  createdAt: string;
+  /** 事件操作者（Bot 经 actorDisplayLogin 显示 login[bot]） */
+  actorLogin: string;
+  actorIsBot: boolean;
+  /** commit 节点（PullRequestCommit） */
+  commitOid: string;
+  commitMessage: string;
+  commitAuthorAvatar: string;
+  /** label 节点（官方行内加粗 label name） */
+  labelName: string;
+  /** assign/unassign/review request 节点目标（User/Bot 取 login，Team/Organization 取 name） */
+  targetLogin: string;
+  targetIsBot: boolean;
+  /** merged 节点（合并提交 + 目标分支） */
+  mergeAbbrev: string;
+  mergeRefName: string;
+  /** comment 节点（整卡，复用 RepoComment） */
+  comment: RepoComment | null;
+  /** review 节点（整卡，复用 PrReview） */
+  review: PrReview | null;
+}
+
+/** 空节点工厂（映射时逐类覆盖；避免 ArkTS 对象字面量缺字段） */
+function blankTimelineNode(): TimelineNode {
+  return {
+    kind: '', id: '', createdAt: '',
+    actorLogin: '', actorIsBot: false,
+    commitOid: '', commitMessage: '', commitAuthorAvatar: '',
+    labelName: '',
+    targetLogin: '', targetIsBot: false,
+    mergeAbbrev: '', mergeRefName: '',
+    comment: null, review: null
+  };
+}
+
+/** union 取显示名：User/Bot/Mannequin 有 login，Team/Organization 取 name */
+function unionName(obj: JsonMap | null): string {
+  if (obj === null) {
+    return '';
+  }
+  const login = Json.str(obj, 'login');
+  return login !== '' ? login : Json.str(obj, 'name');
+}
+
+/** 事件操作者（Actor 联合）填充 */
+function fillActor(node: TimelineNode, raw: JsonMap): void {
+  const actor = Json.obj(raw, 'actor');
+  if (actor !== null) {
+    node.actorLogin = unionName(actor);
+    node.actorIsBot = Json.str(actor, '__typename') === 'Bot';
+  }
+}
+
+/**
+ * timelineItems nodes → 时间轴节点（官方 itemTypes 子集；未识别类型返回 kind='' 由调用方丢弃）。
+ * 数据来源：GH 实测 PullRequestTimelineItems 共 78 种类型，本映射覆盖会话高频子集。
+ */
+export function mapTimeline(conn: JsonMap): TimelineNode[] {
+  const out: TimelineNode[] = [];
+  for (const item of Json.arr(conn, 'nodes')) {
+    const raw = item as JsonMap;
+    const type = Json.str(raw, '__typename');
+    const node = blankTimelineNode();
+    node.id = Json.str(raw, 'id');
+    node.createdAt = Json.str(raw, 'createdAt');
+    fillActor(node, raw);
+    if (type === 'PullRequestCommit') {
+      const commit = Json.obj(raw, 'commit');
+      const author = commit !== null ? Json.obj(commit, 'author') : null;
+      node.kind = 'commit';
+      node.commitOid = commit !== null ? Json.str(commit, 'oid') : '';
+      node.commitMessage = commit !== null ? Json.str(commit, 'messageHeadline') : '';
+      node.commitAuthorAvatar = author !== null ? Json.str(author, 'avatarUrl') : '';
+    } else if (type === 'IssueComment') {
+      node.kind = 'comment';
+      node.comment = mapComment(raw);
+    } else if (type === 'PullRequestReview') {
+      node.kind = 'review';
+      node.review = mapReview(raw);
+    } else if (type === 'LabeledEvent' || type === 'UnlabeledEvent') {
+      node.kind = type === 'LabeledEvent' ? 'labeled' : 'unlabeled';
+      const label = Json.obj(raw, 'label');
+      node.labelName = label !== null ? Json.str(label, 'name') : '';
+    } else if (type === 'AssignedEvent' || type === 'UnassignedEvent') {
+      node.kind = type === 'AssignedEvent' ? 'assigned' : 'unassigned';
+      const assignee = Json.obj(raw, 'assignee');
+      node.targetLogin = unionName(assignee);
+      node.targetIsBot = assignee !== null && Json.str(assignee, '__typename') === 'Bot';
+    } else if (type === 'ReviewRequestedEvent' || type === 'ReviewRequestRemovedEvent') {
+      node.kind = type === 'ReviewRequestedEvent' ? 'review_requested' : 'review_request_removed';
+      const reviewer = Json.obj(raw, 'requestedReviewer');
+      node.targetLogin = unionName(reviewer);
+      node.targetIsBot = reviewer !== null && Json.str(reviewer, '__typename') === 'Bot';
+    } else if (type === 'MergedEvent') {
+      const commit = Json.obj(raw, 'commit');
+      node.kind = 'merged';
+      node.mergeAbbrev = commit !== null ? Json.str(commit, 'abbreviatedOid') : '';
+      node.mergeRefName = Json.str(raw, 'mergeRefName');
+    } else if (type === 'ClosedEvent') {
+      node.kind = 'closed';
+    } else if (type === 'ReopenedEvent') {
+      node.kind = 'reopened';
+    } else if (type === 'ConvertToDraftEvent') {
+      node.kind = 'draft';
+    } else if (type === 'ReadyForReviewEvent') {
+      node.kind = 'ready';
+    }
+    if (node.kind !== '') {
+      out.push(node);
+    }
+  }
+  return out;
+}
+
+/** 元数据标签行（图1 概览面板 + 044 编辑器共用口径） */
+export interface MetaLabel {  id: string;
+  name: string;
+  color: string;
+}
+
+/** 元数据负责人行 */
+export interface MetaUser {
+  id: string;
+  login: string;
+  avatarUrl: string;
+}
+
+/** 元数据里程碑行 */
+export interface MetaMilestone {
+  id: string;
+  title: string;
 }
 
 export interface PrDetailPage {
@@ -207,6 +441,12 @@ export interface PrDetailPage {
   deletions: number;
   authorLogin: string;
   authorAvatar: string;
+  /** 作者关联角色（AuthorAssociation 原值；NONE/未知不显示角色胶囊） */
+  authorAssociation: string;
+  /** 正文反应（正文卡反应行：subjectId 即 PR 节点 id） */
+  reactions: ReactionGroup[];
+  /** 仓库 owner 头像（页头作者行=仓库上下文：owner 头像 + `owner / repo #N`） */
+  ownerAvatar: string;
   headRefName: string;
   baseRefName: string;
   mergeOid: string;
@@ -214,12 +454,179 @@ export interface PrDetailPage {
   filesCount: number;
   commitsCount: number;
   reviewsTotal: number;
+  /** 会话时间轴（官方 Conversation：事件行 + 评论/审阅卡按时间序） */
+  timeline: TimelineNode[];
+  /** 时间轴分页（>30 条 Load more） */
+  timelineHasNext: boolean;
+  timelineCursor: string;
   checksState: string;
   checks: StatusCheckItem[];
-  comments: RepoComment[];
-  /** 评论分页（review B7：与 IssueDetail 对齐，>20 条可 Load more） */
-  commentsHasNext: boolean;
-  commentsCursor: string;
+  /** 元数据概览面板（info 钮 → 图1） */
+  labelItems: MetaLabel[];
+  assigneeItems: MetaUser[];
+  milestoneItem: MetaMilestone | null;
+  /** MERGEABLE / CONFLICTING / UNKNOWN（Spec 042 元素9） */
+  mergeable: string;
+  /** CLEAN / BLOCKED / DIRTY / BEHIND / UNSTABLE / DRAFT / HAS_HOOKS / UNKNOWN（元素10） */
+  mergeStateStatus: string;
+  /** ADMIN / MAINTAIN / WRITE / READ / NONE（合并权限门；PR 无 viewerCanMerge，用仓库级权限代替） */
+  repoViewerPermission: string;
+  /** 仓库/账号默认合并方式（MERGE/SQUASH/REBASE）：Merge options 页默认选中项 */
+  defaultMergeMethod: string;
+  /** 默认提交信息（官方 viewerMergeHeadlineText/BodyText，按默认合并方式口径返回） */
+  mergeHeadline: string;
+  mergeBody: string;
+  threads: ReviewThread[];
+}
+
+// ─────────────── Spec 044 元数据编辑器候选 ───────────────
+
+/** 编辑器候选：负责人 */
+export interface TriageUser {
+  id: string;
+  login: string;
+  avatarUrl: string;
+}
+
+/** 编辑器候选：标签（color 为 GitHub hex，不带 #） */
+export interface TriageLabel {
+  id: string;
+  name: string;
+  color: string;
+}
+
+/** 编辑器候选：里程碑 */
+export interface TriageMilestone {
+  id: string;
+  title: string;
+}
+
+/** 编辑器候选：Linked items 建议（state=OPEN/CLOSED，用于状态字形） */
+export interface TriageLinkedItem {
+  id: string;
+  number: number;
+  title: string;
+  state: string;
+}
+
+/** 编辑器候选：项目（ProjectsV2） */
+export interface TriageProject {
+  id: string;
+  title: string;
+}
+
+/**
+ * 编辑器行（元数据编辑器 Selected / 候选两个列表共用一种行形态）：
+ * title=主文本（login / 标签名 / 里程碑名 / issue 标题 / 项目名）；
+ * avatarUrl/标签色/状态字形三选一，决定行首渲染什么。
+ */
+export interface EditorRow {
+  id: string;
+  title: string;
+  avatarUrl?: string;
+  labelColor?: string;
+  /** linked 行的 issue 状态（OPEN/CLOSED）→ 状态字形 */
+  state?: string;
+}
+
+/** 候选列表按关键字过滤（客户端过滤：编辑器搜索框；空关键字原样返回） */
+export function filterTriageByKeyword(names: string[], keyword: string): number[] {
+  const hit: number[] = [];
+  const k = keyword.trim().toLowerCase();
+  for (let i = 0; i < names.length; i++) {
+    if (k === '' || names[i].toLowerCase().indexOf(k) >= 0) {
+      hit.push(i);
+    }
+  }
+  return hit;
+}
+
+/** 单选保存时取选中项 id（未选中返回 ''，服务端按 null 清除） */
+export function singlePickId(ids: string[]): string {
+  return ids.length > 0 ? ids[0] : '';
+}
+
+/** 多选差异：add=目标有而原有没，remove=原有而目标没有（Spec 044 元素2 差异推送） */
+export function diffSelection(before: string[], after: string[]): DiffIds {
+  const add: string[] = [];
+  const remove: string[] = [];
+  for (const id of after) {
+    if (before.indexOf(id) < 0) {
+      add.push(id);
+    }
+  }
+  for (const id of before) {
+    if (after.indexOf(id) < 0) {
+      remove.push(id);
+    }
+  }
+  return { add: add, remove: remove };
+}
+
+export interface DiffIds {
+  add: string[];
+  remove: string[];
+}
+
+export function mapTriageUsers(data: JsonMap): TriageUser[] {
+  const conn = Json.obj(Json.obj(data, 'repository') ?? ({} as JsonMap), 'assignableUsers') ?? ({} as JsonMap);
+  const out: TriageUser[] = [];
+  for (const node of Json.arr(conn, 'nodes')) {
+    const it = node as JsonMap;
+    out.push({ id: Json.str(it, 'id'), login: Json.str(it, 'login'), avatarUrl: Json.str(it, 'avatarUrl') });
+  }
+  return out;
+}
+
+export function mapTriageLabels(data: JsonMap): TriageLabel[] {
+  const conn = Json.obj(Json.obj(data, 'repository') ?? ({} as JsonMap), 'labels') ?? ({} as JsonMap);
+  const out: TriageLabel[] = [];
+  for (const node of Json.arr(conn, 'nodes')) {
+    const it = node as JsonMap;
+    out.push({ id: Json.str(it, 'id'), name: Json.str(it, 'name'), color: Json.str(it, 'color') });
+  }
+  return out;
+}
+
+export function mapTriageMilestones(data: JsonMap): TriageMilestone[] {
+  const conn = Json.obj(Json.obj(data, 'repository') ?? ({} as JsonMap), 'milestones') ?? ({} as JsonMap);
+  const out: TriageMilestone[] = [];
+  for (const node of Json.arr(conn, 'nodes')) {
+    const it = node as JsonMap;
+    out.push({ id: Json.str(it, 'id'), title: Json.str(it, 'title') });
+  }
+  return out;
+}
+
+/** Linked 建议：排除 PR 自身节点（excludeId） */
+export function mapTriageLinked(data: JsonMap, excludeId: string): TriageLinkedItem[] {
+  const conn = Json.obj(Json.obj(data, 'repository') ?? ({} as JsonMap), 'issues') ?? ({} as JsonMap);
+  const out: TriageLinkedItem[] = [];
+  for (const node of Json.arr(conn, 'nodes')) {
+    const it = node as JsonMap;
+    const id = Json.str(it, 'id');
+    if (id === excludeId) {
+      continue;
+    }
+    out.push({
+      id: id, number: Json.num(it, 'number'), title: Json.str(it, 'title'), state: Json.str(it, 'state')
+    });
+  }
+  return out;
+}
+
+/** 项目候选：scope='user' 取 viewer.projectsV2，其余取 repository.projectsV2 */
+export function mapTriageProjects(data: JsonMap, scope: string): TriageProject[] {
+  const wrap = scope === 'user'
+    ? Json.obj(data, 'viewer')
+    : Json.obj(data, 'repository');
+  const conn = Json.obj(wrap ?? ({} as JsonMap), 'projectsV2') ?? ({} as JsonMap);
+  const out: TriageProject[] = [];
+  for (const node of Json.arr(conn, 'nodes')) {
+    const it = node as JsonMap;
+    out.push({ id: Json.str(it, 'id'), title: Json.str(it, 'title') });
+  }
+  return out;
 }
 
 // ─────────────── 纯函数：客户端过滤 ───────────────
@@ -400,6 +807,7 @@ export function mapRepoPr(raw: JsonMap): RepoPrItem {
     commentCount: comments !== null ? Json.num(comments, 'totalCount') : 0,
     reviewCount: reviews !== null ? Json.num(reviews, 'totalCount') : 0,
     checksState: checks !== null ? Json.str(checks, 'state') : '',
+    checksCount: checks !== null ? Json.num(Json.obj(checks, 'contexts') ?? ({} as JsonMap), 'totalCount') : 0,
     authorLogin: author !== null ? Json.str(author, 'login') : '',
     authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : '',
     assignees: assignees,
@@ -655,6 +1063,7 @@ function mapComment(raw: JsonMap): RepoComment {
     createdAt: Json.str(raw, 'createdAt'),
     authorLogin: author !== null ? Json.str(author, 'login') : '',
     authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : '',
+    authorIsBot: author !== null && Json.str(author, '__typename') === 'Bot',
     viewerDidAuthor: Json.bool(raw, 'viewerDidAuthor'),
     reactions: reactions
   };
@@ -700,17 +1109,32 @@ export function mapPrDetail(data: JsonMap): PrDetailPage {
   const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
   const pr = Json.obj(repo, 'pullRequest') ?? ({} as JsonMap);
   const author = Json.obj(pr, 'author');
+  const repoOwner = Json.obj(repo, 'owner');
   const mergedBy = Json.obj(pr, 'mergedBy');
   const mergeCommit = Json.obj(pr, 'mergeCommit');
   const files = Json.obj(pr, 'files');
   const commitsSum = Json.obj(pr, 'commits');
   const reviews = Json.obj(pr, 'reviews');
   const checks = Json.obj(pr, 'statusCheckRollup');
-  const commentsWrap = Json.obj(pr, 'comments') ?? ({} as JsonMap);
-  const comments: RepoComment[] = [];
-  for (const nodeItem of Json.arr(commentsWrap, 'nodes')) {
-    comments.push(mapComment(nodeItem as JsonMap));
+  // 会话时间轴（官方 Conversation）：事件 + 评论 + 审阅按时间序，单一游标分页
+  const timelineWrap = Json.obj(pr, 'timelineItems') ?? ({} as JsonMap);
+  const timelinePage = Json.obj(timelineWrap, 'pageInfo') ?? ({} as JsonMap);
+  const labelItems: MetaLabel[] = [];
+  const labelsConn = Json.obj(pr, 'labels') ?? ({} as JsonMap);
+  for (const nodeItem of Json.arr(labelsConn, 'nodes')) {
+    const it = nodeItem as JsonMap;
+    labelItems.push({ id: Json.str(it, 'id'), name: Json.str(it, 'name'), color: Json.str(it, 'color') });
   }
+  const assigneeItems: MetaUser[] = [];
+  const assigneesConn = Json.obj(pr, 'assignees') ?? ({} as JsonMap);
+  for (const nodeItem of Json.arr(assigneesConn, 'nodes')) {
+    const it = nodeItem as JsonMap;
+    assigneeItems.push({ id: Json.str(it, 'id'), login: Json.str(it, 'login'), avatarUrl: Json.str(it, 'avatarUrl') });
+  }
+  const milestoneObj = Json.obj(pr, 'milestone');
+  const milestoneItem: MetaMilestone | null = milestoneObj !== null
+    ? { id: Json.str(milestoneObj, 'id'), title: Json.str(milestoneObj, 'title') }
+    : null;
   return {
     subjectId: Json.str(pr, 'id'),
     number: Json.num(pr, 'number'),
@@ -726,6 +1150,9 @@ export function mapPrDetail(data: JsonMap): PrDetailPage {
     deletions: Json.num(pr, 'deletions'),
     authorLogin: author !== null ? Json.str(author, 'login') : '',
     authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : '',
+    authorAssociation: Json.str(pr, 'authorAssociation'),
+    reactions: mapReactionGroups(Json.arr(pr, 'reactionGroups')),
+    ownerAvatar: repoOwner !== null ? Json.str(repoOwner, 'avatarUrl') : '',
     headRefName: Json.str(pr, 'headRefName'),
     baseRefName: Json.str(pr, 'baseRefName'),
     mergeOid: mergeCommit !== null ? Json.str(mergeCommit, 'abbreviatedOid') : '',
@@ -735,9 +1162,20 @@ export function mapPrDetail(data: JsonMap): PrDetailPage {
     reviewsTotal: reviews !== null ? Json.num(reviews, 'totalCount') : 0,
     checksState: checks !== null ? Json.str(checks, 'state') : '',
     checks: mapStatusChecks(checks),
-    comments: comments,
-    commentsHasNext: Json.bool(commentsWrap, 'hasNextPage'),
-    commentsCursor: Json.str(Json.obj(commentsWrap, 'pageInfo') ?? ({} as JsonMap), 'endCursor')
+    labelItems: labelItems,
+    assigneeItems: assigneeItems,
+    milestoneItem: milestoneItem,
+    mergeable: Json.str(pr, 'mergeable'),
+    mergeStateStatus: Json.str(pr, 'mergeStateStatus'),
+    repoViewerPermission: Json.str(repo, 'viewerPermission'),
+    defaultMergeMethod: Json.str(repo, 'viewerDefaultMergeMethod'),
+    mergeHeadline: Json.str(pr, 'viewerMergeHeadlineText'),
+    mergeBody: Json.str(pr, 'viewerMergeBodyText'),
+    timeline: mapTimeline(timelineWrap),
+    // 分页信息在 pageInfo 内（连接层没有 hasNextPage/endCursor 键）
+    timelineHasNext: Json.bool(timelinePage, 'hasNextPage'),
+    timelineCursor: Json.str(timelinePage, 'endCursor'),
+    threads: mapReviewThreads(Json.obj(pr, 'reviewThreads'))
   };
 }
 
@@ -757,8 +1195,127 @@ function mapStatusChecks(checks: JsonMap | null): StatusCheckItem[] {
     const conclusion = Json.str(node, 'conclusion');
     const state = conclusion !== '' ? conclusion : Json.str(node, 'state');
     if (name !== '') {
-      items.push({ name: name, state: state });
+      items.push({ key: `${name}#${items.length}`, name: name, state: state });
     }
   }
   return items;
+}
+
+/** reviews(first) connection → 审阅卡行（Spec 042 元素4） */
+/** 单条审阅节点 → PrReview（时间轴 review 节点与审阅编辑共用） */
+export function mapReview(node: JsonMap): PrReview {
+  const author = Json.obj(node, 'author');
+  return {
+    id: Json.str(node, 'id'),
+    state: Json.str(node, 'state'),
+    body: Json.str(node, 'body'),
+    bodyHTML: Json.str(node, 'bodyHTML'),
+    submittedAt: Json.str(node, 'submittedAt'),
+    authorLogin: author !== null ? Json.str(author, 'login') : '',
+    authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : '',
+    authorIsBot: author !== null && Json.str(author, '__typename') === 'Bot',
+    viewerDidAuthor: Json.bool(node, 'viewerDidAuthor')
+  };
+}
+
+/** reviewThreads(first) connection → thread 行；line 为 null（文件级）归一为 0（Spec 042 元素4） */
+export function mapReviewThreads(conn: JsonMap | null): ReviewThread[] {
+  const items: ReviewThread[] = [];
+  if (conn === null) {
+    return items;
+  }
+  for (const nodeItem of Json.arr(conn, 'nodes')) {
+    const node = nodeItem as JsonMap;
+    const commentsWrap = Json.obj(node, 'comments') ?? ({} as JsonMap);
+    const comments: ReviewThreadComment[] = [];
+    for (const commentItem of Json.arr(commentsWrap, 'nodes')) {
+      const comment = commentItem as JsonMap;
+      const commentAuthor = Json.obj(comment, 'author');
+      comments.push({
+        id: Json.str(comment, 'id'),
+        body: Json.str(comment, 'body'),
+        bodyHTML: Json.str(comment, 'bodyHTML'),
+        createdAt: Json.str(comment, 'createdAt'),
+        authorLogin: commentAuthor !== null ? Json.str(commentAuthor, 'login') : '',
+        authorAvatar: commentAuthor !== null ? Json.str(commentAuthor, 'avatarUrl') : '',
+        authorIsBot: commentAuthor !== null && Json.str(commentAuthor, '__typename') === 'Bot',
+        viewerDidAuthor: Json.bool(comment, 'viewerDidAuthor')
+      });
+    }
+    items.push({
+      id: Json.str(node, 'id'),
+      path: Json.str(node, 'path'),
+      line: Json.num(node, 'line'),
+      isResolved: Json.bool(node, 'isResolved'),
+      isOutdated: Json.bool(node, 'isOutdated'),
+      viewerCanResolve: Json.bool(node, 'viewerCanResolve'),
+      viewerCanUnresolve: Json.bool(node, 'viewerCanUnresolve'),
+      comments: comments,
+      commentsTotal: Json.num(commentsWrap, 'totalCount')
+    });
+  }
+  return items;
+}
+
+/**
+ * Merge 可用性门（Spec 042 元素8/9）：未合并 + 服务端可合 + 仓库写权限。
+ * PR 无 viewerCanMerge 字段（运行时实测），权限改用 Repository.viewerPermission；
+ * mergeStateStatus 的细粒度阻塞（BLOCKED/BEHIND…）由 mergeStateReasonKey 呈现文案，
+ * 门禁只看 mergeable（CONFLICTING/UNKNOWN 一律禁用）。
+ */
+export function canMergePr(merged: boolean, mergeable: string, repoViewerPermission: string): boolean {
+  const canWrite = repoViewerPermission === 'ADMIN'
+    || repoViewerPermission === 'MAINTAIN' || repoViewerPermission === 'WRITE';
+  return !merged && mergeable === 'MERGEABLE' && canWrite;
+}
+
+/**
+ * Merge options 当前生效方式（Spec 042 元素8）：用户选过（current 非空）用用户的，
+ * 否则取服务端默认 `Repository.viewerDefaultMergeMethod`（PR 无 mergeMethod 参数，默认值只能来自仓库），
+ * 再兜底 MERGE。UI 侧不得用「固定 squash」当初值——那会让服务端默认永不生效。
+ */
+export function resolveMergeMethod(current: string, serverDefault: string): string {
+  if (current !== '') {
+    return current;
+  }
+  return serverDefault !== '' ? serverDefault : 'MERGE';
+}
+
+/**
+ * mergeStateStatus → 不可合并原因文案键后缀（Spec 042 元素10；UI 拼 $r('app.string.pr_merge_state_*')）。
+ * 未知枚举兜底 unknown（测试 8：失败显示对应原因且不崩溃）。
+ */
+export function mergeStateReasonKey(status: string): string {
+  switch (status) {
+    case 'DIRTY':
+      return 'conflicting';
+    case 'BLOCKED':
+      return 'blocked';
+    case 'BEHIND':
+      return 'behind';
+    case 'UNSTABLE':
+      return 'unstable';
+    case 'DRAFT':
+      return 'draft';
+    case 'HAS_HOOKS':
+      return 'has_hooks';
+    default:
+      return 'unknown';
+  }
+}
+
+/** PullRequestReviewState → 审阅卡徽章文案键后缀（pr_review_state_*；未知值按 COMMENTED 呈现） */
+export function reviewStateKey(state: string): string {
+  switch (state) {
+    case 'APPROVED':
+      return 'approved';
+    case 'CHANGES_REQUESTED':
+      return 'changes_requested';
+    case 'DISMISSED':
+      return 'dismissed';
+    case 'PENDING':
+      return 'pending';
+    default:
+      return 'commented';
+  }
 }

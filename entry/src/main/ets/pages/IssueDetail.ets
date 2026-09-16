@@ -179,6 +179,7 @@ export struct IssueDetailView {
       subjectId: this.detail?.subjectId ?? '',
       editingId: this.editingId,
       initial: this.editingId !== '' ? this.editingInitial : this.draft,
+      quoteSource: this.detail !== null ? this.detail.body : '',
       previewContext: `${this.owner}/${this.name}`,
       onClose: (): void => this.closeComposer(),
       onPublished: (): void => this.afterCommentSaved(),
@@ -313,10 +314,13 @@ export struct IssueDetailView {
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
     .bindSheet($$this.composerOpen, this.composerSheet(), {
-      height: 560,
+      height: SheetSize.LARGE,
+      detents: [SheetSize.LARGE, SheetSize.MEDIUM],
       showClose: false,
-      backgroundColor: $r('app.color.bg_page'),
-      dragBar: false,
+      backgroundColor: $r('app.color.card_background'),
+      dragBar: true,
+      // 键盘弹起缩面板：格式工具条停在键盘正上方（见 PrDetail 同名说明）
+      keyboardAvoidMode: SheetKeyboardAvoidMode.RESIZE_ONLY,
       onDisappear: () => this.closeComposer()
     })
   }

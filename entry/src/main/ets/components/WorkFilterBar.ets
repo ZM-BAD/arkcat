@@ -590,6 +590,7 @@ export struct WorkFilterBar {
     .width('100%')
     .bindSheet(this.sheetKind !== '', this.overlaySheet(), {
       height: this.sheetKind === 'sort' ? 620 : 560,
+      detents: [this.sheetKind === 'sort' ? 620 : 560, SheetSize.LARGE],
       backgroundColor: $r('app.color.bg_page'),
       // 关闭钮与标题行均自绘，避免默认 ✕ 与放大镜重叠
       showClose: false,

@@ -134,6 +134,8 @@ struct Index {
   @State homeWorkVersion: number = 0;
   /** PrFiles 回页刷新计数器：Code Options 返回后递增，重读行号等设置 */
   @State prFilesTick: number = 0;
+  /** prFiles 返回 tick：PrDetail 重拉 reviewThreads（Spec 042 行内评论落点在会话区） */
+  @State prDetailTick: number = 0;
   /** Code Options 返回 tick：CodeViewer/CommitDetail 重读设置（review C3，同 prFilesTick 模式） */
   @State codeOptionsTick: number = 0;
   /** 首显守卫（review A6/D17）：onShown 首次触发时 aboutToAppear 已拉取，不重复请求 */
@@ -1054,11 +1056,15 @@ struct Index {
         name: this.repoName,
         number: this.detailNumber,
         token: this.token,
-        pathStack: this.pathStack
+        pathStack: this.pathStack,
+        refreshTick: this.prDetailTick
       })
     }
     .onReady((context: NavDestinationContext) => {
       this.parseRouteParam(context.pathInfo.param as string);
+    })
+    .onShown(() => {
+      this.prDetailTick += 1;
     })
     .hideTitleBar(true)
   }

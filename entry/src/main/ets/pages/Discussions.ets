@@ -1031,6 +1031,7 @@ export struct DiscussionsView {
     .backgroundColor($r('app.color.bg_page'))
     .bindSheet(this.sheetKind !== '', this.overlaySheet(), {
       height: 560,
+      detents: [560, SheetSize.LARGE],
       backgroundColor: $r('app.color.bg_page'),
       showClose: false,
       onDisappear: (): void => {

@@ -275,6 +275,14 @@
     {
       "name": "empty_state_bg",
       "value": "#21262D"
+    },
+    {
+      "name": "success_btn_bg",
+      "value": "#238636"
+    },
+    {
+      "name": "floating_btn_bg",
+      "value": "#2A3038"
     }
   ]
 }

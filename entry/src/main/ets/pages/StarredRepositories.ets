@@ -521,6 +521,7 @@ export struct StarredRepositoriesView {
     // !! 双向绑定：拖拽/遮罩/回退关闭时框架回写 false，否则再点 ⋯ 无法重新打开
     .bindSheet(this.listSheetOpen!!, this.listSheet(), {
       height: 300,
+      detents: [300, SheetSize.LARGE],
       backgroundColor: $r('app.color.bg_page'),
       // 关闭钮/标题均自绘；外点自动关闭
       showClose: false

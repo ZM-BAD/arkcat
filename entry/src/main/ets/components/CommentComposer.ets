@@ -4,6 +4,7 @@
  */
 import { promptAction } from '@kit.ArkUI';
 import { MarkdownView } from './MarkdownView';
+import { OctIcon } from './OctIcon';
 import { RepoSubService } from '../services/RepoSubService';
 import { MarkdownService } from '../services/MarkdownService';
 import { MarkdownEdit, MarkdownToolKind } from '../utils/MarkdownEdit';
@@ -19,6 +20,8 @@ export struct CommentComposer {
   @Param editingId: string = '';
   /** 打开时预填内容（草稿 / 编辑回填） */
   @Param initial: string = '';
+  /** reply 键引用源（PR/Issue 正文；编辑既有评论时由页面传被回复内容） */
+  @Param quoteSource: string = '';
   /** renderMarkdown context（owner/repo，放大为满链接） */
   @Param previewContext: string = '';
   @Local text: string = '';
@@ -31,6 +34,8 @@ export struct CommentComposer {
   @Local selEnd: number = 0;
   @Event onClose: () => void = (): void => { };
   @Event onPublished: () => void = (): void => { };
+  /** 预览区站内链接路由（官方预览里点链接可跳转） */
+  @Event onNavigate: (name: string, param: string) => void = (name: string, param: string): void => { };
   /** 草稿实时回传（父级 @Local 保存；取消/关闭后重开恢复） */
   @Event onDraftChange: (text: string) => void = (text: string): void => { };
 
@@ -76,6 +81,16 @@ export struct CommentComposer {
     const ins = MarkdownEdit.apply(this.text, this.selStart, this.selEnd, kind);
     this.text = ins.text;
     this.textController.setTextSelection(ins.selStart, ins.selEnd);
+  }
+
+  /** reply 键：引用被回复的内容（正文/评论体由页面传入） */
+  private applyReply(): void {
+    const ins = MarkdownEdit.reply(this.text, this.selStart, this.selEnd, this.quoteSource);
+    this.text = ins.text;
+    this.textController.setTextSelection(ins.selStart, ins.selEnd);
+    if (this.editingId === '') {
+      this.onDraftChange(this.text);
+    }
   }
 
   private togglePreview(): void {
@@ -136,79 +151,136 @@ export struct CommentComposer {
   }
 
   @Builder
-  toolBtn(label: string, kind: MarkdownToolKind, bold: boolean = false, strike: boolean = false) {
-    Text(label)
-      .fontSize($r('app.float.chip_font_size'))
-      .fontWeight(bold ? 600 : FontWeight.Medium)
-      .fontColor($r('app.color.text_secondary'))
-      .textAlign(TextAlign.Center)
-      .width(36)
-      .height(32)
-      .responseRegion({ x: -4, y: -6, width: '122%', height: '138%' })
-      .borderRadius(6)
-      .decoration(strike ? { type: TextDecorationType.LineThrough, color: $r('app.color.text_secondary') }
-        : { type: TextDecorationType.None, color: Color.Transparent })
-      .onClick(() => this.applyTool(kind))
+  toolBtn(iconRes: Resource, kind: string) {
+    Stack() {
+      OctIcon({ res: iconRes, iconSize: 20, iconColor: $r('app.color.text_primary') })
+    }
+    .width(40)
+    .height(36)
+    .responseRegion({ x: -2, y: -6, width: '110%', height: '140%' })
+    .onClick(() => {
+      if (kind === 'reply') {
+        this.applyReply();
+      } else {
+        this.applyTool(kind as MarkdownToolKind);
+      }
+    })
   }
 
+  /**
+   * Markdown 工具条（官方全集，顺序与官方一致）：
+   * B / I / 链接 / 图片 / @ / 列表 / 待办(checkbox) / 标题 / 删除线 / 引用 / 行内代码 / 代码块 / 回复(reply)。
+   * 官方为**横向可滑动**（键位多于屏宽，右侧还有）；贴在输入区下方 → 键盘弹起时位于键盘正上方。
+   */
   @Builder
   markdownToolbar() {
     Scroll() {
-      Row({ space: 2 }) {
-        this.toolBtn('B', 'bold', true)
-        this.toolBtn('I', 'italic')
-        this.toolBtn('❝', 'quote')
-        this.toolBtn('🔗', 'link')
-        this.toolBtn('`', 'code')
-        this.toolBtn('S', 'strike', false, true)
-        this.toolBtn('☐', 'task')
-        Text('')
-          .width(8)
+      Row({ space: 4 }) {
+        this.toolBtn($r('app.media.oct_bold_16'), 'bold')
+        this.toolBtn($r('app.media.oct_italic_16'), 'italic')
+        this.toolBtn($r('app.media.oct_link_16'), 'link')
+        this.toolBtn($r('app.media.oct_image_16'), 'image')
+        this.toolBtn($r('app.media.oct_mention_16'), 'mention')
+        this.toolBtn($r('app.media.oct_list_unordered_16'), 'list')
+        this.toolBtn($r('app.media.oct_checkbox_16'), 'task')
+        this.toolBtn($r('app.media.oct_heading_16'), 'heading')
+        this.toolBtn($r('app.media.oct_strikethrough_16'), 'strike')
+        this.toolBtn($r('app.media.oct_quote_16'), 'quote')
+        this.toolBtn($r('app.media.oct_code_16'), 'code')
+        this.toolBtn($r('app.media.oct_code_square_16'), 'codeblock')
+        this.toolBtn($r('app.media.oct_reply_16'), 'reply')
       }
-      .padding({ left: 4, right: 8 })
+      .padding({ left: 12, right: 12 })
     }
     .scrollable(ScrollDirection.Horizontal)
     .scrollBar(BarState.Off)
     .width('100%')
-    .height(36)
-    .backgroundColor($r('app.color.search_chips_row_bg'))
-    .borderRadius(6)
+    .height(48)
+    .align(Alignment.Start)
+  }
+
+  /** Edit / Preview 页签（等分，选中项蓝色下划线） */
+  @Builder
+  editorTab(label: ResourceStr, key: string) {
+    Column() {
+      Text(label)
+        .fontSize($r('app.float.sub_text_font_size'))
+        .fontColor($r('app.color.text_primary'))
+      Row()
+        .width('100%')
+        .height(2)
+        .backgroundColor(this.mode === key ? $r('app.color.link_blue') : Color.Transparent)
+        .margin({ top: 10 })
+    }
+    .layoutWeight(1)
+    .alignItems(HorizontalAlign.Center)
+    .padding({ top: 8 })
+    .onClick((): void => {
+      if (this.mode !== key) {
+        this.togglePreview();
+      }
+    })
   }
 
   build() {
-    Column({ space: 8 }) {
-      Row({ space: 8 }) {
+    Column() {
+      // 头部：✕ 关闭 + 标题 + 蓝色纸飞机发送（官方 Comment 页）
+      Row({ space: 4 }) {
+        Stack() {
+          OctIcon({ res: $r('app.media.oct_x_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
+        }
+        .width(44)
+        .height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .onClick((): void => this.onClose())
         Text(this.editingId !== ''
           ? this.stringOf($r('app.string.comment_edit_title'))
           : this.stringOf($r('app.string.comment_button')))
-          .fontSize($r('app.float.body_font_size'))
-          .fontWeight(FontWeight.Medium)
+          .fontSize($r('app.float.title_font_size'))
+          .fontWeight(600)
           .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
-        Text(this.mode === 'write' ? $r('app.string.comment_preview') : $r('app.string.comment_write'))
-          .fontSize($r('app.float.body_font_size'))
-          .fontColor($r('app.color.link_blue'))
-          .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-          .onClick(() => this.togglePreview())
+        Stack() {
+          OctIcon({
+            res: $r('app.media.oct_paper_airplane_16'),
+            iconSize: 20,
+            iconColor: this.submitting ? $r('app.color.text_tertiary') : $r('app.color.link_blue')
+          })
+        }
+        .width(44)
+        .height(44)
+        .accessibilityDescription($r('app.string.comment_publish'))
+        .onClick((): void => this.publish())
       }
       .width('100%')
+      .padding({ left: 4, right: 4 })
+
+      // Edit / Preview 页签 + 全幅细分隔线
+      Row() {
+        this.editorTab($r('app.string.comment_tab_edit'), 'write')
+        this.editorTab($r('app.string.comment_preview'), 'preview')
+      }
+      .width('100%')
+      Divider()
+        .color($r('app.color.divider'))
+        .strokeWidth(1)
+        .width('100%')
 
       if (this.mode === 'write') {
         TextArea({
           text: this.text,
-          placeholder: this.stringOf($r('app.string.comment_button')),
+          placeholder: this.stringOf($r('app.string.comment_placeholder')),
           controller: this.textController
         })
-          .fontSize($r('app.float.body_font_size'))
+          .fontSize($r('app.float.sub_text_font_size'))
           .fontColor($r('app.color.text_primary'))
-          .placeholderFont({ size: $r('app.float.body_font_size') })
+          .placeholderFont({ size: $r('app.float.sub_text_font_size') })
           .placeholderColor($r('app.color.text_tertiary'))
-          .backgroundColor($r('app.color.card_background'))
-          .borderRadius(6)
-          .border({ width: 1, color: $r('app.color.border') })
+          .backgroundColor(Color.Transparent)
+          .borderRadius(0)
           .width('100%')
-          .height(140)
-          .padding(8)
+          .layoutWeight(1)
+          .padding({ left: 16, right: 16, top: 12 })
           .onChange((v: string) => {
             this.text = v;
             if (this.editingId === '') {
@@ -219,41 +291,29 @@ export struct CommentComposer {
             this.selStart = start;
             this.selEnd = end;
           })
+        // 工具条贴着输入区底部 → 键盘弹起时正好位于键盘上方
         this.markdownToolbar()
       } else {
-        if (this.previewHtml !== '') {
-          Scroll() {
+        Scroll() {
+          // 最小高度撑满滚动区：内容不足一屏时 Scroll 会竖直居中 → 顶到顶部（官方预览从首行起排）；
+          // 用 minHeight 而非 height，长预览仍按内容增长、外滚可滚到底。
+          Column() {
             MarkdownView({
               html: this.previewHtml,
               fallbackText: this.text,
               collapse: false,
-              foldThreshold: 0
+              foldThreshold: 0,
+              onNavigate: (name: string, param: string) => this.onNavigate(name, param)
             })
           }
-          .layoutWeight(1)
-          .scrollBar(BarState.Off)
           .width('100%')
-        } else {
-          Column() {
-            if (this.previewLoading) {
-              LoadingProgress().width(28).height(28).color($r('app.color.link_blue'))
-            } else {
-              // 降级文本可滚（review F14：固定 120 高会截断长文）
-              Scroll() {
-                Text(this.text)
-                  .fontSize($r('app.float.body_font_size'))
-                  .fontColor($r('app.color.text_secondary'))
-                  .width('100%')
-              }
-              .scrollBar(BarState.Off)
-              .width('100%')
-              .constraintSize({ minHeight: 120, maxHeight: 320 })
-            }
-          }
-          .width('100%')
-          .constraintSize({ minHeight: 120, maxHeight: 320 })
-          .justifyContent(FlexAlign.Center)
+          .constraintSize({ minHeight: '100%' })
+          .justifyContent(FlexAlign.Start)
         }
+        .layoutWeight(1)
+        .scrollBar(BarState.Off)
+        .width('100%')
+        .padding({ left: 16, right: 16, top: 12 })
       }
 
       if (this.errorMsg !== '') {
@@ -261,29 +321,11 @@ export struct CommentComposer {
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.danger_text'))
           .width('100%')
+          .padding({ left: 16, right: 16, bottom: 8 })
       }
-
-      Row({ space: 8 }) {
-        Button(this.mode === 'write' ? $r('app.string.comment_preview') : $r('app.string.comment_write'))
-          .buttonStyle(ButtonStyleMode.NORMAL)
-          .layoutWeight(1)
-          .height(40)
-          .borderRadius(6)
-          .onClick(() => this.togglePreview())
-        Button($r('app.string.comment_publish'))
-          .buttonStyle(ButtonStyleMode.NORMAL)
-          .layoutWeight(2)
-          .height(40)
-          .borderRadius(6)
-          .fontColor(Color.White)
-          .backgroundColor($r('app.color.primary'))
-          .enabled(!this.submitting)
-          .onClick(() => this.publish())
-      }
-      .width('100%')
     }
-    .padding({ left: 16, right: 16, top: 12, bottom: 16 })
     .width('100%')
-    .backgroundColor($r('app.color.bg_page'))
+    .height('100%')
+    .backgroundColor($r('app.color.card_background'))
   }
 }

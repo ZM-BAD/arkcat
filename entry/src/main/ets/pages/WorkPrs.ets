@@ -5,6 +5,7 @@
  */
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
+import { PullRequestCard } from '../components/PullRequestCard';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { WorkFilterBar, WorkFilterOption, WorkFilterState, defaultWorkFilter, isWorkFilterDirty } from '../components/WorkFilterBar';
 import { WorkPrItem, WorkPrsPage } from '../models/WorkModels';
@@ -12,7 +13,6 @@ import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { WorkEmptyView } from '../components/WorkEmptyView';
-import { CountChip } from '../components/CountChip';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
@@ -185,92 +185,22 @@ export struct WorkPrsView {
     return item.iconKey === 'draft' ? $r('app.color.text_secondary') : $r('app.color.danger_text');
   }
 
-  /** Checks 胶囊文案（SUCCESS/FAILURE/PENDING；未知静默，图标由 checksIcon 提供） */
-  private checksLabel(state: string): string {
-    if (state === 'SUCCESS') {
-      return this.stringOf($r('app.string.work_pr_checks'));
-    }
-    if (state === 'FAILURE' || state === 'ERROR') {
-      return this.stringOf($r('app.string.work_pr_checks_failed'));
-    }
-    if (state === 'PENDING') {
-      return this.stringOf($r('app.string.work_pr_checks_pending'));
-    }
-    return '';
-  }
-
-  private checksIcon(state: string): Resource {
-    if (state === 'SUCCESS') {
-      return $r('app.media.oct_check_16');
-    }
-    return $r('app.media.oct_x_16');
-  }
-
-  private checksColor(state: string): ResourceColor {
-    if (state === 'SUCCESS') {
-      return $r('app.color.success_text');
-    }
-    if (state === 'FAILURE' || state === 'ERROR') {
-      return $r('app.color.danger_text');
-    }
-    return $r('app.color.warning_text');
-  }
 
   @Builder
   prCard(item: WorkPrItem) {
-    Row({ space: 12 }) {
-      OctIcon({ res: this.prIcon(item), iconSize: 18, iconColor: this.prColor(item) })
-      Column({ space: 6 }) {
-        Row() {
-          Text(`${item.repoFullName} #${item.number}`)
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .layoutWeight(1)
-          Text(this.timeText(timeParts(item.createdAt, Date.now())))
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-        }
-        .width('100%')
-
-        Text(item.title)
-          .fontSize($r('app.float.body_font_size'))
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.text_primary'))
-          .maxLines(2)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .width('100%')
-
-        Row({ space: 8 }) {
-          if (item.checksState !== '') {
-            CountChip({
-              icon: this.checksIcon(item.checksState),
-              iconColor: this.checksColor(item.checksState),
-              text: this.checksLabel(item.checksState),
-              textColor: $r('app.color.text_primary'),
-              outlined: true
-            })
-          }
-          if (item.commentCount > 0) {
-            CountChip({ icon: $r('app.media.oct_comment_16'), text: `${item.commentCount}` })
-          }
-          if (item.reviewCount > 0) {
-            CountChip({ icon: $r('app.media.oct_eye_16'), text: `${item.reviewCount}` })
-          }
-        }
-        .width('100%')
+    PullRequestCard({
+      iconRes: this.prIcon(item),
+      iconColor: this.prColor(item),
+      title: item.title,
+      number: item.number,
+      repoLine: item.repoFullName,
+      timeText: this.timeText(timeParts(item.createdAt, Date.now())),
+      commentCount: item.commentCount,
+      reviewCount: item.reviewCount,
+      checksState: item.checksState,
+      onOpen: (): void => {
+        this.pathStack.pushPathByName('prDetail', `${item.repoFullName}/${item.number}`);
       }
-      .layoutWeight(1)
-    }
-    .alignItems(VerticalAlign.Top)
-    .padding($r('app.float.card_padding'))
-    .borderRadius($r('app.float.card_radius'))
-    .backgroundColor($r('app.color.card_background'))
-    .width('100%')
-    .margin({ bottom: 8 })
-    .onClick(() => {
-      this.pathStack.pushPathByName('prDetail', `${item.repoFullName}/${item.number}`);
     })
   }
 

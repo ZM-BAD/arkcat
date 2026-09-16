@@ -359,9 +359,10 @@ export struct ProfileHeaderCard {
     // 切换器高度随账号数变化（单账号 ≈ 210，上限 5 ≈ 420）
     .bindSheet(this.switcherOpen, this.switcherSheet(), {
       height: 110 + this.accounts.length * 56,
+      detents: [110 + this.accounts.length * 56, SheetSize.LARGE],
       showClose: false,
       backgroundColor: $r('app.color.bg_page'),
-      dragBar: false,
+      dragBar: true,
       onDisappear: () => {
         this.switcherOpen = false;
       }

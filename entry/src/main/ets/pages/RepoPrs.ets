@@ -6,10 +6,9 @@
  * + Reviews 面板占位（交互待详设）。Author/Assignee/Milestone 为客户端过滤 + 空态自动补拉。
  */
 import { promptAction } from '@kit.ArkUI';
-import { AppBar, AppBarAction, AppBarActionCfg } from '../components/AppBar';
 import { OctIcon } from '../components/OctIcon';
+import { PullRequestCard } from '../components/PullRequestCard';
 import { PageShadowBar } from '../components/PageShadowBar';
-import { LabelPill } from '../components/LabelPill';
 import { FilterDropdownChip, FilterDropdownOption, FilterSheetChip } from '../components/FilterDropdownChip';
 import { WorkFilterSortSheet } from '../components/WorkFilterSortSheet';
 import { RepoPrItem, RepoPrsPage, filterPrsByAuthor, filterPrsByAssignee, filterPrsByMilestone, repoPrIconKey } from '../models/RepoSubModels';
@@ -22,7 +21,6 @@ import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 import { shouldAutoLoadMore, isLimitedRangeEmpty, NONE_FILTER_KEY } from '../utils/FilterLoading';
 import { FilterOptionSheet } from '../components/FilterOptionSheet';
-import { CountChip } from '../components/CountChip';
 
 @ComponentV2
 export struct RepoPrsView {
@@ -47,6 +45,9 @@ export struct RepoPrsView {
   /** 面板搜索态（与 IssuesList 同款：点 🔍 标题就地变搜索框，回退/重开即复位） */
   @Local sheetSearchShow: boolean = false;
   @Local sheetSearchText: string = '';
+  /** 顶栏就地搜索（WorkPrs 同款）：按标题/编号过滤已加载列表 */
+  @Local inSearch: boolean = false;
+  @Local searchQuery: string = '';
   @Local all: RepoPrItem[] = [];
   @Local shown: RepoPrItem[] = [];
   /** 仓库标签全集（带色：Label 面板 LabelPill 渲染用） */
@@ -147,6 +148,12 @@ export struct RepoPrsView {
     let list: RepoPrItem[] = filterPrsByAuthor(this.all, this.author);
     list = filterPrsByAssignee(list, this.assignee);
     list = filterPrsByMilestone(list, this.milestone);
+    // 顶栏就地搜索：标题/编号包含匹配（大小写不敏感）
+    const q = this.searchQuery.trim().toLowerCase();
+    if (q !== '') {
+      list = list.filter((item: RepoPrItem): boolean =>
+        item.title.toLowerCase().includes(q) || `#${item.number}`.includes(q) || String(item.number).includes(q));
+    }
     this.shown = list;
   }
 
@@ -447,96 +454,124 @@ export struct RepoPrsView {
     this.refresh();
   }
 
+  private enterSearch(): void {
+    this.inSearch = true;
+    this.searchQuery = '';
+    // 下一帧获焦，自动弹起软键盘（WorkPrs 同款）
+    setTimeout((): void => {
+      this.getUIContext().getFocusController().requestFocus('repo_prs_search');
+    }, 60);
+  }
+
+  private exitSearch(): void {
+    this.inSearch = false;
+    this.searchQuery = '';
+    this.applyFilters();
+  }
+
   @Builder
   prRow(item: RepoPrItem) {
-    Row({ space: 12 }) {
-      OctIcon({ res: this.prIcon(item), iconSize: 18, iconColor: this.prColor(item) })
-      Column({ space: 6 }) {
-        Row() {
-          Text(item.title)
-            .fontSize($r('app.float.body_font_size'))
-            .fontWeight(FontWeight.Medium)
-            .fontColor($r('app.color.text_primary'))
-            .maxLines(2)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .layoutWeight(1)
-          Text(`#${item.number}`)
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-            .margin({ left: 8 })
-        }
-        .width('100%')
-
-        // 标签数量不定：芯片组包横向 Scroll 防溢出卡片，头像/时间锚定右侧不随滚动
-        Row({ space: 8 }) {
-          Scroll() {
-            Row({ space: 8 }) {
-              ForEach(item.labels, (label: WorkLabel) => {
-                LabelPill({ labelName: label.name, colorHex: label.color })
-              }, (label: WorkLabel) => label.name)
-              if (item.checksState === 'SUCCESS') {
-                CountChip({
-                  icon: $r('app.media.oct_check_16'),
-                  iconColor: $r('app.color.success_text'),
-                  text: this.stringOf($r('app.string.work_pr_checks')),
-                  textColor: $r('app.color.text_primary'),
-                  outlined: true
-                })
-              }
-              if (item.commentCount > 0) {
-                CountChip({ icon: $r('app.media.oct_comment_16'), text: `${item.commentCount}` })
-              }
-            }
-            .constraintSize({ minWidth: '100%' })
-          }
-          .scrollBar(BarState.Off)
-          .layoutWeight(1)
-          if (item.authorAvatar !== '') {
-            Image(item.authorAvatar)
-              .width(20)
-              .height(20)
-              .borderRadius(12)
-              .backgroundColor($r('app.color.heat_empty'))
-          }
-          Text(this.timeText(timeParts(item.createdAt, Date.now())))
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-        }
-        .width('100%')
+    PullRequestCard({
+      iconRes: this.prIcon(item),
+      iconColor: this.prColor(item),
+      title: item.title,
+      number: item.number,
+      timeText: this.timeText(timeParts(item.createdAt, Date.now())),
+      labels: item.labels,
+      commentCount: item.commentCount,
+      reviewCount: item.reviewCount,
+      checksState: item.checksState,
+      authorAvatar: item.authorAvatar,
+      onOpen: (): void => {
+        this.pathStack.pushPathByName('prDetail', `${this.owner}/${this.name}/${item.number}`);
       }
-      .layoutWeight(1)
-    }
-    .alignItems(VerticalAlign.Top)
-    .padding($r('app.float.card_padding'))
-    .borderRadius($r('app.float.card_radius'))
-    .backgroundColor($r('app.color.card_background'))
-    .width('100%')
-    .margin({ bottom: 8 })
-    .onClick(() => {
-      this.pathStack.pushPathByName('prDetail', `${this.owner}/${this.name}/${item.number}`);
     })
   }
 
   build() {
     Column() {
-      // 两行头部：owner（灰小字·上）+ Pull requests（黑粗体·下）→ subtitleAbove
-      AppBar({
-        showBack: true,
-        title: $r('app.string.home_work_pull_requests'),
-        subtitle: this.owner,
-        subtitleAbove: true,
-        onBack: (): void => {
+      // 顶栏（Spec 067 自绘内联搜索头口径）：两行头 repoName（灰小字·上）+ Pull requests（粗体·下）；
+      // 点🔍就地变搜索框（WorkPrs 同款），⊕=circle-plus
+      Row() {
+        Stack() {
+          OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
+        }
+        .width(44)
+        .height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
+        .onClick((): void => {
           this.pathStack.pop();
-        },
-        actions: [
-          new AppBarAction($r('app.media.oct_search_24'), (): void => {
-            this.pathStack.pushPathByName('search', '');
-          }, { iconColor: $r('app.color.text_primary'), a11y: $r('app.string.a11y_search') }),
-          new AppBarAction($r('app.media.oct_plus_24'), (): void => {
-            promptAction.showToast({ message: $r('app.string.home_feature_coming') });
-          }, { iconColor: $r('app.color.link_blue'), a11y: $r('app.string.a11y_new') })
-        ]
-      })
+        })
+        if (this.inSearch) {
+          TextInput({
+            placeholder: this.stringOf($r('app.string.repo_prs_search_pr')),
+            text: this.searchQuery
+          })
+            .id('repo_prs_search')
+            .layoutWeight(1)
+            .height(44)
+            .fontSize($r('app.float.title_font_size'))
+            .fontColor($r('app.color.text_primary'))
+            .caretColor($r('app.color.link_blue'))
+            .backgroundColor(Color.Transparent)
+            .onChange((v: string) => {
+              this.searchQuery = v;
+              this.applyFilters();
+            })
+        } else {
+          Column() {
+            Text(this.name)
+              .fontSize($r('app.float.caption_font_size'))
+              .fontColor($r('app.color.text_secondary'))
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
+            Text($r('app.string.home_work_pull_requests'))
+              .fontSize($r('app.float.title_font_size'))
+              .fontWeight(600)
+              .fontColor($r('app.color.text_primary'))
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
+          }
+          .alignItems(HorizontalAlign.Start)
+          .layoutWeight(1)
+        }
+        if (this.inSearch) {
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
+          }
+          .width(44)
+          .height(44)
+          .padding(6)
+          .accessibilityDescription($r('app.string.a11y_close'))
+          .focusable(true)
+          .onClick((): void => this.exitSearch())
+        } else {
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 20, iconColor: $r('app.color.link_blue') })
+          }
+          .width(44)
+          .height(44)
+          .padding(6)
+          .accessibilityDescription($r('app.string.a11y_search'))
+          .focusable(true)
+          .onClick((): void => this.enterSearch())
+        }
+        Stack() {
+          OctIcon({ res: $r('app.media.oct_plus_circle_24'), iconSize: 20, iconColor: $r('app.color.link_blue') })
+        }
+        .width(44)
+        .height(44)
+        .padding(6)
+        .accessibilityDescription($r('app.string.a11y_new'))
+        .focusable(true)
+        .onClick((): void => {
+          promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+        })
+      }
+      .width('100%')
+      .height(48)
+      .padding({ left: 4, right: 4 })
 
       PageShadowBar({ show: this.scrollShadow })
 
@@ -690,6 +725,7 @@ export struct RepoPrsView {
     .backgroundColor($r('app.color.bg_page'))
     .bindSheet(this.sheetKind !== '', this.listSheet(), {
       height: this.sheetKind === 'sort' ? 620 : 560,
+      detents: [this.sheetKind === 'sort' ? 620 : 560, SheetSize.LARGE],
       backgroundColor: $r('app.color.bg_page'),
       // 关闭钮自绘，避免默认 ✕ 重叠（全库 bindSheet 口径）
       showClose: false,
