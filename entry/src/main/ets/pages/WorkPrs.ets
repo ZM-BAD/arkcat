@@ -198,7 +198,6 @@ export struct WorkPrsView {
       commentCount: item.commentCount,
       reviewCount: item.reviewCount,
       checksState: item.checksState,
-      checksCount: item.checksCount,
       onOpen: (): void => {
         this.pathStack.pushPathByName('prDetail', `${item.repoFullName}/${item.number}`);
       }

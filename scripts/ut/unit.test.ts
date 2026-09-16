@@ -1147,8 +1147,11 @@ test('Spec 042 mapPrDetail 合并门 + reviews/reviewThreads 映射', () => {
   // 会话时间轴（Spec 031 重设计）：事件/审阅按时间序映射，未识别类型丢弃
   assert.equal(page.timeline.length, 4);
   assert.equal(page.timeline[0].kind, 'commit');
-  assert.equal(page.timeline[0].commitAbbrev, 'abc123d');
-  assert.equal(page.timeline[0].commitAuthorName, 'renovate[bot]');
+  assert.equal(page.timeline[0].commitOid, 'abc123def');
+  assert.equal(page.timeline[0].commitMessage, 'chore(deps): bump x');
+  assert.equal(page.timeline[0].commitAuthorAvatar, 'https://a/1');
+  // 事件节点带 createdAt（PullRequestCommit 无该字段，仅事件类查询）
+  assert.equal(page.timeline[1].createdAt, '2026-09-01T00:00:01Z');
   assert.equal(page.timeline[1].kind, 'labeled');
   assert.equal(page.timeline[1].labelName, 'dependencies');
   assert.equal(page.timeline[1].actorLogin, 'renovate');
@@ -1251,6 +1254,54 @@ test('Spec 042 resolveMergeMethod 生效方式（未选过取服务端默认，�
   assert.equal(resolveMergeMethod('REBASE', 'MERGE'), 'REBASE');
   // 服务端默认缺失（旧 token/字段不可见）：兜底 MERGE，不落到 ''
   assert.equal(resolveMergeMethod('', ''), 'MERGE');
+});
+
+test('Spec 031 Checks 行 key 唯一（同名 check 来自不同 suite 不重键）', () => {
+  const data: JsonMap = { 'repository': { 'pullRequest': {
+    'number': 1, 'title': '', 'state': 'OPEN', 'merged': false, 'isDraft': false, 'body': '',
+    'bodyHTML': '', 'createdAt': '', 'additions': 0, 'deletions': 0,
+    'author': { 'login': 'a' }, 'headRefName': '', 'baseRefName': '',
+    'statusCheckRollup': { 'state': 'FAILURE', 'contexts': { 'totalCount': 3, 'nodes': [
+      { 'name': 'build', 'conclusion': 'SUCCESS' },
+      { 'name': 'build', 'conclusion': 'FAILURE' },
+      { 'context': 'ci/legacy', 'state': 'PENDING' }
+    ] } }
+  } } };
+  const page = mapPrDetail(data);
+  assert.equal(page.checks.length, 3);
+  assert.equal(page.checks[0].name, 'build');
+  // StatusContext 无 name 时回落 context 字段
+  assert.equal(page.checks[2].name, 'ci/legacy');
+  assert.equal(page.checks[2].state, 'PENDING');
+  const keys = new Set(page.checks.map((c) => c.key));
+  assert.equal(keys.size, 3);
+});
+
+test('Spec 042 Bot 标识：审阅卡与 thread 评论按 author.__typename 判定（官方 login[bot]）', () => {
+  const botAuthor: JsonMap = { '__typename': 'Bot', 'login': 'renovate', 'avatarUrl': 'https://a/1' };
+  const page = mapPrDetail({ 'repository': { 'pullRequest': {
+    'number': 1, 'title': '', 'state': 'OPEN', 'merged': false, 'isDraft': false, 'body': '',
+    'bodyHTML': '', 'createdAt': '', 'additions': 0, 'deletions': 0,
+    'author': { '__typename': 'User', 'login': 'a' }, 'headRefName': '', 'baseRefName': '',
+    'timelineItems': { 'nodes': [{
+      '__typename': 'PullRequestReview', 'id': 'RV1', 'state': 'COMMENTED',
+      'author': botAuthor, 'body': '', 'bodyHTML': '', 'submittedAt': ''
+    }] },
+    'reviewThreads': { 'nodes': [{
+      'id': 'T1', 'path': 'a.ets', 'line': 1,
+      'comments': { 'totalCount': 1, 'nodes': [{
+        'id': 'TC1', 'body': 'x', 'bodyHTML': '', 'createdAt': '',
+        'author': botAuthor, 'viewerDidAuthor': false
+      }] }
+    }] }
+  } } });
+  const review = page.timeline[0].review;
+  assert.equal(review !== null ? review.authorIsBot : false, true);
+  assert.equal(actorDisplayLogin(review !== null ? review.authorLogin : '',
+    review !== null ? review.authorIsBot : false), 'renovate[bot]');
+  assert.equal(page.threads[0].comments[0].authorIsBot, true);
+  assert.equal(actorDisplayLogin(page.threads[0].comments[0].authorLogin,
+    page.threads[0].comments[0].authorIsBot), 'renovate[bot]');
 });
 
 test('mapRepoReleasesPage body=description 兜底 + formatBytes 单位', () => {

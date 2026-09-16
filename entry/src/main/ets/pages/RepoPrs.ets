@@ -481,7 +481,6 @@ export struct RepoPrsView {
       commentCount: item.commentCount,
       reviewCount: item.reviewCount,
       checksState: item.checksState,
-      checksCount: item.checksCount,
       authorAvatar: item.authorAvatar,
       onOpen: (): void => {
         this.pathStack.pushPathByName('prDetail', `${this.owner}/${this.name}/${item.number}`);

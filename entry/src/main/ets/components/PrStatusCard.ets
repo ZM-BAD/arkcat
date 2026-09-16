@@ -7,22 +7,18 @@
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from './OctIcon';
 import { PrDetailPage, StatusCheckItem, canMergePr, mergeStateReasonKey } from '../models/RepoSubModels';
-import { RepoSubService } from '../services/RepoSubService';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
 export struct PrStatusCard {
   @Require @Param detail: PrDetailPage;
-  @Param token: string = '';
-  /** 合并成功后通知页面重拉（merged badge / 分支行 / Merge 区块随之刷新） */
-  @Event onRefresh: () => void = (): void => { };
+  /** 合并进行中（页面 mergeSending 传入；主段 MERGE 按钮在此期间禁用，防重复提交） */
+  @Param merging: boolean = false;
   /** Status 卡片 checks 列表展开态（仅本卡消费，自持有） */
   @Local checksOpen: boolean = false;
   /** Reviews 行展开态（REQUEST REVIEWS 按钮；编辑管道随 Spec 044 接入，先占位） */
   @Local reviewsOpen: boolean = false;
-  /** 合并进行中（防重复提交；按钮禁用） */
-  @Local merging: boolean = false;
   /** 右段 ▾ → 页面打开 Merge options 底部页（只管选方式/改提交信息，页内无确认钮） */
   @Event onMergeOpen: () => void = (): void => { };
   /** 主段 MERGE → 按当前方式直接合并（页面先弹官方确认对话框） */
@@ -184,7 +180,7 @@ export struct PrStatusCard {
           }
           .width('100%')
           .padding({ left: 22 })
-        }, (c: StatusCheckItem) => c.name)
+        }, (c: StatusCheckItem) => c.key)
       }
       // Merge 区块（Spec 042 元素8/9/10）：已合并不显示；可用=Ready to merge 行+MERGE 分段按钮
       // （Android 官方形态：主段 MERGE 进确认 sheet、右段 ▾ 选方法）；阻塞=原因（冲突红字）+禁用态

@@ -7,8 +7,9 @@
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from './OctIcon';
 import { MarkdownView } from './MarkdownView';
-import { ReviewThread, ReviewThreadComment } from '../models/RepoSubModels';
+import { ReviewThread, ReviewThreadComment, actorDisplayLogin } from '../models/RepoSubModels';
 import { RepoSubService } from '../services/RepoSubService';
+import { friendlyError } from '../services/GitHttpClient';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
@@ -79,7 +80,7 @@ export struct ReviewThreadsCard {
       })
       .catch((e: Error) => {
         this.sending = false;
-        promptAction.showToast({ message: e.message });
+        promptAction.showToast({ message: friendlyError(this.getUIContext(), e) });
       });
   }
 
@@ -100,7 +101,7 @@ export struct ReviewThreadsCard {
       })
       .catch((e: Error) => {
         this.sending = false;
-        promptAction.showToast({ message: e.message });
+        promptAction.showToast({ message: friendlyError(this.getUIContext(), e) });
       });
   }
 
@@ -162,7 +163,7 @@ export struct ReviewThreadsCard {
                   .borderRadius(10)
                   .backgroundColor($r('app.color.heat_empty'))
               }
-              Text(comment.authorLogin)
+              Text(actorDisplayLogin(comment.authorLogin, comment.authorIsBot))
                 .fontSize($r('app.float.caption_font_size'))
                 .fontColor($r('app.color.text_primary'))
               Text(this.timeText(timeParts(comment.createdAt, Date.now())))

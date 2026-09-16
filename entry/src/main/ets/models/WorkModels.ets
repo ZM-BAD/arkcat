@@ -46,7 +46,7 @@ export interface WorkPrItem {
   reviewCount: number;
   /** SUCCESS/FAILURE/PENDING/ERROR/EXPECTED；无 Checks 时为 '' */
   checksState: string;
-  /** Checks 通过数（SUCCESS 态胶囊显示 N；rollup contexts 总数） */
+  /** Checks 通过数（rollup contexts 总数）。已入库备用：官方列表卡「绿圈勾 + N」口径未解（N 与 checks 总数对不上），UI 暂不展示 */
   checksCount: number;
 }
 

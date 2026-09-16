@@ -27,8 +27,6 @@ export struct PullRequestCard {
   @Param reviewCount: number = 0;
   /** GitHub statusCheckRollup state（StatusState 五态全集）：SUCCESS/FAILURE/ERROR/PENDING/EXPECTED；''=无 Checks 不显示胶囊 */
   @Param checksState: string = '';
-  /** Checks 通过数（已接数、暂不展示——官方「圈勾+N」口径待 #82 之谜解开（见 handoff）后启用） */
-  @Param checksCount: number = 0;
   @Param authorAvatar: string = '';
   @Event onOpen: () => void = (): void => { };
 

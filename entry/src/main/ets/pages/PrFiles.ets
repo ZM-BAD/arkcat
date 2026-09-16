@@ -144,8 +144,13 @@ export struct PrFilesView {
     if (this.page === null || this.reviewSending || this.page.pullRequestId === '') {
       return;
     }
+    // COMMENT 态必须有总结 body（与详情页 reviewSheet 同口径；服务端同样拒空）
+    if (this.reviewEvent === 'COMMENT' && this.reviewBody.trim() === '') {
+      promptAction.showToast({ message: $r('app.string.pr_review_need_body') });
+      return;
+    }
     this.reviewSending = true;
-    RepoSubService.submitReview(this.token, this.page.pullRequestId, this.reviewEvent, this.reviewBody)
+    RepoSubService.submitReview(this.token, this.page.pullRequestId, this.reviewEvent, this.reviewBody.trim())
       .then(() => {
         this.reviewSending = false;
         this.sheetKind = '';
@@ -197,7 +202,7 @@ export struct PrFilesView {
       })
       .catch((e: Error) => {
         this.threadSending = false;
-        promptAction.showToast({ message: e.message });
+        promptAction.showToast({ message: friendlyError(this.getUIContext(), e) });
       });
   }
 
@@ -427,7 +432,7 @@ export struct PrFilesView {
         .fontSize($r('app.float.body_font_size'))
         .fontColor(Color.White)
         .backgroundColor($r('app.color.link_blue'))
-        .enabled(!this.reviewSending)
+        .enabled(!this.reviewSending && (this.reviewEvent !== 'COMMENT' || this.reviewBody.trim() !== ''))
         .onClick((): void => this.submitReviewFromFiles())
     }
     .width('100%')

@@ -255,7 +255,7 @@ PR 列表卡片的胶囊统一**描边变体**：透明底 + `divider` 1px 描�
 | EXPECTED | `circle` | `text_secondary` 灰 | Checks expected / Checks 等待上报 | `work_pr_checks_expected` |
 
 > SUCCESS 态数量口径**暂缓**：官方 App 行内曾见「绿圈勾 + 1」，与 checks 总数（#82=26/27）对不上，
-> 候选=提交数/关联 issue 数/legacy status 数（详见 handoff「DAG-chat PR #82 圈勾 1 之谜」）；解谜前 SUCCESS 用纯文案 `Checks`。
+> 候选=提交数/关联 issue 数/legacy status 数；解谜前 SUCCESS 用纯文案 `Checks`（数量已入库备用，UI 未展示）。
 > 文字一律 `text_primary`（仅图标着色，2026-09-16 用户定案）；枚举出处 `StatusState`
 >（introspection 实测，rollup `state` 只可能返回这五个值）；未知值静默不显示胶囊。
 

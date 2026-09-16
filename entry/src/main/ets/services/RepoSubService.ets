@@ -163,7 +163,7 @@ query IssueDetail($owner: String!, $name: String!, $number: Int!, $first: Int = 
         ${FRAG_PAGE_INFO}
         nodes {
           id body bodyHTML createdAt
-          author { login avatarUrl }
+          author { __typename login avatarUrl }
           viewerDidAuthor
           reactionGroups {
             content viewerHasReacted
@@ -228,7 +228,7 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!, $after: 
           id path line isResolved isOutdated viewerCanResolve viewerCanUnresolve
           comments(first: 30) {
             totalCount
-            nodes { id body bodyHTML createdAt author { login avatarUrl } viewerDidAuthor }
+            nodes { id body bodyHTML createdAt author { __typename login avatarUrl } viewerDidAuthor }
           }
         }
       }
@@ -259,7 +259,7 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!, $after: 
           __typename
           ... on PullRequestCommit {
             id
-            commit { oid abbreviatedOid messageHeadline author { name avatarUrl } }
+            commit { oid messageHeadline author { avatarUrl } }
           }
           ... on IssueComment {
             id body bodyHTML createdAt viewerDidAuthor
@@ -281,33 +281,33 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!, $after: 
             id state body bodyHTML submittedAt viewerDidAuthor
             author { __typename login avatarUrl }
           }
-          ... on LabeledEvent { id createdAt actor { __typename login avatarUrl } label { name color } }
-          ... on UnlabeledEvent { id createdAt actor { __typename login avatarUrl } label { name color } }
+          ... on LabeledEvent { id createdAt actor { __typename login } label { name } }
+          ... on UnlabeledEvent { id createdAt actor { __typename login } label { name } }
           ... on AssignedEvent {
             id createdAt
-            actor { __typename login avatarUrl }
+            actor { __typename login }
             assignee { __typename ... on User { login } ... on Bot { login } ... on Mannequin { login } ... on Organization { name } }
           }
           ... on UnassignedEvent {
             id createdAt
-            actor { __typename login avatarUrl }
+            actor { __typename login }
             assignee { __typename ... on User { login } ... on Bot { login } ... on Mannequin { login } ... on Organization { name } }
           }
           ... on ReviewRequestedEvent {
             id createdAt
-            actor { __typename login avatarUrl }
+            actor { __typename login }
             requestedReviewer { __typename ... on User { login } ... on Bot { login } ... on Mannequin { login } ... on Team { name } }
           }
           ... on ReviewRequestRemovedEvent {
             id createdAt
-            actor { __typename login avatarUrl }
+            actor { __typename login }
             requestedReviewer { __typename ... on User { login } ... on Bot { login } ... on Mannequin { login } ... on Team { name } }
           }
-          ... on MergedEvent { id createdAt actor { __typename login avatarUrl } commit { abbreviatedOid } mergeRefName }
-          ... on ClosedEvent { id createdAt actor { __typename login avatarUrl } }
-          ... on ReopenedEvent { id createdAt actor { __typename login avatarUrl } }
-          ... on ConvertToDraftEvent { id createdAt actor { __typename login avatarUrl } }
-          ... on ReadyForReviewEvent { id createdAt actor { __typename login avatarUrl } }
+          ... on MergedEvent { id createdAt actor { __typename login } commit { abbreviatedOid } mergeRefName }
+          ... on ClosedEvent { id createdAt actor { __typename login } }
+          ... on ReopenedEvent { id createdAt actor { __typename login } }
+          ... on ConvertToDraftEvent { id createdAt actor { __typename login } }
+          ... on ReadyForReviewEvent { id createdAt actor { __typename login } }
         }
       }
     }

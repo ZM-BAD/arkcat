@@ -20,7 +20,7 @@ export interface RepoPrItem {
   commentCount: number;
   reviewCount: number;
   checksState: string;
-  /** Checks 通过数（SUCCESS 态胶囊显示 N；rollup contexts 总数） */
+  /** Checks 通过数（rollup contexts 总数）。已入库备用：官方列表卡「绿圈勾 + N」口径未解（N 与 checks 总数对不上），UI 暂不展示 */
   checksCount: number;
   authorLogin: string;
   authorAvatar: string;
@@ -190,6 +190,8 @@ export interface IssueDetailPage {
 
 /** Checks 列表行（statusCheckRollup.contexts：CheckRun/StatusContext 归一化） */
 export interface StatusCheckItem {
+  /** ForEach key（同名 check 可来自不同 suite/app，name 不足以唯一——映射时按序号定型） */
+  key: string;
   name: string;
   state: string;
 }
@@ -203,6 +205,8 @@ export interface PrReview {  id: string;
   submittedAt: string;
   authorLogin: string;
   authorAvatar: string;
+  /** 作者是 Bot（author.__typename = Bot）：官方显示 `login[bot]`（与 CommentCard 同口径） */
+  authorIsBot: boolean;
   viewerDidAuthor: boolean;
 }
 
@@ -214,6 +218,8 @@ export interface ReviewThreadComment {
   createdAt: string;
   authorLogin: string;
   authorAvatar: string;
+  /** 作者是 Bot（author.__typename = Bot）：官方显示 `login[bot]`（与 CommentCard 同口径） */
+  authorIsBot: boolean;
   viewerDidAuthor: boolean;
 }
 
@@ -284,20 +290,17 @@ export interface TimelineNode {
   kind: string;
   /** 节点 id（ForEach key 用；评论/审阅另拼可变数据） */
   id: string;
+  /** 节点时间（官方事件行时间戳口径待定，UI 暂未渲染） */
   createdAt: string;
   /** 事件操作者（Bot 经 actorDisplayLogin 显示 login[bot]） */
   actorLogin: string;
   actorIsBot: boolean;
-  actorAvatar: string;
   /** commit 节点（PullRequestCommit） */
   commitOid: string;
-  commitAbbrev: string;
   commitMessage: string;
-  commitAuthorName: string;
   commitAuthorAvatar: string;
   /** label 节点（官方行内加粗 label name） */
   labelName: string;
-  labelColor: string;
   /** assign/unassign/review request 节点目标（User/Bot 取 login，Team/Organization 取 name） */
   targetLogin: string;
   targetIsBot: boolean;
@@ -314,9 +317,9 @@ export interface TimelineNode {
 function blankTimelineNode(): TimelineNode {
   return {
     kind: '', id: '', createdAt: '',
-    actorLogin: '', actorIsBot: false, actorAvatar: '',
-    commitOid: '', commitAbbrev: '', commitMessage: '', commitAuthorName: '', commitAuthorAvatar: '',
-    labelName: '', labelColor: '',
+    actorLogin: '', actorIsBot: false,
+    commitOid: '', commitMessage: '', commitAuthorAvatar: '',
+    labelName: '',
     targetLogin: '', targetIsBot: false,
     mergeAbbrev: '', mergeRefName: '',
     comment: null, review: null
@@ -338,7 +341,6 @@ function fillActor(node: TimelineNode, raw: JsonMap): void {
   if (actor !== null) {
     node.actorLogin = unionName(actor);
     node.actorIsBot = Json.str(actor, '__typename') === 'Bot';
-    node.actorAvatar = Json.str(actor, 'avatarUrl');
   }
 }
 
@@ -360,9 +362,7 @@ export function mapTimeline(conn: JsonMap): TimelineNode[] {
       const author = commit !== null ? Json.obj(commit, 'author') : null;
       node.kind = 'commit';
       node.commitOid = commit !== null ? Json.str(commit, 'oid') : '';
-      node.commitAbbrev = commit !== null ? Json.str(commit, 'abbreviatedOid') : '';
       node.commitMessage = commit !== null ? Json.str(commit, 'messageHeadline') : '';
-      node.commitAuthorName = author !== null ? Json.str(author, 'name') : '';
       node.commitAuthorAvatar = author !== null ? Json.str(author, 'avatarUrl') : '';
     } else if (type === 'IssueComment') {
       node.kind = 'comment';
@@ -374,7 +374,6 @@ export function mapTimeline(conn: JsonMap): TimelineNode[] {
       node.kind = type === 'LabeledEvent' ? 'labeled' : 'unlabeled';
       const label = Json.obj(raw, 'label');
       node.labelName = label !== null ? Json.str(label, 'name') : '';
-      node.labelColor = label !== null ? Json.str(label, 'color') : '';
     } else if (type === 'AssignedEvent' || type === 'UnassignedEvent') {
       node.kind = type === 'AssignedEvent' ? 'assigned' : 'unassigned';
       const assignee = Json.obj(raw, 'assignee');
@@ -1196,7 +1195,7 @@ function mapStatusChecks(checks: JsonMap | null): StatusCheckItem[] {
     const conclusion = Json.str(node, 'conclusion');
     const state = conclusion !== '' ? conclusion : Json.str(node, 'state');
     if (name !== '') {
-      items.push({ name: name, state: state });
+      items.push({ key: `${name}#${items.length}`, name: name, state: state });
     }
   }
   return items;
@@ -1214,6 +1213,7 @@ export function mapReview(node: JsonMap): PrReview {
     submittedAt: Json.str(node, 'submittedAt'),
     authorLogin: author !== null ? Json.str(author, 'login') : '',
     authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : '',
+    authorIsBot: author !== null && Json.str(author, '__typename') === 'Bot',
     viewerDidAuthor: Json.bool(node, 'viewerDidAuthor')
   };
 }
@@ -1238,6 +1238,7 @@ export function mapReviewThreads(conn: JsonMap | null): ReviewThread[] {
         createdAt: Json.str(comment, 'createdAt'),
         authorLogin: commentAuthor !== null ? Json.str(commentAuthor, 'login') : '',
         authorAvatar: commentAuthor !== null ? Json.str(commentAuthor, 'avatarUrl') : '',
+        authorIsBot: commentAuthor !== null && Json.str(commentAuthor, '__typename') === 'Bot',
         viewerDidAuthor: Json.bool(comment, 'viewerDidAuthor')
       });
     }

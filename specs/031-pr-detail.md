@@ -35,7 +35,7 @@ PR 详情页三区块：**Changes 卡片**（N files changed · +A −D · commi
 | 6 | Changes | commit 数 + 相对时间 | 展示 | ✅ | `commits.totalCount/createdAt` | 点击进 PR commits 列表 |
 | 7 | Status | Reviews · None requested + REQUEST REVIEWS | 展示 | ✅ | `reviews.totalCount` | 行尾 chevron 展开，按钮动作随 Spec 044 元数据编排接入 |
 | 8 | Status | Checks 状态 + Branch merged 时间线 | 展示 | ✅ | `statusCheckRollup{state/contexts}/mergeCommit{abbreviatedOid}/mergedAt/mergedBy` | 点击展开内联 checks 列表（statusCheckRollup.contexts 归一化 CheckRun/StatusContext；无时长/步骤/重跑） |
-| 9 | Conversation | **会话时间轴**：事件行（commit/label/assign 等 14 类）+ 评论卡 + 审阅卡，左侧竖直连线 | 展示 | ✅ | `timelineItems(first:30, after:, itemTypes:[…])` → `{__typename}` + 各事件字段 | 一次请求拿全时间轴（单一游标分页）；连线贯穿「事件行」、被不透明白卡遮断（同官方）；Bot 操作者显示 `login[bot]`（`actorDisplayLogin`）；用户 2026-09-17 参考官方截图定形 |
+| 9 | Conversation | **会话时间轴**：事件行（commit/label/assign 等 14 类）+ 评论卡 + 审阅卡，左侧竖直连线 | 展示 | ✅ | `timelineItems(first:30, after:, itemTypes:[…])` → `{__typename}` + 各事件字段 | 一次请求拿全时间轴（单一游标分页）；连线贯穿「事件行」、被不透明白卡遮断（同官方）；Bot 操作者显示 `login[bot]`（`actorDisplayLogin`） |
 | 10 | Conversation | Status 卡 merged 行（mergedAt/mergeOid/mergedBy）+ refer 事件（后续时间线）+ DELETE BRANCH | 展示 | ✅ | `mergedAt/mergeCommit{abbreviatedOid}/mergedBy` | 按钮提示 |
 | 11 | 底部 | 悬浮 COMMENT + info（元数据底部整页） | 占位 | ✅ | `assignees/labels/milestone` | 五段展示已接数；EDIT 编辑器随 044 接入（当前占位） |
 | 12 | 正文卡 | 正文反应行（圆轮廓笑脸钮 + 反应芯片） | 交互 | ✅ | `reactionGroups{content/viewerHasReacted/reactors}` + `addReaction/removeReaction`（subjectId = PR 节点 id） | 笑脸钮弹 8 种官方反应 2×4 全集（ReactionBar `pickerFull`，与 release 变体的 6 种正向子集区分）；芯片整颗可点翻转（已反应 -1）、长按进 Reactees 整页；无反应时只留笑脸钮 |
@@ -132,6 +132,8 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!, $after: 
 - [x] 测试 5：正文反应行——笑脸钮弹 8 种反应 2×4 面板；选一种 → 芯片出现且计数 1；再点芯片 → 移除（模拟器实测 + GitHub 侧 reactions total_count 归零核对）
 - [x] 测试 6：会话时间轴——PR #83 实机实测 4 个节点（提交行/标签行/指派行/评论卡）+ 左侧连线贯穿事件行、被白卡遮断；`mapTimeline` 纯函数断言（含未识别类型丢弃、Bot 显示口径、文案拆段）
 - [x] 测试 7：评论卡反应行——笑脸钮弹 8 种面板（原「+」chip 在镜像含全 8 组时被条件隐藏，故与官方对齐改为笑脸钮）
+- [x] 测试 8：时间轴分页信息取自 `pageInfo`（宿主单测断言 hasNextPage/endCursor）；Checks 行 key 唯一（同名 check 不重键）
+- [ ] 测试 9：会话超 30 条时滚到底续拉下一段（实现完成，待模拟器走查）
 
 ---
 

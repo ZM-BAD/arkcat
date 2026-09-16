@@ -3,6 +3,7 @@
  * Status 卡片 + Conversation + 审阅列表 + ReviewThreads + 评论输入面板 + Review changes 三态审阅面板。
  */
 import { promptAction } from '@kit.ArkUI';
+import { RequestSequencer } from 'graphql';
 import { AppBar, AppBarAction, AppBarActionCfg, AppBarMenuItem } from '../components/AppBar';
 import { OctIcon } from '../components/OctIcon';
 import { MarkdownView } from '../components/MarkdownView';
@@ -15,7 +16,7 @@ import { TimelineRow } from '../components/TimelineRow';
 import { ReviewThreadsCard } from '../components/ReviewThreadsCard';
 import { RepoComment, PrDetailPage, PrReview, TimelineNode, reviewStateKey, MetaLabel, MetaUser,
   TriageUser, TriageLabel, TriageMilestone, TriageLinkedItem, TriageProject, EditorRow,
-  filterTriageByKeyword, diffSelection, singlePickId, resolveMergeMethod } from '../models/RepoSubModels';
+  filterTriageByKeyword, diffSelection, singlePickId, resolveMergeMethod, actorDisplayLogin } from '../models/RepoSubModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { friendlyError } from '../services/GitHttpClient';
 import { StateView } from '../components/StateView';
@@ -94,6 +95,10 @@ export struct PrDetailView {
   @Local mergeSending: boolean = false;
   /** 首个 onShown tick 不重拉（aboutToAppear 已拉过） */
   private skipFirstTick: boolean = true;
+  /** 详情请求竞态守卫：旧 refresh 响应按序号丢弃（库原语） */
+  private detailReqSeq: RequestSequencer = new RequestSequencer();
+  /** 时间轴代际：refresh 发起即递增，使在途续拉结果作废（防旧游标页拼到新时间轴） */
+  private timelineGen: number = 0;
 
   aboutToAppear(): void {
     this.refresh();
@@ -109,10 +114,16 @@ export struct PrDetailView {
   }
 
   private refresh(): void {
+    const seq: number = this.detailReqSeq.begin();
+    // 代际递增：refresh 会整页替换时间轴，在途续拉（旧游标 + 旧节点）随之作废
+    this.timelineGen++;
     this.loading = true;
     this.errorMsg = '';
     RepoSubService.fetchPrDetail(this.token, this.owner, this.name, this.number, '')
       .then((page: PrDetailPage) => {
+        if (!this.detailReqSeq.isCurrent(seq)) {
+          return;
+        }
         this.detail = page;
         this.timelineHasNext = page.timelineHasNext;
         this.timelineCursor = page.timelineCursor;
@@ -121,6 +132,9 @@ export struct PrDetailView {
         this.loadingMore = false;
       })
       .catch((e: Error) => {
+        if (!this.detailReqSeq.isCurrent(seq)) {
+          return;
+        }
         this.errorMsg = e.message;
         this.loading = false;
         this.isRefreshing = false;
@@ -133,9 +147,15 @@ export struct PrDetailView {
     if (!this.timelineHasNext || this.loadingMore || this.detail === null) {
       return;
     }
+    const gen: number = this.timelineGen;
+    const cursor: string = this.timelineCursor;
     this.loadingMore = true;
-    RepoSubService.fetchPrDetail(this.token, this.owner, this.name, this.number, this.timelineCursor)
+    RepoSubService.fetchPrDetail(this.token, this.owner, this.name, this.number, cursor)
       .then((page: PrDetailPage) => {
+        if (gen !== this.timelineGen) {
+          // 期间发生过 refresh：本页游标与当前时间轴不再连续，丢弃（loadingMore 由 refresh 归位）
+          return;
+        }
         const prev = this.detail;
         if (prev !== null) {
           // 合并进新页对象后整体重赋值，触发 UI 刷新（同 B4 模式）
@@ -147,8 +167,11 @@ export struct PrDetailView {
         this.loadingMore = false;
       })
       .catch((e: Error) => {
+        if (gen !== this.timelineGen) {
+          return;
+        }
         this.loadingMore = false;
-        promptAction.showToast({ message: e.message });
+        promptAction.showToast({ message: friendlyError(this.getUIContext(), e) });
       });
   }
 
@@ -200,7 +223,7 @@ export struct PrDetailView {
             .borderRadius(11)
             .backgroundColor($r('app.color.heat_empty'))
         }
-        Text(review.authorLogin)
+        Text(actorDisplayLogin(review.authorLogin, review.authorIsBot))
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_primary'))
         Text(this.reviewStateText(review.state))
@@ -623,7 +646,7 @@ export struct PrDetailView {
         })
         .catch((e: Error) => {
           this.reviewSending = false;
-          promptAction.showToast({ message: e.message });
+          promptAction.showToast({ message: friendlyError(this.getUIContext(), e) });
         });
       return;
     }
@@ -641,7 +664,7 @@ export struct PrDetailView {
       })
       .catch((e: Error) => {
         this.reviewSending = false;
-        promptAction.showToast({ message: e.message });
+        promptAction.showToast({ message: friendlyError(this.getUIContext(), e) });
       });
   }
 
@@ -757,7 +780,7 @@ export struct PrDetailView {
       .catch((e: Error) => {
         this.mergeSending = false;
         promptAction.showToast({
-          message: this.stringOf($r('app.string.pr_merge_failed')) + ': ' + e.message
+          message: this.stringOf($r('app.string.pr_merge_failed')) + ': ' + friendlyError(this.getUIContext(), e)
         });
       });
   }
@@ -920,7 +943,9 @@ export struct PrDetailView {
                 this.refresh();
               })
               .catch((e: Error) => {
-                promptAction.showToast({ message: this.stringOf($r('app.string.comment_error_delete')) + ': ' + e.message });
+                promptAction.showToast({
+                  message: this.stringOf($r('app.string.comment_error_delete')) + ': ' + friendlyError(this.getUIContext(), e)
+                });
               });
           }
         }
@@ -1751,8 +1776,7 @@ export struct PrDetailView {
             // Status 卡片（组件化，checks 展开态自持有；Merge 区块随 detail 刷新）
             PrStatusCard({
               detail: this.detail,
-              token: this.token,
-              onRefresh: (): void => this.refresh(),
+              merging: this.mergeSending,
               onMergeOpen: (): void => this.openMergeOptions(),
               onMergeConfirm: (): void => this.confirmMergeTap()
             })
@@ -1775,7 +1799,7 @@ export struct PrDetailView {
                   .margin({ left: 15.5, top: 16 })
                   .zIndex(0)
                 Column() {
-                  ForEach(this.detail.timeline, (item: TimelineNode, index: number) => {
+                  ForEach(this.detail.timeline, (item: TimelineNode) => {
                     if (item.kind === 'comment' && item.comment !== null) {
                       CommentCard({
                         comment: this.commentOf(item),
@@ -1811,7 +1835,7 @@ export struct PrDetailView {
                         onOpenCommit: (oid: string): void => this.openCommit(oid)
                       })
                     }
-                  }, (item: TimelineNode, index: number) => `${item.kind}-${item.id}-${index}`)
+                  }, (item: TimelineNode) => `${item.kind}-${item.id}`)
                 }
                 .width('100%')
                 .padding({ bottom: 20 })
