@@ -2356,6 +2356,10 @@
     {
       "name": "pr_merge_button",
       "value": "MERGE"
+    },
+    {
+      "name": "menu_quote_reply",
+      "value": "Quote reply"
     }
   ]
 }

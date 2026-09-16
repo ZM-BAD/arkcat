@@ -2356,6 +2356,10 @@
     {
       "name": "pr_merge_button",
       "value": "合并"
+    },
+    {
+      "name": "menu_quote_reply",
+      "value": "引用回复"
     }
   ]
 }

@@ -419,10 +419,14 @@ export struct PrDetailView {
   }
 
   build() {
-    Column() {
+    Stack({ alignContent: Alignment.BottomEnd }) {
+      Column() {
       AppBar({
         showBack: true,
-        title: `${this.owner}/${this.name} #${this.number}`,
+        title: this.detail !== null ? this.detail.title : '',
+        subtitle: `${this.owner} / ${this.name} #${this.number}`,
+        subtitleAbove: true,
+        titleHeadEllipsis: true,
         onBack: (): void => {
           this.pathStack.pop();
         },
@@ -505,6 +509,12 @@ export struct PrDetailView {
                 Text(this.detail.authorLogin)
                   .fontSize($r('app.float.caption_font_size'))
                   .fontColor($r('app.color.text_primary'))
+                Text(`${this.owner}/${this.name} #${this.number}`)
+                  .fontSize($r('app.float.caption_font_size'))
+                  .fontColor($r('app.color.text_secondary'))
+                  .layoutWeight(1)
+                  .maxLines(1)
+                  .textOverflow({ overflow: TextOverflow.Ellipsis })
                 Text(this.timeText(timeParts(this.detail.createdAt, Date.now())))
                   .fontSize($r('app.float.caption_font_size'))
                   .fontColor($r('app.color.text_secondary'))
@@ -595,6 +605,19 @@ export struct PrDetailView {
                     this.sheetOpen = true;
                   },
                   onDelete: (comment: RepoComment) => this.confirmDeleteComment(comment),
+                  onShare: (comment: RepoComment): void => {
+                    shareLink(this.getUIContext(), pullPageUrl(this.owner, this.name, this.number),
+                      `${this.owner}/${this.name} #${this.number}`);
+                  },
+                  onQuoteReply: (comment: RepoComment): void => {
+                    // 官方 Quote reply：`> 正文` 引用进草稿并打开输入面板
+                    const quoted = comment.body.split('\n').map((line: string): string => `> ${line}`).join('\n');
+                    this.draft = `${quoted}\n\n`;
+                    this.editingId = '';
+                    this.editingInitial = '';
+                    this.sheetKind = 'composer';
+                    this.sheetOpen = true;
+                  },
                   onReactionChanged: (): void => this.refresh()
                 })
               }, (item: RepoComment) => `${item.id}-${item.body.length}`)
@@ -716,30 +739,41 @@ export struct PrDetailView {
         this.refresh();
       })
 
-      // 底部操作（041 Comment + 042 Review changes；已合并后审阅入口隐藏）
+    }
+      // 右下悬浮操作钮（Android 官方形态：黑色 COMMENT 胶囊 + 圆形 Review changes 钮；已合并隐藏审阅钮）
       Row({ space: 10 }) {
-        Button($r('app.string.comment_button'))
-          .buttonStyle(ButtonStyleMode.NORMAL)
-          .layoutWeight(1)
-          .height(44)
-          .borderRadius(6)
-          .onClick(() => this.openComposer())
+        Blank()
+        Row({ space: 6 }) {
+          OctIcon({ res: $r('app.media.oct_comment_16'), iconSize: 14, iconColor: Color.White })
+          Text($r('app.string.comment_button'))
+            .fontSize($r('app.float.body_font_size'))
+            .fontWeight(FontWeight.Medium)
+            .fontColor(Color.White)
+        }
+        .padding({ left: 18, right: 18, top: 13, bottom: 13 })
+        .borderRadius(10)
+        .backgroundColor($r('app.color.floating_btn_bg'))
+        .shadow({ radius: 12, color: $r('app.color.shadow_floating'), offsetY: 4 })
+        .onClick(() => this.openComposer())
         if (this.detail !== null && !this.detail.merged) {
-          Button($r('app.string.pr_review_changes'))
-            .buttonStyle(ButtonStyleMode.NORMAL)
-            .layoutWeight(1)
-            .height(44)
-            .borderRadius(6)
-            .fontColor($r('app.color.link_blue'))
-            .onClick(() => this.openReviewSheet())
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_file_diff_16'), iconSize: 16, iconColor: Color.White })
+          }
+          .width(46)
+          .height(46)
+          .borderRadius(10)
+          .backgroundColor($r('app.color.floating_btn_bg'))
+          .shadow({ radius: 12, color: $r('app.color.shadow_floating'), offsetY: 4 })
+          .accessibilityDescription($r('app.string.pr_review_changes'))
+          .onClick(() => this.openReviewSheet())
         }
       }
       .width('100%')
-      .padding({ left: 16, right: 16, top: 8, bottom: 12 })
-    }
-    .width('100%')
-    .height('100%')
-    .backgroundColor($r('app.color.bg_page'))
+      .padding({ left: 16, right: 16, bottom: 16 })
+      }
+      .width('100%')
+      .height('100%')
+      .backgroundColor($r('app.color.bg_page'))
     .bindSheet($$this.sheetOpen, this.sheetBuilder(), {
       height: 560,
       showClose: false,

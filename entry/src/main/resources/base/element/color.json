@@ -279,6 +279,10 @@
     {
       "name": "success_btn_bg",
       "value": "#1A7F37"
+    },
+    {
+      "name": "floating_btn_bg",
+      "value": "#24292F"
     }
   ]
 }

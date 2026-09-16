@@ -56,6 +56,8 @@ export struct AppBar {
   @Param subtitle: ResourceStr = '';
   /** Profile 型两行：副标题（小字）在上、主标题在下；默认副标题在主标题下方 */
   @Param subtitleAbove: boolean = false;
+  /** 标题头部省略（…尾部完整呈现，Android 官方 PR/Issue 详情口径）；默认关 */
+  @Param titleHeadEllipsis: boolean = false;
   @Param actions: AppBarAction[] = [];
   /** 返回键回调，由页面传入（通常 () => this.pathStack.pop()） */
   @Param onBack: () => void = () => {};
@@ -84,7 +86,7 @@ export struct AppBar {
               .textOverflow({ overflow: TextOverflow.Ellipsis })
           }
           if (this.title !== '') {
-            Text(this.title)
+            Text(this.titleHeadEllipsis ? headEllipsis(`${this.title}`) : this.title)
               .fontSize($r('app.float.title_font_size'))
               .fontWeight(600)
               .fontColor($r('app.color.text_primary'))
@@ -138,4 +140,12 @@ export struct AppBar {
     .height(48)
     .padding({ left: 4, right: 4 })
   }
+}
+
+/** 标题头省略（Spec 042 官方对齐）：超长时头截尾全（…tup-node action to v7 口径）；短标题原样 */
+export function headEllipsis(title: string, keep: number = 24): string {
+  if (title.length <= keep + 3) {
+    return title;
+  }
+  return `...${title.substring(title.length - keep)}`;
 }
