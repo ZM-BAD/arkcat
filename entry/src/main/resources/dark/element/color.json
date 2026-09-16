@@ -275,6 +275,10 @@
     {
       "name": "empty_state_bg",
       "value": "#21262D"
+    },
+    {
+      "name": "success_btn_bg",
+      "value": "#238636"
     }
   ]
 }

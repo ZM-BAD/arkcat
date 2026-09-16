@@ -3,7 +3,7 @@
 > BFS Level: 3
 > 关联截图: 官方 PR「Files Changed」行内评论与「Review changes」面板；Merge 下拉（squash/merge/rebase）
 > 上游 Spec: 010（PR Diff，已 implemented）、031（PrDetail）、041（评论基础，复用输入面板）
-> 状态: draft（2026-09-02 规划；010 已于 2026-09-04 implemented，前置解除，待排期）
+> 状态: implemented（2026-09-14，链式批需求1：模型/服务/三态审阅面板/Merge 区块/ReviewThreads 卡/行内评论落地；宿主单测覆盖映射与合并门纯函数；测试 1-9 模拟器走查项随用户验收；mergeMethod 枚举真名 PullRequestMergeMethod，Spec 片段 MergeMethod! 系笔误已在实现中纠正）
 
 ---
 
@@ -128,7 +128,7 @@ mutation Merge($prId: ID!, $method: MergeMethod!) {
 - [ ] 测试 7：merge 成功后 merged badge 更新、输入区禁用
 - [ ] 测试 8：merge 失败（BEHIND/DIRTY）显示对应原因且不崩溃（未知枚举有兜底文案）
 - [ ] 测试 9：isOutdated thread 显示灰态禁回复
-- [ ] 测试 10：新文案 base/zh_CN 双份，check-spec 通过
+- [x] 测试 10：新文案 base/zh_CN 双份，check-spec 通过（35 键双语文案；check-spec 0 错；宿主单测 89/89）
 
 ---
 
@@ -137,3 +137,4 @@ mutation Merge($prId: ID!, $method: MergeMethod!) {
 - 依赖链：010（Diff 视图）已于 2026-09-04 implemented，前置解除。行内评论落地时若行级 line 不可得，可将「行内评论」降为「整行文件评论」（thread.path 无 line）先行。
 - 官方参照：审阅/合并是 v1.0 就有的能力（官方最低优先级）；行内评论 2026 增强为「未变更行也可评论」（1.245）；thread 解析状态在官方移动端与 web 一致。
 - Review 里程碑、多用户提议的「建议修改」行级建议（suggestion/apply）不在本 Spec 范围（❌ 桌面专属，备注留档）。
+- 2026-09-14 走查纠错：**PullRequest 无 viewerCanMerge 字段**（本文第四章片段系书面推写，运行时实测报错）——合并权限门改用 `Repository.viewerPermission ∈ {ADMIN, MAINTAIN, WRITE}`（canMergePr 第三参已改权限串），查询已在 repository 层补 viewerPermission；**同批引入的 PR viewerCanUpdate/viewerCanClose/viewerCanReopen 运行时未报错，视为有效**。

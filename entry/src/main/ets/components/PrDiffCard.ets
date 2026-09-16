@@ -15,6 +15,15 @@ interface PopupState {
   isVisible: boolean;
 }
 
+/** diff 行点击目标（Spec 042 元素1：行内评论定位上下文） */
+export interface LineCommentTarget {
+  path: string;
+  /** diff 行号（del=旧行号，add/ctx=新行号） */
+  line: number;
+  /** LEFT=删除行，RIGHT=新增/上下文行 */
+  side: string;
+}
+
 @ComponentV2
 export struct PrDiffCard {
   @Param item: PrFileItem | null = null;
@@ -25,6 +34,8 @@ export struct PrDiffCard {
   @Event onSetExpanded: (expanded: boolean) => void = (expanded: boolean): void => { };
   @Event onToggle: () => void = (): void => { };
   @Event onOpenFile: () => void = (): void => { };
+  /** 点击 diff 行 → 行内评论（Spec 042 元素1；本组件只上报行号，定位换算在页面侧） */
+  @Event onLineTap: (line: DiffLine) => void = (line: DiffLine): void => { };
   /** 已标记 reviewed 状态（页面内临时） */
   @Local reviewed: boolean = false;
   /** 三点菜单弹层 */
@@ -125,6 +136,10 @@ export struct PrDiffCard {
     .alignItems(VerticalAlign.Top)
     .backgroundColor(line.kind === 'add' ? $r('app.color.diff_add_bg')
       : (line.kind === 'del' ? $r('app.color.diff_del_bg') : Color.Transparent))
+    .onClick((): void => {
+      // 行内评论入口（Spec 042 元素1）：点击 diff 行 → 页面弹 thread 输入
+      this.onLineTap(line);
+    })
   }
 
   /** hunk 块：@@ 标题行（左列 fold-up + 蓝字蓝底）+ 行列表 */

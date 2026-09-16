@@ -33,6 +33,7 @@ export default [
     name: 'PR_DETAIL_QUERY',
     query: `query PullRequestDetail($owner: String!, $name: String!, $number: Int!, $after: String) {
   repository(owner: $owner, name: $name) {
+    viewerPermission
     pullRequest(number: $number) {
       id title state merged isDraft body bodyHTML createdAt mergedAt
       additions deletions
@@ -42,7 +43,21 @@ export default [
       mergeCommit { abbreviatedOid }
       files { totalCount }
       commits { totalCount }
-      reviews { totalCount }
+      mergeable mergeStateStatus
+      reviews(first: 20) {
+        totalCount
+        nodes { id state body bodyHTML submittedAt author { login avatarUrl } viewerDidAuthor }
+      }
+      reviewThreads(first: 50) {
+        totalCount
+        nodes {
+          id path line isResolved isOutdated viewerCanResolve viewerCanUnresolve
+          comments(first: 30) {
+            totalCount
+            nodes { id body bodyHTML createdAt author { login avatarUrl } viewerDidAuthor }
+          }
+        }
+      }
       statusCheckRollup {
 state
 contexts(first: 20) {

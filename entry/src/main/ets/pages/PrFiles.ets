@@ -1,7 +1,8 @@
 /**
- * PR 文件变更页（Spec 010）：Files Changed 视图。
- * GraphQL 列表/计数 + REST patch 兜底；文件卡折叠/展开、Find file 过滤、底部 Add a comment（GraphQL addComment）。
- * 入口：PrDetail Changes 卡「N files changed」行；行内评论/图片 diff 属 042/后续批。
+ * PR 文件变更页（Spec 010 + 042）：Files Changed 视图。
+ * GraphQL 列表/计数 + REST patch 兜底；文件卡折叠/展开、Find file 过滤、底部 Add a comment（GraphQL addComment）、
+ * 点击 diff 行弹行内评论（addPullRequestReviewThread）。
+ * 入口：PrDetail Changes 卡「N files changed」行。
  */
 import { promptAction } from '@kit.ArkUI';
 import { preferences } from '@kit.ArkData';
@@ -11,6 +12,7 @@ import { StateView } from '../components/StateView';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { PrDiffCard } from '../components/PrDiffCard';
 import { PrFileItem, PrFilesPage } from '../models/PrDiffModels';
+import { DiffLine } from '../utils/Diff';
 import { RepoSubService } from '../services/RepoSubService';
 import { resText } from '../utils/I18n';
 
@@ -37,6 +39,13 @@ export struct PrFilesView {
   @Local isRefreshing: boolean = false;
   @Local commentText: string = '';
   @Local sending: boolean = false;
+  /** 行内评论面板（Spec 042 元素1：diff 行 → review thread） */
+  @Local threadSheetOpen: boolean = false;
+  @Local threadPath: string = '';
+  @Local threadLine: number = 0;
+  @Local threadSide: string = 'RIGHT';
+  @Local threadBody: string = '';
+  @Local threadSending: boolean = false;
   /** Code Options「展示行号」开关 */
   @Local showLineNumbers: boolean = true;
 
@@ -127,6 +136,44 @@ export struct PrFilesView {
       });
   }
 
+  /** diff 行点击 → 换算 thread 定位（del=LEFT+旧行号，其余 RIGHT+新行号；行号无效忽略）并弹输入 */
+  private openThreadSheet(path: string, line: DiffLine): void {
+    const lineNo = line.kind === 'del' ? line.oldLine : line.newLine;
+    if (lineNo <= 0) {
+      return;
+    }
+    this.threadPath = path;
+    this.threadLine = lineNo;
+    this.threadSide = line.kind === 'del' ? 'LEFT' : 'RIGHT';
+    this.threadBody = '';
+    this.threadSheetOpen = true;
+  }
+
+  private closeThreadSheet(): void {
+    this.threadSheetOpen = false;
+    this.threadBody = '';
+  }
+
+  /** 提交行内 thread（addPullRequestReviewThread；成功后回 PrDetail 会话区可见） */
+  private sendThread(): void {
+    const body = this.threadBody.trim();
+    if (body === '' || this.threadSending || this.page === null || this.page.pullRequestId === '') {
+      return;
+    }
+    this.threadSending = true;
+    RepoSubService.addReviewThread(this.token, this.page.pullRequestId, body,
+      this.threadPath, this.threadLine, this.threadSide)
+      .then(() => {
+        this.threadSending = false;
+        this.closeThreadSheet();
+        promptAction.showToast({ message: $r('app.string.pr_thread_created') });
+      })
+      .catch((e: Error) => {
+        this.threadSending = false;
+        promptAction.showToast({ message: e.message });
+      });
+  }
+
   build() {
     Column() {
       // 自绘头部：← 标题 + ···（Find file）
@@ -206,7 +253,8 @@ export struct PrFilesView {
                     showLineNumbers: this.showLineNumbers,
                     onToggle: (): void => this.togglePath(item.path),
                     onSetExpanded: (expanded: boolean): void => this.setExpanded(item.path, expanded),
-                    onOpenFile: (): void => this.openFile(item)
+                    onOpenFile: (): void => this.openFile(item),
+                    onLineTap: (line: DiffLine): void => this.openThreadSheet(item.path, line)
                   })
                 }, (item: PrFileItem) => item.path)
               }
@@ -260,5 +308,48 @@ export struct PrFilesView {
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
+    .bindSheet($$this.threadSheetOpen, this.threadSheet(), {
+      height: 420,
+      showClose: false,
+      backgroundColor: $r('app.color.bg_page'),
+      dragBar: false,
+      onDisappear: (): void => this.closeThreadSheet()
+    })
+  }
+
+  /** 行内评论输入面板（Spec 042 元素1/2：path:line 上下文 + body → thread） */
+  @Builder
+  threadSheet() {
+    Column({ space: 10 }) {
+      Text(this.threadLine > 0 ? `${this.threadPath}:${this.threadLine}` : this.threadPath)
+        .fontFamily('monospace')
+        .fontSize($r('app.float.caption_font_size'))
+        .fontColor($r('app.color.text_secondary'))
+        .width('100%')
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+      TextArea({
+        text: this.threadBody,
+        placeholder: this.stringOf($r('app.string.pr_comment_hint'))
+      })
+        .fontSize($r('app.float.body_font_size'))
+        .height(160)
+        .borderRadius(6)
+        .backgroundColor($r('app.color.input_bg'))
+        .onChange((v: string): void => {
+          this.threadBody = v;
+        })
+      Button($r('app.string.comment_button'))
+        .type(ButtonType.Normal)
+        .width('100%')
+        .height(44)
+        .borderRadius(6)
+        .backgroundColor($r('app.color.link_blue'))
+        .enabled(!this.threadSending && this.threadBody.trim() !== '')
+        .onClick((): void => this.sendThread())
+    }
+    .width('100%')
+    .height('100%')
+    .padding({ left: 16, right: 16, top: 16, bottom: 16 })
   }
 }

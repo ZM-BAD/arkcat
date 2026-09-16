@@ -184,6 +184,9 @@ query IssueDetail($owner: String!, $name: String!, $number: Int!, $first: Int = 
 const PR_DETAIL_QUERY = `
 query PullRequestDetail($owner: String!, $name: String!, $number: Int!, $after: String) {
   repository(owner: $owner, name: $name) {
+    # 合并权限门：PullRequest 无 viewerCanMerge 字段（2026-09-14 运行时实测），
+    # 改用 Repository.viewerPermission ∈ ADMIN/MAINTAIN/WRITE 判定
+    viewerPermission
     pullRequest(number: $number) {
       id title state merged isDraft body bodyHTML createdAt mergedAt
       additions deletions
@@ -193,7 +196,21 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!, $after: 
       mergeCommit { abbreviatedOid }
       files { totalCount }
       commits { totalCount }
-      reviews { totalCount }
+      mergeable mergeStateStatus
+      reviews(first: 20) {
+        totalCount
+        nodes { id state body bodyHTML submittedAt author { login avatarUrl } viewerDidAuthor }
+      }
+      reviewThreads(first: 50) {
+        totalCount
+        nodes {
+          id path line isResolved isOutdated viewerCanResolve viewerCanUnresolve
+          comments(first: 30) {
+            totalCount
+            nodes { id body bodyHTML createdAt author { login avatarUrl } viewerDidAuthor }
+          }
+        }
+      }
       statusCheckRollup {
         state
         contexts(first: 20) {
@@ -284,6 +301,64 @@ mutation AddReaction($subjectId: ID!, $content: ReactionContent!) {
 const REMOVE_REACTION_MUTATION = `
 mutation RemoveReaction($subjectId: ID!, $content: ReactionContent!) {
   removeReaction(input: { subjectId: $subjectId, content: $content }) { reaction { id } }
+}`;
+
+// ─────────────── Spec 042：PR 审阅与合并 ───────────────
+
+/** 行内新建 review thread（del 行 side=LEFT、其余 RIGHT；line 由 diff 行号换算） */
+const ADD_REVIEW_THREAD_MUTATION = `
+mutation AddReviewThread($prId: ID!, $body: String!, $path: String!, $line: Int!, $side: DiffSide!) {
+  addPullRequestReviewThread(input: { pullRequestId: $prId, body: $body, path: $path, line: $line, side: $side }) {
+    thread { id path line }
+  }
+}`;
+
+/** thread 回复（threadId + body，已提交 thread 场景） */
+const REPLY_REVIEW_THREAD_MUTATION = `
+mutation ReplyReviewThread($threadId: ID!, $body: String!) {
+  addPullRequestReviewComment(input: { threadId: $threadId, body: $body }) { comment { id } }
+}`;
+
+/** 审阅汇总提交（三态：APPROVE / REQUEST_CHANGES / COMMENT） */
+const SUBMIT_REVIEW_MUTATION = `
+mutation SubmitPullRequestReview($prId: ID!, $event: PullRequestReviewEvent!, $body: String!) {
+  submitPullRequestReview(input: { pullRequestId: $prId, event: $event, body: $body }) {
+    pullRequestReview { id state submittedAt }
+  }
+}`;
+
+/** 编辑本人已提交审阅的总结（Spec 042 元素6：仅 viewerDidAuthor 暴露入口） */
+const UPDATE_REVIEW_MUTATION = `
+mutation UpdatePullRequestReview($reviewId: ID!, $body: String!) {
+  updatePullRequestReview(input: { pullRequestReviewId: $reviewId, body: $body }) {
+    pullRequestReview { id body }
+  }
+}`;
+
+const RESOLVE_THREAD_MUTATION = `
+mutation ResolveReviewThread($threadId: ID!) {
+  resolveReviewThread(input: { threadId: $threadId }) { thread { id isResolved } }
+}`;
+
+const UNRESOLVE_THREAD_MUTATION = `
+mutation UnresolveReviewThread($threadId: ID!) {
+  unresolveReviewThread(input: { threadId: $threadId }) { thread { id isResolved } }
+}`;
+
+/** 合并（官方默认 squash；mergeMethod 枚举真名 PullRequestMergeMethod，Spec 片段里的 MergeMethod! 是笔误） */
+const MERGE_PULL_REQUEST_MUTATION = `
+mutation MergePullRequest($prId: ID!, $method: PullRequestMergeMethod) {
+  mergePullRequest(input: { pullRequestId: $prId, mergeMethod: $method }) {
+    pullRequest { merged state mergedAt }
+  }
+}`;
+
+/** 合并 + 自定义 commit message（官方 Merge sheet 的 EDIT 态，Android 截图对齐） */
+const MERGE_WITH_MESSAGE_MUTATION = `
+mutation MergePullRequestWithMessage($prId: ID!, $method: PullRequestMergeMethod, $headline: String!, $body: String!) {
+  mergePullRequest(input: { pullRequestId: $prId, mergeMethod: $method, commitHeadline: $headline, commitBody: $body }) {
+    pullRequest { merged state mergedAt }
+  }
 }`;
 
 /** 仓库内 PR 列表（state: all/open/closed/merged；label 走 GraphQL，author/assignee 客户端过滤） */
@@ -525,6 +600,57 @@ export class RepoSubService {
   static async removeReaction(token: string, subjectId: string, content: string): Promise<void> {
     const variables: Record<string, Object> = { 'subjectId': subjectId, 'content': content };
     await graphql(REMOVE_REACTION_MUTATION, variables, token);
+  }
 
+  // ───────────── Spec 042：PR 审阅与合并 ─────────────
+
+  /** 新建行内 review thread（path + diff 行号 + side；成功后调用方刷新详情） */
+  static async addReviewThread(token: string, prId: string, body: string, path: string,
+    line: number, side: string): Promise<void> {
+    const variables: Record<string, Object> = {
+      'prId': prId, 'body': body, 'path': path, 'line': line, 'side': side
+    };
+    await graphql(ADD_REVIEW_THREAD_MUTATION, variables, token);
+  }
+
+  /** thread 回复（追加评论，评论数 +1） */
+  static async replyReviewThread(token: string, threadId: string, body: string): Promise<void> {
+    const variables: Record<string, Object> = { 'threadId': threadId, 'body': body };
+    await graphql(REPLY_REVIEW_THREAD_MUTATION, variables, token);
+  }
+
+  /** 提交审阅（event: APPROVE / REQUEST_CHANGES / COMMENT；body 可为空串） */
+  static async submitReview(token: string, prId: string, event: string, body: string): Promise<void> {
+    const variables: Record<string, Object> = { 'prId': prId, 'event': event, 'body': body };
+    await graphql(SUBMIT_REVIEW_MUTATION, variables, token);
+  }
+
+  /** 编辑本人已提交审阅的总结 body */
+  static async updateReview(token: string, reviewId: string, body: string): Promise<void> {
+    const variables: Record<string, Object> = { 'reviewId': reviewId, 'body': body };
+    await graphql(UPDATE_REVIEW_MUTATION, variables, token);
+  }
+
+  /** 解析/取消解析 thread（resolve=true → resolveReviewThread，否则 unresolve） */
+  static async setThreadResolved(token: string, threadId: string, resolve: boolean): Promise<void> {
+    const variables: Record<string, Object> = { 'threadId': threadId };
+    await graphql(resolve ? RESOLVE_THREAD_MUTATION : UNRESOLVE_THREAD_MUTATION, variables, token);
+  }
+
+  /**
+   * 合并 PR（method: SQUASH / MERGE / REBASE；成功后调用方刷新详情）。
+   * headline/body 非空时走带 commit message 的 mutation（官方 Merge sheet EDIT 态）。
+   */
+  static async mergePullRequest(token: string, prId: string, method: string, headline: string,
+    body: string): Promise<void> {
+    if (headline !== '') {
+      const vars: Record<string, Object> = {
+        'prId': prId, 'method': method, 'headline': headline, 'body': body
+      };
+      await graphql(MERGE_WITH_MESSAGE_MUTATION, vars, token);
+      return;
+    }
+    const variables: Record<string, Object> = { 'prId': prId, 'method': method };
+    await graphql(MERGE_PULL_REQUEST_MUTATION, variables, token);
   }
 }

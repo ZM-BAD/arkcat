@@ -2196,6 +2196,166 @@
     {
       "name": "app_lock_no_credential",
       "value": "未检测到设备锁屏凭据，请先在系统设置中设置锁屏密码"
+    },
+    {
+      "name": "pr_review_changes",
+      "value": "审阅更改"
+    },
+    {
+      "name": "pr_review_type_comment",
+      "value": "评论"
+    },
+    {
+      "name": "pr_review_type_approve",
+      "value": "批准"
+    },
+    {
+      "name": "pr_review_type_request",
+      "value": "申请修改"
+    },
+    {
+      "name": "pr_review_summary_hint",
+      "value": "留下总结评论（可选）"
+    },
+    {
+      "name": "pr_review_submit",
+      "value": "提交审阅"
+    },
+    {
+      "name": "pr_review_submitted",
+      "value": "审阅已提交"
+    },
+    {
+      "name": "pr_review_need_body",
+      "value": "评论类型审阅需填写总结"
+    },
+    {
+      "name": "pr_review_state_approved",
+      "value": "已批准"
+    },
+    {
+      "name": "pr_review_state_changes_requested",
+      "value": "已申请修改"
+    },
+    {
+      "name": "pr_review_state_commented",
+      "value": "已评论"
+    },
+    {
+      "name": "pr_review_state_dismissed",
+      "value": "已撤下"
+    },
+    {
+      "name": "pr_review_state_pending",
+      "value": "待提交"
+    },
+    {
+      "name": "pr_review_edit",
+      "value": "编辑"
+    },
+    {
+      "name": "pr_review_save",
+      "value": "保存"
+    },
+    {
+      "name": "pr_thread_outdated",
+      "value": "已过期"
+    },
+    {
+      "name": "pr_thread_resolved",
+      "value": "已解决"
+    },
+    {
+      "name": "pr_thread_resolve",
+      "value": "标记解决"
+    },
+    {
+      "name": "pr_thread_unresolve",
+      "value": "取消解决"
+    },
+    {
+      "name": "pr_thread_reply_hint",
+      "value": "回复…"
+    },
+    {
+      "name": "pr_thread_created",
+      "value": "行内评论已发布（会话区可见）"
+    },
+    {
+      "name": "pr_merge_squash",
+      "value": "Squash 合并"
+    },
+    {
+      "name": "pr_merge_merge_commit",
+      "value": "创建合并提交"
+    },
+    {
+      "name": "pr_merge_rebase",
+      "value": "变基合并"
+    },
+    {
+      "name": "pr_merge_confirm_title",
+      "value": "合并拉取请求"
+    },
+    {
+      "name": "pr_merge_confirm_body",
+      "value": "确认合并该拉取请求？"
+    },
+    {
+      "name": "pr_merge_merged",
+      "value": "合并成功"
+    },
+    {
+      "name": "pr_merge_failed",
+      "value": "合并失败"
+    },
+    {
+      "name": "pr_merge_state_conflicting",
+      "value": "此分支存在冲突，需先解决冲突"
+    },
+    {
+      "name": "pr_merge_state_blocked",
+      "value": "合并被分支规则阻止"
+    },
+    {
+      "name": "pr_merge_state_behind",
+      "value": "此分支落后于目标分支"
+    },
+    {
+      "name": "pr_merge_state_unstable",
+      "value": "存在未通过的检查，合并被阻止"
+    },
+    {
+      "name": "pr_merge_state_draft",
+      "value": "草稿状态不可合并"
+    },
+    {
+      "name": "pr_merge_state_has_hooks",
+      "value": "合并被仓库规则阻止"
+    },
+    {
+      "name": "pr_merge_state_unknown",
+      "value": "正在检查可合并状态"
+    },
+    {
+      "name": "pr_merge_ready",
+      "value": "可以合并"
+    },
+    {
+      "name": "pr_merge_ready_sub",
+      "value": "可自动执行合并"
+    },
+    {
+      "name": "pr_merge_commit_default",
+      "value": "提交信息 · 默认"
+    },
+    {
+      "name": "pr_merge_edit",
+      "value": "编辑"
+    },
+    {
+      "name": "pr_merge_button",
+      "value": "合并"
     }
   ]
 }

@@ -22,7 +22,8 @@ import {
 import {
   mapRepoCommit, mapRepoCommitsPage, mapPrCommits,
   filterPrsByAuthor, filterPrsByAssignee, filterPrsByMilestone, repoPrIconKey, RepoPrItem, mapIssueDetail,
-  mapPrDetail, mapRepoReleasesPage, formatBytes
+  mapPrDetail, mapRepoReleasesPage, formatBytes,
+  mapReviewThreads, canMergePr, mergeStateReasonKey, reviewStateKey
 } from '../../entry/src/main/ets/models/RepoSubModels';
 import { mapPrFiles, mapFilesCursor, applyRestPatch, PrFileItem } from '../../entry/src/main/ets/models/PrDiffModels';
 import {
@@ -953,6 +954,98 @@ test('mapIssueDetail/mapPrDetail body/bodyHTML 映射（防正文恒空回归）
     } }
   };
   assert.equal(mapPrDetail(prData).bodyHTML, '<p>pr html</p>');
+});
+
+test('Spec 042 mapPrDetail 合并门 + reviews/reviewThreads 映射', () => {
+  const author: JsonMap = { 'login': 'zm_bad' };
+  const reviewNode: JsonMap = {
+    'id': 'RV1', 'state': 'APPROVED', 'body': 'lgtm', 'bodyHTML': '<p>lgtm</p>',
+    'submittedAt': '2026-09-01T00:00:00Z', 'author': author, 'viewerDidAuthor': true
+  };
+  const threadNode: JsonMap = {
+    'id': 'TH1', 'path': 'src/a.ets', 'line': null, 'isResolved': true, 'isOutdated': false,
+    'viewerCanResolve': false, 'viewerCanUnresolve': true,
+    'comments': {
+      'totalCount': 1,
+      'nodes': [{
+        'id': 'TC1', 'body': 'inline', 'bodyHTML': '<p>inline</p>',
+        'createdAt': '2026-09-01T00:00:00Z', 'author': author, 'viewerDidAuthor': true
+      }]
+    }
+  };
+  const prData: JsonMap = {
+    'repository': { 'viewerPermission': 'ADMIN', 'pullRequest': {
+      'number': 9, 'title': 't', 'state': 'OPEN', 'merged': false, 'isDraft': false,
+      'body': '', 'bodyHTML': '', 'createdAt': '2026-09-01T00:00:00Z', 'additions': 0,
+      'deletions': 0, 'author': author, 'headRefName': 'h', 'baseRefName': 'm',
+      'mergeable': 'MERGEABLE', 'mergeStateStatus': 'CLEAN',
+      'reviews': { 'totalCount': 1, 'nodes': [reviewNode] },
+      'reviewThreads': { 'totalCount': 1, 'nodes': [threadNode] },
+      'comments': { 'totalCount': 0, 'nodes': [] }
+    } }
+  };
+  const page = mapPrDetail(prData);
+  assert.equal(page.mergeable, 'MERGEABLE');
+  assert.equal(page.mergeStateStatus, 'CLEAN');
+  assert.equal(page.repoViewerPermission, 'ADMIN');
+  assert.equal(page.reviews.length, 1);
+  assert.equal(page.reviews[0].state, 'APPROVED');
+  assert.equal(page.reviews[0].viewerDidAuthor, true);
+  // line=null（文件级 thread）归一为 0
+  assert.equal(page.threads[0].line, 0);
+  assert.equal(page.threads[0].isResolved, true);
+  assert.equal(page.threads[0].viewerCanUnresolve, true);
+  assert.equal(page.threads[0].comments[0].authorLogin, 'zm_bad');
+  assert.equal(page.threads[0].commentsTotal, 1);
+  // 缺字段容错：无 reviewThreads/reviews 键 → 空数组、viewerCanMerge 回 false
+  const bare = mapPrDetail({ 'repository': { 'pullRequest': {
+    'number': 1, 'title': '', 'state': 'OPEN', 'merged': false, 'isDraft': false, 'body': '',
+    'bodyHTML': '', 'createdAt': '', 'additions': 0, 'deletions': 0,
+    'author': author, 'headRefName': '', 'baseRefName': '', 'comments': { 'totalCount': 0, 'nodes': [] }
+  } } });
+  assert.equal(bare.threads.length, 0);
+  assert.equal(bare.reviews.length, 0);
+  assert.equal(bare.repoViewerPermission, '');
+});
+
+test('Spec 042 mapReviewThreads 多 thread 顺序与字段', () => {
+  const conn: JsonMap = { 'nodes': [
+    { 'id': 'T1', 'path': 'a.ets', 'line': 12, 'isResolved': false, 'isOutdated': true,
+      'viewerCanResolve': true, 'viewerCanUnresolve': false, 'comments': { 'totalCount': 0, 'nodes': [] } },
+    { 'id': 'T2', 'path': 'b.ets', 'line': 3, 'isResolved': true, 'isOutdated': false,
+      'viewerCanResolve': false, 'viewerCanUnresolve': true, 'comments': { 'totalCount': 2, 'nodes': [] } }
+  ] };
+  const threads = mapReviewThreads(conn);
+  assert.equal(threads.length, 2);
+  assert.equal(threads[0].line, 12);
+  assert.equal(threads[0].isOutdated, true);
+  assert.equal(threads[1].commentsTotal, 2);
+  // null connection 容错
+  assert.equal(mapReviewThreads(null).length, 0);
+});
+
+test('Spec 042 canMergePr 合并门 + 文案键映射（未知枚举兜底）', () => {
+  assert.equal(canMergePr(false, 'MERGEABLE', 'WRITE'), true);
+  assert.equal(canMergePr(false, 'MERGEABLE', 'ADMIN'), true);
+  assert.equal(canMergePr(false, 'MERGEABLE', 'MAINTAIN'), true);
+  assert.equal(canMergePr(true, 'MERGEABLE', 'WRITE'), false);
+  assert.equal(canMergePr(false, 'CONFLICTING', 'WRITE'), false);
+  assert.equal(canMergePr(false, 'MERGEABLE', 'READ'), false);
+  assert.equal(canMergePr(false, 'MERGEABLE', ''), false);
+  assert.equal(mergeStateReasonKey('DIRTY'), 'conflicting');
+  assert.equal(mergeStateReasonKey('BLOCKED'), 'blocked');
+  assert.equal(mergeStateReasonKey('BEHIND'), 'behind');
+  assert.equal(mergeStateReasonKey('UNSTABLE'), 'unstable');
+  assert.equal(mergeStateReasonKey('DRAFT'), 'draft');
+  assert.equal(mergeStateReasonKey('HAS_HOOKS'), 'has_hooks');
+  assert.equal(mergeStateReasonKey('UNKNOWN'), 'unknown');
+  assert.equal(mergeStateReasonKey('SOMETHING_NEW'), 'unknown');
+  assert.equal(reviewStateKey('APPROVED'), 'approved');
+  assert.equal(reviewStateKey('CHANGES_REQUESTED'), 'changes_requested');
+  assert.equal(reviewStateKey('DISMISSED'), 'dismissed');
+  assert.equal(reviewStateKey('PENDING'), 'pending');
+  assert.equal(reviewStateKey('COMMENTED'), 'commented');
+  assert.equal(reviewStateKey('WEIRD'), 'commented');
 });
 
 test('mapRepoReleasesPage body=description 兜底 + formatBytes 单位', () => {

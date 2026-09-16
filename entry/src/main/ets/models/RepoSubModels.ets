@@ -190,6 +190,44 @@ export interface StatusCheckItem {
   state: string;
 }
 
+/** PR 审阅卡行（Spec 042）：reviews(first) nodes 归一化 */
+export interface PrReview {
+  id: string;
+  /** APPROVED / CHANGES_REQUESTED / COMMENTED / DISMISSED / PENDING */
+  state: string;
+  body: string;
+  bodyHTML: string;
+  submittedAt: string;
+  authorLogin: string;
+  authorAvatar: string;
+  viewerDidAuthor: boolean;
+}
+
+/** Review thread 内评论行（无 reactionGroups，区别于会话区 RepoComment） */
+export interface ReviewThreadComment {
+  id: string;
+  body: string;
+  bodyHTML: string;
+  createdAt: string;
+  authorLogin: string;
+  authorAvatar: string;
+  viewerDidAuthor: boolean;
+}
+
+/** Review thread（Spec 042）：diff 行内评论集合；line=0 表示文件级 thread */
+export interface ReviewThread {
+  id: string;
+  path: string;
+  line: number;
+  isResolved: boolean;
+  isOutdated: boolean;
+  /** viewer 可否切换 resolve（权限由服务端判定） */
+  viewerCanResolve: boolean;
+  viewerCanUnresolve: boolean;
+  comments: ReviewThreadComment[];
+  commentsTotal: number;
+}
+
 export interface PrDetailPage {
   /** 评论发布用节点 id（SubjectId） */
   subjectId: string;
@@ -216,6 +254,14 @@ export interface PrDetailPage {
   reviewsTotal: number;
   checksState: string;
   checks: StatusCheckItem[];
+  /** MERGEABLE / CONFLICTING / UNKNOWN（Spec 042 元素9） */
+  mergeable: string;
+  /** CLEAN / BLOCKED / DIRTY / BEHIND / UNSTABLE / DRAFT / HAS_HOOKS / UNKNOWN（元素10） */
+  mergeStateStatus: string;
+  /** ADMIN / MAINTAIN / WRITE / READ / NONE（合并权限门；PR 无 viewerCanMerge，用仓库级权限代替） */
+  repoViewerPermission: string;
+  reviews: PrReview[];
+  threads: ReviewThread[];
   comments: RepoComment[];
   /** 评论分页（review B7：与 IssueDetail 对齐，>20 条可 Load more） */
   commentsHasNext: boolean;
@@ -735,6 +781,11 @@ export function mapPrDetail(data: JsonMap): PrDetailPage {
     reviewsTotal: reviews !== null ? Json.num(reviews, 'totalCount') : 0,
     checksState: checks !== null ? Json.str(checks, 'state') : '',
     checks: mapStatusChecks(checks),
+    mergeable: Json.str(pr, 'mergeable'),
+    mergeStateStatus: Json.str(pr, 'mergeStateStatus'),
+    repoViewerPermission: Json.str(repo, 'viewerPermission'),
+    reviews: mapReviews(reviews),
+    threads: mapReviewThreads(Json.obj(pr, 'reviewThreads')),
     comments: comments,
     commentsHasNext: Json.bool(commentsWrap, 'hasNextPage'),
     commentsCursor: Json.str(Json.obj(commentsWrap, 'pageInfo') ?? ({} as JsonMap), 'endCursor')
@@ -761,4 +812,116 @@ function mapStatusChecks(checks: JsonMap | null): StatusCheckItem[] {
     }
   }
   return items;
+}
+
+/** reviews(first) connection → 审阅卡行（Spec 042 元素4） */
+function mapReviews(reviews: JsonMap | null): PrReview[] {
+  const items: PrReview[] = [];
+  if (reviews === null) {
+    return items;
+  }
+  for (const nodeItem of Json.arr(reviews, 'nodes')) {
+    const node = nodeItem as JsonMap;
+    const author = Json.obj(node, 'author');
+    items.push({
+      id: Json.str(node, 'id'),
+      state: Json.str(node, 'state'),
+      body: Json.str(node, 'body'),
+      bodyHTML: Json.str(node, 'bodyHTML'),
+      submittedAt: Json.str(node, 'submittedAt'),
+      authorLogin: author !== null ? Json.str(author, 'login') : '',
+      authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : '',
+      viewerDidAuthor: Json.bool(node, 'viewerDidAuthor')
+    });
+  }
+  return items;
+}
+
+/** reviewThreads(first) connection → thread 行；line 为 null（文件级）归一为 0（Spec 042 元素4） */
+export function mapReviewThreads(conn: JsonMap | null): ReviewThread[] {
+  const items: ReviewThread[] = [];
+  if (conn === null) {
+    return items;
+  }
+  for (const nodeItem of Json.arr(conn, 'nodes')) {
+    const node = nodeItem as JsonMap;
+    const commentsWrap = Json.obj(node, 'comments') ?? ({} as JsonMap);
+    const comments: ReviewThreadComment[] = [];
+    for (const commentItem of Json.arr(commentsWrap, 'nodes')) {
+      const comment = commentItem as JsonMap;
+      const commentAuthor = Json.obj(comment, 'author');
+      comments.push({
+        id: Json.str(comment, 'id'),
+        body: Json.str(comment, 'body'),
+        bodyHTML: Json.str(comment, 'bodyHTML'),
+        createdAt: Json.str(comment, 'createdAt'),
+        authorLogin: commentAuthor !== null ? Json.str(commentAuthor, 'login') : '',
+        authorAvatar: commentAuthor !== null ? Json.str(commentAuthor, 'avatarUrl') : '',
+        viewerDidAuthor: Json.bool(comment, 'viewerDidAuthor')
+      });
+    }
+    items.push({
+      id: Json.str(node, 'id'),
+      path: Json.str(node, 'path'),
+      line: Json.num(node, 'line'),
+      isResolved: Json.bool(node, 'isResolved'),
+      isOutdated: Json.bool(node, 'isOutdated'),
+      viewerCanResolve: Json.bool(node, 'viewerCanResolve'),
+      viewerCanUnresolve: Json.bool(node, 'viewerCanUnresolve'),
+      comments: comments,
+      commentsTotal: Json.num(commentsWrap, 'totalCount')
+    });
+  }
+  return items;
+}
+
+/**
+ * Merge 可用性门（Spec 042 元素8/9）：未合并 + 服务端可合 + 仓库写权限。
+ * PR 无 viewerCanMerge 字段（运行时实测），权限改用 Repository.viewerPermission；
+ * mergeStateStatus 的细粒度阻塞（BLOCKED/BEHIND…）由 mergeStateReasonKey 呈现文案，
+ * 门禁只看 mergeable（CONFLICTING/UNKNOWN 一律禁用）。
+ */
+export function canMergePr(merged: boolean, mergeable: string, repoViewerPermission: string): boolean {
+  const canWrite = repoViewerPermission === 'ADMIN'
+    || repoViewerPermission === 'MAINTAIN' || repoViewerPermission === 'WRITE';
+  return !merged && mergeable === 'MERGEABLE' && canWrite;
+}
+
+/**
+ * mergeStateStatus → 不可合并原因文案键后缀（Spec 042 元素10；UI 拼 $r('app.string.pr_merge_state_*')）。
+ * 未知枚举兜底 unknown（测试 8：失败显示对应原因且不崩溃）。
+ */
+export function mergeStateReasonKey(status: string): string {
+  switch (status) {
+    case 'DIRTY':
+      return 'conflicting';
+    case 'BLOCKED':
+      return 'blocked';
+    case 'BEHIND':
+      return 'behind';
+    case 'UNSTABLE':
+      return 'unstable';
+    case 'DRAFT':
+      return 'draft';
+    case 'HAS_HOOKS':
+      return 'has_hooks';
+    default:
+      return 'unknown';
+  }
+}
+
+/** PullRequestReviewState → 审阅卡徽章文案键后缀（pr_review_state_*；未知值按 COMMENTED 呈现） */
+export function reviewStateKey(state: string): string {
+  switch (state) {
+    case 'APPROVED':
+      return 'approved';
+    case 'CHANGES_REQUESTED':
+      return 'changes_requested';
+    case 'DISMISSED':
+      return 'dismissed';
+    case 'PENDING':
+      return 'pending';
+    default:
+      return 'commented';
+  }
 }

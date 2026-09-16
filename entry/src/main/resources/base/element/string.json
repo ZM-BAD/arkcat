@@ -2196,6 +2196,166 @@
     {
       "name": "app_lock_no_credential",
       "value": "No screen lock found. Set a lock screen password in system settings first."
+    },
+    {
+      "name": "pr_review_changes",
+      "value": "Review changes"
+    },
+    {
+      "name": "pr_review_type_comment",
+      "value": "Comment"
+    },
+    {
+      "name": "pr_review_type_approve",
+      "value": "Approve"
+    },
+    {
+      "name": "pr_review_type_request",
+      "value": "Request changes"
+    },
+    {
+      "name": "pr_review_summary_hint",
+      "value": "Leave a summary comment"
+    },
+    {
+      "name": "pr_review_submit",
+      "value": "Submit review"
+    },
+    {
+      "name": "pr_review_submitted",
+      "value": "Review submitted"
+    },
+    {
+      "name": "pr_review_need_body",
+      "value": "Add a summary comment"
+    },
+    {
+      "name": "pr_review_state_approved",
+      "value": "Approved"
+    },
+    {
+      "name": "pr_review_state_changes_requested",
+      "value": "Changes requested"
+    },
+    {
+      "name": "pr_review_state_commented",
+      "value": "Commented"
+    },
+    {
+      "name": "pr_review_state_dismissed",
+      "value": "Dismissed"
+    },
+    {
+      "name": "pr_review_state_pending",
+      "value": "Pending"
+    },
+    {
+      "name": "pr_review_edit",
+      "value": "Edit"
+    },
+    {
+      "name": "pr_review_save",
+      "value": "Save"
+    },
+    {
+      "name": "pr_thread_outdated",
+      "value": "Outdated"
+    },
+    {
+      "name": "pr_thread_resolved",
+      "value": "Resolved"
+    },
+    {
+      "name": "pr_thread_resolve",
+      "value": "Resolve"
+    },
+    {
+      "name": "pr_thread_unresolve",
+      "value": "Unresolve"
+    },
+    {
+      "name": "pr_thread_reply_hint",
+      "value": "Reply…"
+    },
+    {
+      "name": "pr_thread_created",
+      "value": "Review comment published (see Conversation)"
+    },
+    {
+      "name": "pr_merge_squash",
+      "value": "Squash and merge"
+    },
+    {
+      "name": "pr_merge_merge_commit",
+      "value": "Create a merge commit"
+    },
+    {
+      "name": "pr_merge_rebase",
+      "value": "Rebase and merge"
+    },
+    {
+      "name": "pr_merge_confirm_title",
+      "value": "Merge pull request"
+    },
+    {
+      "name": "pr_merge_confirm_body",
+      "value": "Are you sure you want to merge this pull request?"
+    },
+    {
+      "name": "pr_merge_merged",
+      "value": "Pull request merged"
+    },
+    {
+      "name": "pr_merge_failed",
+      "value": "Merge failed"
+    },
+    {
+      "name": "pr_merge_state_conflicting",
+      "value": "This branch has conflicts that must be resolved"
+    },
+    {
+      "name": "pr_merge_state_blocked",
+      "value": "Merging is blocked"
+    },
+    {
+      "name": "pr_merge_state_behind",
+      "value": "This branch is out-of-date for the base branch"
+    },
+    {
+      "name": "pr_merge_state_unstable",
+      "value": "Merging is blocked by failing checks"
+    },
+    {
+      "name": "pr_merge_state_draft",
+      "value": "Merging is blocked: this pull request is a draft"
+    },
+    {
+      "name": "pr_merge_state_has_hooks",
+      "value": "Merging is blocked by repository rules"
+    },
+    {
+      "name": "pr_merge_state_unknown",
+      "value": "Checking mergeability…"
+    },
+    {
+      "name": "pr_merge_ready",
+      "value": "Ready to merge"
+    },
+    {
+      "name": "pr_merge_ready_sub",
+      "value": "Merging can be performed automatically"
+    },
+    {
+      "name": "pr_merge_commit_default",
+      "value": "Commit message · Default"
+    },
+    {
+      "name": "pr_merge_edit",
+      "value": "EDIT"
+    },
+    {
+      "name": "pr_merge_button",
+      "value": "MERGE"
     }
   ]
 }
