@@ -235,6 +235,30 @@ ArkCat 渲染档位（官方 App 实测 + 已走查定案，**新增图标必须
 - Primer web 的 Button 高 32（默认）/40（large）；**移动端官方 App 实测主按钮高 ≈48**，ArkCat 取 `button_height=48vp`——这是移动端放大口径，**勿按 web 文档「修正」回 32/40**；圆角 `button_radius=6`（`RADIUS_MEDIUM`）
 - 出处：Button（组件目录 <https://primer.style/product/components/>）
 
+### 10.5 PR 卡片胶囊全集（PullRequestCard，2026-09-16 收口）
+
+PR 列表卡片的胶囊统一**描边变体**：透明底 + `divider` 1px 描边 + `text_primary` 文字（仅 Checks 图标着色），
+半径 12、内距 8/2（`components/CountChip.ets` outlined 变体）；组容器 `Flex(wrap)` **放不下自动折行**
+（不横向截断、头像不裁），头像跟在胶囊末尾。实现：`components/PullRequestCard.ets`（WorkPrs/RepoPrs 共用）。
+
+**Checks 胶囊（StatusState 五态全集，GitHub GraphQL 权威枚举，勿增勿漏）**：
+
+| StatusState | 图标 | 图标色（令牌） | 文字（base / zh_CN） | 字符串键 |
+| --- | --- | --- | --- | --- |
+| SUCCESS | `check` | `success_text` 绿 | Checks / 检查 | `work_pr_checks` |
+| FAILURE、ERROR | `x` | `danger_text` 红 | Checks failed / Checks 失败 | `work_pr_checks_failed` |
+| PENDING | `x` | `warning_text` 黄 | Checks pending / Checks 进行中 | `work_pr_checks_pending` |
+| EXPECTED | `circle` | `text_secondary` 灰 | Checks expected / Checks 等待上报 | `work_pr_checks_expected` |
+
+> SUCCESS 态数量口径**暂缓**：官方 App 行内曾见「绿圈勾 + 1」，与 checks 总数（#82=26/27）对不上，
+> 候选=提交数/关联 issue 数/legacy status 数（详见 handoff「DAG-chat PR #82 圈勾 1 之谜」）；解谜前 SUCCESS 用纯文案 `Checks`。
+> 文字一律 `text_primary`（仅图标着色，2026-09-16 用户定案）；枚举出处 `StatusState`
+>（introspection 实测，rollup `state` 只可能返回这五个值）；未知值静默不显示胶囊。
+
+**计数胶囊**：评论（`comment` 图标 + N）、Reviews（`eye` 图标 + N），仅在数量 > 0 时显示，描边变体。
+**标签胶囊**：`LabelPill`（§10.2，填充标签自身数据色——`dependencies=ededed` 浅灰即官方真实色，非渲染错误）。
+**状态字形**：卡片左缘的状态图标/颜色走 §10.1 StateLabel 映射（draft/merged/closed 含在内）。
+
 ## 11. 落地清单（评审批次核对项）
 
 - [ ] 全部页面：尺寸/间距/字号/圆角/阴影引用令牌（无硬编码）

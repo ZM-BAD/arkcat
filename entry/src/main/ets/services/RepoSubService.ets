@@ -28,7 +28,7 @@ query RepoPullRequests($owner: String!, $name: String!, $states: [PullRequestSta
         labels(first: 8) { nodes { name color } }
         comments { totalCount }
         reviewRequests(first: 10) { totalCount }
-        statusCheckRollup { state }
+        statusCheckRollup { state contexts(first: 1) { totalCount } }
         author { login avatarUrl }
         assignees(first: 10) { nodes { login } }
       }

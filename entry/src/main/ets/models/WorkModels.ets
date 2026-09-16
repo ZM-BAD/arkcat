@@ -44,8 +44,10 @@ export interface WorkPrItem {
   repoFullName: string;
   commentCount: number;
   reviewCount: number;
-  /** SUCCESS/FAILURE/PENDING/ERROR；无 Checks 时为 '' */
+  /** SUCCESS/FAILURE/PENDING/ERROR/EXPECTED；无 Checks 时为 '' */
   checksState: string;
+  /** Checks 通过数（SUCCESS 态胶囊显示 N；rollup contexts 总数） */
+  checksCount: number;
 }
 
 export interface WorkPrsPage {
@@ -438,7 +440,8 @@ export function mapWorkPr(raw: JsonMap): WorkPrItem {
     repoFullName: repo !== null ? Json.str(repo, 'nameWithOwner') : '',
     commentCount: comments !== null ? Json.num(comments, 'totalCount') : 0,
     reviewCount: reviews !== null ? Json.num(reviews, 'totalCount') : 0,
-    checksState: checks !== null ? Json.str(checks, 'state') : ''
+    checksState: checks !== null ? Json.str(checks, 'state') : '',
+    checksCount: checks !== null ? Json.num(Json.obj(checks, 'contexts') ?? ({} as JsonMap), 'totalCount') : 0
   };
 }
 

@@ -2172,7 +2172,6 @@
       "name": "discussions_filter_categories",
       "value": "筛选分类"
     },
-
     {
       "name": "discussions_filter_unlabeled",
       "value": "无标签"
@@ -2360,6 +2359,14 @@
     {
       "name": "menu_quote_reply",
       "value": "引用回复"
+    },
+    {
+      "name": "repo_prs_search_pr",
+      "value": "搜索 Pull Request"
+    },
+    {
+      "name": "work_pr_checks_expected",
+      "value": "Checks 等待上报"
     }
   ]
 }

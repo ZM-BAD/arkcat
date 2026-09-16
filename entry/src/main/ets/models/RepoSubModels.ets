@@ -20,6 +20,8 @@ export interface RepoPrItem {
   commentCount: number;
   reviewCount: number;
   checksState: string;
+  /** Checks 通过数（SUCCESS 态胶囊显示 N；rollup contexts 总数） */
+  checksCount: number;
   authorLogin: string;
   authorAvatar: string;
   assignees: string[];
@@ -446,6 +448,7 @@ export function mapRepoPr(raw: JsonMap): RepoPrItem {
     commentCount: comments !== null ? Json.num(comments, 'totalCount') : 0,
     reviewCount: reviews !== null ? Json.num(reviews, 'totalCount') : 0,
     checksState: checks !== null ? Json.str(checks, 'state') : '',
+    checksCount: checks !== null ? Json.num(Json.obj(checks, 'contexts') ?? ({} as JsonMap), 'totalCount') : 0,
     authorLogin: author !== null ? Json.str(author, 'login') : '',
     authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : '',
     assignees: assignees,
