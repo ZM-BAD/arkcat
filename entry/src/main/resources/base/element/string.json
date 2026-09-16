@@ -1489,6 +1489,54 @@
       "value": "Updating reaction failed"
     },
     {
+      "name": "tl_added_label",
+      "value": "%1$s added the %2$s label"
+    },
+    {
+      "name": "tl_removed_label",
+      "value": "%1$s removed the %2$s label"
+    },
+    {
+      "name": "tl_assigned",
+      "value": "%1$s assigned %2$s"
+    },
+    {
+      "name": "tl_unassigned",
+      "value": "%1$s unassigned %2$s"
+    },
+    {
+      "name": "tl_review_requested",
+      "value": "%1$s requested a review from %2$s"
+    },
+    {
+      "name": "tl_review_request_removed",
+      "value": "%1$s removed the review request from %2$s"
+    },
+    {
+      "name": "tl_merged",
+      "value": "%1$s merged commit %2$s into %3$s"
+    },
+    {
+      "name": "tl_closed",
+      "value": "%1$s closed this"
+    },
+    {
+      "name": "tl_reopened",
+      "value": "%1$s reopened this"
+    },
+    {
+      "name": "tl_draft",
+      "value": "%1$s marked this pull request as draft"
+    },
+    {
+      "name": "tl_ready",
+      "value": "%1$s marked this pull request as ready for review"
+    },
+    {
+      "name": "a11y_open_commit",
+      "value": "Open commit"
+    },
+    {
       "name": "reaction_panel_title",
       "value": "React with"
     },

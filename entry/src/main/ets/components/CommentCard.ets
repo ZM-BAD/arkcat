@@ -5,7 +5,7 @@
 import { MarkdownView } from './MarkdownView';
 import { OctIcon } from './OctIcon';
 import { ReactionBar } from './ReactionBar';
-import { RepoComment } from '../models/RepoSubModels';
+import { RepoComment, actorDisplayLogin } from '../models/RepoSubModels';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
@@ -91,7 +91,7 @@ export struct CommentCard {
         } else {
           Circle().width(24).height(24).fill($r('app.color.heat_empty'))
         }
-        Text(this.comment.authorLogin)
+        Text(actorDisplayLogin(this.comment.authorLogin, this.comment.authorIsBot))
           .fontSize($r('app.float.caption_font_size'))
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.text_primary'))
@@ -136,7 +136,14 @@ export struct CommentCard {
         token: this.token,
         subjectId: this.comment.id,
         reactions: this.comment.reactions,
-        onChanged: (): void => this.onReactionChanged()
+        // 官方评论卡反应行：圆轮廓笑脸钮弹 8 种全集（与正文反应行同款）；
+        // 芯片整颗可点翻转，长按芯片进 Reactees 整页（release/正文同口径）
+        smileyTrigger: true,
+        pickerFull: true,
+        onChanged: (): void => this.onReactionChanged(),
+        onOpenUsers: (subjectId: string, content: string): void => {
+          this.onNavigate('reactionUsers', `${encodeURIComponent(subjectId)}/${content}`);
+        }
       })
     }
     .padding($r('app.float.card_padding'))

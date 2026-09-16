@@ -1457,6 +1457,54 @@
       "value": "反应更新失败"
     },
     {
+      "name": "tl_added_label",
+      "value": "%1$s 添加了 %2$s 标签"
+    },
+    {
+      "name": "tl_removed_label",
+      "value": "%1$s 移除了 %2$s 标签"
+    },
+    {
+      "name": "tl_assigned",
+      "value": "%1$s 指派给 %2$s"
+    },
+    {
+      "name": "tl_unassigned",
+      "value": "%1$s 取消了 %2$s 的指派"
+    },
+    {
+      "name": "tl_review_requested",
+      "value": "%1$s 请求 %2$s 审阅"
+    },
+    {
+      "name": "tl_review_request_removed",
+      "value": "%1$s 取消了 %2$s 的审阅请求"
+    },
+    {
+      "name": "tl_merged",
+      "value": "%1$s 把提交 %2$s 合并进 %3$s"
+    },
+    {
+      "name": "tl_closed",
+      "value": "%1$s 关闭了此 PR"
+    },
+    {
+      "name": "tl_reopened",
+      "value": "%1$s 重新打开了此 PR"
+    },
+    {
+      "name": "tl_draft",
+      "value": "%1$s 把此 PR 标记为草稿"
+    },
+    {
+      "name": "tl_ready",
+      "value": "%1$s 把此 PR 标记为可审阅"
+    },
+    {
+      "name": "a11y_open_commit",
+      "value": "打开提交"
+    },
+    {
       "name": "reaction_panel_title",
       "value": "选择反应"
     },

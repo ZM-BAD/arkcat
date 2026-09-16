@@ -10,10 +10,12 @@ import { PageShadowBar } from '../components/PageShadowBar';
 import { CommentCard } from '../components/CommentCard';
 import { CommentComposer } from '../components/CommentComposer';
 import { PrStatusCard } from '../components/PrStatusCard';
+import { ReactionBar } from '../components/ReactionBar';
+import { TimelineRow } from '../components/TimelineRow';
 import { ReviewThreadsCard } from '../components/ReviewThreadsCard';
-import { RepoComment, PrDetailPage, PrReview, reviewStateKey, MetaLabel, MetaUser,
+import { RepoComment, PrDetailPage, PrReview, TimelineNode, reviewStateKey, MetaLabel, MetaUser,
   TriageUser, TriageLabel, TriageMilestone, TriageLinkedItem, TriageProject, EditorRow,
-  filterTriageByKeyword, diffSelection, singlePickId } from '../models/RepoSubModels';
+  filterTriageByKeyword, diffSelection, singlePickId, resolveMergeMethod } from '../models/RepoSubModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { friendlyError } from '../services/GitHttpClient';
 import { StateView } from '../components/StateView';
@@ -72,9 +74,11 @@ export struct PrDetailView {
   @Local draft: string = '';
   @Local editingId: string = '';
   @Local editingInitial: string = '';
-  /** 评论分页（review B7：>20 条 Load more） */
-  @Local commentsCursor: string = '';
-  @Local commentsHasNext: boolean = false;
+  /** 时间轴分页（>30 条 Load more） */
+  @Local timelineCursor: string = '';
+  @Local timelineHasNext: boolean = false;
+  /** 时间轴内容实测高度（vp）：竖线按此撑高（Percent 会被外层 Stack 反向撑长） */
+  @Local timelineContentH: number = 0;
   @Local loadingMore: boolean = false;
   /** Review changes 面板（Spec 042 元素5）：三态审阅 + 总结 body */
   @Local reviewEvent: string = 'COMMENT';
@@ -82,8 +86,8 @@ export struct PrDetailView {
   @Local reviewSending: boolean = false;
   /** 审阅编辑模式（元素6：复用面板，仅 body 可改） */
   @Local editingReviewId: string = '';
-  /** Merge 确认 sheet（Android 官方流：commit message 默认值 + EDIT + MERGE/CANCEL） */
-  @Local mergeMethod: string = 'SQUASH';
+  /** 合并方式：'' = 用户未选（取服务端默认 viewerDefaultMergeMethod，故不用固定初值） */
+  @Local mergeMethod: string = '';
   @Local mergeHeadline: string = '';
   @Local mergeBody: string = '';
   @Local mergeEditing: boolean = false;
@@ -110,8 +114,8 @@ export struct PrDetailView {
     RepoSubService.fetchPrDetail(this.token, this.owner, this.name, this.number, '')
       .then((page: PrDetailPage) => {
         this.detail = page;
-        this.commentsHasNext = page.commentsHasNext;
-        this.commentsCursor = page.commentsCursor;
+        this.timelineHasNext = page.timelineHasNext;
+        this.timelineCursor = page.timelineCursor;
         this.loading = false;
         this.isRefreshing = false;
         this.loadingMore = false;
@@ -124,28 +128,42 @@ export struct PrDetailView {
       });
   }
 
-  /** 追加下一批评论（review B7：只拼接不整页替换） */
-  private loadMoreComments(): void {
-    if (!this.commentsHasNext || this.loadingMore || this.detail === null) {
+  /** 追加下一段时间轴（只拼接不整页替换） */
+  private loadMoreTimeline(): void {
+    if (!this.timelineHasNext || this.loadingMore || this.detail === null) {
       return;
     }
     this.loadingMore = true;
-    RepoSubService.fetchPrDetail(this.token, this.owner, this.name, this.number, this.commentsCursor)
+    RepoSubService.fetchPrDetail(this.token, this.owner, this.name, this.number, this.timelineCursor)
       .then((page: PrDetailPage) => {
         const prev = this.detail;
         if (prev !== null) {
           // 合并进新页对象后整体重赋值，触发 UI 刷新（同 B4 模式）
-          page.comments = prev.comments.concat(page.comments);
+          page.timeline = prev.timeline.concat(page.timeline);
           this.detail = page;
         }
-        this.commentsHasNext = page.commentsHasNext;
-        this.commentsCursor = page.commentsCursor;
+        this.timelineHasNext = page.timelineHasNext;
+        this.timelineCursor = page.timelineCursor;
         this.loadingMore = false;
       })
       .catch((e: Error) => {
         this.loadingMore = false;
         promptAction.showToast({ message: e.message });
       });
+  }
+
+  /** 时间轴提交行 → 提交详情（路由参数 owner/name/oid） */
+  private openCommit(oid: string): void {
+    this.pathStack.pushPathByName('commitDetail', `${this.owner}/${this.name}/${oid}`);
+  }
+
+  /** 非空取用（时间轴节点已按 kind 判定，此处仅做类型收窄） */
+  private commentOf(item: TimelineNode): RepoComment {
+    return item.comment ?? ({} as RepoComment);
+  }
+
+  private reviewOf(item: TimelineNode): PrReview {
+    return item.review ?? ({} as PrReview);
   }
 
   private stringOf(res: Resource): string {
@@ -168,6 +186,52 @@ export struct PrDetailView {
   /** MarkdownView 站内链接路由（正文/评论点击 GitHub 内部链接 → 对应页面） */
   private navigateLink(name: string, param: string): void {
     this.pathStack.pushPathByName(name, param);
+  }
+
+  /** 时间轴内审阅整卡（Spec 042 元素4/6：状态徽章 + 总结 body；仅本人可编辑） */
+  @Builder
+  reviewCard(review: PrReview) {
+    Column({ space: 6 }) {
+      Row({ space: 6 }) {
+        if (review.authorAvatar !== '') {
+          Image(review.authorAvatar)
+            .width(22)
+            .height(22)
+            .borderRadius(11)
+            .backgroundColor($r('app.color.heat_empty'))
+        }
+        Text(review.authorLogin)
+          .fontSize($r('app.float.caption_font_size'))
+          .fontColor($r('app.color.text_primary'))
+        Text(this.reviewStateText(review.state))
+          .fontSize($r('app.float.caption_font_size'))
+          .fontColor(this.reviewStateColor(review.state))
+          .padding({ left: 6, right: 6, top: 1, bottom: 1 })
+          .borderRadius(4)
+          .backgroundColor($r('app.color.heat_empty'))
+        Blank()
+        if (review.viewerDidAuthor && !this.detail?.merged) {
+          Text($r('app.string.pr_review_edit'))
+            .fontSize($r('app.float.caption_font_size'))
+            .fontColor($r('app.color.link_blue'))
+            .onClick((): void => this.openReviewEdit(review))
+        }
+      }
+      .width('100%')
+      if (review.body !== '' || review.bodyHTML !== '') {
+        MarkdownView({
+          html: review.bodyHTML,
+          fallbackText: review.body,
+          onNavigate: (name: string, param: string) => this.navigateLink(name, param)
+        })
+      }
+    }
+    .width('100%')
+    .alignItems(HorizontalAlign.Start)
+    .padding($r('app.float.card_padding'))
+    .borderRadius($r('app.float.card_radius'))
+    .backgroundColor($r('app.color.card_background'))
+    .margin({ bottom: 8 })
   }
 
   /** COMMENT 按钮（打开输入面板；PR 不限状态可评论） */
@@ -586,9 +650,7 @@ export struct PrDetailView {
     if (this.detail === null) {
       return;
     }
-    if (this.mergeMethod === '') {
-      this.mergeMethod = this.detail.defaultMergeMethod !== '' ? this.detail.defaultMergeMethod : 'MERGE';
-    }
+    this.mergeMethod = resolveMergeMethod(this.mergeMethod, this.detail.defaultMergeMethod);
     this.mergeHeadline = this.defaultHeadlineFor(this.mergeMethod);
     this.mergeBody = this.mergeMethod === this.detail.defaultMergeMethod ? this.detail.mergeBody : '';
     this.mergeEditing = false;
@@ -682,7 +744,9 @@ export struct PrDetailView {
       return;
     }
     this.mergeSending = true;
-    RepoSubService.mergePullRequest(this.token, this.detail.subjectId, this.mergeMethod,
+    // 主段 MERGE 可未经 Merge options 页直接确认：方式同样取服务端默认（resolveMergeMethod）
+    RepoSubService.mergePullRequest(this.token, this.detail.subjectId,
+      resolveMergeMethod(this.mergeMethod, this.detail.defaultMergeMethod),
       this.mergeEditing ? this.mergeHeadline.trim() : '', this.mergeBody)
       .then(() => {
         this.mergeSending = false;
@@ -1620,6 +1684,21 @@ export struct PrDetailView {
                   fallbackText: this.detail.body,
                   onNavigate: (name: string, param: string) => this.navigateLink(name, param)
                 })
+
+                // 正文反应行（官方评论卡形态）：笑脸圆钮弹 8 种全集，芯片整颗可点翻转，长按进 Reactees 整页
+                ReactionBar({
+                  token: this.token,
+                  subjectId: this.detail.subjectId,
+                  reactions: this.detail.reactions,
+                  smileyTrigger: true,
+                  pickerFull: true,
+                  onChanged: (): void => this.refresh(),
+                  onOpenUsers: (subjectId: string, content: string): void => {
+                    // id 经 encodeURIComponent（GraphQL id 为 base64，可能含 /）
+                    this.pathStack.pushPathByName('reactionUsers',
+                      `${encodeURIComponent(subjectId)}/${content}`);
+                  }
+                })
               }
               .padding($r('app.float.card_padding'))
               .borderRadius($r('app.float.card_radius'))
@@ -1678,84 +1757,71 @@ export struct PrDetailView {
               onMergeConfirm: (): void => this.confirmMergeTap()
             })
 
-            // Conversation
+            // Conversation = 官方时间轴：左侧竖直连线 + 事件行 + 评论/审阅整卡（时间序）
             Column({ space: 8 }) {
               this.sectionTitle(this.stringOf($r('app.string.pr_conversation_title')))
-              if (this.detail.comments.length === 0) {
+              if (this.detail.timeline.length === 0) {
                 Text($r('app.string.issues_empty'))
                   .fontSize($r('app.float.caption_font_size'))
                   .fontColor($r('app.color.text_secondary'))
               }
-              ForEach(this.detail.comments, (item: RepoComment) => {
-                CommentCard({
-                  comment: item,
-                  token: this.token,
-                  onNavigate: (name: string, param: string) => this.navigateLink(name, param),
-                  onEdit: (comment: RepoComment) => {
-                    this.editingId = comment.id;
-                    this.editingInitial = comment.body;
-                    this.sheetKind = 'composer';
-                    this.sheetOpen = true;
-                  },
-                  onDelete: (comment: RepoComment) => this.confirmDeleteComment(comment),
-                  onShare: (comment: RepoComment): void => {
-                    shareLink(this.getUIContext(), pullPageUrl(this.owner, this.name, this.number),
-                      `${this.owner}/${this.name} #${this.number}`);
-                  },
-                  onQuoteReply: (comment: RepoComment): void => {
-                    // 官方 Quote reply：`> 正文` 引用进草稿并打开输入面板
-                    const quoted = comment.body.split('\n').map((line: string): string => `> ${line}`).join('\n');
-                    this.draft = `${quoted}\n\n`;
-                    this.editingId = '';
-                    this.editingInitial = '';
-                    this.sheetKind = 'composer';
-                    this.sheetOpen = true;
-                  },
-                  onReactionChanged: (): void => this.refresh()
-                })
-              }, (item: RepoComment) => `${item.id}-${item.body.length}`)
-              // 已提交审阅卡（Spec 042 元素4/6：状态徽章 + 总结 body；仅本人可编辑）
-              ForEach(this.detail.reviews, (review: PrReview) => {
-                Divider().color($r('app.color.divider'))
-                Column({ space: 6 }) {
-                  Row({ space: 6 }) {
-                    if (review.authorAvatar !== '') {
-                      Image(review.authorAvatar)
-                        .width(22)
-                        .height(22)
-                        .borderRadius(11)
-                        .backgroundColor($r('app.color.heat_empty'))
+              Stack({ alignContent: Alignment.TopStart }) {
+                // 竖线贯穿整轴：高度取内容实测值（Percent 会与外层 Stack 互撑，导致线拖长）；顶端对齐首个节点图标中心；
+                // zIndex 显式分层 → 不透明的评论/审阅卡在线之上，把线遮断（同官方观感）
+                Column()
+                  .width(1)
+                  .height(this.timelineContentH)
+                  .backgroundColor($r('app.color.divider'))
+                  .margin({ left: 15.5, top: 16 })
+                  .zIndex(0)
+                Column() {
+                  ForEach(this.detail.timeline, (item: TimelineNode, index: number) => {
+                    if (item.kind === 'comment' && item.comment !== null) {
+                      CommentCard({
+                        comment: this.commentOf(item),
+                        token: this.token,
+                        onNavigate: (name: string, param: string) => this.navigateLink(name, param),
+                        onEdit: (comment: RepoComment) => {
+                          this.editingId = comment.id;
+                          this.editingInitial = comment.body;
+                          this.sheetKind = 'composer';
+                          this.sheetOpen = true;
+                        },
+                        onDelete: (comment: RepoComment) => this.confirmDeleteComment(comment),
+                        onShare: (comment: RepoComment): void => {
+                          shareLink(this.getUIContext(), pullPageUrl(this.owner, this.name, this.number),
+                            `${this.owner}/${this.name} #${this.number}`);
+                        },
+                        onQuoteReply: (comment: RepoComment): void => {
+                          // 官方 Quote reply：`> 正文` 引用进草稿并打开输入面板
+                          const quoted = comment.body.split('\n').map((line: string): string => `> ${line}`).join('\n');
+                          this.draft = `${quoted}\n\n`;
+                          this.editingId = '';
+                          this.editingInitial = '';
+                          this.sheetKind = 'composer';
+                          this.sheetOpen = true;
+                        },
+                        onReactionChanged: (): void => this.refresh()
+                      })
+                    } else if (item.kind === 'review' && item.review !== null) {
+                      this.reviewCard(this.reviewOf(item))
+                    } else {
+                      TimelineRow({
+                        node: item,
+                        onOpenCommit: (oid: string): void => this.openCommit(oid)
+                      })
                     }
-                    Text(review.authorLogin)
-                      .fontSize($r('app.float.caption_font_size'))
-                      .fontColor($r('app.color.text_primary'))
-                    Text(this.reviewStateText(review.state))
-                      .fontSize($r('app.float.caption_font_size'))
-                      .fontColor(this.reviewStateColor(review.state))
-                      .padding({ left: 6, right: 6, top: 1, bottom: 1 })
-                      .borderRadius(4)
-                      .backgroundColor($r('app.color.heat_empty'))
-                    Blank()
-                    if (review.viewerDidAuthor && !this.detail?.merged) {
-                      Text($r('app.string.pr_review_edit'))
-                        .fontSize($r('app.float.caption_font_size'))
-                        .fontColor($r('app.color.link_blue'))
-                        .onClick((): void => this.openReviewEdit(review))
-                    }
-                  }
-                  .width('100%')
-                  if (review.body !== '' || review.bodyHTML !== '') {
-                    MarkdownView({
-                      html: review.bodyHTML,
-                      fallbackText: review.body,
-                      onNavigate: (name: string, param: string) => this.navigateLink(name, param)
-                    })
-                  }
+                  }, (item: TimelineNode, index: number) => `${item.kind}-${item.id}-${index}`)
                 }
                 .width('100%')
-                .alignItems(HorizontalAlign.Start)
-              }, (review: PrReview) => `${review.id}-${review.body.length}`)
-              if (this.commentsHasNext) {
+                .padding({ bottom: 20 })
+                .zIndex(1)
+                .onAreaChange((_oldArea: Area, newArea: Area) => {
+                  this.timelineContentH = Number(newArea.height);
+                })
+              }
+              .width('100%')
+              if (this.timelineHasNext) {
                 ListLoadingFooter({ show: this.loadingMore })
               }
               if (this.detail.merged) {
@@ -1796,9 +1862,7 @@ export struct PrDetailView {
                   })
               }
             }
-            .padding($r('app.float.card_padding'))
-            .borderRadius($r('app.float.card_radius'))
-            .backgroundColor($r('app.color.card_background'))
+            // 官方口径：会话区不套白卡（灰底时间轴 + 通栏白卡节点），时间轴节点自身成卡
             .width('100%')
 
             // ReviewThreads 卡（Spec 042：diff 行内评论集合；重拉后 Resolved 折叠）
@@ -1820,7 +1884,7 @@ export struct PrDetailView {
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
       .onReachEnd((): void => {
-        this.loadMoreComments();
+        this.loadMoreTimeline();
       })
       .onScroll((_x: number, y: number): void => {
         this.scrollShadow = y > 0.001;

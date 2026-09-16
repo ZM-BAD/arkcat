@@ -24,9 +24,10 @@ import {
   mapRepoCommit, mapRepoCommitsPage, mapPrCommits,
   filterPrsByAuthor, filterPrsByAssignee, filterPrsByMilestone, repoPrIconKey, RepoPrItem, mapIssueDetail,
   mapPrDetail, mapRepoReleasesPage, formatBytes,
-  mapReviewThreads, canMergePr, mergeStateReasonKey, reviewStateKey,
+  mapReviewThreads, canMergePr, mergeStateReasonKey, reviewStateKey, resolveMergeMethod,
   mapTriageUsers, mapTriageLabels, mapTriageMilestones, mapTriageLinked, mapTriageProjects,
-  filterTriageByKeyword, diffSelection, singlePickId
+  filterTriageByKeyword, diffSelection, singlePickId,
+  mapTimeline, actorDisplayLogin, phraseSegments
 } from '../../entry/src/main/ets/models/RepoSubModels';
 import { mapPrFiles, mapFilesCursor, applyRestPatch, PrFileItem } from '../../entry/src/main/ets/models/PrDiffModels';
 import {
@@ -1072,9 +1073,29 @@ test('mapIssueDetail/mapPrDetail body/bodyHTML 映射（防正文恒空回归）
 test('Spec 042 mapPrDetail 合并门 + reviews/reviewThreads 映射', () => {
   const author: JsonMap = { 'login': 'zm_bad' };
   const reviewNode: JsonMap = {
+    '__typename': 'PullRequestReview',
     'id': 'RV1', 'state': 'APPROVED', 'body': 'lgtm', 'bodyHTML': '<p>lgtm</p>',
     'submittedAt': '2026-09-01T00:00:00Z', 'author': author, 'viewerDidAuthor': true
   };
+  // 时间轴节点（官方 Conversation）：提交 / 标签 / 指派 三类事件 + 未识别类型
+  const commitNode: JsonMap = {
+    '__typename': 'PullRequestCommit', 'id': 'PC1',
+    'commit': {
+      'oid': 'abc123def', 'abbreviatedOid': 'abc123d', 'messageHeadline': 'chore(deps): bump x',
+      'author': { 'name': 'renovate[bot]', 'avatarUrl': 'https://a/1' }
+    }
+  };
+  const labelNode: JsonMap = {
+    '__typename': 'LabeledEvent', 'id': 'LE1', 'createdAt': '2026-09-01T00:00:01Z',
+    'actor': { '__typename': 'Bot', 'login': 'renovate', 'avatarUrl': 'https://a/2' },
+    'label': { 'name': 'dependencies', 'color': 'ededed' }
+  };
+  const assignNode: JsonMap = {
+    '__typename': 'AssignedEvent', 'id': 'AE1', 'createdAt': '2026-09-01T00:00:02Z',
+    'actor': { '__typename': 'User', 'login': 'zm_bad', 'avatarUrl': 'https://a/3' },
+    'assignee': { '__typename': 'User', 'login': 'ZM-BAD' }
+  };
+  const unknownNode: JsonMap = { '__typename': 'PinnedEvent', 'id': 'PE1' };
   const threadNode: JsonMap = {
     'id': 'TH1', 'path': 'src/a.ets', 'line': null, 'isResolved': true, 'isOutdated': false,
     'viewerCanResolve': false, 'viewerCanUnresolve': true,
@@ -1099,6 +1120,18 @@ test('Spec 042 mapPrDetail 合并门 + reviews/reviewThreads 映射', () => {
         'viewerMergeBodyText': 'feat: x',
         'reviews': { 'totalCount': 1, 'nodes': [reviewNode] },
         'reviewThreads': { 'totalCount': 1, 'nodes': [threadNode] },
+        // 会话时间轴（事件 + 评论 + 审阅按时间序；含一个未识别类型验证丢弃）
+        // 分页信息与线上一致：只在 pageInfo 内（连接层无 hasNextPage/endCursor 键）
+        'timelineItems': {
+          'totalCount': 5,
+          'pageInfo': { 'hasNextPage': true, 'endCursor': 'CUR1' },
+          'nodes': [commitNode, labelNode, assignNode, reviewNode, unknownNode]
+        },
+        // 正文反应（正文卡反应行：笑脸钮弹 8 种全集 + 芯片）
+        'reactionGroups': [{
+          'content': 'THUMBS_UP', 'viewerHasReacted': true,
+          'reactors': { 'totalCount': 2, 'nodes': [{ 'login': 'zm_bad', 'avatarUrl': 'a' }] }
+        }],
         'comments': { 'totalCount': 0, 'nodes': [] }
       }
     }
@@ -1111,23 +1144,62 @@ test('Spec 042 mapPrDetail 合并门 + reviews/reviewThreads 映射', () => {
   assert.equal(page.defaultMergeMethod, 'MERGE');
   assert.equal(page.mergeHeadline, 'Merge pull request #9 from o/h');
   assert.equal(page.mergeBody, 'feat: x');
-  assert.equal(page.reviews.length, 1);
-  assert.equal(page.reviews[0].state, 'APPROVED');
-  assert.equal(page.reviews[0].viewerDidAuthor, true);
+  // 会话时间轴（Spec 031 重设计）：事件/审阅按时间序映射，未识别类型丢弃
+  assert.equal(page.timeline.length, 4);
+  assert.equal(page.timeline[0].kind, 'commit');
+  assert.equal(page.timeline[0].commitAbbrev, 'abc123d');
+  assert.equal(page.timeline[0].commitAuthorName, 'renovate[bot]');
+  assert.equal(page.timeline[1].kind, 'labeled');
+  assert.equal(page.timeline[1].labelName, 'dependencies');
+  assert.equal(page.timeline[1].actorLogin, 'renovate');
+  assert.equal(page.timeline[1].actorIsBot, true);
+  assert.equal(page.timeline[2].kind, 'assigned');
+  assert.equal(page.timeline[2].targetLogin, 'ZM-BAD');
+  assert.equal(page.timeline[2].targetIsBot, false);
+  assert.equal(page.timeline[3].kind, 'review');
+  const tlReview = page.timeline[3].review;
+  assert.equal(tlReview !== null ? tlReview.state : '', 'APPROVED');
+  assert.equal(page.timelineHasNext, true);
+  assert.equal(page.timelineCursor, 'CUR1');
+  // Bot 登录名显示口径（GraphQL Bot login 无后缀，官方 UI 显示 login[bot]）
+  assert.equal(actorDisplayLogin('renovate', true), 'renovate[bot]');
+  assert.equal(actorDisplayLogin('zm_bad', false), 'zm_bad');
+  assert.equal(actorDisplayLogin('', true), '');
+  // 事件行文案拆段：人物/对象 emphasis、其余普通段
+  const segs = phraseSegments('%1$s added the %2$s label', ['renovate[bot]', 'dependencies']);
+  assert.equal(segs.length, 4);
+  assert.equal(segs[0].text, 'renovate[bot]');
+  assert.equal(segs[0].emphasis, true);
+  assert.equal(segs[1].text, ' added the ');
+  assert.equal(segs[1].emphasis, false);
+  assert.equal(segs[2].text, 'dependencies');
+  assert.equal(segs[3].text, ' label');
+  // 占位序号越界 → 整段按普通文本处理（不吞字符）
+  const segs2 = phraseSegments('%1$s %3$s', ['a']);
+  assert.equal(segs2.length, 2);
+  assert.equal(segs2[0].text, 'a');
+  assert.equal(segs2[1].text, ' %3$s');
   // line=null（文件级 thread）归一为 0
   assert.equal(page.threads[0].line, 0);
   assert.equal(page.threads[0].isResolved, true);
   assert.equal(page.threads[0].viewerCanUnresolve, true);
   assert.equal(page.threads[0].comments[0].authorLogin, 'zm_bad');
   assert.equal(page.threads[0].commentsTotal, 1);
-  // 缺字段容错：无 reviewThreads/reviews 键 → 空数组、viewerCanMerge 回 false
+  // 正文反应（正文卡反应行数据链：content/count/viewerHasReacted）
+  assert.equal(page.reactions.length, 1);
+  assert.equal(page.reactions[0].content, 'THUMBS_UP');
+  assert.equal(page.reactions[0].count, 2);
+  assert.equal(page.reactions[0].viewerHasReacted, true);
+  assert.equal(page.reactions[0].users[0].login, 'zm_bad');
+  // 缺字段容错：无 reviewThreads/timelineItems/reactionGroups 键 → 空数组、viewerCanMerge 回 false
   const bare = mapPrDetail({ 'repository': { 'pullRequest': {
     'number': 1, 'title': '', 'state': 'OPEN', 'merged': false, 'isDraft': false, 'body': '',
     'bodyHTML': '', 'createdAt': '', 'additions': 0, 'deletions': 0,
     'author': author, 'headRefName': '', 'baseRefName': '', 'comments': { 'totalCount': 0, 'nodes': [] }
   } } });
   assert.equal(bare.threads.length, 0);
-  assert.equal(bare.reviews.length, 0);
+  assert.equal(bare.timeline.length, 0);
+  assert.equal(bare.timelineHasNext, false);
   assert.equal(bare.repoViewerPermission, '');
 });
 
@@ -1148,8 +1220,7 @@ test('Spec 042 mapReviewThreads 多 thread 顺序与字段', () => {
 });
 
 test('Spec 042 canMergePr 合并门 + 文案键映射（未知枚举兜底）', () => {
-  assert.equal(canMergePr(false, 'MERGEABLE', 'WRITE'), true);
-  assert.equal(canMergePr(false, 'MERGEABLE', 'ADMIN'), true);
+  assert.equal(canMergePr(false, 'MERGEABLE', 'WRITE'), true);  assert.equal(canMergePr(false, 'MERGEABLE', 'ADMIN'), true);
   assert.equal(canMergePr(false, 'MERGEABLE', 'MAINTAIN'), true);
   assert.equal(canMergePr(true, 'MERGEABLE', 'WRITE'), false);
   assert.equal(canMergePr(false, 'CONFLICTING', 'WRITE'), false);
@@ -1169,6 +1240,17 @@ test('Spec 042 canMergePr 合并门 + 文案键映射（未知枚举兜底）', 
   assert.equal(reviewStateKey('PENDING'), 'pending');
   assert.equal(reviewStateKey('COMMENTED'), 'commented');
   assert.equal(reviewStateKey('WEIRD'), 'commented');
+});
+
+test('Spec 042 resolveMergeMethod 生效方式（未选过取服务端默认，缺省兜底 MERGE）', () => {
+  // 未选过（''）：用仓库 viewerDefaultMergeMethod——非固定 squash
+  assert.equal(resolveMergeMethod('', 'MERGE'), 'MERGE');
+  assert.equal(resolveMergeMethod('', 'SQUASH'), 'SQUASH');
+  assert.equal(resolveMergeMethod('', 'REBASE'), 'REBASE');
+  // 用户选过：以用户选择为准（不被服务端默认覆盖）
+  assert.equal(resolveMergeMethod('REBASE', 'MERGE'), 'REBASE');
+  // 服务端默认缺失（旧 token/字段不可见）：兜底 MERGE，不落到 ''
+  assert.equal(resolveMergeMethod('', ''), 'MERGE');
 });
 
 test('mapRepoReleasesPage body=description 兜底 + formatBytes 单位', () => {

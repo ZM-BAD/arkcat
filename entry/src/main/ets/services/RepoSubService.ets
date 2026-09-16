@@ -198,6 +198,19 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!, $after: 
       additions deletions
       # 作者关联角色（页头正文卡角色胶囊：AuthorAssociation 全集）
       authorAssociation
+      # 正文反应（正文卡反应行：笑脸钮 + 芯片；addReaction 的 subjectId 即本节点 id）
+      reactionGroups {
+        content viewerHasReacted
+        reactors(first: 8) {
+          totalCount
+          nodes {
+            ... on User { login avatarUrl }
+            ... on Bot { login avatarUrl }
+            ... on Mannequin { login avatarUrl }
+            ... on Organization { login avatarUrl }
+          }
+        }
+      }
       author { login avatarUrl }
       headRefName baseRefName
       mergedBy { login }
@@ -208,10 +221,7 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!, $after: 
       # Merge options 页提交信息默认值（无 mergeMethod 参数，返回的是「默认合并方式」口径的文本）
       viewerMergeHeadlineText
       viewerMergeBodyText
-      reviews(first: 20) {
-        totalCount
-        nodes { id state body bodyHTML submittedAt author { login avatarUrl } viewerDidAuthor }
-      }
+      reviews { totalCount }
       reviewThreads(first: 50) {
         totalCount
         nodes {
@@ -235,25 +245,69 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!, $after: 
       labels(first: 10) { nodes { id name color } }
       assignees(first: 10) { nodes { id login avatarUrl } }
       milestone { id title }
-      comments(first: 20, after: $after) {
+      # 会话时间轴（官方 Conversation）：事件 + 评论 + 审阅按时间序，单一游标分页。
+      # itemTypes 限定为客户端已渲染的子集（GH 共 78 种时间轴类型，未列入的暂不取）。
+      timelineItems(first: 30, after: $after, itemTypes: [
+        PULL_REQUEST_COMMIT, ISSUE_COMMENT, PULL_REQUEST_REVIEW,
+        LABELED_EVENT, UNLABELED_EVENT, ASSIGNED_EVENT, UNASSIGNED_EVENT,
+        REVIEW_REQUESTED_EVENT, REVIEW_REQUEST_REMOVED_EVENT,
+        MERGED_EVENT, CLOSED_EVENT, REOPENED_EVENT, CONVERT_TO_DRAFT_EVENT, READY_FOR_REVIEW_EVENT
+      ]) {
         totalCount
         ${FRAG_PAGE_INFO}
         nodes {
-          id body bodyHTML createdAt
-          author { login avatarUrl }
-          viewerDidAuthor
-          reactionGroups {
-            content viewerHasReacted
-            reactors(first: 8) {
-              totalCount
-              nodes {
-                ... on User { login avatarUrl }
-                ... on Bot { login avatarUrl }
-                ... on Mannequin { login avatarUrl }
-                ... on Organization { login avatarUrl }
+          __typename
+          ... on PullRequestCommit {
+            id
+            commit { oid abbreviatedOid messageHeadline author { name avatarUrl } }
+          }
+          ... on IssueComment {
+            id body bodyHTML createdAt viewerDidAuthor
+            author { __typename login avatarUrl }
+            reactionGroups {
+              content viewerHasReacted
+              reactors(first: 8) {
+                totalCount
+                nodes {
+                  ... on User { login avatarUrl }
+                  ... on Bot { login avatarUrl }
+                  ... on Mannequin { login avatarUrl }
+                  ... on Organization { login avatarUrl }
+                }
               }
             }
           }
+          ... on PullRequestReview {
+            id state body bodyHTML submittedAt viewerDidAuthor
+            author { __typename login avatarUrl }
+          }
+          ... on LabeledEvent { id createdAt actor { __typename login avatarUrl } label { name color } }
+          ... on UnlabeledEvent { id createdAt actor { __typename login avatarUrl } label { name color } }
+          ... on AssignedEvent {
+            id createdAt
+            actor { __typename login avatarUrl }
+            assignee { __typename ... on User { login } ... on Bot { login } ... on Mannequin { login } ... on Organization { name } }
+          }
+          ... on UnassignedEvent {
+            id createdAt
+            actor { __typename login avatarUrl }
+            assignee { __typename ... on User { login } ... on Bot { login } ... on Mannequin { login } ... on Organization { name } }
+          }
+          ... on ReviewRequestedEvent {
+            id createdAt
+            actor { __typename login avatarUrl }
+            requestedReviewer { __typename ... on User { login } ... on Bot { login } ... on Mannequin { login } ... on Team { name } }
+          }
+          ... on ReviewRequestRemovedEvent {
+            id createdAt
+            actor { __typename login avatarUrl }
+            requestedReviewer { __typename ... on User { login } ... on Bot { login } ... on Mannequin { login } ... on Team { name } }
+          }
+          ... on MergedEvent { id createdAt actor { __typename login avatarUrl } commit { abbreviatedOid } mergeRefName }
+          ... on ClosedEvent { id createdAt actor { __typename login avatarUrl } }
+          ... on ReopenedEvent { id createdAt actor { __typename login avatarUrl } }
+          ... on ConvertToDraftEvent { id createdAt actor { __typename login avatarUrl } }
+          ... on ReadyForReviewEvent { id createdAt actor { __typename login avatarUrl } }
         }
       }
     }
