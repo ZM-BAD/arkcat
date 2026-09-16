@@ -230,6 +230,26 @@ export interface ReviewThread {
   commentsTotal: number;
 }
 
+/** 元数据标签行（图1 概览面板 + 044 编辑器共用口径） */
+export interface MetaLabel {
+  id: string;
+  name: string;
+  color: string;
+}
+
+/** 元数据负责人行 */
+export interface MetaUser {
+  id: string;
+  login: string;
+  avatarUrl: string;
+}
+
+/** 元数据里程碑行 */
+export interface MetaMilestone {
+  id: string;
+  title: string;
+}
+
 export interface PrDetailPage {
   /** 评论发布用节点 id（SubjectId） */
   subjectId: string;
@@ -247,6 +267,10 @@ export interface PrDetailPage {
   deletions: number;
   authorLogin: string;
   authorAvatar: string;
+  /** 作者关联角色（AuthorAssociation 原值；NONE/未知不显示角色胶囊） */
+  authorAssociation: string;
+  /** 仓库 owner 头像（页头作者行=仓库上下文：owner 头像 + `owner / repo #N`） */
+  ownerAvatar: string;
   headRefName: string;
   baseRefName: string;
   mergeOid: string;
@@ -256,18 +280,177 @@ export interface PrDetailPage {
   reviewsTotal: number;
   checksState: string;
   checks: StatusCheckItem[];
+  /** 元数据概览面板（info 钮 → 图1） */
+  labelItems: MetaLabel[];
+  assigneeItems: MetaUser[];
+  milestoneItem: MetaMilestone | null;
   /** MERGEABLE / CONFLICTING / UNKNOWN（Spec 042 元素9） */
   mergeable: string;
   /** CLEAN / BLOCKED / DIRTY / BEHIND / UNSTABLE / DRAFT / HAS_HOOKS / UNKNOWN（元素10） */
   mergeStateStatus: string;
   /** ADMIN / MAINTAIN / WRITE / READ / NONE（合并权限门；PR 无 viewerCanMerge，用仓库级权限代替） */
   repoViewerPermission: string;
+  /** 仓库/账号默认合并方式（MERGE/SQUASH/REBASE）：Merge options 页默认选中项 */
+  defaultMergeMethod: string;
+  /** 默认提交信息（官方 viewerMergeHeadlineText/BodyText，按默认合并方式口径返回） */
+  mergeHeadline: string;
+  mergeBody: string;
   reviews: PrReview[];
   threads: ReviewThread[];
   comments: RepoComment[];
   /** 评论分页（review B7：与 IssueDetail 对齐，>20 条可 Load more） */
   commentsHasNext: boolean;
   commentsCursor: string;
+}
+
+// ─────────────── Spec 044 元数据编辑器候选 ───────────────
+
+/** 编辑器候选：负责人 */
+export interface TriageUser {
+  id: string;
+  login: string;
+  avatarUrl: string;
+}
+
+/** 编辑器候选：标签（color 为 GitHub hex，不带 #） */
+export interface TriageLabel {
+  id: string;
+  name: string;
+  color: string;
+}
+
+/** 编辑器候选：里程碑 */
+export interface TriageMilestone {
+  id: string;
+  title: string;
+}
+
+/** 编辑器候选：Linked items 建议（state=OPEN/CLOSED，用于状态字形） */
+export interface TriageLinkedItem {
+  id: string;
+  number: number;
+  title: string;
+  state: string;
+}
+
+/** 编辑器候选：项目（ProjectsV2） */
+export interface TriageProject {
+  id: string;
+  title: string;
+}
+
+/**
+ * 编辑器行（元数据编辑器 Selected / 候选两个列表共用一种行形态）：
+ * title=主文本（login / 标签名 / 里程碑名 / issue 标题 / 项目名）；
+ * avatarUrl/标签色/状态字形三选一，决定行首渲染什么。
+ */
+export interface EditorRow {
+  id: string;
+  title: string;
+  avatarUrl?: string;
+  labelColor?: string;
+  /** linked 行的 issue 状态（OPEN/CLOSED）→ 状态字形 */
+  state?: string;
+}
+
+/** 候选列表按关键字过滤（客户端过滤：编辑器搜索框；空关键字原样返回） */
+export function filterTriageByKeyword(names: string[], keyword: string): number[] {
+  const hit: number[] = [];
+  const k = keyword.trim().toLowerCase();
+  for (let i = 0; i < names.length; i++) {
+    if (k === '' || names[i].toLowerCase().indexOf(k) >= 0) {
+      hit.push(i);
+    }
+  }
+  return hit;
+}
+
+/** 单选保存时取选中项 id（未选中返回 ''，服务端按 null 清除） */
+export function singlePickId(ids: string[]): string {
+  return ids.length > 0 ? ids[0] : '';
+}
+
+/** 多选差异：add=目标有而原有没，remove=原有而目标没有（Spec 044 元素2 差异推送） */
+export function diffSelection(before: string[], after: string[]): DiffIds {
+  const add: string[] = [];
+  const remove: string[] = [];
+  for (const id of after) {
+    if (before.indexOf(id) < 0) {
+      add.push(id);
+    }
+  }
+  for (const id of before) {
+    if (after.indexOf(id) < 0) {
+      remove.push(id);
+    }
+  }
+  return { add: add, remove: remove };
+}
+
+export interface DiffIds {
+  add: string[];
+  remove: string[];
+}
+
+export function mapTriageUsers(data: JsonMap): TriageUser[] {
+  const conn = Json.obj(Json.obj(data, 'repository') ?? ({} as JsonMap), 'assignableUsers') ?? ({} as JsonMap);
+  const out: TriageUser[] = [];
+  for (const node of Json.arr(conn, 'nodes')) {
+    const it = node as JsonMap;
+    out.push({ id: Json.str(it, 'id'), login: Json.str(it, 'login'), avatarUrl: Json.str(it, 'avatarUrl') });
+  }
+  return out;
+}
+
+export function mapTriageLabels(data: JsonMap): TriageLabel[] {
+  const conn = Json.obj(Json.obj(data, 'repository') ?? ({} as JsonMap), 'labels') ?? ({} as JsonMap);
+  const out: TriageLabel[] = [];
+  for (const node of Json.arr(conn, 'nodes')) {
+    const it = node as JsonMap;
+    out.push({ id: Json.str(it, 'id'), name: Json.str(it, 'name'), color: Json.str(it, 'color') });
+  }
+  return out;
+}
+
+export function mapTriageMilestones(data: JsonMap): TriageMilestone[] {
+  const conn = Json.obj(Json.obj(data, 'repository') ?? ({} as JsonMap), 'milestones') ?? ({} as JsonMap);
+  const out: TriageMilestone[] = [];
+  for (const node of Json.arr(conn, 'nodes')) {
+    const it = node as JsonMap;
+    out.push({ id: Json.str(it, 'id'), title: Json.str(it, 'title') });
+  }
+  return out;
+}
+
+/** Linked 建议：排除 PR 自身节点（excludeId） */
+export function mapTriageLinked(data: JsonMap, excludeId: string): TriageLinkedItem[] {
+  const conn = Json.obj(Json.obj(data, 'repository') ?? ({} as JsonMap), 'issues') ?? ({} as JsonMap);
+  const out: TriageLinkedItem[] = [];
+  for (const node of Json.arr(conn, 'nodes')) {
+    const it = node as JsonMap;
+    const id = Json.str(it, 'id');
+    if (id === excludeId) {
+      continue;
+    }
+    out.push({
+      id: id, number: Json.num(it, 'number'), title: Json.str(it, 'title'), state: Json.str(it, 'state')
+    });
+  }
+  return out;
+}
+
+/** 项目候选：scope='user' 取 viewer.projectsV2，其余取 repository.projectsV2 */
+export function mapTriageProjects(data: JsonMap, scope: string): TriageProject[] {
+  const wrap = scope === 'user'
+    ? Json.obj(data, 'viewer')
+    : Json.obj(data, 'repository');
+  const conn = Json.obj(wrap ?? ({} as JsonMap), 'projectsV2') ?? ({} as JsonMap);
+  const out: TriageProject[] = [];
+  for (const node of Json.arr(conn, 'nodes')) {
+    const it = node as JsonMap;
+    out.push({ id: Json.str(it, 'id'), title: Json.str(it, 'title') });
+  }
+  return out;
 }
 
 // ─────────────── 纯函数：客户端过滤 ───────────────
@@ -749,6 +932,7 @@ export function mapPrDetail(data: JsonMap): PrDetailPage {
   const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
   const pr = Json.obj(repo, 'pullRequest') ?? ({} as JsonMap);
   const author = Json.obj(pr, 'author');
+  const repoOwner = Json.obj(repo, 'owner');
   const mergedBy = Json.obj(pr, 'mergedBy');
   const mergeCommit = Json.obj(pr, 'mergeCommit');
   const files = Json.obj(pr, 'files');
@@ -760,6 +944,22 @@ export function mapPrDetail(data: JsonMap): PrDetailPage {
   for (const nodeItem of Json.arr(commentsWrap, 'nodes')) {
     comments.push(mapComment(nodeItem as JsonMap));
   }
+  const labelItems: MetaLabel[] = [];
+  const labelsConn = Json.obj(pr, 'labels') ?? ({} as JsonMap);
+  for (const nodeItem of Json.arr(labelsConn, 'nodes')) {
+    const it = nodeItem as JsonMap;
+    labelItems.push({ id: Json.str(it, 'id'), name: Json.str(it, 'name'), color: Json.str(it, 'color') });
+  }
+  const assigneeItems: MetaUser[] = [];
+  const assigneesConn = Json.obj(pr, 'assignees') ?? ({} as JsonMap);
+  for (const nodeItem of Json.arr(assigneesConn, 'nodes')) {
+    const it = nodeItem as JsonMap;
+    assigneeItems.push({ id: Json.str(it, 'id'), login: Json.str(it, 'login'), avatarUrl: Json.str(it, 'avatarUrl') });
+  }
+  const milestoneObj = Json.obj(pr, 'milestone');
+  const milestoneItem: MetaMilestone | null = milestoneObj !== null
+    ? { id: Json.str(milestoneObj, 'id'), title: Json.str(milestoneObj, 'title') }
+    : null;
   return {
     subjectId: Json.str(pr, 'id'),
     number: Json.num(pr, 'number'),
@@ -775,6 +975,8 @@ export function mapPrDetail(data: JsonMap): PrDetailPage {
     deletions: Json.num(pr, 'deletions'),
     authorLogin: author !== null ? Json.str(author, 'login') : '',
     authorAvatar: author !== null ? Json.str(author, 'avatarUrl') : '',
+    authorAssociation: Json.str(pr, 'authorAssociation'),
+    ownerAvatar: repoOwner !== null ? Json.str(repoOwner, 'avatarUrl') : '',
     headRefName: Json.str(pr, 'headRefName'),
     baseRefName: Json.str(pr, 'baseRefName'),
     mergeOid: mergeCommit !== null ? Json.str(mergeCommit, 'abbreviatedOid') : '',
@@ -784,9 +986,15 @@ export function mapPrDetail(data: JsonMap): PrDetailPage {
     reviewsTotal: reviews !== null ? Json.num(reviews, 'totalCount') : 0,
     checksState: checks !== null ? Json.str(checks, 'state') : '',
     checks: mapStatusChecks(checks),
+    labelItems: labelItems,
+    assigneeItems: assigneeItems,
+    milestoneItem: milestoneItem,
     mergeable: Json.str(pr, 'mergeable'),
     mergeStateStatus: Json.str(pr, 'mergeStateStatus'),
     repoViewerPermission: Json.str(repo, 'viewerPermission'),
+    defaultMergeMethod: Json.str(repo, 'viewerDefaultMergeMethod'),
+    mergeHeadline: Json.str(pr, 'viewerMergeHeadlineText'),
+    mergeBody: Json.str(pr, 'viewerMergeBodyText'),
     reviews: mapReviews(reviews),
     threads: mapReviewThreads(Json.obj(pr, 'reviewThreads')),
     comments: comments,

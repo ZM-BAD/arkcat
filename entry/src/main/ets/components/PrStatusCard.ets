@@ -19,10 +19,14 @@ export struct PrStatusCard {
   @Event onRefresh: () => void = (): void => { };
   /** Status 卡片 checks 列表展开态（仅本卡消费，自持有） */
   @Local checksOpen: boolean = false;
+  /** Reviews 行展开态（REQUEST REVIEWS 按钮；编辑管道随 Spec 044 接入，先占位） */
+  @Local reviewsOpen: boolean = false;
   /** 合并进行中（防重复提交；按钮禁用） */
   @Local merging: boolean = false;
-  /** MERGE 主按钮/方法菜单选择 → 页面打开 Merge 确认 sheet（Android 官方截图对齐） */
-  @Event onMergeTap: (method: string) => void = (method: string): void => { };
+  /** 右段 ▾ → 页面打开 Merge options 底部页（只管选方式/改提交信息，页内无确认钮） */
+  @Event onMergeOpen: () => void = (): void => { };
+  /** 主段 MERGE → 按当前方式直接合并（页面先弹官方确认对话框） */
+  @Event onMergeConfirm: () => void = (): void => { };
 
   private stringOf(res: Resource): string {
     return resText(this.getUIContext(), res);
@@ -83,24 +87,6 @@ export struct PrStatusCard {
     }
   }
 
-  /** 三方法菜单项（官方默认 squash） */
-  private mergeMenuItems(): MenuElement[] {
-    return [
-      {
-        value: this.stringOf($r('app.string.pr_merge_squash')),
-        action: (): void => this.onMergeTap('SQUASH')
-      },
-      {
-        value: this.stringOf($r('app.string.pr_merge_merge_commit')),
-        action: (): void => this.onMergeTap('MERGE')
-      },
-      {
-        value: this.stringOf($r('app.string.pr_merge_rebase')),
-        action: (): void => this.onMergeTap('REBASE')
-      }
-    ];
-  }
-
   @Builder
   sectionTitle(text: string) {
     Text(text)
@@ -113,8 +99,8 @@ export struct PrStatusCard {
   build() {
     Column({ space: 8 }) {
       this.sectionTitle(this.stringOf($r('app.string.pr_status_title')))
-      // Reviews（黑）· None requested（灰）
-      Row({ space: 6 }) {
+      // Reviews（黑）· None requested（灰）· 行尾 chevron（点开 REQUEST REVIEWS）
+      Row({ space: 8 }) {
         OctIcon({ res: $r('app.media.oct_person_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
         Text(this.stringOf($r('app.string.pr_reviews')))
           .fontSize($r('app.float.caption_font_size'))
@@ -125,8 +111,43 @@ export struct PrStatusCard {
         Text(this.detail.reviewsTotal > 0 ? `${this.detail.reviewsTotal}` : this.stringOf($r('app.string.pr_reviews_none')))
           .fontSize($r('app.float.caption_font_size'))
           .fontColor(this.detail.reviewsTotal > 0 ? $r('app.color.text_primary') : $r('app.color.text_secondary'))
+        Blank()
+        OctIcon({
+          res: $r('app.media.oct_chevron_down_16'),
+          iconSize: 14,
+          iconColor: $r('app.color.text_secondary')
+        })
+        .rotate(this.reviewsOpen ? { angle: 180 } : { angle: 0 })
       }
       .width('100%')
+      .onClick(() => {
+        this.reviewsOpen = !this.reviewsOpen;
+      })
+      // REQUEST REVIEWS（官方展开态）：按钮左缘对齐上一行 Reviews 文案开头（icon 14 + space 8 = 22）
+      if (this.reviewsOpen) {
+        Row() {
+          // REQUEST REVIEWS：自绘行而非 Button（Button 不支持 textCase，且 Capsule 型忽略 borderRadius）
+          // 圆角 6 矩形端，与下方 MERGE 按钮同口径；配色/长度不变
+          Row() {
+            Text($r('app.string.pr_request_reviews'))
+              .fontSize($r('app.float.caption_font_size'))
+              .fontColor($r('app.color.text_primary'))
+              .textCase(TextCase.UpperCase)
+          }
+          .width('100%')
+          .height(36)
+          .justifyContent(FlexAlign.Center)
+          .borderRadius(6)
+          .backgroundColor($r('app.color.card_background'))
+          .border({ width: 1, color: $r('app.color.border') })
+          .onClick((): void => {
+            // 请求审阅人员选择器（Spec 044 元数据编排）接入前的占位
+            promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+          })
+        }
+        .width('100%')
+        .padding({ left: 22 })
+      }
       // Checks 摘要行：状态色圆圈 + 文案 + chevron；点击展开全部 checks
       Row({ space: 8 }) {
         OctIcon({
@@ -172,7 +193,7 @@ export struct PrStatusCard {
           Row({ space: 8 }) {
             OctIcon({
               res: $r('app.media.oct_check_circle_fill_16'),
-              iconSize: 16,
+              iconSize: 14,
               iconColor: $r('app.color.success_text')
             })
             Column({ space: 2 }) {
@@ -199,7 +220,7 @@ export struct PrStatusCard {
               .backgroundColor($r('app.color.success_btn_bg'))
               .borderRadius({ topLeft: 6, bottomLeft: 6 })
               .enabled(!this.merging)
-              .onClick((): void => this.onMergeTap('SQUASH'))
+              .onClick((): void => this.onMergeConfirm())
             Stack() {
               OctIcon({ res: $r('app.media.oct_chevron_down_16'), iconSize: 14, iconColor: Color.White })
             }
@@ -207,7 +228,8 @@ export struct PrStatusCard {
             .height(40)
             .backgroundColor($r('app.color.success_btn_bg'))
             .borderRadius({ topRight: 6, bottomRight: 6 })
-            .bindMenu(this.mergeMenuItems())
+            .accessibilityDescription($r('app.string.pr_merge_options_title'))
+            .onClick((): void => this.onMergeOpen())
           }
           .width('100%')
         } else {

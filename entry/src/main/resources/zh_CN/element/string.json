@@ -1317,6 +1317,10 @@
       "value": "未请求"
     },
     {
+      "name": "pr_request_reviews",
+      "value": "请求审查"
+    },
+    {
       "name": "pr_all_checks_passed",
       "value": "所有检查已通过"
     },
@@ -1365,14 +1369,6 @@
       "value": "添加评论…"
     },
     {
-      "name": "pr_comment_sent",
-      "value": "评论已发布"
-    },
-    {
-      "name": "pr_comment_failed",
-      "value": "评论提交失败"
-    },
-    {
       "name": "a11y_expand",
       "value": "展开"
     },
@@ -1389,6 +1385,10 @@
       "value": "评论"
     },
     {
+      "name": "comment_placeholder",
+      "value": "留下评论"
+    },
+    {
       "name": "comment_publish",
       "value": "发布"
     },
@@ -1397,8 +1397,8 @@
       "value": "预览"
     },
     {
-      "name": "comment_write",
-      "value": "写"
+      "name": "comment_tab_edit",
+      "value": "编辑"
     },
     {
       "name": "comment_edit_title",
@@ -2345,8 +2345,36 @@
       "value": "可自动执行合并"
     },
     {
-      "name": "pr_merge_commit_default",
-      "value": "提交信息 · 默认"
+      "name": "pr_merge_options_title",
+      "value": "合并选项"
+    },
+    {
+      "name": "pr_merge_method_label",
+      "value": "合并方式"
+    },
+    {
+      "name": "pr_merge_desc_merge",
+      "value": "该分支上的所有提交将通过一次合并提交添加到基础分支。"
+    },
+    {
+      "name": "pr_merge_desc_squash_one",
+      "value": "该分支上的 1 个提交将被添加到基础分支。"
+    },
+    {
+      "name": "pr_merge_desc_squash_many",
+      "value": "该分支上的 %1$s 个提交将被添加到基础分支。"
+    },
+    {
+      "name": "pr_merge_desc_rebase_one",
+      "value": "该分支上的 1 个提交将被变基并添加到基础分支。"
+    },
+    {
+      "name": "pr_merge_desc_rebase_many",
+      "value": "该分支上的 %1$s 个提交将被变基并添加到基础分支。"
+    },
+    {
+      "name": "pr_merge_commit_custom",
+      "value": "提交信息 · 自定义"
     },
     {
       "name": "pr_merge_edit",
@@ -2361,12 +2389,172 @@
       "value": "引用回复"
     },
     {
+      "name": "menu_edit",
+      "value": "编辑"
+    },
+    {
+      "name": "menu_report",
+      "value": "举报"
+    },
+    {
+      "name": "menu_block",
+      "value": "屏蔽"
+    },
+    {
+      "name": "menu_change_base",
+      "value": "更改基础分支"
+    },
+    {
+      "name": "menu_unsubscribe",
+      "value": "取消订阅"
+    },
+    {
+      "name": "menu_lock_conversation",
+      "value": "锁定对话"
+    },
+    {
+      "name": "menu_close_pr",
+      "value": "关闭 Pull Request"
+    },
+    {
+      "name": "author_assoc_owner",
+      "value": "所有者"
+    },
+    {
+      "name": "author_assoc_member",
+      "value": "成员"
+    },
+    {
+      "name": "author_assoc_collaborator",
+      "value": "协作者"
+    },
+    {
+      "name": "author_assoc_contributor",
+      "value": "贡献者"
+    },
+    {
+      "name": "author_assoc_first_time",
+      "value": "首次贡献者"
+    },
+    {
+      "name": "author_assoc_first_timer",
+      "value": "首次贡献"
+    },
+    {
       "name": "repo_prs_search_pr",
       "value": "搜索 Pull Request"
     },
     {
       "name": "work_pr_checks_expected",
       "value": "Checks 等待上报"
+    },
+    {
+      "name": "pr_meta_edit",
+      "value": "编辑"
+    },
+    {
+      "name": "pr_meta_labels",
+      "value": "标签"
+    },
+    {
+      "name": "pr_meta_assignees",
+      "value": "负责人"
+    },
+    {
+      "name": "pr_meta_milestone",
+      "value": "里程碑"
+    },
+    {
+      "name": "pr_meta_no_labels",
+      "value": "暂无标签"
+    },
+    {
+      "name": "pr_meta_no_assignees",
+      "value": "暂无负责人"
+    },
+    {
+      "name": "pr_meta_no_milestone",
+      "value": "未选择里程碑"
+    },
+    {
+      "name": "pr_meta_linked",
+      "value": "关联事项"
+    },
+    {
+      "name": "pr_meta_no_linked",
+      "value": "暂无关联事项"
+    },
+    {
+      "name": "pr_meta_projects",
+      "value": "项目"
+    },
+    {
+      "name": "pr_meta_no_projects",
+      "value": "未选择项目"
+    },
+    {
+      "name": "meta_editor_save",
+      "value": "保存"
+    },
+    {
+      "name": "meta_editor_selected",
+      "value": "已选"
+    },
+    {
+      "name": "meta_editor_search",
+      "value": "搜索"
+    },
+    {
+      "name": "meta_editor_select_assignees",
+      "value": "选择负责人"
+    },
+    {
+      "name": "meta_editor_select_labels",
+      "value": "选择标签"
+    },
+    {
+      "name": "meta_editor_select_milestone",
+      "value": "选择里程碑"
+    },
+    {
+      "name": "meta_editor_select_linked",
+      "value": "建议"
+    },
+    {
+      "name": "meta_editor_select_projects",
+      "value": "选择项目"
+    },
+    {
+      "name": "meta_editor_no_results",
+      "value": "无结果"
+    },
+    {
+      "name": "meta_editor_tab_recent",
+      "value": "最近"
+    },
+    {
+      "name": "meta_editor_tab_user",
+      "value": "我的"
+    },
+    {
+      "name": "meta_editor_saved",
+      "value": "已更新"
+    },
+    {
+      "name": "meta_editor_unsupported",
+      "value": "此操作仅支持网页端"
+    },
+    {
+      "name": "pr_files_finish_review",
+      "value": "完成审阅"
+    },
+    {
+      "name": "pr_files_jump",
+      "value": "跳转到文件"
+    },
+    {
+      "name": "a11y_info",
+      "value": "信息"
     }
   ]
 }

@@ -657,6 +657,7 @@ export struct ExploreRepoListView {
       .backgroundColor($r('app.color.card_background'))
       .bindSheet(this.sheetKind !== '', this.overlaySheet(), {
         height: this.sheetKind === 'lists' ? 300 : 540,
+        detents: [this.sheetKind === 'lists' ? 300 : 540, SheetSize.LARGE],
       backgroundColor: $r('app.color.card_background'),
       // 关闭钮与标题行均自绘，避免默认 ✕ 与自绘按钮重叠
       showClose: false,

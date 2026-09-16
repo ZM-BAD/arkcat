@@ -364,9 +364,10 @@ export struct ReactionBar {
     .width('100%')
     .bindSheet($$this.sheetOpen, this.sheetPanel(), {
       height: 300,
+      detents: [300, SheetSize.LARGE],
       showClose: false,
       backgroundColor: $r('app.color.bg_page'),
-      dragBar: false,
+      dragBar: true,
       onDisappear: () => {
         this.sheetKind = '';
       }

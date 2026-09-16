@@ -9,7 +9,9 @@ import { repoIssueOrder } from './IssuesService';
 import {
   RepoPrsPage, RepoCommitsPage, RepoReleasesPage, IssueDetailPage, PrDetailPage,
   mapRepoPrsPage, mapRepoCommitsPage, mapRepoReleasesPage, mapIssueDetail, mapPrDetail, mapPrCommits,
-  ReleaseDetailPage, mapReleaseDetail, ReactionUsersPage, mapReactionUsersPage
+  ReleaseDetailPage, mapReleaseDetail, ReactionUsersPage, mapReactionUsersPage,
+  TriageUser, TriageLabel, TriageMilestone, TriageLinkedItem, TriageProject,
+  mapTriageUsers, mapTriageLabels, mapTriageMilestones, mapTriageLinked, mapTriageProjects
 } from '../models/RepoSubModels';
 import { PrFilesPage, PrFileItem, mapPrFiles, applyRestPatch, mapFilesCursor, mapFileNode } from '../models/PrDiffModels';
 import { CommitDetailPage, mapCommitDetail } from '../models/PrDiffModels';
@@ -187,9 +189,15 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!, $after: 
     # 合并权限门：PullRequest 无 viewerCanMerge 字段（2026-09-14 运行时实测），
     # 改用 Repository.viewerPermission ∈ ADMIN/MAINTAIN/WRITE 判定
     viewerPermission
+    # 页头作者行=仓库上下文（官方口径）：owner 头像 + owner / repo #N
+    owner { avatarUrl }
+    # Merge options 页默认选中项（官方口径：仓库/账号默认合并方式，非固定 squash）
+    viewerDefaultMergeMethod
     pullRequest(number: $number) {
       id title state merged isDraft body bodyHTML createdAt mergedAt
       additions deletions
+      # 作者关联角色（页头正文卡角色胶囊：AuthorAssociation 全集）
+      authorAssociation
       author { login avatarUrl }
       headRefName baseRefName
       mergedBy { login }
@@ -197,6 +205,9 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!, $after: 
       files { totalCount }
       commits { totalCount }
       mergeable mergeStateStatus
+      # Merge options 页提交信息默认值（无 mergeMethod 参数，返回的是「默认合并方式」口径的文本）
+      viewerMergeHeadlineText
+      viewerMergeBodyText
       reviews(first: 20) {
         totalCount
         nodes { id state body bodyHTML submittedAt author { login avatarUrl } viewerDidAuthor }
@@ -221,6 +232,9 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!, $after: 
           }
         }
       }
+      labels(first: 10) { nodes { id name color } }
+      assignees(first: 10) { nodes { id login avatarUrl } }
+      milestone { id title }
       comments(first: 20, after: $after) {
         totalCount
         ${FRAG_PAGE_INFO}
@@ -365,6 +379,92 @@ mutation MergePullRequestWithMessage($prId: ID!, $method: PullRequestMergeMethod
 export function repoPrsStates(states: string[] | null): string[] | null {
   return states;
 }
+
+// ─────────────── Spec 044 元数据编排（详情页 info → EDIT 编辑器）───────────────
+
+/** 编辑器候选源：负责人（仓库可分配用户，搜索在客户端过滤） */
+const TRIAGE_ASSIGNEES_QUERY = `
+query TriageAssignees($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    assignableUsers(first: 50) { nodes { id login avatarUrl } }
+  }
+}`;
+
+/** 编辑器候选源：仓库全部标签（按名字升序，Spec 044） */
+const TRIAGE_LABELS_QUERY = `
+query TriageLabels($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    labels(first: 50, orderBy: { field: NAME, direction: ASC }) { nodes { id name color } }
+  }
+}`;
+
+/** 编辑器候选源：未关闭里程碑（Spec 044：只列 open） */
+const TRIAGE_MILESTONES_QUERY = `
+query TriageMilestones($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    milestones(first: 30, states: OPEN) { nodes { id title } }
+  }
+}`;
+
+/**
+ * 编辑器候选源：Linked items 的 Suggestions。
+ * 官方「linked items」是站内私有能力（无公开 GraphQL 关联字段/变更），
+ * 这里按「仓库内最近更新的 issue（含 PR 自身排除由客户端做）」给出建议列表。
+ */
+const TRIAGE_LINKED_QUERY = `
+query TriageLinked($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    issues(first: 20, states: [OPEN, CLOSED], orderBy: { field: UPDATED_AT, direction: DESC }) {
+      nodes { id number title state }
+    }
+  }
+}`;
+
+/** 编辑器候选源：项目（RECENT=仓库项目，USER=当前账号项目，复用 020 的 ProjectsV2 通道） */
+const TRIAGE_PROJECTS_QUERY = `
+query TriageProjects($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    projectsV2(first: 20) { nodes { id title } }
+  }
+  viewer {
+    projectsV2(first: 20) { nodes { id title } }
+  }
+}`;
+
+/** 负责人保存：整组替换（UpdatePullRequestInput.assigneeIds） */
+const SET_PR_ASSIGNEES_MUTATION = `
+mutation SetPrAssignees($prId: ID!, $ids: [ID!]!) {
+  updatePullRequest(input: { pullRequestId: $prId, assigneeIds: $ids }) { clientMutationId }
+}`;
+
+/** 里程碑保存（UpdatePullRequestInput.milestoneId） */
+const SET_PR_MILESTONE_MUTATION = `
+mutation SetPrMilestone($prId: ID!, $milestoneId: ID!) {
+  updatePullRequest(input: { pullRequestId: $prId, milestoneId: $milestoneId }) { clientMutationId }
+}`;
+
+/** 里程碑清除（不带 milestoneId 键，等价服务端清空） */
+const CLEAR_PR_MILESTONE_MUTATION = `
+mutation ClearPrMilestone($prId: ID!) {
+  updatePullRequest(input: { pullRequestId: $prId, milestoneId: null }) { clientMutationId }
+}`;
+
+/** 标签增删（labelable 对 Issue/PR 通用，差异分两次 mutation，Spec 044 元素2） */
+const ADD_LABELS_MUTATION = `
+mutation AddLabels($labelableId: ID!, $labelIds: [ID!]!) {
+  addLabelsToLabelable(input: { labelableId: $labelableId, labelIds: $labelIds }) { clientMutationId }
+}`;
+
+const REMOVE_LABELS_MUTATION = `
+mutation RemoveLabels($labelableId: ID!, $labelIds: [ID!]!) {
+  removeLabelsFromLabelable(input: { labelableId: $labelableId, labelIds: $labelIds }) { clientMutationId }
+}`;
+
+/** 项目拉入（Spec 044 元素7：只做「加入项目」，字段/状态编辑归 P2） */
+const ADD_PROJECT_ITEM_MUTATION = `
+mutation AddProjectItem($projectId: ID!, $contentId: ID!) {
+  addProjectV2ItemById(input: { projectId: $projectId, contentId: $contentId }) { item { id } }
+}`;
 
 export class RepoSubService {
   /** 仓库内 PR 列表：states/labels 服务端 + 排序（PullRequestOrder 与 IssueOrder 同构，复用 6 键映射） */
@@ -652,5 +752,82 @@ export class RepoSubService {
     }
     const variables: Record<string, Object> = { 'prId': prId, 'method': method };
     await graphql(MERGE_PULL_REQUEST_MUTATION, variables, token);
+  }
+
+  // ─────────────── Spec 044 元数据编辑器：候选拉取 ───────────────
+
+  /** 负责人候选（assignableUsers；Spec 044 元素5） */
+  static async fetchTriageAssignees(token: string, owner: string, name: string): Promise<TriageUser[]> {
+    const variables: Record<string, Object> = { 'owner': owner, 'name': name };
+    const data = await graphql(TRIAGE_ASSIGNEES_QUERY, variables, token);
+    return mapTriageUsers(data);
+  }
+
+  /** 标签候选（仓库标签全集；Spec 044 元素2） */
+  static async fetchTriageLabels(token: string, owner: string, name: string): Promise<TriageLabel[]> {
+    const variables: Record<string, Object> = { 'owner': owner, 'name': name };
+    const data = await graphql(TRIAGE_LABELS_QUERY, variables, token);
+    return mapTriageLabels(data);
+  }
+
+  /** 里程碑候选（仅 open；Spec 044 元素6） */
+  static async fetchTriageMilestones(token: string, owner: string, name: string): Promise<TriageMilestone[]> {
+    const variables: Record<string, Object> = { 'owner': owner, 'name': name };
+    const data = await graphql(TRIAGE_MILESTONES_QUERY, variables, token);
+    return mapTriageMilestones(data);
+  }
+
+  /** Linked items 建议列表（最近更新的 issue；excludeId 用于排除 PR 自身） */
+  static async fetchTriageLinked(token: string, owner: string, name: string,
+    excludeId: string): Promise<TriageLinkedItem[]> {
+    const variables: Record<string, Object> = { 'owner': owner, 'name': name };
+    const data = await graphql(TRIAGE_LINKED_QUERY, variables, token);
+    return mapTriageLinked(data, excludeId);
+  }
+
+  /** 项目候选（RECENT=仓库项目 / USER=当前账号项目） */
+  static async fetchTriageProjects(token: string, owner: string, name: string,
+    scope: string): Promise<TriageProject[]> {
+    const variables: Record<string, Object> = { 'owner': owner, 'name': name };
+    const data = await graphql(TRIAGE_PROJECTS_QUERY, variables, token);
+    return mapTriageProjects(data, scope);
+  }
+
+  // ─────────────── Spec 044 元数据编辑器：保存 ───────────────
+
+  /** 负责人保存（整组替换，官方多选语义） */
+  static async setPrAssignees(token: string, prId: string, userIds: string[]): Promise<void> {
+    const variables: Record<string, Object> = { 'prId': prId, 'ids': userIds };
+    await graphql(SET_PR_ASSIGNEES_MUTATION, variables, token);
+  }
+
+  /** 里程碑保存（milestoneId='' 即清除） */
+  static async setPrMilestone(token: string, prId: string, milestoneId: string): Promise<void> {
+    // 传 null 即「清除里程碑」：Record<string, Object> 不收 null，故用不带该键的文档分支
+    if (milestoneId === '') {
+      const clearVars: Record<string, Object> = { 'prId': prId };
+      await graphql(CLEAR_PR_MILESTONE_MUTATION, clearVars, token);
+      return;
+    }
+    const variables: Record<string, Object> = { 'prId': prId, 'milestoneId': milestoneId };
+    await graphql(SET_PR_MILESTONE_MUTATION, variables, token);
+  }
+
+  /** 标签保存：先加后删（差异推送） */
+  static async setPrLabels(token: string, prId: string, addIds: string[], removeIds: string[]): Promise<void> {
+    if (addIds.length > 0) {
+      const addVars: Record<string, Object> = { 'labelableId': prId, 'labelIds': addIds };
+      await graphql(ADD_LABELS_MUTATION, addVars, token);
+    }
+    if (removeIds.length > 0) {
+      const removeVars: Record<string, Object> = { 'labelableId': prId, 'labelIds': removeIds };
+      await graphql(REMOVE_LABELS_MUTATION, removeVars, token);
+    }
+  }
+
+  /** 项目拉入（addProjectV2ItemById） */
+  static async addPrToProject(token: string, prId: string, projectId: string): Promise<void> {
+    const variables: Record<string, Object> = { 'projectId': projectId, 'contentId': prId };
+    await graphql(ADD_PROJECT_ITEM_MUTATION, variables, token);
   }
 }

@@ -1,4 +1,10 @@
 import { OctIcon } from './OctIcon';
+import { headEllipsisByWidth } from '../utils/Format';
+
+/** bindPopup onStateChange 回调类型（与 CommentCard / PrDetail 同款自声明） */
+interface PopupState {
+  isVisible: boolean;
+}
 
 /**
  * 统一顶栏组件（Spec 067）。
@@ -25,6 +31,19 @@ export interface AppBarActionCfg {
   a11y?: Resource;
   /** 传入则绑定弹出菜单（MenuElement[] 由页面构造，闭包仍指向页面） */
   menu?: MenuElement[] | null;
+  /** 自绘弹层菜单（可上色，原生 MenuElement 无法着色）：与 menu 二选一，menu 优先 */
+  menuItems?: AppBarMenuItem[];
+}
+
+/**
+ * 自绘弹层菜单项（与评论卡/正文卡同一视觉口径）：
+ * danger=整行红（Close/Report/Block 等危险项）。
+ */
+export interface AppBarMenuItem {
+  icon: Resource;
+  label: ResourceStr;
+  onAction: () => void;
+  danger?: boolean;
 }
 
 export class AppBarAction {
@@ -35,6 +54,7 @@ export class AppBarAction {
   rotate90: boolean = false;
   a11y: Resource = $r('app.string.a11y_more');
   menu: MenuElement[] | null = null;
+  menuItems: AppBarMenuItem[] | null = null;
 
   constructor(icon: Resource, onAction: () => void, cfg?: AppBarActionCfg) {
     this.icon = icon;
@@ -45,6 +65,7 @@ export class AppBarAction {
       this.rotate90 = cfg.rotate90 ?? false;
       this.a11y = cfg.a11y ?? $r('app.string.a11y_more');
       this.menu = cfg.menu ?? null;
+      this.menuItems = cfg.menuItems ?? null;
     }
   }
 }
@@ -61,6 +82,70 @@ export struct AppBar {
   @Param actions: AppBarAction[] = [];
   /** 返回键回调，由页面传入（通常 () => this.pathStack.pop()） */
   @Param onBack: () => void = () => {};
+  /** 标题区实测可用宽度（vp，onAreaChange 回填）：按宽度裁剪头省略，保证结尾完整可见 */
+  @Local titleAvailVp: number = 0;
+  /** 自绘菜单当前展开的动作序号（-1=全部收起；原生 menu 走 bindMenu 不用本状态） */
+  @Local openActionIndex: number = -1;
+
+  /** 菜单项颜色（danger 整行红） */
+  private menuItemColor(item: AppBarMenuItem): ResourceColor {
+    return item.danger === true ? $r('app.color.danger_text') : $r('app.color.text_primary');
+  }
+
+  /** 自绘动作菜单（与评论卡/正文卡同款：半径 12 + 悬浮阴影 + 灰线分组） */
+  @Builder
+  actionMenu(items: AppBarMenuItem[]) {
+    Column() {
+      ForEach(items, (item: AppBarMenuItem, index: number) => {
+        Row({ space: 10 }) {
+          OctIcon({ res: item.icon, iconSize: 16, iconColor: this.menuItemColor(item) })
+          Text(item.label)
+            .fontSize($r('app.float.body_font_size'))
+            .fontColor(this.menuItemColor(item))
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+        }
+        .width('100%')
+        .height(40)
+        .responseRegion({ x: 0, y: -2, width: '100%', height: '110%' })
+        .padding({ left: 14, right: 14 })
+        .onClick((): void => {
+          this.openActionIndex = -1;
+          item.onAction();
+        })
+      }, (item: AppBarMenuItem, index: number) => `${index}-${item.label}`)
+    }
+    .width(230)
+    .borderRadius(12)
+    .backgroundColor($r('app.color.card_background'))
+    .shadow({ radius: 24, color: $r('app.color.shadow_floating'), offsetY: 8 })
+    .padding({ top: 6, bottom: 6 })
+  }
+
+  /** 按标题字号实测文本宽度（vp）；fontWeight 与标题渲染一致（600） */
+  private measureVp(text: string): number {
+    const ui = this.getUIContext();
+    return ui.px2vp(ui.getMeasureUtils().measureText({
+      textContent: text,
+      fontSize: $r('app.float.title_font_size'),
+      fontWeight: 600
+    }));
+  }
+
+  /**
+   * 顶栏标题：不开头省略时**原样返回**（title 可能是 `$r(...)`，字符串化会渲染成 [object Object]）；
+   * 仅头省略分支需要按字符裁剪，才做字符串化。首帧未测到宽度时退回定长裁剪。
+   */
+  private displayTitle(): ResourceStr {
+    if (!this.titleHeadEllipsis) {
+      return this.title;
+    }
+    const raw = `${this.title}`;
+    if (this.titleAvailVp <= 0) {
+      return headEllipsis(raw);
+    }
+    return headEllipsisByWidth(raw, this.titleAvailVp, (t: string): number => this.measureVp(t));
+  }
 
   build() {
     Row() {
@@ -86,7 +171,7 @@ export struct AppBar {
               .textOverflow({ overflow: TextOverflow.Ellipsis })
           }
           if (this.title !== '') {
-            Text(this.titleHeadEllipsis ? headEllipsis(`${this.title}`) : this.title)
+            Text(this.displayTitle())
               .fontSize($r('app.float.title_font_size'))
               .fontWeight(600)
               .fontColor($r('app.color.text_primary'))
@@ -104,6 +189,9 @@ export struct AppBar {
         .alignItems(HorizontalAlign.Start)
         .layoutWeight(1)
         .padding({ left: this.showBack ? 0 : 12 })
+        .onAreaChange((_oldArea: Area, newArea: Area) => {
+          this.titleAvailVp = Number(newArea.width);
+        })
       } else {
         Blank()
       }
@@ -120,6 +208,30 @@ export struct AppBar {
           .bindMenu(action.menu)
           .onClick(() => {
             action.onAction();
+          })
+        } else if (action.menuItems !== null) {
+          // 自绘弹层菜单：可上色（danger 红），点开与收起都在本组件内闭环
+          Stack() {
+            OctIcon({ res: action.icon, iconSize: action.iconSize, iconColor: action.iconColor })
+              .rotate({ angle: action.rotate90 ? 90 : 0 })
+          }
+          .width(44)
+          .height(44)
+          .accessibilityDescription(action.a11y)
+          .focusable(true)
+          .onClick(() => {
+            this.openActionIndex = this.openActionIndex === index ? -1 : index;
+          })
+          .bindPopup(this.openActionIndex === index, {
+            builder: (): void => this.actionMenu(action.menuItems ?? []),
+            placement: Placement.BottomRight,
+            enableArrow: false,
+            mask: true,
+            onStateChange: (e: PopupState): void => {
+              if (!e.isVisible) {
+                this.openActionIndex = -1;
+              }
+            }
           })
         } else {
           Stack() {

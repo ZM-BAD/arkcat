@@ -3,7 +3,8 @@
  * 输出插入后文本与光标位置（测试 9 断言用）。ArkTS 严格类型，无 DOM 依赖。
  */
 
-export type MarkdownToolKind = 'bold' | 'italic' | 'code' | 'quote' | 'link' | 'strike' | 'task';
+export type MarkdownToolKind = 'bold' | 'italic' | 'code' | 'quote' | 'link' | 'strike' | 'task'
+  | 'image' | 'mention' | 'list' | 'heading' | 'codeblock';
 
 export interface MarkdownInsert {
   text: string;
@@ -61,6 +62,72 @@ export class MarkdownEdit {
     return { text: result, selStart: selEnd + 3, selEnd: selEnd + 3 };
   }
 
+  /** 图片：选中 → ![alt]()，光标进入 ()；未选中 → ![]() */
+  static image(text: string, selStart: number, selEnd: number): MarkdownInsert {
+    if (selStart > selEnd) {
+      const t = selStart;
+      selStart = selEnd;
+      selEnd = t;
+    }
+    const selected = text.substring(selStart, selEnd);
+    const result = text.substring(0, selStart) + '![' + selected + ']()' + text.substring(selEnd);
+    const caret = selected === '' ? selStart + 4 : selEnd + 4;
+    return { text: result, selStart: caret, selEnd: caret };
+  }
+
+  /** 提及：光标处插入 @（官方工具栏 @ 键） */
+  static mention(text: string, selStart: number, selEnd: number): MarkdownInsert {
+    if (selStart > selEnd) {
+      const t = selStart;
+      selStart = selEnd;
+      selEnd = t;
+    }
+    const result = text.substring(0, selStart) + '@' + text.substring(selEnd);
+    return { text: result, selStart: selStart + 1, selEnd: selStart + 1 };
+  }
+
+  /**
+   * 代码块：选区多行 → 每行前加 4 空格缩进包裹的围栏；未选中 → 插入空围栏并把光标放进中间。
+   * （官方工具栏 { } 键；用 \`\`\` 围栏 + 语言位留空）
+   */
+  static codeBlock(text: string, selStart: number, selEnd: number): MarkdownInsert {
+    if (selStart > selEnd) {
+      const t = selStart;
+      selStart = selEnd;
+      selEnd = t;
+    }
+    const fence = '```\n';
+    const tail = '\n```';
+    const selected = text.substring(selStart, selEnd);
+    const result = text.substring(0, selStart) + fence + selected + tail + text.substring(selEnd);
+    if (selected === '') {
+      const caret = selStart + fence.length;
+      return { text: result, selStart: caret, selEnd: caret };
+    }
+    return { text: result, selStart: selStart, selEnd: selEnd + fence.length + tail.length };
+  }
+
+  /**
+   * 回复（官方工具栏最后一键 reply）：把「被回复的内容」（PR/Issue 正文，或引用的评论正文）
+   * 按 `> line` 引用进光标处，尾随空行方便继续输入；编辑器为空时即为整段引用。
+   * source 为空（无正文/编辑既有评论）时不改动文本。
+   */
+  static reply(text: string, selStart: number, selEnd: number, source: string): MarkdownInsert {
+    if (selStart > selEnd) {
+      const t = selStart;
+      selStart = selEnd;
+      selEnd = t;
+    }
+    if (source.trim() === '') {
+      return { text: text, selStart: selStart, selEnd: selEnd };
+    }
+    const quoted = source.split('\n').map((l: string): string => `> ${l}`).join('\n');
+    const block = `${quoted}\n\n`;
+    const result = text.substring(0, selStart) + block + text.substring(selEnd);
+    const caret = selStart + block.length;
+    return { text: result, selStart: caret, selEnd: caret };
+  }
+
   /** 按工具 kind 应用；kind 未匹配返回原样 */
   static apply(text: string, selStart: number, selEnd: number, kind: MarkdownToolKind): MarkdownInsert {
     switch (kind) {
@@ -78,6 +145,16 @@ export class MarkdownEdit {
         return MarkdownEdit.prefixLines(text, selStart, selEnd, '- [ ] ');
       case 'link':
         return MarkdownEdit.link(text, selStart, selEnd);
+      case 'image':
+        return MarkdownEdit.image(text, selStart, selEnd);
+      case 'mention':
+        return MarkdownEdit.mention(text, selStart, selEnd);
+      case 'list':
+        return MarkdownEdit.prefixLines(text, selStart, selEnd, '- ');
+      case 'heading':
+        return MarkdownEdit.prefixLines(text, selStart, selEnd, '# ');
+      case 'codeblock':
+        return MarkdownEdit.codeBlock(text, selStart, selEnd);
     }
     return { text: text, selStart: selStart, selEnd: selEnd };
   }

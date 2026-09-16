@@ -103,7 +103,7 @@ export function buildSetOverflowJs(collapsed: boolean): string {
   return 'document.body.style.overflow = "' + (collapsed ? 'hidden' : 'visible') + '";';
 }
 
-/** 测量正文高度（px；回传给 ArkTS 后折算 vp 设置组件高） */
+/** 测量正文高度（CSS px，与 vp 1:1；回传给 ArkTS 直接设组件高） */
 export function buildMeasureJs(): string {
   return 'document.body.scrollHeight';
 }

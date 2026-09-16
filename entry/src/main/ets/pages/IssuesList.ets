@@ -766,6 +766,7 @@ export struct IssuesListView {
     .backgroundColor($r('app.color.bg_page'))
     .bindSheet(this.sheetKind !== '', this.sortSheet(), {
       height: this.sheetKind === 'sort' ? 620 : 560,
+      detents: [this.sheetKind === 'sort' ? 620 : 560, SheetSize.LARGE],
       backgroundColor: $r('app.color.bg_page'),
       // 关闭钮自绘，避免默认 ✕ 重叠（全库 bindSheet 口径）
       showClose: false,

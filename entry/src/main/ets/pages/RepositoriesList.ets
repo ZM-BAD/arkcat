@@ -428,6 +428,7 @@ export struct RepositoriesListView {
     .bindSheet(this.sheetKind !== '', this.overlaySheet(), {
       // Sort 面板 8 行 + 3 条分隔带需更高；Language 面板长列表固定 540
       height: this.sheetKind === 'sort' ? 560 : 540,
+      detents: [this.sheetKind === 'sort' ? 560 : 540, SheetSize.LARGE],
       backgroundColor: $r('app.color.card_background'),
       // 关闭钮与标题行均自绘，避免默认 ✕ 与自绘按钮重叠
       showClose: false,

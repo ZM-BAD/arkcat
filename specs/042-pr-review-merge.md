@@ -20,8 +20,9 @@ PrDetail 页面结构：
    - 每次点击行号行尾（评论图标）弹出：评论 thread（041 输入面板），点击 Comment 即可提交 thread
 2. Review 状态：Approve / Request changes / Comment 三态按钮组
    - 汇总输入框（可选 body）→ Submit
-3. Status 卡：mergeable（MERGEABLE / CONFLICTING）+ 合并方式
-   - Merge 下拉：SQUASH · MERGE · REBASE → 确认
+3. Status 卡：mergeable（MERGEABLE / CONFLICTING）+ Merge 分段按钮（主段 MERGE + 右段 ▾）
+   - 两段均打开 **Merge options 底部整页**：`←` + 标题、Merge method（Create a merge commit / Squash and merge / Rebase and merge，各带说明与官方圆形单选）、全幅灰带分组、提交信息（`Commit message · Default|Custom` + EDIT，未编辑态显示粗体 headline + 等宽 body）→ MERGE 执行
+   - 默认选中与默认提交信息取自服务端：`Repository.viewerDefaultMergeMethod`、`PullRequest.viewerMergeHeadlineText/BodyText`（后者无 `mergeMethod` 参数，只按默认方式口径返回；切换方式时按官方口径本地推导：squash/rebase=PR 标题、merge=固定句式）
 4. Conversation：已提交审阅卡 + ReviewThreads（Resolved 标记）
 
 ---
@@ -37,13 +38,14 @@ PrDetail 页面结构：
 | 5 | 汇总面板 | 提交审阅 | 三态（APPROVE / REQUEST_CHANGES / COMMENT）+ body → `submitPullRequestReview` | ✅ | 见四 | 官方「Review changes」面板样式 |
 | 6 | 汇总面板 | 编辑已提交审阅 | 需修改 body 时 `updatePullRequestReview` | ✅ | 见四 | 仅本人未过期审阅 |
 | 7 | Thread | 解析/未解析 | `resolveReviewThread` / `unresolveReviewThread` + 状态标签 | ✅ | 见四 | 官方标记「已解决」 |
-| 8 | Status 卡 | Merge 按钮 | viewerCanMerge 时启用；下拉选择 mergeMethod | ✅ | `mergePullRequest(input: { mergeMethod })` | 官方默认 squash |
-| 9 | Status 卡 | 冲突状态 | mergeable 字段：CONFLICTING → 红色提示「存在冲突，请在当地解决」 | ✅ | PR.mergeable / mergeStateStatus | 官方文案对齐；冲突时禁用合并 |
-| 10 | Merge | 失败原因提示 | merge 失败（合并队列/skip CI/过时检查）显示 mergeStateStatus 具体原因并禁用 | ⚠️ | mergeStateStatus（BEHIND/DIRTY/UNKNOWN…） | 枚举本地映射；未知值降级通用文案 |
-| 11 | Conversation | 已合并后状态 | merge 成功后 merged badge/时间刷新，输入区禁用 | ✅ | —— | 局部刷新即可 |
-| 12 | 页面 | 合并队列/排队状态 | merge queue 条目加入排队（官方 web 支持） | ⚠️ | mergeQueue 相关字段勘探 | 移动端仅展示，不做操作 |
+| 8 | Status 卡 | Merge 按钮 | 权限门通过时启用；两段（主段/▾）均打开 Merge options 页 | ✅ | `mergePullRequest(input: { mergeMethod })` | 默认选中 = `viewerDefaultMergeMethod`（非固定 squash） |
+| 9 | Merge options | 方法单选 + 提交信息 | 三方法单选（含 commit 数说明）、`· Default/Custom` + EDIT、MERGE 执行 | ✅ | `viewerDefaultMergeMethod` / `viewerMergeHeadlineText` / `viewerMergeBodyText` | 切换方式时未编辑态才重算默认信息，避免覆盖用户改动 |
+| 10 | Status 卡 | 冲突状态 | mergeable 字段：CONFLICTING → 红色提示「存在冲突，请在当地解决」 | ✅ | PR.mergeable / mergeStateStatus | 官方文案对齐；冲突时禁用合并 |
+| 11 | Merge | 失败原因提示 | merge 失败（合并队列/skip CI/过时检查）显示 mergeStateStatus 具体原因并禁用 | ⚠️ | mergeStateStatus（BEHIND/DIRTY/UNKNOWN…） | 枚举本地映射；未知值降级通用文案 |
+| 12 | Conversation | 已合并后状态 | merge 成功后 merged badge/时间刷新，输入区禁用 | ✅ | —— | 局部刷新即可 |
+| 13 | 页面 | 合并队列/排队状态 | merge queue 条目加入排队（官方 web 支持） | ⚠️ | mergeQueue 相关字段勘探 | 移动端仅展示，不做操作 |
 
-> 可行性: 10/12 可行（其余 2 项为 ⚠️：失败原因枚举映射、合并队列展示）
+> 可行性: 11/13 可行（其余 2 项为 ⚠️：失败原因枚举映射、合并队列展示）
 
 ---
 
@@ -96,9 +98,18 @@ mutation Resolve { resolveReviewThread(input: { threadId: $tid }) { thread { isR
 mutation Unresolve { unresolveReviewThread(input: { threadId: $tid }) { thread { isResolved } } }
 
 # 合并
-mutation Merge($prId: ID!, $method: MergeMethod!) {
+mutation Merge($prId: ID!, $method: PullRequestMergeMethod!) {
   mergePullRequest(input: { pullRequestId: $prId, mergeMethod: $method }) {
     pullRequest { merged state mergedAt }
+  }
+}
+
+# Merge options 页默认值（详情查询内）
+repository {
+  viewerDefaultMergeMethod        # Merge/Squash/Rebase（默认选中项）
+  pullRequest {
+    viewerMergeHeadlineText       # 默认提交信息标题（按默认方式口径，无 mergeMethod 参数）
+    viewerMergeBodyText           # 默认提交信息正文
   }
 }
 ```

@@ -218,6 +218,10 @@ ArkCat 渲染档位（官方 App 实测 + 已走查定案，**新增图标必须
 > 历史注：closed PR 曾按 2026-09-05 review B9 定为「灰色 + x-circle」，与官方不符；
 > 2026-09-14 以官方为准改为「红色 + `git-pull-request-closed`」。
 > 出处：StateLabel（组件目录 <https://primer.style/product/components/>）、octicons（<https://github.com/primer/octicons>）。
+>
+> 详情页页头（`pages/PrDetail.ets`，2026-09-16 官方对齐）以**填充胶囊变体**渲染同一映射：
+> 白字白图标、半径 12、内距 8/3；底色 open=`success_btn_bg`、merged=`merged_badge_bg`、
+> closed=`badge_red`、draft=`text_secondary`。列表卡片仍用「左缘裸图标」变体，两处共用本表字形/语义色。
 
 ### 10.2 IssueLabel（标签胶囊）
 

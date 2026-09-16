@@ -3,7 +3,7 @@
 > BFS Level: 3
 > 关联截图: 官方 Issue 右侧边栏「Labels/Assignees/Milestones/Projects」展开面板；Issue timeline 变更事件
 > 上游 Spec: 030（IssueDetail）、031（PrDetail）、020（Projects）
-> 状态: draft（2026-09-02 规划；与 043 可并行，两者只在详情页「更多」入口交汇）
+> 状态: ✅ implemented（2026-09-16，PrDetail info 页五段 EDIT 全部落地：Assignees/Labels/Milestone/Projects 走真实 GraphQL 读写，Linked items 因站内能力无公开 API 只做选人 UI + 「仅网页端」提示；Issue 侧入口沿用同一组件待接）
 
 ---
 
@@ -28,6 +28,12 @@ IssueDetail / PrDetail 页面结构：
    - Milestone: 开/关里程碑列表（单选）
    - Projects: 项目项添加/状态（简化：项目下拉 + 状态子菜单）
 4. 保存即 mutation，底部 toast 反馈 + timeline 事件刷新
+
+**落地形态（2026-09-16，官方编辑器截图对齐）**：编辑器是 info 底部整页里的第二层（点 EDIT 进入、`←` 返回列表；Assignees 用 `✕` 直接关整页），
+统一骨架 = 白色头块（`✕/←` + 标题 + 右侧 SAVE）→ 搜索行（Milestone 无）→ 白段「Selected」→ 8vp 灰带 → 白段候选区 → 余下露灰底；
+行形态统一（`EditorRow`）：头像 / 彩色标签胶囊 / issue 状态字形 三选一做行首，候选行尾蓝色 ⊕，已选行尾灰底白 ✕。
+搜索为**客户端过滤**（`filterTriageByKeyword`，候选一次取 50 条）；SAVE 置灰判据 = 选择集与打开时不一致（`diffSelection` 做标签差异推送、`singlePickId` 做里程碑单选/清除）。
+候选源：`assignableUsers(first:50)` / `labels(first:50, NAME ASC)` / `milestones(first:30, states:OPEN)` / `issues(最近更新 20，排除 PR 自身)` / `repository|viewer.projectsV2(first:20)`（RECENT/USER 双页签）。
 
 ---
 

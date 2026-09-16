@@ -1349,6 +1349,10 @@
       "value": "None requested"
     },
     {
+      "name": "pr_request_reviews",
+      "value": "Request reviews"
+    },
+    {
       "name": "pr_all_checks_passed",
       "value": "All checks have passed"
     },
@@ -1397,14 +1401,6 @@
       "value": "Add a comment..."
     },
     {
-      "name": "pr_comment_sent",
-      "value": "Comment posted"
-    },
-    {
-      "name": "pr_comment_failed",
-      "value": "Failed to post comment"
-    },
-    {
       "name": "a11y_expand",
       "value": "Expand"
     },
@@ -1421,6 +1417,10 @@
       "value": "COMMENT"
     },
     {
+      "name": "comment_placeholder",
+      "value": "Leave a comment"
+    },
+    {
       "name": "comment_publish",
       "value": "Publish"
     },
@@ -1429,8 +1429,8 @@
       "value": "Preview"
     },
     {
-      "name": "comment_write",
-      "value": "Write"
+      "name": "comment_tab_edit",
+      "value": "Edit"
     },
     {
       "name": "comment_edit_title",
@@ -2345,8 +2345,36 @@
       "value": "Merging can be performed automatically"
     },
     {
-      "name": "pr_merge_commit_default",
-      "value": "Commit message · Default"
+      "name": "pr_merge_options_title",
+      "value": "Merge options"
+    },
+    {
+      "name": "pr_merge_method_label",
+      "value": "Merge method"
+    },
+    {
+      "name": "pr_merge_desc_merge",
+      "value": "All commits from this branch will be added to the base branch via a merge commit."
+    },
+    {
+      "name": "pr_merge_desc_squash_one",
+      "value": "The 1 commit from this branch will be added to the base branch."
+    },
+    {
+      "name": "pr_merge_desc_squash_many",
+      "value": "The %1$s commits from this branch will be added to the base branch."
+    },
+    {
+      "name": "pr_merge_desc_rebase_one",
+      "value": "The 1 commit from this branch will be rebased and added to the base branch."
+    },
+    {
+      "name": "pr_merge_desc_rebase_many",
+      "value": "The %1$s commits from this branch will be rebased and added to the base branch."
+    },
+    {
+      "name": "pr_merge_commit_custom",
+      "value": "Commit message · Custom"
     },
     {
       "name": "pr_merge_edit",
@@ -2361,12 +2389,172 @@
       "value": "Quote reply"
     },
     {
+      "name": "menu_edit",
+      "value": "Edit"
+    },
+    {
+      "name": "menu_report",
+      "value": "Report"
+    },
+    {
+      "name": "menu_block",
+      "value": "Block"
+    },
+    {
+      "name": "menu_change_base",
+      "value": "Change Base Branch"
+    },
+    {
+      "name": "menu_unsubscribe",
+      "value": "Unsubscribe"
+    },
+    {
+      "name": "menu_lock_conversation",
+      "value": "Lock Conversation"
+    },
+    {
+      "name": "menu_close_pr",
+      "value": "Close Pull Request"
+    },
+    {
+      "name": "author_assoc_owner",
+      "value": "Owner"
+    },
+    {
+      "name": "author_assoc_member",
+      "value": "Member"
+    },
+    {
+      "name": "author_assoc_collaborator",
+      "value": "Collaborator"
+    },
+    {
+      "name": "author_assoc_contributor",
+      "value": "Contributor"
+    },
+    {
+      "name": "author_assoc_first_time",
+      "value": "First-time contributor"
+    },
+    {
+      "name": "author_assoc_first_timer",
+      "value": "First-timer"
+    },
+    {
       "name": "repo_prs_search_pr",
       "value": "Search Pull Request"
     },
     {
       "name": "work_pr_checks_expected",
       "value": "Checks expected"
+    },
+    {
+      "name": "pr_meta_edit",
+      "value": "Edit"
+    },
+    {
+      "name": "pr_meta_labels",
+      "value": "Labels"
+    },
+    {
+      "name": "pr_meta_assignees",
+      "value": "Assignees"
+    },
+    {
+      "name": "pr_meta_milestone",
+      "value": "Milestone"
+    },
+    {
+      "name": "pr_meta_no_labels",
+      "value": "None yet"
+    },
+    {
+      "name": "pr_meta_no_assignees",
+      "value": "No assignees"
+    },
+    {
+      "name": "pr_meta_no_milestone",
+      "value": "No milestone selected"
+    },
+    {
+      "name": "pr_meta_linked",
+      "value": "Linked items"
+    },
+    {
+      "name": "pr_meta_no_linked",
+      "value": "No linked items"
+    },
+    {
+      "name": "pr_meta_projects",
+      "value": "Projects"
+    },
+    {
+      "name": "pr_meta_no_projects",
+      "value": "No projects selected"
+    },
+    {
+      "name": "meta_editor_save",
+      "value": "SAVE"
+    },
+    {
+      "name": "meta_editor_selected",
+      "value": "Selected"
+    },
+    {
+      "name": "meta_editor_search",
+      "value": "Search"
+    },
+    {
+      "name": "meta_editor_select_assignees",
+      "value": "Select Assignees"
+    },
+    {
+      "name": "meta_editor_select_labels",
+      "value": "Select Labels"
+    },
+    {
+      "name": "meta_editor_select_milestone",
+      "value": "Select a Milestone"
+    },
+    {
+      "name": "meta_editor_select_linked",
+      "value": "Suggestions"
+    },
+    {
+      "name": "meta_editor_select_projects",
+      "value": "Select Projects"
+    },
+    {
+      "name": "meta_editor_no_results",
+      "value": "No results"
+    },
+    {
+      "name": "meta_editor_tab_recent",
+      "value": "RECENT"
+    },
+    {
+      "name": "meta_editor_tab_user",
+      "value": "USER"
+    },
+    {
+      "name": "meta_editor_saved",
+      "value": "Updated"
+    },
+    {
+      "name": "meta_editor_unsupported",
+      "value": "This action is only available on the web"
+    },
+    {
+      "name": "pr_files_finish_review",
+      "value": "Finish your review"
+    },
+    {
+      "name": "pr_files_jump",
+      "value": "Jump to file"
+    },
+    {
+      "name": "a11y_info",
+      "value": "Info"
     }
   ]
 }

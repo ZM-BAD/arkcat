@@ -499,6 +499,7 @@ export struct InboxView {
     .backgroundColor($r('app.color.bg_page'))
     .bindSheet(this.sheetKind !== '', this.overlaySheet(), {
       height: 600,
+      detents: [600, SheetSize.LARGE],
       backgroundColor: $r('app.color.card_background'),
       // 关闭钮与标题行均自绘，避免默认 ✕ 与自绘按钮重叠
       showClose: false,
