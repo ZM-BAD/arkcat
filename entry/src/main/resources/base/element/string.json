@@ -33,26 +33,6 @@
       "value": "Issues"
     },
     {
-      "name": "token_setup_title",
-      "value": "Set up GitHub Token"
-    },
-    {
-      "name": "token_setup_desc",
-      "value": "ArkCat connects directly to the GitHub API. A Personal Access Token (read:user, repo, notifications) is required."
-    },
-    {
-      "name": "token_input_placeholder",
-      "value": "Paste your ghp_ token"
-    },
-    {
-      "name": "token_save",
-      "value": "Save & Continue"
-    },
-    {
-      "name": "token_error_empty",
-      "value": "Token cannot be empty"
-    },
-    {
       "name": "file_dir_entry_count",
       "value": "Directory has %1$s entries"
     },
@@ -78,19 +58,11 @@
     },
     {
       "name": "login_choice_desc",
-      "value": "ArkCat connects directly to the GitHub API. Sign in with GitHub, or paste a personal access token."
+      "value": "ArkCat connects directly to the GitHub API. Sign in with your GitHub account to continue."
     },
     {
       "name": "login_oauth_button",
       "value": "Sign in with GitHub"
-    },
-    {
-      "name": "login_oauth_hint",
-      "value": "Recommended · No need to create a token manually"
-    },
-    {
-      "name": "login_pat_button",
-      "value": "Use a personal access token"
     },
     {
       "name": "oauth_wait_title",

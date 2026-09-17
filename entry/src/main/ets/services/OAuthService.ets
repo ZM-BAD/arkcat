@@ -2,7 +2,7 @@
  * GitHub OAuth Device Flow 服务（Spec 057）。
  *
  * 流程三步：device/code 取设备码 → 轮询 access_token（slow_down 后 interval += 5s）→
- * 调用方用 /user 实测 token 后经 AccountStore 落库（与 PAT 保存前实测口径一致，review A13）。
+ * 调用方用 /user 实测 token 后经 AccountStore 落库（无效 token 不落库）。
  * 纯端侧架构：全程只携带公开 client_id，无 client_secret（Device Flow 无需）。
  *
  * 状态机解析（parsePollResponse）为纯函数，与 HTTP I/O 分离，供 ohosTest 五态单测。

@@ -48,7 +48,7 @@
 
 - [ ] 发布证书 + 发布 Profile（AGC 生成；调试证书不可上架）——发布证书已就位（`~/workstation/harmonyos_configs/arkcat-release.{p12,cer}`，别名 `arkcat-release`，2029-09-08 到期）；**发布 Profile（`.p7b`）未落位，`build-profile.json5` 目前只挂调试签名**
 - [ ] 正式签名 HAP
-- [ ] 审核测试说明：写明登录方式（**OAuth Device Flow 为主路径**，PAT 粘贴为兼容路径）与配置步骤
+- [ ] 审核测试说明：写明登录方式（**OAuth Device Flow**）与配置步骤
 - [ ] 上架前自检：AGC 云测试 / DevEco Testing 预检 / 邀请测试版本（约 3 小时审核通道）
 
 ## 5. 文案红线（商店描述）

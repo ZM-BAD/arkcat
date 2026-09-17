@@ -67,7 +67,7 @@
 | 054 | [repo-contributors-watchers.md](054-repo-contributors-watchers.md) | 仓库 Contributors / Watchers 列表 | Level 3 | implemented |
 | 055 | [repo-license.md](055-repo-license.md) | 仓库 License 正文页 | Level 3 | implemented |
 | 056 | [explore-page.md](056-explore-page.md) | Explore 官方化（Discover 入口 + Trending/Awesome + Activity） | Level 1 | implemented |
-| 057 | [oauth-login.md](057-oauth-login.md) | OAuth 登录（Device Flow，与 PAT 并存） | Level 0 | implemented |
+| 057 | [oauth-login.md](057-oauth-login.md) | OAuth 登录（Device Flow） | Level 0 | implemented |
 | 058 | [copilot-ui.md](058-copilot-ui.md) | Copilot UI 架子（已被 059 取代：mock 换真实 API） | Level 1 | deprecated |
 | 059 | [copilot-chat.md](059-copilot-chat.md) | Copilot 真实对话（已被 060 移除：上架合规，Copilot 三关无解） | Level 1 | deprecated |
 | 060 | [profile-tab-remove-copilot.md](060-profile-tab-remove-copilot.md) | 底栏结构调整（tab4 = 我的主页 Tab，图标为账号头像）+ Copilot 移除 | Level 1 | approved |

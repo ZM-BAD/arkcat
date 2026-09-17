@@ -353,7 +353,7 @@ export class WorkService {
     return mapWorkOrgsPage(data);
   }
 
-  /** viewer login（任何 scope 的 PAT 均可） */
+  /** viewer login（任何有效 token 均可） */
   static async fetchViewerLogin(token: string): Promise<string> {
     const data = await graphql(VIEWER_LOGIN_QUERY, {}, token);
     const viewer = Json.obj(data, 'viewer') ?? ({} as JsonMap);

@@ -15,7 +15,7 @@
 | 语言 / 构建 | ArkTS / ArkUI；hvigor（DevEco Studio 内置，CLI 经 `devecocli` 调用） |
 | 测试框架 | Hypium（仪器 / ohosTest）+ node:test（宿主纯函数单测） |
 | 架构 | 纯端侧直连 GitHub GraphQL API v4（REST v3 兜底），无 BFF/后端 |
-| 认证 | GitHub OAuth Device Flow（主路径）+ Personal Access Token（兼容路径），均本地加密存储 |
+| 认证 | GitHub OAuth Device Flow，token 本地加密存储 |
 
 ---
 

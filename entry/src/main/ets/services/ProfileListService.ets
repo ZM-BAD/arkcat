@@ -3,7 +3,7 @@
  * 组织主页、通用仓库列表（用户/组织）。
  *
  * 权限策略：Organizations(Organization 类型)的 GraphQL 字段要求 read:org scope，
- * 而项目 PAT 仅 repo scope——组织数据一律走 REST（公开字段无需额外 scope）：
+ * 组织列表/主页以 REST 为主（公开字段无需额外 scope）：
  * 组织列表 = /users/{login}/orgs；组织主页 = /orgs/{login} + /repos/{login}/.github/readme；
  * 组织仓库列表 = GraphQL 优先（有权 token 享受完整筛选/分页），失败降级 REST 一页 100 +
  * 客户端语言/排序。Pinned（仅 GraphQL 供给）失败时清空隐藏。

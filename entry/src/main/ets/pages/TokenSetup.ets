@@ -1,7 +1,6 @@
 /**
- * Token 设置页：首次启动或未配置 Token 时展示。
- * Spec 057：OAuth Device Flow 主路径 + PAT 粘贴兼容路径（两路径均在本 Spec 范围内）。
- * 登录方式二选一：GitHub 登录（浏览器授权，无手动 token）/ PAT 粘贴（兼容保留）。
+ * 登录页：首次启动未配置账号时展示；Accounts 添加账号以 embedded 形式复用。
+ * Spec 057：OAuth Device Flow 登录——登录页发起授权，等待页展示设备码并轮询。
  */
 import { common } from '@kit.AbilityKit';
 import { pasteboard } from '@kit.BasicServicesKit';
@@ -16,15 +15,11 @@ import { resText } from '../utils/I18n';
 export struct TokenSetup {
   /** onSaved(token, login)：登录成功后上抛（登录落地页/添加账号双场景共用） */
   @Event onSaved: (token: string, login: string) => void = (token: string, login: string) => {};
-  /** 视图态：'choice'=登录方式二选一 / 'pat'=PAT 表单 / 'oauth'=浏览器授权等待页 */
+  /** 视图态：'choice'=登录引导页 / 'oauth'=浏览器授权等待页 */
   /** 作为 NavDestination（添加账号场景）嵌入时：pageBar 返回走 onEmbeddedPop；落地页时内部视图切换 */
   @Param embedded: boolean = false;
   @Event onEmbeddedPop: () => void = () => {};
   @Local view: string = 'choice';
-  // ---- PAT（兼容路径，行为零改动）----
-  @Local token: string = '';
-  @Local error: string = '';
-  @Local saving: boolean = false;
   // ---- OAuth（Spec 057）----
   @Local oauthInfo: OAuthDeviceInfo | null = null;
   @Local oauthError: string = '';
@@ -39,8 +34,6 @@ export struct TokenSetup {
     Column() {
       if (this.view === 'choice') {
         this.choiceView()
-      } else if (this.view === 'pat') {
-        this.patView()
       } else {
         this.oauthView()
       }
@@ -50,13 +43,13 @@ export struct TokenSetup {
     .backgroundColor($r('app.color.bg_page'))
   }
 
-  /** 登录方式二选一：OAuth 主按钮（蓝底）+ PAT 文字次入口 */
+  /** 登录引导页：logo + 说明 + OAuth 主按钮 */
   @Builder
   choiceView() {
     Column({ space: 16 }) {
       Blank().height(80)
 
-      // ArkCat logo（与桌面图标同源的 foreground.png），替换原 🐙 emoji
+      // ArkCat logo（与桌面图标同源的 foreground.png）
       Image($r('app.media.foreground'))
         .width(96)
         .height(96)
@@ -81,71 +74,12 @@ export struct TokenSetup {
           this.startOAuth();
         })
 
-      Text($r('app.string.login_oauth_hint'))
-        .fontSize($r('app.float.caption_font_size'))
-        .fontColor($r('app.color.text_secondary'))
-
-      Text($r('app.string.login_pat_button'))
-        .fontSize($r('app.float.body_font_size'))
-        .fontColor($r('app.color.link_blue'))
-        .padding({ left: 16, right: 16, top: 10, bottom: 10 })
-        .onClick(() => {
-          this.view = 'pat';
-        })
-
       if (this.oauthError !== '') {
         Text(this.oauthError)
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.badge_red'))
           .padding({ left: 24, right: 24 })
       }
-    }
-    .width('100%')
-  }
-
-  /** PAT 折叠表单：兼容路径，行为原样保留（输入 + 保存前实测 + 错误文案） */
-  @Builder
-  patView() {
-    Column({ space: 16 }) {
-      this.pageBar($r('app.string.token_setup_title'), () => {
-        if (this.embedded) {
-          this.onEmbeddedPop();
-        } else {
-          this.view = 'choice';
-        }
-      })
-
-      Blank().height(40)
-
-      Text($r('app.string.token_setup_desc'))
-        .fontSize($r('app.float.body_font_size'))
-        .fontColor($r('app.color.text_secondary'))
-        .textAlign(TextAlign.Center)
-        .padding({ left: 24, right: 24 })
-
-      TextInput({ placeholder: $r('app.string.token_input_placeholder'), text: this.token })
-        .type(InputType.Password)
-        .width('86%')
-        .height($r('app.float.button_height'))
-        .onChange((value: string) => {
-          this.token = value;
-          this.error = '';
-        })
-
-      if (this.error !== '') {
-        Text(this.error)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.badge_red'))
-      }
-
-      Button($r('app.string.token_save'))
-        .width('86%')
-        .height($r('app.float.button_height'))
-        .backgroundColor($r('app.color.link_blue'))
-        .enabled(this.token.trim() !== '' && !this.saving)
-        .onClick(() => {
-          this.saveToken();
-        })
     }
     .width('100%')
   }
@@ -271,7 +205,7 @@ export struct TokenSetup {
       this.openBrowser(info.verificationUri);
       this.startPolling(info);
     } catch (e) {
-      // 申请失败停留选择页；网络失败友好文案（review A14）
+      // 申请失败停留登录页；网络失败友好文案
       this.polling = false;
       this.oauthError = friendlyError(this.getUIContext(), e as Error);
     }
@@ -309,7 +243,7 @@ export struct TokenSetup {
     }
   }
 
-  /** token 落库前实测（与 PAT 保存口径一致）；通过后触发 onSaved 进主界面 */
+  /** token 落库前实测（无效 token 不落库）；通过后触发 onSaved 进主界面 */
   private async finishLogin(token: string): Promise<void> {
     try {
       const viewer = await HomeService.fetchViewerBasic(token);
@@ -387,34 +321,7 @@ export struct TokenSetup {
     this.getUIContext().getPromptAction().showToast({ message: $r('app.string.oauth_code_copied') });
   }
 
-  private async saveToken(): Promise<void> {
-    const trimmed = this.token.trim();
-    if (trimmed === '') {
-      this.error = this.stringOf($r('app.string.token_error_empty'));
-      return;
-    }
-    this.saving = true;
-    try {
-      // 保存前实测 Token（review A13：无效 token 存下后四 Tab 全 401 且无引导）
-      const viewer = await HomeService.fetchViewerBasic(trimmed);
-      const result = await this.persistAccount(viewer.login, trimmed, viewer.name);
-      if (result === AddAccountResult.LIMIT) {
-        this.error = this.stringOf($r('app.string.accounts_limit_hint'));
-        return;
-      }
-      if (result === AddAccountResult.DUPLICATE) {
-        this.getUIContext().getPromptAction().showToast({ message: $r('app.string.accounts_duplicate_hint') });
-      }
-      this.onSaved(trimmed, viewer.login);
-    } catch (e) {
-      // 401/403 才是 token 无效；网络失败友好区分，不误导用户改 token（复核修正）
-      this.error = friendlyError(this.getUIContext(), e as Error);
-    } finally {
-      this.saving = false;
-    }
-  }
-
-  /** 写入账号存储（查重/上限反馈），供 PAT 与 OAuth 两条路径共用 */
+  /** 写入账号存储（查重/上限反馈），查重命中视为重新授权并切为当前 */
   private async persistAccount(login: string, token: string, name: string): Promise<AddAccountResult> {
     const ctx = this.getUIContext().getHostContext() as common.Context | undefined;
     return AccountStore.addAccount(ctx, login, token, name);

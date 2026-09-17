@@ -33,26 +33,6 @@
       "value": "议题"
     },
     {
-      "name": "token_setup_title",
-      "value": "配置 GitHub Token"
-    },
-    {
-      "name": "token_setup_desc",
-      "value": "ArkCat 直连 GitHub API，需要一个 Personal Access Token（read:user、repo、notifications 权限即可）"
-    },
-    {
-      "name": "token_input_placeholder",
-      "value": "粘贴 ghp_ 开头的 Token"
-    },
-    {
-      "name": "token_save",
-      "value": "保存并进入"
-    },
-    {
-      "name": "token_error_empty",
-      "value": "Token 不能为空"
-    },
-    {
       "name": "file_dir_entry_count",
       "value": "目录共 %1$s 项"
     },
@@ -78,19 +58,11 @@
     },
     {
       "name": "login_choice_desc",
-      "value": "ArkCat 直连 GitHub API。使用 GitHub 登录，或粘贴 Personal Access Token。"
+      "value": "ArkCat 直连 GitHub API，使用 GitHub 账号授权登录。"
     },
     {
       "name": "login_oauth_button",
       "value": "使用 GitHub 登录"
-    },
-    {
-      "name": "login_oauth_hint",
-      "value": "推荐 · 无需手动创建 Token"
-    },
-    {
-      "name": "login_pat_button",
-      "value": "使用 Personal Access Token"
     },
     {
       "name": "oauth_wait_title",
