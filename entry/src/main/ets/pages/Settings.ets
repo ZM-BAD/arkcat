@@ -6,7 +6,7 @@
 import { promptAction } from '@kit.ArkUI';
 import { i18n } from '@kit.LocalizationKit';
 import { preferences } from '@kit.ArkData';
-import { common, bundleManager } from '@kit.AbilityKit';
+import { common } from '@kit.AbilityKit';
 import { AccountStore } from '../services/AccountStore';
 import { AppBar } from '../components/AppBar';
 import { OctIcon } from '../components/OctIcon';
@@ -30,22 +30,9 @@ export struct SettingsView {
   @Local language: string = 'system';
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
-  /** 版本号：运行时读 bundle 清单的 versionName，避免与 AppScope/app.json5 手工同步（review 2026-09-10） */
-  @Local versionText: ResourceStr = $r('app.string.settings_version');
 
   aboutToAppear(): void {
     this.loadSettings();
-    this.loadVersion();
-  }
-
-  /** 版本号取自 bundle 清单；取不到时保留静态回退串 */
-  private loadVersion(): void {
-    try {
-      const info = bundleManager.getBundleInfoForSelfSync(bundleManager.BundleFlag.GET_BUNDLE_INFO_DEFAULT);
-      this.versionText = `ArkCat v${info.versionName}`;
-    } catch (e) {
-      // 保持回退串
-    }
   }
 
   private loadSettings(): void {
@@ -337,14 +324,9 @@ export struct SettingsView {
           // 第三方无合法提交管道且语义错位（App 自身问题应走仓库 Discussions），偏离理由记 spec 014 §七
           this.row($r('app.string.settings_privacy'), '', () => this.pathStack.pushPathByName('inAppBrowser', 'Privacy Policy|https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement'))
           this.row($r('app.string.settings_open_source'), '', () => this.pathStack.pushPathByName('openSourceLibraries', ''))
+          // Spec 069：About 行（备案信息/快速 Star/贡献者）；Sign Out 保持组尾（官方序不变）
+          this.row($r('app.string.settings_about'), '', () => this.pathStack.pushPathByName('settingsAbout', ''))
           this.row($r('app.string.settings_sign_out'), '', () => this.signOut())
-
-          Text(this.versionText)
-            .fontSize($r('app.float.caption_font_size'))
-            .fontColor($r('app.color.text_secondary'))
-            .width('100%')
-            .textAlign(TextAlign.Center)
-            .margin({ top: 24, bottom: 24 })
         }
         .padding({ left: 16, right: 16 })
         .width('100%')

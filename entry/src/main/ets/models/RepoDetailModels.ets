@@ -149,3 +149,20 @@ export function mapRepoDetail(data: JsonMap): RepoDetail {
 export function nextStarAction(viewerHasStarred: boolean): boolean {
   return !viewerHasStarred;
 }
+
+/** Star 态轻量模型（Spec 069 关于页仓库行）：仅 id/计数/是否已加星 */
+export interface RepoStarState {
+  repoId: string;
+  stargazerCount: number;
+  viewerHasStarred: boolean;
+}
+
+/** GraphQL 轻量查询响应 → RepoStarState */
+export function mapRepoStarState(data: JsonMap): RepoStarState {
+  const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
+  return {
+    repoId: Json.str(repo, 'id'),
+    stargazerCount: Json.num(repo, 'stargazerCount'),
+    viewerHasStarred: Json.bool(repo, 'viewerHasStarred')
+  };
+}

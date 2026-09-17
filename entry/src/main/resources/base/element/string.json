@@ -713,6 +713,18 @@
       "value": "ArkCat"
     },
     {
+      "name": "settings_about",
+      "value": "About"
+    },
+    {
+      "name": "about_version",
+      "value": "Version"
+    },
+    {
+      "name": "about_copyright",
+      "value": "Copyright © 2026 ZM-BAD"
+    },
+    {
       "name": "search_placeholder",
       "value": "Search GitHub"
     },

@@ -41,6 +41,7 @@ import { PrFilesView } from './PrFiles';
 import { CommitDetailView } from './CommitDetail';import { NotificationSettingsView } from './NotificationSettings';
 import { CodeOptionsView } from './CodeOptions';
 import { OpenSourceLibrariesView } from './OpenSourceLibraries';
+import { SettingsAboutView } from './SettingsAbout';
 import { UserListView } from './UserList';
 import { StargazersView } from './Stargazers';
 import { ForksView } from './Forks';
@@ -62,7 +63,7 @@ import { AppLockOverlay, AppLockSettingsView } from './AppLock';
  *  + 应用内浏览器（用户 09-08 定案：该子页也不显示底栏） */
 const TAB_BAR_HIDDEN_ROUTES: string[] = [
   'settings', 'notificationSettings', 'codeOptions', 'accounts', 'tokenSetup', 'achievementDetail',
-  'openSourceLibraries', 'inAppBrowser', 'repoDiscussions', 'appLock'
+  'openSourceLibraries', 'settingsAbout', 'inAppBrowser', 'repoDiscussions', 'appLock'
 ];
 
 @Entry
@@ -138,10 +139,13 @@ struct Index {
   @State prDetailTick: number = 0;
   /** Code Options 返回 tick：CodeViewer/CommitDetail 重读设置（review C3，同 prFilesTick 模式） */
   @State codeOptionsTick: number = 0;
+  /** About 页回显信号：从详情页返回可见时自增，重拉 star 态（Spec 069） */
+  @State settingsAboutTick: number = 0;
   /** 首显守卫（review A6/D17）：onShown 首次触发时 aboutToAppear 已拉取，不重复请求 */
   @State starredShownOnce: boolean = false;
   @State listDetailShownOnce: boolean = false;
   @State repoPrsShownOnce: boolean = false;
+  @State settingsAboutShownOnce: boolean = false;
   @State issuesListShownOnce: boolean = false;
   @State workPrsShownOnce: boolean = false;
   @State workIssuesShownOnce: boolean = false;
@@ -443,6 +447,26 @@ struct Index {
         pathStack: this.pathStack
       })
     }
+    .hideTitleBar(true)
+  }
+
+  /** Spec 069：关于页（Settings → About；Star 引导 + 仓库行 + 备案信息） */
+  @Builder
+  settingsAboutDestination() {
+    NavDestination() {
+      SettingsAboutView({
+        pathStack: this.pathStack,
+        token: this.token,
+        tick: this.settingsAboutTick
+      })
+    }
+    // 从详情页返回可见时静默重拉 star 态；首显跳过（aboutToAppear 已拉取，review A6/D17 同款）
+    .onShown(() => {
+      if (this.settingsAboutShownOnce) {
+        this.settingsAboutTick += 1;
+      }
+      this.settingsAboutShownOnce = true;
+    })
     .hideTitleBar(true)
   }
 
@@ -1184,6 +1208,8 @@ struct Index {
       this.codeOptionsDestination()
     } else if (name === 'openSourceLibraries') {
       this.openSourceLibrariesDestination()
+    } else if (name === 'settingsAbout') {
+      this.settingsAboutDestination()
     } else if (name === 'appLock') {
       this.appLockDestination()
     } else if (name === 'userList') {

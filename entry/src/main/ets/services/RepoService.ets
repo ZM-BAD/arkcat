@@ -6,7 +6,7 @@ import { graphql, restGet, ApiError } from './GitHttpClient';
 import { aliasField, aliasQueryDocument, withFallback } from 'graphql';
 import { contributorCount } from './ExploreService';
 import { Json, JsonMap } from '../utils/Json';
-import { RepoDetail, mapRepoDetail } from '../models/RepoDetailModels';
+import { RepoDetail, mapRepoDetail, RepoStarState, mapRepoStarState } from '../models/RepoDetailModels';
 import { StargazerPage, ForkPage, PeoplePage, mapStargazerPage, mapForkPage, mapWatcherPage, mapContributorPage } from '../models/RepoSocialModels';
 import { LicenseInfo, mapLicenseInfo } from '../models/RepoLicenseModels';
 import { FRAG_PAGE_INFO, FRAG_VIEWER_LOGIN } from './GqlFragments';
@@ -63,6 +63,16 @@ mutation AddStar($starrableId: ID!) {
 const REMOVE_STAR_MUTATION = `
 mutation RemoveStar($starrableId: ID!) {
   removeStar(input: { starrableId: $starrableId }) { starrable { viewerHasStarred } }
+}`;
+
+/** Star 态轻量查询（Spec 069 关于页仓库行）：详情大查询的 readme/fileTree/languages 对本页全为冗余 */
+const REPO_STAR_STATE_QUERY = `
+query RepoStarState($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    id
+    stargazerCount
+    viewerHasStarred
+  }
 }`;
 
 const CREATE_FORK_MUTATION = `
@@ -122,6 +132,13 @@ export class RepoService {
     const variables: Record<string, Object> = { 'owner': owner, 'name': name };
     const data = await graphql(REPO_QUERY, variables, token);
     return mapRepoDetail(data);
+  }
+
+  /** Star 态轻量查询（Spec 069 关于页仓库行）：仅 id/计数/是否已加星 */
+  static async fetchRepoStarState(token: string, owner: string, name: string): Promise<RepoStarState> {
+    const variables: Record<string, Object> = { 'owner': owner, 'name': name };
+    const data = await graphql(REPO_STAR_STATE_QUERY, variables, token);
+    return mapRepoStarState(data);
   }
 
   /** Star/取消 Star，返回操作后的 viewerHasStarred */
