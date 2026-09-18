@@ -27,8 +27,13 @@ import {
   mapReviewThreads, canMergePr, mergeStateReasonKey, reviewStateKey, resolveMergeMethod,
   mapTriageUsers, mapTriageLabels, mapTriageMilestones, mapTriageLinked, mapTriageProjects,
   filterTriageByKeyword, diffSelection, singlePickId,
-  mapTimeline, actorDisplayLogin, phraseSegments
+  mapTimeline, actorDisplayLogin, phraseSegments,
+  mapRepoForm, mapEditable, mapIssueTemplates, mapBranchRefs, mapPickerRepos, filterReposByKeyword
 } from '../../entry/src/main/ets/models/RepoSubModels';
+import {
+  issueTitleError, canSubmitIssue, validatePrHeads, defaultBaseBranch,
+  parseFormRoute, filterBranches, ISSUE_TITLE_MAX
+} from '../../entry/src/main/ets/utils/IssueFormRules';
 import { mapPrFiles, mapFilesCursor, applyRestPatch, PrFileItem } from '../../entry/src/main/ets/models/PrDiffModels';
 import {
   buildNotificationsPath, pullRefFromUrl, buildPullStatesQuery, mapPullMerged,
@@ -1775,4 +1780,142 @@ test('retryDelayMs：500ms 起步指数退避、4s 封顶', () => {
   assert.equal(retryDelayMs(3), 4000);
   assert.equal(retryDelayMs(4), 4000);
   assert.equal(retryDelayMs(10), 4000);
+});
+
+// ─────────────── Spec 043：Issue/PR 创建与编辑 ───────────────
+
+test('issueTitleError：空/空白/255 上限/合法（Spec 043 测试3）', () => {
+  assert.equal(issueTitleError(''), 'required');
+  assert.equal(issueTitleError('   \n  '), 'required');
+  assert.equal(issueTitleError('a'.repeat(ISSUE_TITLE_MAX)), '');
+  assert.equal(issueTitleError('a'.repeat(ISSUE_TITLE_MAX + 1)), 'too_long');
+  assert.equal(issueTitleError('  Bug: crash on launch  '), '');
+  assert.equal(canSubmitIssue('Bug: crash'), true);
+  assert.equal(canSubmitIssue('  '), false);
+});
+
+test('validatePrHeads：未选 head/head=base/合法（Spec 043 测试5）', () => {
+  assert.equal(validatePrHeads('main', ''), 'head_required');
+  assert.equal(validatePrHeads('main', '   '), 'head_required');
+  assert.equal(validatePrHeads('main', 'main'), 'head_equals_base');
+  assert.equal(validatePrHeads('main', 'feature/x'), '');
+});
+
+test('defaultBaseBranch：默认分支优先/退回首个/空列表（Spec 043 测试4）', () => {
+  assert.equal(defaultBaseBranch('develop', ['main', 'develop']), 'develop');
+  assert.equal(defaultBaseBranch('gone', ['main', 'dev']), 'main');
+  assert.equal(defaultBaseBranch('main', ['main']), 'main');
+  assert.equal(defaultBaseBranch('', []), '');
+});
+
+test('parseFormRoute：四段/缺段/非法数字回落', () => {
+  const r = parseFormRoute('ZM-BAD|arkcat|edit|12');
+  assert.equal(r.owner, 'ZM-BAD');
+  assert.equal(r.name, 'arkcat');
+  assert.equal(r.mode, 'edit');
+  assert.equal(r.editNumber, 12);
+  const home = parseFormRoute('||new|0');
+  assert.equal(home.owner, '');
+  assert.equal(home.name, '');
+  assert.equal(home.mode, 'new');
+  const bare = parseFormRoute('');
+  assert.equal(bare.mode, 'new');
+  assert.equal(bare.editNumber, 0);
+  const bad = parseFormRoute('a|b|new|x9');
+  assert.equal(bad.editNumber, 0);
+});
+
+test('filterBranches：大小写不敏感过滤/空词全量', () => {
+  const branches = ['main', 'develop', 'Feature/X', 'fix/bug'];
+  assert.deepEqual(filterBranches(branches, ''), branches);
+  assert.deepEqual(filterBranches(branches, 'FEAT'), ['Feature/X']);
+  assert.deepEqual(filterBranches(branches, 'fix/'), ['fix/bug']);
+  assert.deepEqual(filterBranches(branches, 'zzz'), []);
+});
+
+test('mapIssueTemplates/mapBranchRefs：模板与分支映射（Spec 043 测试1/4 数据侧）', () => {
+  const templates = mapIssueTemplates({ repository: { issueTemplates: [
+    { name: 'Bug report', title: 'Bug', body: '**Steps**', filename: 'bug_report.md' }
+  ] } });
+  assert.equal(templates.length, 1);
+  assert.equal(templates[0].filename, 'bug_report.md');
+  assert.deepEqual(mapIssueTemplates({ repository: { issueTemplates: [] } }), []);
+  const refs = mapBranchRefs({ repository: { refs: { nodes: [
+    { name: 'main', target: { oid: 'a1' } },
+    { name: 'develop', target: { oid: 'b2' } }
+  ] } } });
+  assert.equal(refs.length, 2);
+  assert.equal(refs[1].name, 'develop');
+  assert.equal(refs[1].oid, 'b2');
+});
+
+test('mapRepoForm：仓库 id/默认分支/模板/分支聚合', () => {
+  const page = mapRepoForm({
+    repository: {
+      id: 'R_kgDOUJ9eUQ',
+      defaultBranchRef: { name: 'develop' },
+      issueTemplates: [{ name: 'Bug report', title: 'Bug', body: 'B', filename: 'bug.md' }],
+      refs: { nodes: [{ name: 'main', target: { oid: 'a1' } }] }
+    }
+  });
+  assert.equal(page.repoId, 'R_kgDOUJ9eUQ');
+  assert.equal(page.defaultBranch, 'develop');
+  assert.equal(page.templates.length, 1);
+  assert.equal(page.branches.length, 1);
+  // 空仓库（defaultBranchRef=null / refs 空）
+  const empty = mapRepoForm({
+    repository: { id: 'R1', defaultBranchRef: null, issueTemplates: [], refs: { nodes: [] } }
+  });
+  assert.equal(empty.defaultBranch, '');
+  assert.equal(empty.branches.length, 0);
+  assert.equal(empty.repoId, 'R1');
+});
+
+test('mapEditable：Issue/PR 编辑回填与权限门', () => {
+  const c = mapEditable(
+    { repository: { issue: { id: 'I1', title: 'T', body: 'B', viewerCanUpdate: true } } }, 'issue');
+  assert.equal(c.id, 'I1');
+  assert.equal(c.viewerCanUpdate, true);
+  const p = mapEditable(
+    { repository: { pullRequest: { id: 'PR1', title: 'T2', body: '', viewerCanUpdate: false } } }, 'pullRequest');
+  assert.equal(p.id, 'PR1');
+  assert.equal(p.viewerCanUpdate, false);
+});
+
+test('mapPickerRepos + filterReposByKeyword：候选映射与过滤（Spec 043 元素1）', () => {
+  const repos = mapPickerRepos({ viewer: { repositories: { nodes: [
+    { id: 'R1', nameWithOwner: 'ZM-BAD/arkcat' },
+    { id: 'R2', nameWithOwner: 'ZM-BAD/DAG-chat' }
+  ] } } });
+  assert.equal(repos.length, 2);
+  assert.equal(repos[0].id, 'R1');
+  assert.equal(filterReposByKeyword(repos, 'dag')[0].nameWithOwner, 'ZM-BAD/DAG-chat');
+  assert.equal(filterReposByKeyword(repos, '  ').length, 2);
+  assert.equal(filterReposByKeyword(repos, 'zzz').length, 0);
+});
+
+test('mapIssueDetail/mapPrDetail：viewerCanUpdate 权限门映射（Spec 043）', () => {
+  const issue = mapIssueDetail({ repository: { issue: {
+    id: 'I1', number: 52, title: 'T', state: 'OPEN', stateReason: null,
+    viewerCanUpdate: true, body: '', bodyHTML: '', createdAt: '2026-09-01T00:00:00Z',
+    author: { login: 'ZM-BAD', avatarUrl: '' },
+    labels: { nodes: [] },
+    comments: { totalCount: 0, nodes: [], pageInfo: { hasNextPage: false, endCursor: '' } }
+  } } });
+  assert.equal(issue.viewerCanUpdate, true);
+  const pr = mapPrDetail({ repository: {
+    viewerPermission: 'ADMIN', owner: { avatarUrl: '' },
+    pullRequest: {
+      id: 'P1', number: 51, title: 'T', state: 'OPEN', merged: false, isDraft: false,
+      viewerCanUpdate: false, body: '', bodyHTML: '', createdAt: '', mergedAt: null,
+      additions: 0, deletions: 0, authorAssociation: 'NONE', reactionGroups: [],
+      author: null, headRefName: 'a', baseRefName: 'b', mergedBy: null, mergeCommit: null,
+      files: null, commits: null, mergeable: 'MERGEABLE', mergeStateStatus: 'CLEAN',
+      viewerMergeHeadlineText: '', viewerMergeBodyText: '',
+      reviews: null, reviewThreads: { totalCount: 0, nodes: [] }, statusCheckRollup: null,
+      labels: { nodes: [] }, assignees: { nodes: [] }, milestone: null,
+      timelineItems: { totalCount: 0, pageInfo: { hasNextPage: false, endCursor: '' }, nodes: [] }
+    }
+  } });
+  assert.equal(pr.viewerCanUpdate, false);
 });

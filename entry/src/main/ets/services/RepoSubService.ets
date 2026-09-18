@@ -11,7 +11,9 @@ import {
   mapRepoPrsPage, mapRepoCommitsPage, mapRepoReleasesPage, mapIssueDetail, mapPrDetail, mapPrCommits,
   ReleaseDetailPage, mapReleaseDetail, ReactionUsersPage, mapReactionUsersPage,
   TriageUser, TriageLabel, TriageMilestone, TriageLinkedItem, TriageProject,
-  mapTriageUsers, mapTriageLabels, mapTriageMilestones, mapTriageLinked, mapTriageProjects
+  mapTriageUsers, mapTriageLabels, mapTriageMilestones, mapTriageLinked, mapTriageProjects,
+  RepoFormPage, EditableContent, PickerRepo,
+  mapRepoForm, mapEditable, mapPickerRepos
 } from '../models/RepoSubModels';
 import { PrFilesPage, PrFileItem, mapPrFiles, applyRestPatch, mapFilesCursor, mapFileNode } from '../models/PrDiffModels';
 import { CommitDetailPage, mapCommitDetail } from '../models/PrDiffModels';
@@ -156,6 +158,8 @@ query IssueDetail($owner: String!, $name: String!, $number: Int!, $first: Int = 
   repository(owner: $owner, name: $name) {
     issue(number: $number) {
       id title state stateReason body bodyHTML createdAt
+      # 编辑权限门（Spec 043：编辑/关闭入口显隐）
+      viewerCanUpdate
       author { login avatarUrl }
       labels(first: 10) { nodes { name } }
       comments(first: $first, after: $after) {
@@ -195,6 +199,8 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!, $after: 
     viewerDefaultMergeMethod
     pullRequest(number: $number) {
       id title state merged isDraft body bodyHTML createdAt mergedAt
+      # 编辑权限门（Spec 043：编辑/关闭/draft 切换入口显隐）
+      viewerCanUpdate
       additions deletions
       # 作者关联角色（页头正文卡角色胶囊：AuthorAssociation 全集）
       authorAssociation
@@ -518,6 +524,110 @@ mutation RemoveLabels($labelableId: ID!, $labelIds: [ID!]!) {
 const ADD_PROJECT_ITEM_MUTATION = `
 mutation AddProjectItem($projectId: ID!, $contentId: ID!) {
   addProjectV2ItemById(input: { projectId: $projectId, contentId: $contentId }) { item { id } }
+}`;
+
+// ─────────────── Spec 043：Issue/PR 创建与编辑 ───────────────
+
+/** 表单基础数据（New Issue / New PR 共用）：仓库 id/默认分支 + 官方 Issue 模板 + 分支列表 */
+const REPO_FORM_QUERY = `
+query RepoForm($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    id
+    defaultBranchRef { name }
+    issueTemplates { name title body filename }
+    refs(refPrefix: "refs/heads/", first: 100) {
+      nodes { name target { oid } }
+    }
+  }
+}`;
+
+/** 编辑 Issue 回填（标题/正文 + viewerCanUpdate 权限门） */
+const ISSUE_EDIT_QUERY = `
+query IssueEdit($owner: String!, $name: String!, $number: Int!) {
+  repository(owner: $owner, name: $name) {
+    issue(number: $number) { id title body viewerCanUpdate }
+  }
+}`;
+
+/** 编辑 PR 回填（标题/正文 + viewerCanUpdate 权限门） */
+const PR_EDIT_QUERY = `
+query PullRequestEdit($owner: String!, $name: String!, $number: Int!) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) { id title body viewerCanUpdate }
+  }
+}`;
+
+/** Home「+」建 Issue/PR 的仓库候选（本人/协作/组织成员仓库，按最近推送序） */
+const VIEWER_REPOS_QUERY = `
+query PickerRepos($first: Int = 100) {
+  viewer {
+    repositories(first: $first, affiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER], orderBy: { field: PUSHED_AT, direction: DESC }) {
+      nodes { id nameWithOwner }
+    }
+  }
+}`;
+
+/** 新建 Issue（成功后调用方按返回 number 跳详情） */
+const CREATE_ISSUE_MUTATION = `
+mutation CreateIssue($repositoryId: ID!, $title: String!, $body: String!) {
+  createIssue(input: { repositoryId: $repositoryId, title: $title, body: $body }) {
+    issue { id number }
+  }
+}`;
+
+/** 新建 PR（base/head 为分支名；head 不存在由服务端 422，客户端提交前校验） */
+const CREATE_PULL_REQUEST_MUTATION = `
+mutation CreatePullRequest($repositoryId: ID!, $base: String!, $head: String!, $title: String!, $body: String!) {
+  createPullRequest(input: { repositoryId: $repositoryId, baseRefName: $base, headRefName: $head, title: $title, body: $body }) {
+    pullRequest { id number }
+  }
+}`;
+
+/** 编辑 Issue 标题/正文（id = Issue 节点 id；body 传空串即清空正文，与官方语义一致） */
+const UPDATE_ISSUE_MUTATION = `
+mutation UpdateIssueTitleBody($id: ID!, $title: String!, $body: String!) {
+  updateIssue(input: { id: $id, title: $title, body: $body }) { issue { id } }
+}`;
+
+/** 编辑 PR 标题/正文 */
+const UPDATE_PULL_REQUEST_MUTATION = `
+mutation UpdatePullRequestTitleBody($pullRequestId: ID!, $title: String!, $body: String!) {
+  updatePullRequest(input: { pullRequestId: $pullRequestId, title: $title, body: $body }) { pullRequest { id } }
+}`;
+
+/** 关闭 Issue（官方两档关闭原因：COMPLETED / NOT_PLANNED） */
+const CLOSE_ISSUE_MUTATION = `
+mutation CloseIssue($issueId: ID!, $stateReason: IssueStateReason!) {
+  closeIssue(input: { issueId: $issueId, stateReason: $stateReason }) {
+    issue { id state stateReason }
+  }
+}`;
+
+const REOPEN_ISSUE_MUTATION = `
+mutation ReopenIssue($issueId: ID!) {
+  reopenIssue(input: { issueId: $issueId }) { issue { id state } }
+}`;
+
+const CLOSE_PULL_REQUEST_MUTATION = `
+mutation ClosePullRequest($pullRequestId: ID!) {
+  closePullRequest(input: { pullRequestId: $pullRequestId }) { pullRequest { id state } }
+}`;
+
+const REOPEN_PULL_REQUEST_MUTATION = `
+mutation ReopenPullRequest($pullRequestId: ID!) {
+  reopenPullRequest(input: { pullRequestId: $pullRequestId }) { pullRequest { id state } }
+}`;
+
+/** PR 转 draft */
+const CONVERT_TO_DRAFT_MUTATION = `
+mutation ConvertPullRequestToDraft($pullRequestId: ID!) {
+  convertPullRequestToDraft(input: { pullRequestId: $pullRequestId }) { pullRequest { id isDraft } }
+}`;
+
+/** draft 转待审查 */
+const MARK_READY_MUTATION = `
+mutation MarkPullRequestReadyForReview($pullRequestId: ID!) {
+  markPullRequestReadyForReview(input: { pullRequestId: $pullRequestId }) { pullRequest { id isDraft } }
 }`;
 
 export class RepoSubService {
@@ -883,5 +993,101 @@ export class RepoSubService {
   static async addPrToProject(token: string, prId: string, projectId: string): Promise<void> {
     const variables: Record<string, Object> = { 'projectId': projectId, 'contentId': prId };
     await graphql(ADD_PROJECT_ITEM_MUTATION, variables, token);
+  }
+
+  // ─────────────── Spec 043：Issue/PR 创建与编辑 ───────────────
+
+  /** 表单基础数据：仓库 id/默认分支/官方 Issue 模板/分支列表 */
+  static async fetchRepoForm(token: string, owner: string, name: string): Promise<RepoFormPage> {
+    const variables: Record<string, Object> = { 'owner': owner, 'name': name };
+    const data = await graphql(REPO_FORM_QUERY, variables, token);
+    return mapRepoForm(data);
+  }
+
+  /** 编辑 Issue 回填（id/title/body/viewerCanUpdate） */
+  static async fetchIssueEdit(token: string, owner: string, name: string, number: number): Promise<EditableContent> {
+    const variables: Record<string, Object> = { 'owner': owner, 'name': name, 'number': number };
+    const data = await graphql(ISSUE_EDIT_QUERY, variables, token);
+    return mapEditable(data, 'issue');
+  }
+
+  /** 编辑 PR 回填 */
+  static async fetchPrEdit(token: string, owner: string, name: string, number: number): Promise<EditableContent> {
+    const variables: Record<string, Object> = { 'owner': owner, 'name': name, 'number': number };
+    const data = await graphql(PR_EDIT_QUERY, variables, token);
+    return mapEditable(data, 'pullRequest');
+  }
+
+  /** Home「+」仓库候选（本人/协作/组织成员仓库，按最近推送序） */
+  static async fetchPickerRepos(token: string): Promise<PickerRepo[]> {
+    const data = await graphql(VIEWER_REPOS_QUERY, { 'first': 100 }, token);
+    return mapPickerRepos(data);
+  }
+
+  /** 新建 Issue：返回新 Issue 编号（调用方跳详情） */
+  static async createIssue(token: string, repositoryId: string, title: string, body: string): Promise<number> {
+    const variables: Record<string, Object> = { 'repositoryId': repositoryId, 'title': title, 'body': body };
+    const data = await graphql(CREATE_ISSUE_MUTATION, variables, token);
+    const issue = Json.obj(Json.obj(data, 'createIssue') ?? ({} as JsonMap), 'issue') ?? ({} as JsonMap);
+    return Json.num(issue, 'number');
+  }
+
+  /** 新建 PR：返回新 PR 编号（调用方跳详情） */
+  static async createPullRequest(token: string, repositoryId: string, base: string, head: string,
+    title: string, body: string): Promise<number> {
+    const variables: Record<string, Object> = {
+      'repositoryId': repositoryId, 'base': base, 'head': head, 'title': title, 'body': body
+    };
+    const data = await graphql(CREATE_PULL_REQUEST_MUTATION, variables, token);
+    const pr = Json.obj(Json.obj(data, 'createPullRequest') ?? ({} as JsonMap), 'pullRequest') ?? ({} as JsonMap);
+    return Json.num(pr, 'number');
+  }
+
+  /** 编辑 Issue 标题/正文 */
+  static async updateIssue(token: string, issueId: string, title: string, body: string): Promise<void> {
+    const variables: Record<string, Object> = { 'id': issueId, 'title': title, 'body': body };
+    await graphql(UPDATE_ISSUE_MUTATION, variables, token);
+  }
+
+  /** 编辑 PR 标题/正文 */
+  static async updatePullRequest(token: string, prId: string, title: string, body: string): Promise<void> {
+    const variables: Record<string, Object> = { 'pullRequestId': prId, 'title': title, 'body': body };
+    await graphql(UPDATE_PULL_REQUEST_MUTATION, variables, token);
+  }
+
+  /** 关闭 Issue（stateReason: COMPLETED / NOT_PLANNED，官方两档） */
+  static async closeIssue(token: string, issueId: string, stateReason: string): Promise<void> {
+    const variables: Record<string, Object> = { 'issueId': issueId, 'stateReason': stateReason };
+    await graphql(CLOSE_ISSUE_MUTATION, variables, token);
+  }
+
+  /** 重开 Issue */
+  static async reopenIssue(token: string, issueId: string): Promise<void> {
+    const variables: Record<string, Object> = { 'issueId': issueId };
+    await graphql(REOPEN_ISSUE_MUTATION, variables, token);
+  }
+
+  /** 关闭 PR */
+  static async closePullRequest(token: string, prId: string): Promise<void> {
+    const variables: Record<string, Object> = { 'pullRequestId': prId };
+    await graphql(CLOSE_PULL_REQUEST_MUTATION, variables, token);
+  }
+
+  /** 重开 PR */
+  static async reopenPullRequest(token: string, prId: string): Promise<void> {
+    const variables: Record<string, Object> = { 'pullRequestId': prId };
+    await graphql(REOPEN_PULL_REQUEST_MUTATION, variables, token);
+  }
+
+  /** PR 转 draft */
+  static async convertPullRequestToDraft(token: string, prId: string): Promise<void> {
+    const variables: Record<string, Object> = { 'pullRequestId': prId };
+    await graphql(CONVERT_TO_DRAFT_MUTATION, variables, token);
+  }
+
+  /** draft 转待审查 */
+  static async markPullRequestReadyForReview(token: string, prId: string): Promise<void> {
+    const variables: Record<string, Object> = { 'pullRequestId': prId };
+    await graphql(MARK_READY_MUTATION, variables, token);
   }
 }

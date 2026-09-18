@@ -175,6 +175,8 @@ export interface IssueDetailPage {
   title: string;
   state: string;
   stateReason: string;
+  /** 编辑权限门（viewerCanUpdate=作者或有写权限；Spec 043 编辑/关闭入口显隐） */
+  viewerCanUpdate: boolean;
   body: string;
   /** 官方渲染 HTML（Spec 040），body 作降级 */
   bodyHTML: string;
@@ -432,6 +434,8 @@ export interface PrDetailPage {
   state: string;
   merged: boolean;
   isDraft: boolean;
+  /** 编辑权限门（viewerCanUpdate=作者或有写权限；Spec 043 编辑/关闭/draft 切换入口显隐） */
+  viewerCanUpdate: boolean;
   body: string;
   /** 官方渲染 HTML（Spec 040），body 作降级 */
   bodyHTML: string;
@@ -1069,6 +1073,114 @@ function mapComment(raw: JsonMap): RepoComment {
   };
 }
 
+// ─────────────── Spec 043：Issue/PR 创建与编辑（表单数据模型）───────────────
+
+/** 官方 Issue 模板（repository.issueTemplates，普通列表非 Connection；filename 为模板文件名） */
+export interface IssueTemplateItem {
+  name: string;
+  title: string;
+  body: string;
+  filename: string;
+}
+
+/** 仓库分支行（refs(refPrefix:"refs/heads/")；New PR base/head 选择） */
+export interface BranchRefItem {
+  name: string;
+  oid: string;
+}
+
+/** Home「+」建 Issue/PR 的仓库候选（nameWithOwner 展示 + id 供 createIssue/createPullRequest） */
+export interface PickerRepo {
+  id: string;
+  nameWithOwner: string;
+}
+
+export function mapIssueTemplates(data: JsonMap): IssueTemplateItem[] {
+  const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
+  const items: IssueTemplateItem[] = [];
+  for (const nodeItem of Json.arr(repo, 'issueTemplates')) {
+    const it = nodeItem as JsonMap;
+    items.push({
+      name: Json.str(it, 'name'),
+      title: Json.str(it, 'title'),
+      body: Json.str(it, 'body'),
+      filename: Json.str(it, 'filename')
+    });
+  }
+  return items;
+}
+
+export function mapBranchRefs(data: JsonMap): BranchRefItem[] {
+  const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
+  const refs = Json.obj(repo, 'refs') ?? ({} as JsonMap);
+  const items: BranchRefItem[] = [];
+  for (const nodeItem of Json.arr(refs, 'nodes')) {
+    const it = nodeItem as JsonMap;
+    const target = Json.obj(it, 'target');
+    items.push({ name: Json.str(it, 'name'), oid: target !== null ? Json.str(target, 'oid') : '' });
+  }
+  return items;
+}
+
+export function mapPickerRepos(data: JsonMap): PickerRepo[] {
+  const viewer = Json.obj(data, 'viewer') ?? ({} as JsonMap);
+  const reposConn = Json.obj(viewer, 'repositories') ?? ({} as JsonMap);
+  const items: PickerRepo[] = [];
+  for (const nodeItem of Json.arr(reposConn, 'nodes')) {
+    const it = nodeItem as JsonMap;
+    items.push({ id: Json.str(it, 'id'), nameWithOwner: Json.str(it, 'nameWithOwner') });
+  }
+  return items;
+}
+
+/** 仓库候选按关键字过滤（nameWithOwner 大小写不敏感包含匹配） */
+export function filterReposByKeyword(repos: PickerRepo[], keyword: string): PickerRepo[] {
+  const q = keyword.trim().toLowerCase();
+  if (q === '') {
+    return repos;
+  }
+  return repos.filter((r: PickerRepo): boolean => r.nameWithOwner.toLowerCase().indexOf(q) >= 0);
+}
+
+/** 表单基础数据聚合（REPO_FORM_QUERY 一次取全：新建 Issue/PR 都要用） */
+export interface RepoFormPage {
+  repoId: string;
+  defaultBranch: string;
+  templates: IssueTemplateItem[];
+  branches: BranchRefItem[];
+}
+
+export function mapRepoForm(data: JsonMap): RepoFormPage {
+  const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
+  const dbr = Json.obj(repo, 'defaultBranchRef');
+  return {
+    repoId: Json.str(repo, 'id'),
+    defaultBranch: dbr !== null ? Json.str(dbr, 'name') : '',
+    templates: mapIssueTemplates(data),
+    branches: mapBranchRefs(data)
+  };
+}
+
+/** 编辑回填内容（Issue/PR 同构：id/title/body + 权限门） */
+export interface EditableContent {
+  id: string;
+  title: string;
+  body: string;
+  viewerCanUpdate: boolean;
+}
+
+/** 按 field（'issue' | 'pullRequest'）取编辑回填节点 */
+export function mapEditable(data: JsonMap, field: string): EditableContent {
+  const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
+  const node = Json.obj(repo, field) ?? ({} as JsonMap);
+  return {
+    id: Json.str(node, 'id'),
+    title: Json.str(node, 'title'),
+    body: Json.str(node, 'body'),
+    viewerCanUpdate: Json.bool(node, 'viewerCanUpdate')
+  };
+}
+
 export function mapIssueDetail(data: JsonMap): IssueDetailPage {
   const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
   const issue = Json.obj(repo, 'issue') ?? ({} as JsonMap);
@@ -1092,6 +1204,7 @@ export function mapIssueDetail(data: JsonMap): IssueDetailPage {
     title: Json.str(issue, 'title'),
     state: Json.str(issue, 'state'),
     stateReason: Json.str(issue, 'stateReason'),
+    viewerCanUpdate: Json.bool(issue, 'viewerCanUpdate'),
     body: Json.str(issue, 'body'),
     bodyHTML: Json.str(issue, 'bodyHTML'),
     createdAt: Json.str(issue, 'createdAt'),
@@ -1142,6 +1255,7 @@ export function mapPrDetail(data: JsonMap): PrDetailPage {
     state: Json.str(pr, 'state'),
     merged: Json.bool(pr, 'merged'),
     isDraft: Json.bool(pr, 'isDraft'),
+    viewerCanUpdate: Json.bool(pr, 'viewerCanUpdate'),
     body: Json.str(pr, 'body'),
     bodyHTML: Json.str(pr, 'bodyHTML'),
     createdAt: Json.str(pr, 'createdAt'),
