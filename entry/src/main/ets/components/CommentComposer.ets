@@ -5,6 +5,7 @@
 import { promptAction } from '@kit.ArkUI';
 import { MarkdownView } from './MarkdownView';
 import { OctIcon } from './OctIcon';
+import { MarkdownToolbar } from './MarkdownToolbar';
 import { RepoSubService } from '../services/RepoSubService';
 import { MarkdownService } from '../services/MarkdownService';
 import { MarkdownEdit, MarkdownToolKind } from '../utils/MarkdownEdit';
@@ -150,53 +151,13 @@ export struct CommentComposer {
     });
   }
 
-  @Builder
-  toolBtn(iconRes: Resource, kind: string) {
-    Stack() {
-      OctIcon({ res: iconRes, iconSize: 20, iconColor: $r('app.color.text_primary') })
+  /** 工具栏键分派：插入算法纯函数计算新文本+光标，写入 TextArea 并恢复光标 */
+  private onToolbarTool(kind: string): void {
+    if (kind === 'reply') {
+      this.applyReply();
+    } else {
+      this.applyTool(kind as MarkdownToolKind);
     }
-    .width(40)
-    .height(36)
-    .responseRegion({ x: -2, y: -6, width: '110%', height: '140%' })
-    .onClick(() => {
-      if (kind === 'reply') {
-        this.applyReply();
-      } else {
-        this.applyTool(kind as MarkdownToolKind);
-      }
-    })
-  }
-
-  /**
-   * Markdown 工具条（官方全集，顺序与官方一致）：
-   * B / I / 链接 / 图片 / @ / 列表 / 待办(checkbox) / 标题 / 删除线 / 引用 / 行内代码 / 代码块 / 回复(reply)。
-   * 官方为**横向可滑动**（键位多于屏宽，右侧还有）；贴在输入区下方 → 键盘弹起时位于键盘正上方。
-   */
-  @Builder
-  markdownToolbar() {
-    Scroll() {
-      Row({ space: 4 }) {
-        this.toolBtn($r('app.media.oct_bold_16'), 'bold')
-        this.toolBtn($r('app.media.oct_italic_16'), 'italic')
-        this.toolBtn($r('app.media.oct_link_16'), 'link')
-        this.toolBtn($r('app.media.oct_image_16'), 'image')
-        this.toolBtn($r('app.media.oct_mention_16'), 'mention')
-        this.toolBtn($r('app.media.oct_list_unordered_16'), 'list')
-        this.toolBtn($r('app.media.oct_checkbox_16'), 'task')
-        this.toolBtn($r('app.media.oct_heading_16'), 'heading')
-        this.toolBtn($r('app.media.oct_strikethrough_16'), 'strike')
-        this.toolBtn($r('app.media.oct_quote_16'), 'quote')
-        this.toolBtn($r('app.media.oct_code_16'), 'code')
-        this.toolBtn($r('app.media.oct_code_square_16'), 'codeblock')
-        this.toolBtn($r('app.media.oct_reply_16'), 'reply')
-      }
-      .padding({ left: 12, right: 12 })
-    }
-    .scrollable(ScrollDirection.Horizontal)
-    .scrollBar(BarState.Off)
-    .width('100%')
-    .height(48)
-    .align(Alignment.Start)
   }
 
   /** Edit / Preview 页签（等分，选中项蓝色下划线） */
@@ -292,7 +253,7 @@ export struct CommentComposer {
             this.selEnd = end;
           })
         // 工具条贴着输入区底部 → 键盘弹起时正好位于键盘上方
-        this.markdownToolbar()
+        MarkdownToolbar({ showReply: true, onTool: (kind: string): void => this.onToolbarTool(kind) })
       } else {
         Scroll() {
           // 最小高度撑满滚动区：内容不足一屏时 Scroll 会竖直居中 → 顶到顶部（官方预览从首行起排）；
