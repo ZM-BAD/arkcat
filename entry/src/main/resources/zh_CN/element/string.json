@@ -261,10 +261,6 @@
       "value": "暂无议题"
     },
     {
-      "name": "issues_new_coming",
-      "value": "新建议题将在后续 Spec 提供"
-    },
-    {
       "name": "home_my_work",
       "value": "我的工作"
     },
@@ -327,10 +323,6 @@
     {
       "name": "home_feature_coming",
       "value": "该功能将在后续 Spec 提供"
-    },
-    {
-      "name": "home_new_coming",
-      "value": "新建功能将在后续版本提供"
     },
     {
       "name": "inbox_menu_inbox",
@@ -2587,6 +2579,162 @@
     {
       "name": "a11y_info",
       "value": "信息"
+    },
+    {
+      "name": "create_new_issue",
+      "value": "新建 Issue"
+    },
+    {
+      "name": "create_new_pr",
+      "value": "新建 Pull Request"
+    },
+    {
+      "name": "form_cancel",
+      "value": "取消"
+    },
+    {
+      "name": "form_create",
+      "value": "创建"
+    },
+    {
+      "name": "form_save",
+      "value": "保存"
+    },
+    {
+      "name": "form_saved",
+      "value": "已保存"
+    },
+    {
+      "name": "form_new_issue_title",
+      "value": "新建议题"
+    },
+    {
+      "name": "form_edit_issue_title",
+      "value": "编辑议题"
+    },
+    {
+      "name": "form_new_pr_title",
+      "value": "新建 Pull Request"
+    },
+    {
+      "name": "form_edit_pr_title",
+      "value": "编辑 Pull Request"
+    },
+    {
+      "name": "form_title_label",
+      "value": "标题"
+    },
+    {
+      "name": "form_title_placeholder",
+      "value": "标题"
+    },
+    {
+      "name": "form_title_required",
+      "value": "请输入标题"
+    },
+    {
+      "name": "form_title_too_long",
+      "value": "标题不能超过 255 个字符"
+    },
+    {
+      "name": "form_body_placeholder",
+      "value": "添加描述（选填）"
+    },
+    {
+      "name": "form_tab_write",
+      "value": "编写"
+    },
+    {
+      "name": "form_tab_preview",
+      "value": "预览"
+    },
+    {
+      "name": "form_repo_pick",
+      "value": "选择仓库"
+    },
+    {
+      "name": "form_repo_search",
+      "value": "搜索仓库"
+    },
+    {
+      "name": "form_repo_required",
+      "value": "请先选择仓库"
+    },
+    {
+      "name": "form_template_add",
+      "value": "添加模板"
+    },
+    {
+      "name": "form_template_title",
+      "value": "选择模板"
+    },
+    {
+      "name": "form_template_blank",
+      "value": "空白议题"
+    },
+    {
+      "name": "form_base_label",
+      "value": "base:"
+    },
+    {
+      "name": "form_head_label",
+      "value": "head:"
+    },
+    {
+      "name": "form_head_pick",
+      "value": "选择 head 分支"
+    },
+    {
+      "name": "form_branch_base_title",
+      "value": "选择 base 分支"
+    },
+    {
+      "name": "form_branch_head_title",
+      "value": "选择 head 分支"
+    },
+    {
+      "name": "form_branch_search",
+      "value": "筛选分支"
+    },
+    {
+      "name": "form_head_required",
+      "value": "请选择 head 分支"
+    },
+    {
+      "name": "form_head_equals_base",
+      "value": "head 分支不能与 base 分支相同"
+    },
+    {
+      "name": "close_issue",
+      "value": "关闭议题"
+    },
+    {
+      "name": "reopen_issue",
+      "value": "重开议题"
+    },
+    {
+      "name": "close_reason_title",
+      "value": "关闭议题"
+    },
+    {
+      "name": "close_reason_completed",
+      "value": "已完成"
+    },
+    {
+      "name": "close_reason_not_planned",
+      "value": "未计划"
+    },
+    {
+      "name": "reopen_pr",
+      "value": "重开 Pull Request"
+    },
+    {
+      "name": "convert_to_draft",
+      "value": "转为草稿"
+    },
+    {
+      "name": "mark_ready",
+      "value": "标记为待审查"
     }
   ]
 }

@@ -261,10 +261,6 @@
       "value": "No issues"
     },
     {
-      "name": "issues_new_coming",
-      "value": "Creating an issue will be available in a future spec"
-    },
-    {
       "name": "home_my_work",
       "value": "My Work"
     },
@@ -327,10 +323,6 @@
     {
       "name": "home_feature_coming",
       "value": "This feature will be available in a future spec"
-    },
-    {
-      "name": "home_new_coming",
-      "value": "Creating content will be available in a future version"
     },
     {
       "name": "inbox_menu_inbox",
@@ -2587,6 +2579,162 @@
     {
       "name": "a11y_info",
       "value": "Info"
+    },
+    {
+      "name": "create_new_issue",
+      "value": "New issue"
+    },
+    {
+      "name": "create_new_pr",
+      "value": "New pull request"
+    },
+    {
+      "name": "form_cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "form_create",
+      "value": "Create"
+    },
+    {
+      "name": "form_save",
+      "value": "Save"
+    },
+    {
+      "name": "form_saved",
+      "value": "Saved"
+    },
+    {
+      "name": "form_new_issue_title",
+      "value": "New Issue"
+    },
+    {
+      "name": "form_edit_issue_title",
+      "value": "Edit Issue"
+    },
+    {
+      "name": "form_new_pr_title",
+      "value": "New Pull Request"
+    },
+    {
+      "name": "form_edit_pr_title",
+      "value": "Edit Pull Request"
+    },
+    {
+      "name": "form_title_label",
+      "value": "Title"
+    },
+    {
+      "name": "form_title_placeholder",
+      "value": "Title"
+    },
+    {
+      "name": "form_title_required",
+      "value": "Title is required"
+    },
+    {
+      "name": "form_title_too_long",
+      "value": "Title must be 255 characters or fewer"
+    },
+    {
+      "name": "form_body_placeholder",
+      "value": "Add a description"
+    },
+    {
+      "name": "form_tab_write",
+      "value": "Write"
+    },
+    {
+      "name": "form_tab_preview",
+      "value": "Preview"
+    },
+    {
+      "name": "form_repo_pick",
+      "value": "Select a repository"
+    },
+    {
+      "name": "form_repo_search",
+      "value": "Search repositories"
+    },
+    {
+      "name": "form_repo_required",
+      "value": "Select a repository"
+    },
+    {
+      "name": "form_template_add",
+      "value": "Add a template"
+    },
+    {
+      "name": "form_template_title",
+      "value": "Choose a template"
+    },
+    {
+      "name": "form_template_blank",
+      "value": "Blank issue"
+    },
+    {
+      "name": "form_base_label",
+      "value": "base:"
+    },
+    {
+      "name": "form_head_label",
+      "value": "head:"
+    },
+    {
+      "name": "form_head_pick",
+      "value": "Select head branch"
+    },
+    {
+      "name": "form_branch_base_title",
+      "value": "Choose base branch"
+    },
+    {
+      "name": "form_branch_head_title",
+      "value": "Choose head branch"
+    },
+    {
+      "name": "form_branch_search",
+      "value": "Filter branches"
+    },
+    {
+      "name": "form_head_required",
+      "value": "Choose a head branch"
+    },
+    {
+      "name": "form_head_equals_base",
+      "value": "Head branch must differ from base branch"
+    },
+    {
+      "name": "close_issue",
+      "value": "Close issue"
+    },
+    {
+      "name": "reopen_issue",
+      "value": "Reopen issue"
+    },
+    {
+      "name": "close_reason_title",
+      "value": "Close issue"
+    },
+    {
+      "name": "close_reason_completed",
+      "value": "Completed"
+    },
+    {
+      "name": "close_reason_not_planned",
+      "value": "Not planned"
+    },
+    {
+      "name": "reopen_pr",
+      "value": "Reopen pull request"
+    },
+    {
+      "name": "convert_to_draft",
+      "value": "Convert to draft"
+    },
+    {
+      "name": "mark_ready",
+      "value": "Mark ready for review"
     }
   ]
 }

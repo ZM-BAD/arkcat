@@ -42,6 +42,8 @@ import { CommitDetailView } from './CommitDetail';import { NotificationSettingsV
 import { CodeOptionsView } from './CodeOptions';
 import { OpenSourceLibrariesView } from './OpenSourceLibraries';
 import { SettingsAboutView } from './SettingsAbout';
+import { IssueFormView } from './IssueForm';
+import { PrFormView } from './PrForm';
 import { UserListView } from './UserList';
 import { StargazersView } from './Stargazers';
 import { ForksView } from './Forks';
@@ -63,7 +65,8 @@ import { AppLockOverlay, AppLockSettingsView } from './AppLock';
  *  + 应用内浏览器（用户 09-08 定案：该子页也不显示底栏） */
 const TAB_BAR_HIDDEN_ROUTES: string[] = [
   'settings', 'notificationSettings', 'codeOptions', 'accounts', 'tokenSetup', 'achievementDetail',
-  'openSourceLibraries', 'settingsAbout', 'inAppBrowser', 'repoDiscussions', 'appLock'
+  'openSourceLibraries', 'settingsAbout', 'inAppBrowser', 'repoDiscussions', 'appLock',
+  'issueForm', 'prForm'
 ];
 
 @Entry
@@ -125,6 +128,11 @@ struct Index {
   @State listDetailTick: number = 0;
   /** Create list 页编辑模式参数（''=新建；否则为被编辑列表 id） */
   @State createListEditId: string = '';
+  /** Spec 043 表单路由参数（owner|name|mode|editNumber 拆段；owner/name 空=Home 入口先选仓库） */
+  @State formOwner: string = '';
+  @State formName: string = '';
+  @State formMode: string = 'new';
+  @State formEditNumber: number = 0;
   /** 文件路由参数（Spec 038/011 共用，格式 owner|name|path） */
   @State fileOwner: string = '';
   @State fileRepo: string = '';
@@ -137,6 +145,8 @@ struct Index {
   @State prFilesTick: number = 0;
   /** prFiles 返回 tick：PrDetail 重拉 reviewThreads（Spec 042 行内评论落点在会话区） */
   @State prDetailTick: number = 0;
+  /** issueDetail 返回 tick：编辑表单（issueForm）pop 回后重拉标题/正文（Spec 043） */
+  @State issueDetailTick: number = 0;
   /** Code Options 返回 tick：CodeViewer/CommitDetail 重读设置（review C3，同 prFilesTick 模式） */
   @State codeOptionsTick: number = 0;
   /** About 页回显信号：从详情页返回可见时自增，重拉 star 态（Spec 069） */
@@ -907,6 +917,16 @@ struct Index {
     }
   }
 
+  /** Spec 043 表单路由参数解析：owner|name|mode|editNumber（owner/name 可空=Home 入口先选仓库） */
+  private parseFormParam(param: string): void {
+    const parts = param.split('|');
+    this.formOwner = parts.length > 0 ? parts[0] : '';
+    this.formName = parts.length > 1 ? parts[1] : '';
+    this.formMode = parts.length > 2 && parts[2] !== '' ? parts[2] : 'new';
+    const n = parts.length > 3 ? Number(parts[3]) : 0;
+    this.formEditNumber = isNaN(n) ? 0 : n;
+  }
+
   @Builder
   repoPrsDestination() {
     NavDestination() {
@@ -1063,11 +1083,54 @@ struct Index {
         name: this.repoName,
         number: this.detailNumber,
         token: this.token,
-        pathStack: this.pathStack
+        pathStack: this.pathStack,
+        refreshTick: this.issueDetailTick
       })
     }
     .onReady((context: NavDestinationContext) => {
       this.parseRouteParam(context.pathInfo.param as string);
+    })
+    // 返回刷新（编辑表单 pop 回后重拉标题/正文，Spec 043）；首显由页内 skipFirstTick 跳过
+    .onShown(() => {
+      this.issueDetailTick += 1;
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 043：新建/编辑 Issue 表单（参数 owner|name|mode|editNumber） */
+  @Builder
+  issueFormDestination() {
+    NavDestination() {
+      IssueFormView({
+        token: this.token,
+        pathStack: this.pathStack,
+        fOwner: this.formOwner,
+        fName: this.formName,
+        fMode: this.formMode,
+        fEditNumber: this.formEditNumber
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseFormParam(context.pathInfo.param as string);
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 043：新建/编辑 Pull Request 表单（参数 owner|name|mode|editNumber） */
+  @Builder
+  prFormDestination() {
+    NavDestination() {
+      PrFormView({
+        token: this.token,
+        pathStack: this.pathStack,
+        fOwner: this.formOwner,
+        fName: this.formName,
+        fMode: this.formMode,
+        fEditNumber: this.formEditNumber
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseFormParam(context.pathInfo.param as string);
     })
     .hideTitleBar(true)
   }
@@ -1257,6 +1320,10 @@ struct Index {
       this.reactionUsersDestination()
     } else if (name === 'issueDetail') {
       this.issueDetailDestination()
+    } else if (name === 'issueForm') {
+      this.issueFormDestination()
+    } else if (name === 'prForm') {
+      this.prFormDestination()
     } else if (name === 'prDetail') {
       this.prDetailDestination()
     } else if (name === 'repoFiles') {

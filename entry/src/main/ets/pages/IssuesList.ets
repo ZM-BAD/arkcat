@@ -618,7 +618,8 @@ export struct IssuesListView {
         .accessibilityDescription($r('app.string.a11y_new'))
         .focusable(true)
         .onClick(() => {
-          promptAction.showToast({ message: $r('app.string.issues_new_coming') });
+          // Spec 043：「+」直接进新建 Issue 表单（仓库上下文已知）
+          this.pathStack.pushPathByName('issueForm', `${this.owner}|${this.name}|new|0`);
         })
       }
       .width('100%')

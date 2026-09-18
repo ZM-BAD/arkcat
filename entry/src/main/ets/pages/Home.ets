@@ -11,6 +11,7 @@ import { friendlyError } from '../services/GitHttpClient';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
 import { AppBar, AppBarAction } from '../components/AppBar';
+import { CreateEntrySheet } from '../components/CreateEntrySheet';
 import { WorkSection, WorkConfigStore, visibleWorkSections } from '../utils/WorkConfig';
 
 /** 标题栏底部渐变阴影（滚动时显示、回顶部消失） */
@@ -88,6 +89,31 @@ export struct HomeView {
   /** 标题栏阴影：滚动中显示、回顶部消失 */
   @Local headerShadow: boolean = false;
   @Local isRefreshing: boolean = false;
+  /** 「+」新建入口弹层（Spec 043：New issue / New pull request 两行） */
+  @Local createSheetOpen: boolean = false;
+
+  /** 「+」→ 新建弹层（Spec 043 元素1：Home 入口无仓库上下文，表单内先选仓库） */
+  private openCreateSheet(): void {
+    this.createSheetOpen = true;
+  }
+
+  private createIssueEntry(): void {
+    this.createSheetOpen = false;
+    this.pathStack.pushPathByName('issueForm', '||new|0');
+  }
+
+  private createPrEntry(): void {
+    this.createSheetOpen = false;
+    this.pathStack.pushPathByName('prForm', '||new|0');
+  }
+
+  @Builder
+  createSheet() {
+    CreateEntrySheet({
+      onIssue: (): void => this.createIssueEntry(),
+      onPr: (): void => this.createPrEntry()
+    })
+  }
 
   @Builder
   header() {
@@ -104,7 +130,7 @@ export struct HomeView {
             this.refresh();
           }, { a11y: $r('app.string.a11y_refresh') }),
           new AppBarAction($r('app.media.oct_plus_circle_24'), (): void => {
-            promptAction.showToast({ message: $r('app.string.home_new_coming') });
+            this.openCreateSheet();
           }, { a11y: $r('app.string.a11y_new') })
         ]
       })
@@ -337,5 +363,12 @@ export struct HomeView {
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
+    .bindSheet($$this.createSheetOpen, this.createSheet(), {
+      height: 264,
+      detents: [264, SheetSize.LARGE],
+      showClose: false,
+      dragBar: true,
+      backgroundColor: $r('app.color.card_background')
+    })
   }
 }

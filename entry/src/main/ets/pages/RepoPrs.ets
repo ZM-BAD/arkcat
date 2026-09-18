@@ -566,7 +566,8 @@ export struct RepoPrsView {
         .accessibilityDescription($r('app.string.a11y_new'))
         .focusable(true)
         .onClick((): void => {
-          promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+          // Spec 043：「+」直接进新建 PR 表单（仓库上下文已知）
+          this.pathStack.pushPathByName('prForm', `${this.owner}|${this.name}|new|0`);
         })
       }
       .width('100%')
