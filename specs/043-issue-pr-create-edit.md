@@ -3,7 +3,7 @@
 > BFS Level: 3
 > 关联截图: 官方「New Issue」「New Pull Request」表单；Issue/PR 标题行 pencil 编辑入口
 > 上游 Spec: 030（IssueDetail）、031（PrDetail）、007（IssuesList）、027（RepoPrs）
-> 状态: draft（2026-09-02 规划）
+> 状态: implemented（2026-09-18，基于 develop 同名重建批）
 
 ---
 
@@ -51,11 +51,11 @@
 ## 四、核心 GraphQL 片段
 
 ```graphql
-# 模板与分支
+# 模板与分支（实测字段：模板文件名是 filename 非 file；2026-09-18 gh 探针证实）
 query RepoForm($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
     id defaultBranchRef { name }
-    issueTemplates { title body file }
+    issueTemplates { name title body filename }
     refs(refPrefix: "refs/heads/", first: 100) {
       nodes { name target { oid } }
     }
@@ -132,3 +132,4 @@ mutation ToReady { markPullRequestReadyForReview(input: { pullRequestId: $prId }
 - 官方轨迹：创建 discussion（1.4.0，2021）→ 建仓（1.257，2026-05）；Issue/PR 创建则在 v1.x 早期即有。我们的顺序：有 041 评论后即可上本 Spec。
 - 「创建仓库」在官方 2026-05 才上线，且需要模板选择器——本项目规模不追（❌ 规划备注：创建仓库依赖 write 能力 + 模板链，可放后续批观察）。
 - 表单页复用 041 的 Markdown 工具栏组件（拆出 `MarkdownToolbar` 公共组件，041/043 共用）。
+- 实现口径（2026-09-18）：REPO_FORM 单查询聚合仓库 id/默认分支/模板/分支；模板只填充正文（标题不动）；Home「+」无仓库上下文 → 表单内先选仓库（viewer.repositories，affiliations=[OWNER, COLLABORATOR, ORGANIZATION_MEMBER]，first 100 按最近推送序，客户端搜索）。编辑入口统一 viewerCanUpdate 门控：Issue=标题行 pencil + 顶栏 ⋯ 菜单 + 正文卡菜单；PR=顶栏 ⋯ 菜单 + 正文卡菜单。关闭原因面板两档 COMPLETED/NOT_PLANNED（圆形单选 + 红色关闭钮）；PR 关闭/重开/draft 切换挂顶栏 ⋯ 菜单（draft 项按 isDraft 换文案：Convert to draft ↔ Mark ready for review）。Issue/PR 详情查询补 viewerCanUpdate；GraphQL 契约同步至 scripts/graphql-contract.mjs（9 条 gh 实测）。
