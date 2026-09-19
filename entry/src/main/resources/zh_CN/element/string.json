@@ -3013,6 +3013,10 @@
       "value": "选择分支"
     },
     {
+      "name": "profile_sponsoring",
+      "value": "赞助中"
+    },
+    {
       "name": "profile_popular_section",
       "value": "热门"
     },

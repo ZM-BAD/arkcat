@@ -188,6 +188,8 @@ export struct ProfileView {
           isDeveloperProgramMember: profile.isDeveloperProgramMember,
           pinned: profile.pinned,
           popular: profile.popular,
+          sponsoringCount: profile.sponsoringCount,
+          projectsCount: profile.projectsCount,
           repositoriesCount: profile.repositoriesCount,
           organizationsCount: profile.organizationsCount,
           starredCount: profile.starredCount
@@ -372,6 +374,8 @@ export struct ProfileView {
                 repositoriesCount: this.profile.repositoriesCount,
                 orgCount: this.orgCount,
                 starredCount: this.profile.starredCount,
+                sponsoringCount: this.profile.sponsoringCount,
+                projectsCount: this.profile.projectsCount,
                 pathStack: this.pathStack
               })
             } else {

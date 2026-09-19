@@ -26,6 +26,10 @@ export interface UserProfile {
   repositoriesCount: number;
   organizationsCount: number;
   starredCount: number;
+  /** Sponsoring 行计数（Spec 073）：TA 作为 sponsor 的在效赞助数 */
+  sponsoringCount: number;
+  /** Projects 行计数（Spec 073）：Projects V2 数量 */
+  projectsCount: number;
 }
 
 /** GraphQL UserProfile 响应 → UserProfile */
@@ -50,6 +54,8 @@ export function mapUserProfile(data: JsonMap): UserProfile {
   const repositoriesRaw = Json.obj(userNode, 'repositories');
   const organizationsRaw = Json.obj(userNode, 'organizations');
   const starsRaw = Json.obj(userNode, 'starredRepositories');
+  const sponsoringRaw = Json.obj(userNode, 'sponsorshipsAsSponsor');
+  const projectsRaw = Json.obj(userNode, 'projectsV2');
   return {
     user: mapUser(userNode),
     userId: Json.str(userNode, 'id'),
@@ -67,7 +73,9 @@ export function mapUserProfile(data: JsonMap): UserProfile {
     popular: popular,
     repositoriesCount: repositoriesRaw ? Json.num(repositoriesRaw, 'totalCount') : 0,
     organizationsCount: organizationsRaw ? Json.num(organizationsRaw, 'totalCount') : 0,
-    starredCount: starsRaw ? Json.num(starsRaw, 'totalCount') : 0
+    starredCount: starsRaw ? Json.num(starsRaw, 'totalCount') : 0,
+    sponsoringCount: sponsoringRaw ? Json.num(sponsoringRaw, 'totalCount') : 0,
+    projectsCount: projectsRaw ? Json.num(projectsRaw, 'totalCount') : 0
   };
 }
 

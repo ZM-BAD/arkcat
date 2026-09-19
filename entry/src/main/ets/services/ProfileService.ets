@@ -43,6 +43,8 @@ query UserProfile($login: String!) {
     }
     repositories { totalCount }
     starredRepositories { totalCount }
+    sponsorshipsAsSponsor { totalCount }
+    projectsV2 { totalCount }
   }
 }`;
 
