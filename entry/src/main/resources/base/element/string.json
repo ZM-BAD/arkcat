@@ -3009,6 +3009,22 @@
       "value": "Repository name can't be empty"
     },
     {
+      "name": "picker_repo_title",
+      "value": "Choose Branch"
+    },
+    {
+      "name": "profile_sponsoring",
+      "value": "Sponsoring"
+    },
+    {
+      "name": "profile_popular_section",
+      "value": "Popular"
+    },
+    {
+      "name": "picker_contribute",
+      "value": "Contribute"
+    },
+    {
       "name": "repo_create_error_invalid_name",
       "value": "Repository name already exists or is invalid"
     }

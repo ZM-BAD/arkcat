@@ -43,6 +43,7 @@ import {
   filterPickerItems, mapRestCreatedRepo, mapTemplateCreatedRepo,
   PickerItem, NewRepoForm
 } from '../../entry/src/main/ets/models/RepoCreateModels';
+import { mapUserProfile } from '../../entry/src/main/ets/models/ProfileModels';
 import { mapPrFiles, mapFilesCursor, applyRestPatch, PrFileItem } from '../../entry/src/main/ets/models/PrDiffModels';
 import {
   buildNotificationsPath, pullRefFromUrl, buildPullStatesQuery, mapPullMerged,
@@ -2171,4 +2172,40 @@ test('Spec 070 filterPickerItems/mapCreatedRepo：搜索过滤与建仓结果映
   });
   assert.equal(tpl.owner, 'ZM-BAD');
   assert.equal(tpl.name, 'demo');
+});
+
+// —— Spec 072：Profile Pinned → Popular 兜底（models/ProfileModels） ——
+
+test('Spec 072 mapUserProfile：popular 兜底映射与无可见仓库空态', () => {
+  const data: JsonMap = { viewer: { login: 'ZM-BAD' }, user: {
+    id: 'U1', login: 'alice', name: 'Alice', avatarUrl: '', bio: '',
+    followers: { totalCount: 3 }, following: { totalCount: 4 },
+    pinnedItems: { nodes: [] },
+    popular: { nodes: [
+      { id: 'R1', name: 'a', nameWithOwner: 'alice/a', description: 'd1', stargazerCount: 30, forkCount: 2,
+        owner: { login: 'alice', avatarUrl: '' }, primaryLanguage: { name: 'TypeScript', color: '#3178c6' }, isPrivate: false },
+      { id: 'R2', name: 'b', nameWithOwner: 'alice/b', description: '', stargazerCount: 5, forkCount: 0,
+        owner: { login: 'alice', avatarUrl: '' }, primaryLanguage: null, isPrivate: false }
+    ] },
+    repositories: { totalCount: 2 },
+    starredRepositories: { totalCount: 9 }
+  } };
+  const profile = mapUserProfile(data);
+  assert.equal(profile.pinned.length, 0);
+  assert.equal(profile.popular.length, 2);
+  assert.equal(profile.popular[0].nameWithOwner, 'alice/a');
+  assert.equal(profile.popular[0].stargazerCount, 30);
+  assert.equal(profile.popular[0].primaryLanguage, 'TypeScript');
+  assert.equal(profile.popular[0].ownerLogin, 'alice');
+  assert.equal(profile.starredCount, 9);
+
+  // 无任何可见仓库：popular 与 pinned 皆空（UI 据此整区隐藏标题与卡片）
+  const bare = mapUserProfile({ viewer: { login: 'ZM-BAD' }, user: {
+    id: 'U2', login: 'bob', name: 'Bob', avatarUrl: '', bio: '',
+    followers: { totalCount: 0 }, following: { totalCount: 0 },
+    pinnedItems: { nodes: [] }, popular: { nodes: [] },
+    repositories: { totalCount: 0 }, starredRepositories: { totalCount: 0 }
+  } });
+  assert.equal(bare.pinned.length, 0);
+  assert.equal(bare.popular.length, 0);
 });

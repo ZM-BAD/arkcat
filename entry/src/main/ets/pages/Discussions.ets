@@ -10,6 +10,7 @@ import { FilterDropdownChip, FilterDropdownOption } from '../components/FilterDr
 import { WorkDiscussionItem, WorkDiscussionsPage, RepoLabelItem, RepoCategoryItem, mapRepoLabels, emojiFromShortcode } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { WorkFilterSelectSheet, FilterSheetItem } from '../components/WorkFilterSelectSheet';
+import { DualStateSheetHeader } from '../components/DualStateSheetHeader';
 import { LabelPill } from '../components/LabelPill';
 import { StateView } from '../components/StateView';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
@@ -497,85 +498,28 @@ export struct DiscussionsView {
     .padding({ left: 8, right: 8 })
   }
 
-  /**
-   * 双态弹层头（官方口径，2026-09-14 统一）：常态=[✕ 标题 🔍]；搜索态=标题**原地**变搜索框
-   * （defaultFocus 自动聚焦），左侧 ✕ 变 ←（回退=清词退出搜索态），框内右端 ✕ 清词。
-   */
-  @Builder
-  dualStateSheetHeader(titleRes: Resource, searchShow: boolean, searchText: string,
-    onClose: () => void, onToggle: () => void, onSearch: (v: string) => void, onClear: () => void) {
-    Row() {
-      Stack() {
-        OctIcon({
-          res: searchShow ? $r('app.media.oct_arrow_left_24') : $r('app.media.oct_x_16'),
-          iconSize: 18,
-          iconColor: $r('app.color.text_primary')
-        })
-      }
-      .width(44)
-      .height(44)
-      .onClick((): void => {
-        if (searchShow) {
-          onClear();
-          onToggle();
-        } else {
-          onClose();
-        }
-      })
-      if (searchShow) {
-        Stack({ alignContent: Alignment.End }) {
-          TextInput({ text: searchText })
-            .height(40)
-            .fontSize($r('app.float.body_font_size'))
-            .width('100%')
-            .padding({ right: 34 })
-            .borderRadius(6)
-            .backgroundColor($r('app.color.chip_bg'))
-            .defaultFocus(true)
-            .onChange((v: string): void => onSearch(v))
-          if (searchText !== '') {
-            Stack() {
-              OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 14, iconColor: $r('app.color.text_secondary') })
-            }
-            .width(36)
-            .height(36)
-            .onClick((): void => onClear())
-          }
-        }
-        .layoutWeight(1)
-        .margin({ right: 8 })
-      } else {
-        Text(titleRes)
-          .fontSize($r('app.float.title_font_size'))
-          .fontWeight(600)
-          .fontColor($r('app.color.text_primary'))
-          .layoutWeight(1)
-        Stack() {
-          OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 18, iconColor: $r('app.color.link_blue') })
-        }
-        .width(44)
-        .height(44)
-        .onClick((): void => onToggle())
-      }
-    }
-    .padding({ left: 8, right: 8 })
-  }
-
   /** Category 弹层：emoji + 名称 + 描述两行（客户端搜索过滤；选中蓝勾，与官方一致） */
   @Builder
   categorySheet() {
     Column() {
-      this.dualStateSheetHeader($r('app.string.discussions_filter_by_category'), this.categorySearchShow,
-        this.categorySearch,
-        (): void => {
+      DualStateSheetHeader({
+        titleRes: $r('app.string.discussions_filter_by_category'),
+        placeholder: $r('app.string.discussions_filter_categories'),
+        searchShow: this.categorySearchShow,
+        searchText: this.categorySearch,
+        onClose: (): void => {
           this.sheetKind = '';
-        }, (): void => {
+        },
+        onToggle: (): void => {
           this.categorySearchShow = !this.categorySearchShow;
-        }, (v: string): void => {
+        },
+        onSearch: (v: string): void => {
           this.categorySearch = v;
-        }, (): void => {
+        },
+        onClear: (): void => {
           this.categorySearch = '';
-        })
+        }
+      })
       Divider().color($r('app.color.divider')).strokeWidth(1).width('100%')
       if (this.categoriesLoading) {
         StateView({ loading: true })
@@ -637,17 +581,24 @@ export struct DiscussionsView {
   @Builder
   labelSheet() {
     Column() {
-      this.dualStateSheetHeader($r('app.string.discussions_filter_by_label'), this.labelSearchShow,
-        this.labelSearch,
-        (): void => {
+      DualStateSheetHeader({
+        titleRes: $r('app.string.discussions_filter_by_label'),
+        placeholder: $r('app.string.filter_labels'),
+        searchShow: this.labelSearchShow,
+        searchText: this.labelSearch,
+        onClose: (): void => {
           this.sheetKind = '';
-        }, (): void => {
+        },
+        onToggle: (): void => {
           this.labelSearchShow = !this.labelSearchShow;
-        }, (v: string): void => {
+        },
+        onSearch: (v: string): void => {
           this.labelSearch = v;
-        }, (): void => {
+        },
+        onClear: (): void => {
           this.labelSearch = '';
-        })
+        }
+      })
       if (this.labelsLoading) {
         StateView({ loading: true })
       } else if (this.labelsError !== '') {
@@ -1032,7 +983,8 @@ export struct DiscussionsView {
     .bindSheet(this.sheetKind !== '', this.overlaySheet(), {
       height: 560,
       detents: [560, SheetSize.LARGE],
-      backgroundColor: $r('app.color.bg_page'),
+      // 白底对齐弹层内容（原 bg_page 灰会在框架 dragBar 区露一条灰带，Spec 019 走查修正）
+      backgroundColor: $r('app.color.card_background'),
       showClose: false,
       onDisappear: (): void => {
         this.sheetKind = '';

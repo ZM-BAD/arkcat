@@ -34,6 +34,7 @@
 | 组件 | 职责 |
 | --- | --- |
 | `SheetHeader` | 双态标题行：常态=[✕ 标题 🔍]，搜索态=标题原地变搜索框、✕ 变 ←（清词退出）；`iconSize`(16/18)、`alwaysDivider` 两口径参数化 |
+| `DualStateSheetHeader` | 双态标题行（Discussions 筛选弹层用）：同 SheetHeader 双态交互（✕/←、原地搜索框、defaultFocus、框内清词）；由页内 @Builder 组件化而来（@Builder 值传参在弹层分支卡旧态致搜索钮失效，坑 1） |
 | `FilterOptionSheet` | 列表单选面板（双态头 + plain/label 胶囊/circle-slash 哨兵三态行）；仓库内 Issues/PRs 四面板共用 |
 | `WorkFilterSelectSheet` | 多选面板（org/repo，头像行 + 全库真搜索） |
 | `WorkFilterSortSheet` / `SortBySheet` | 排序面板 |

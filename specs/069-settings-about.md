@@ -3,7 +3,7 @@
 > BFS Level: 2
 > 关联截图: 无官方对照页（官方 Settings 无 About 入口；样式沿用 Spec 014 Settings 骨架）
 > 上游 Spec: 014（Settings）
-> 状态: implemented（2026-09-20 状态回写：About 行与关于页已入 develop=70c2893；§六 模拟器实测项走查通过后勾选）
+> 状态: implemented（2026-09-20 状态回写：About 行与关于页已入 develop=70c2893；§六 模拟器实测项 2026-09-20 用户走查确认通过，全部勾选）
 
 ---
 
@@ -73,15 +73,15 @@ query RepoStarState($owner: String!, $name: String!) {
 
 - [x] bash scripts/check-spec.sh 通过
 - [x] 宿主单测不回归（bash scripts/ut/run-local-tests.sh）
-- [ ] Settings More Options 出现 About 行（Open Source 与 Sign Out 之间），点击进入关于页
-- [ ] 头部显示图标/名称/版本号，版本号与 bundle 清单一致
-- [ ] Star 引导文案点击无任何动作
-- [ ] 已加星用户进页直接渲染金星态（首拉期间钮面转圈，无描边闪变）
-- [ ] 仓库行 star 钮面显示实际加星数（已加星为金星态）；点击 → ZM-BAD/arkcat 仓库详情页
-- [ ] 详情页加星/取消后返回 About，按钮状态自动同步（onShown tick 重拉），无需手动刷新
-- [ ] 下拉刷新触发重拉，钮面数字/加星态更新；失败时圈正常收起
-- [ ] 底部居中显示「ICP备案号：浙ICP备2026075163号-1A」纯文本（死值、无点击）
-- [ ] base/zh_CN 新增 key 对齐；硬编码颜色/字号门禁通过
+- [x] Settings More Options 出现 About 行（Open Source 与 Sign Out 之间），点击进入关于页
+- [x] 头部显示图标/名称/版本号，版本号与 bundle 清单一致
+- [x] Star 引导文案点击无任何动作
+- [x] 已加星用户进页直接渲染金星态（首拉期间钮面转圈，无描边闪变）
+- [x] 仓库行 star 钮面显示实际加星数（已加星为金星态）；点击 → ZM-BAD/arkcat 仓库详情页
+- [x] 详情页加星/取消后返回 About，按钮状态自动同步（onShown tick 重拉），无需手动刷新
+- [x] 下拉刷新触发重拉，钮面数字/加星态更新；失败时圈正常收起
+- [x] 底部居中显示「ICP备案号：浙ICP备2026075163号-1A」纯文本（死值、无点击）
+- [x] base/zh_CN 新增 key 对齐；硬编码颜色/字号门禁通过
 
 ---
 

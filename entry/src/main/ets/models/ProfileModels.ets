@@ -21,9 +21,15 @@ export interface UserProfile {
   /** GitHub Developer Program 成员（true 时 Profile 显示 cpu 徽章行） */
   isDeveloperProgramMember: boolean;
   pinned: RepoSummary[];
+  /** Popular 兜底（Spec 072）：star 降序前 6 个自有可见仓库，pinned 为空时 UI 消费 */
+  popular: RepoSummary[];
   repositoriesCount: number;
   organizationsCount: number;
   starredCount: number;
+  /** Sponsoring 行计数（Spec 073）：TA 作为 sponsor 的在效赞助数 */
+  sponsoringCount: number;
+  /** Projects 行计数（Spec 073）：Projects V2 数量 */
+  projectsCount: number;
 }
 
 /** GraphQL UserProfile 响应 → UserProfile */
@@ -38,9 +44,18 @@ export function mapUserProfile(data: JsonMap): UserProfile {
       pinned.push(mapRepo(node as JsonMap));
     }
   }
+  const popularRaw = Json.obj(userNode, 'popular');
+  const popular: RepoSummary[] = [];
+  if (popularRaw !== null) {
+    for (const node of Json.arr(popularRaw, 'nodes')) {
+      popular.push(mapRepo(node as JsonMap));
+    }
+  }
   const repositoriesRaw = Json.obj(userNode, 'repositories');
   const organizationsRaw = Json.obj(userNode, 'organizations');
   const starsRaw = Json.obj(userNode, 'starredRepositories');
+  const sponsoringRaw = Json.obj(userNode, 'sponsorshipsAsSponsor');
+  const projectsRaw = Json.obj(userNode, 'projectsV2');
   return {
     user: mapUser(userNode),
     userId: Json.str(userNode, 'id'),
@@ -55,9 +70,12 @@ export function mapUserProfile(data: JsonMap): UserProfile {
     viewerIsFollowing: Json.bool(userNode, 'viewerIsFollowing'),
     isDeveloperProgramMember: Json.bool(userNode, 'isDeveloperProgramMember'),
     pinned: pinned,
+    popular: popular,
     repositoriesCount: repositoriesRaw ? Json.num(repositoriesRaw, 'totalCount') : 0,
     organizationsCount: organizationsRaw ? Json.num(organizationsRaw, 'totalCount') : 0,
-    starredCount: starsRaw ? Json.num(starsRaw, 'totalCount') : 0
+    starredCount: starsRaw ? Json.num(starsRaw, 'totalCount') : 0,
+    sponsoringCount: sponsoringRaw ? Json.num(sponsoringRaw, 'totalCount') : 0,
+    projectsCount: projectsRaw ? Json.num(projectsRaw, 'totalCount') : 0
   };
 }
 

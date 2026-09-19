@@ -1,7 +1,8 @@
 /**
  * 仓库摘要卡片：名称 + 描述 + 语言色点 + Star/Fork 计数。
- * Home（Pinned）、Profile（Repos/Stars）、Explore（Topic 结果）复用。
- * isPinned=true：官方 Pinned 卡片形态（属主头像+用户名 / 仅仓库名 / 黄星+语言 dot），无 Fork 行。
+ * Home（Pinned）、Profile（Repos/Stars/Popular 兜底）、Explore（Topic 结果）复用。
+ * isPinned=true：官方 Pinned 卡片形态（属主头像+用户名 / 仅仓库名 / 黄星+语言 dot），无 Fork 行；
+ * Spec 072：Profile 无 Pin 时的 Popular 兜底区复用同一形态（同高度同元素）。
  */
 import { LanguageDotRow } from './LanguageDot';
 import { RepoSummary } from '../models/GitHubModels';
@@ -12,7 +13,7 @@ import { compactCount } from '../utils/Format';
 @ComponentV2
 export struct RepoCard {
   @Param repo: RepoSummary | null = null;
-  /** Pinned 卡片形态（Profile Pinned 横滑区） */
+  /** Pinned 卡片形态（Profile Pinned 横滑区；Popular 兜底区同形态复用，Spec 072） */
   @Param isPinned: boolean = false;
   @Event onOpen: () => void = () => {};
 
