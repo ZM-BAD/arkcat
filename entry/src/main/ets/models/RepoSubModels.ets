@@ -1152,6 +1152,60 @@ export function mapBranchRefs(data: JsonMap): BranchRefItem[] {
   return items;
 }
 
+/** 分支选择器候选（Compare changes 动线，Spec 043）：默认分支名 + refs 全量分支名 */
+export interface BranchRefs {
+  defaultBranch: string;
+  names: string[];
+}
+
+/** 分支选择器单页（Compare changes 动线，Spec 043）：分支名数组 + 翻页信息 + 默认分支 */
+export interface BranchNamesPage {
+  names: string[];
+  hasNextPage: boolean;
+  endCursor: string;
+  defaultBranch: string;
+}
+
+export function mapBranchNamesPage(data: JsonMap): BranchNamesPage {
+  const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
+  const dbr = Json.obj(repo, 'defaultBranchRef');
+  const refs = Json.obj(repo, 'refs') ?? ({} as JsonMap);
+  const pageInfo = Json.obj(refs, 'pageInfo') ?? ({} as JsonMap);
+  const names: string[] = [];
+  for (const nodeItem of Json.arr(refs, 'nodes')) {
+    names.push(Json.str(nodeItem as JsonMap, 'name'));
+  }
+  return {
+    names: names,
+    hasNextPage: Json.bool(pageInfo, 'hasNextPage'),
+    endCursor: Json.str(pageInfo, 'endCursor'),
+    defaultBranch: dbr !== null ? Json.str(dbr, 'name') : ''
+  };
+}
+
+/** Changes 汇总（REST compare 累加结果；commits 取首页 total_commits 精确值） */
+export interface CompareSummary {
+  files: number;
+  additions: number;
+  deletions: number;
+  commits: number;
+}
+
+/** REST compare 单页解析：累加 files[] 的 additions/deletions，首页回填 total_commits；返回本页文件数供判停 */
+export function mergeComparePage(acc: CompareSummary, body: string, isFirst: boolean): number {
+  const page = JSON.parse(body) as JsonMap;
+  if (isFirst) {
+    acc.commits = Json.num(page, 'total_commits');
+  }
+  const files = Json.arr(page, 'files');
+  for (const node of files) {
+    const f = node as JsonMap;
+    acc.additions += Json.num(f, 'additions');
+    acc.deletions += Json.num(f, 'deletions');
+  }
+  return files.length;
+}
+
 export function mapPickerRepos(data: JsonMap): PickerRepo[] {
   const viewer = Json.obj(data, 'viewer') ?? ({} as JsonMap);
   const items: PickerRepo[] = [];

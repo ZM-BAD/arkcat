@@ -566,8 +566,8 @@ export struct RepoPrsView {
         .accessibilityDescription($r('app.string.a11y_new'))
         .focusable(true)
         .onClick((): void => {
-          // Spec 043：「+」直接进新建 PR 表单（仓库上下文已知）
-          this.pathStack.pushPathByName('prForm', `${this.owner}|${this.name}|new|0`);
+          // Spec 043：「+」进 Compare changes 页选 base/compare（官方动线，2026-09-19 重做）
+          this.pathStack.pushPathByName('prCompare', `${this.owner}|${this.name}`);
         })
       }
       .width('100%')

@@ -45,17 +45,19 @@ export function defaultBaseBranch(defaultBranch: string, branches: string[]): st
   return branches.length > 0 ? branches[0] : '';
 }
 
-/** 表单路由参数（owner|name|mode|editNumber|templateName；owner/name 为空 = Home 入口先选仓库；
- * templateName 非空 = 从 Choose Template 页带模板进入） */
+/** 表单路由参数（owner|name|mode|editNumber|templateName|base|head；owner/name 为空 = Home 入口先选仓库；
+ * templateName 非空 = 从 Choose Template 页带模板进入；base/head = Start pull request 动线选定的分支） */
 export interface FormRoute {
   owner: string;
   name: string;
   mode: string;
   editNumber: number;
   templateName: string;
+  base: string;
+  head: string;
 }
 
-/** 解析表单路由参数：缺段/非法段回落默认值（mode=new，editNumber=0，templateName=''） */
+/** 解析表单路由参数：缺段/非法段回落默认值（mode=new，editNumber=0，templateName/base/head=''） */
 export function parseFormRoute(param: string): FormRoute {
   const parts: string[] = param.split('|');
   const numberRaw: string = parts.length > 3 ? parts[3] : '0';
@@ -65,7 +67,9 @@ export function parseFormRoute(param: string): FormRoute {
     name: parts.length > 1 ? parts[1] : '',
     mode: parts.length > 2 && parts[2] !== '' ? parts[2] : 'new',
     editNumber: isNaN(parsed) ? 0 : parsed,
-    templateName: parts.length > 4 ? parts[4] : ''
+    templateName: parts.length > 4 ? parts[4] : '',
+    base: parts.length > 5 ? parts[5] : '',
+    head: parts.length > 6 ? parts[6] : ''
   };
 }
 
@@ -76,4 +80,18 @@ export function filterBranches(branches: string[], keyword: string): string[] {
     return branches;
   }
   return branches.filter((b: string): boolean => b.toLowerCase().indexOf(q) >= 0);
+}
+
+/** 分支选择器排序（官方 Choose Branch 口径）：默认分支置顶，其余按名称字节序升序 */
+export function orderBranches(branches: string[], defaultBranch: string): string[] {
+  const rest: string[] = branches.filter((b: string): boolean => b !== defaultBranch);
+  rest.sort((a: string, b: string): number => (a < b ? -1 : (a > b ? 1 : 0)));
+  if (defaultBranch !== '' && branches.indexOf(defaultBranch) >= 0) {
+    const ordered: string[] = [defaultBranch];
+    for (const b of rest) {
+      ordered.push(b);
+    }
+    return ordered;
+  }
+  return rest;
 }

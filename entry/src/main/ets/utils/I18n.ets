@@ -12,7 +12,10 @@ export function resText(ui: UIContext, res: Resource, ...args: Array<string | nu
     return '';
   }
   try {
-    return ctx.resourceManager.getStringSync(res.id, ...args);
+    // $r(name, p1…) 的实参存于 res.params：getStringSync 必须透传才会做 %1$s/%1$d 替换
+    const params = res.params !== undefined && res.params.length > 0
+      ? res.params as Array<string | number> : args;
+    return ctx.resourceManager.getStringSync(res.id, ...params);
   } catch (e) {
     return '';
   }

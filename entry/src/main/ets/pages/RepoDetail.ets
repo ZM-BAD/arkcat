@@ -188,7 +188,8 @@ export struct RepoDetailView {
         icon: $r('app.media.oct_git_pull_request_16'),
         label: $r('app.string.create_new_pr'),
         onAction: (): void => {
-          this.pathStack.pushPathByName('prForm', `${this.owner}|${this.name}|new|0`);
+          // 官方动线（Spec 043 2026-09-19 重做）：先进 Compare changes 页选 base/compare
+          this.pathStack.pushPathByName('prCompare', `${this.owner}|${this.name}`);
         }
       }
     ];

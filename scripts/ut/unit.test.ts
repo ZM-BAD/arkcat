@@ -11,7 +11,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Json, JsonMap } from '../../entry/src/main/ets/utils/Json';
 import {
-  timeParts, githubShortTime, compactCount, notificationTypeKey, headEllipsisByWidth, TimeParts
+  timeParts, githubShortTime, compactCount, notificationTypeKey, headEllipsisByWidth, TimeParts,
+  groupDigits
 } from '../../entry/src/main/ets/utils/Format';
 import { NONE_FILTER_KEY } from '../../entry/src/main/ets/utils/FilterLoading';
 import { parseDiffPatch, fileBaseName } from '../../entry/src/main/ets/utils/Diff';
@@ -29,11 +30,12 @@ import {
   filterTriageByKeyword, diffSelection, singlePickId,
   mapTimeline, actorDisplayLogin, phraseSegments,
   mapRepoForm, mapEditable, mapIssueTemplates, mapBranchRefs, mapPickerRepos, filterReposByKeyword,
+  mapBranchNamesPage, mergeComparePage,
   pickerRepoFullName, parseContactLinks, parseIssueFormMeta
 } from '../../entry/src/main/ets/models/RepoSubModels';
 import {
   issueTitleError, canSubmitIssue, validatePrHeads, defaultBaseBranch,
-  parseFormRoute, filterBranches, ISSUE_TITLE_MAX
+  parseFormRoute, filterBranches, orderBranches, ISSUE_TITLE_MAX
 } from '../../entry/src/main/ets/utils/IssueFormRules';
 import { mapPrFiles, mapFilesCursor, applyRestPatch, PrFileItem } from '../../entry/src/main/ets/models/PrDiffModels';
 import {
@@ -1836,6 +1838,68 @@ test('filterBranches：大小写不敏感过滤/空词全量', () => {
   assert.deepEqual(filterBranches(branches, 'FEAT'), ['Feature/X']);
   assert.deepEqual(filterBranches(branches, 'fix/'), ['fix/bug']);
   assert.deepEqual(filterBranches(branches, 'zzz'), []);
+});
+
+test('orderBranches：默认分支置顶 + 字母序（Spec 043 Choose Branch）', () => {
+  assert.deepEqual(orderBranches(['f_b', 'main', 'a/x'], 'main'), ['main', 'a/x', 'f_b']);
+  assert.deepEqual(orderBranches(['main'], 'main'), ['main']);
+  assert.deepEqual(orderBranches([], 'main'), []);
+  // 默认分支不在列表内（异常数据）：仅按字母序
+  assert.deepEqual(orderBranches(['b', 'a'], 'gone'), ['a', 'b']);
+});
+
+test('groupDigits：千分位分组（Spec 043 Changes 汇总）', () => {
+  assert.equal(groupDigits(0), '0');
+  assert.equal(groupDigits(7), '7');
+  assert.equal(groupDigits(1142), '1,142');
+  assert.equal(groupDigits(1171), '1,171');
+  assert.equal(groupDigits(59985), '59,985');
+  assert.equal(groupDigits(1234567), '1,234,567');
+});
+
+test('parseFormRoute：Start PR 带 base/head 段（Spec 043）', () => {
+  const start = parseFormRoute('ZM-BAD|arkcat|new|0||main|develop');
+  assert.equal(start.mode, 'new');
+  assert.equal(start.base, 'main');
+  assert.equal(start.head, 'develop');
+  // 编辑模式旧参数形态：base/head 留空
+  const edit = parseFormRoute('ZM-BAD|arkcat|edit|5|');
+  assert.equal(edit.base, '');
+  assert.equal(edit.head, '');
+});
+
+test('mapBranchNamesPage：分支选择器单页映射（Spec 043）', () => {
+  const page = mapBranchNamesPage({
+    repository: {
+      defaultBranchRef: { name: 'main' },
+      refs: {
+        totalCount: 3,
+        pageInfo: { hasNextPage: true, endCursor: 'c1' },
+        nodes: [{ name: 'main' }, { name: 'develop' }]
+      }
+    }
+  });
+  assert.equal(page.defaultBranch, 'main');
+  assert.deepEqual(page.names, ['main', 'develop']);
+  assert.equal(page.hasNextPage, true);
+  assert.equal(page.endCursor, 'c1');
+});
+
+test('mergeComparePage：REST compare 单页累加（Spec 043 Changes 汇总）', () => {
+  const acc = { files: 0, additions: 0, deletions: 0, commits: 0 };
+  const n1 = mergeComparePage(acc,
+    JSON.stringify({ total_commits: 114, files: [
+      { additions: 10, deletions: 2 }, { additions: 1, deletions: 0 }
+    ] }), true);
+  assert.equal(n1, 2);
+  assert.equal(acc.commits, 114);
+  assert.equal(acc.additions, 11);
+  assert.equal(acc.deletions, 2);
+  const n2 = mergeComparePage(acc, JSON.stringify({ files: [{ additions: 5, deletions: 40 }] }), false);
+  assert.equal(n2, 1);
+  assert.equal(acc.commits, 114);
+  assert.equal(acc.additions, 16);
+  assert.equal(acc.deletions, 42);
 });
 
 test('mapIssueTemplates/mapBranchRefs：模板与分支映射（Spec 043 测试1/4 数据侧）', () => {

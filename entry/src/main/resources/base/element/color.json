@@ -283,6 +283,10 @@
     {
       "name": "floating_btn_bg",
       "value": "#24292F"
+    },
+    {
+      "name": "text_on_fill",
+      "value": "#FFFFFF"
     }
   ]
 }

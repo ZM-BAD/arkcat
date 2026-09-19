@@ -253,6 +253,29 @@ statusCheckRollup { state }
     variables: {"owner": "ZM-BAD", "name": "arkcat"}
   },
   {
+    name: 'BRANCH_REFS_QUERY',
+    query: `query BranchRefs($owner: String!, $name: String!, $after: String) {
+  repository(owner: $owner, name: $name) {
+    defaultBranchRef { name }
+    refs(refPrefix: "refs/heads/", first: 100, after: $after) {
+      totalCount
+      pageInfo { hasNextPage endCursor }
+      nodes { name }
+    }
+  }
+}`,
+    variables: {"owner": "ZM-BAD", "name": "arkcat"}
+  },
+  {
+    name: 'REF_TIP_QUERY',
+    query: `query RefTip($owner: String!, $name: String!, $qualified: String!) {
+  repository(owner: $owner, name: $name) {
+    ref(qualifiedName: $qualified) { target { ... on Commit { committedDate } } }
+  }
+}`,
+    variables: {"owner": "ZM-BAD", "name": "arkcat", "qualified": "refs/heads/develop"}
+  },
+  {
     name: 'ISSUE_EDIT_QUERY',
     query: `query IssueEdit($owner: String!, $name: String!, $number: Int!) {
   repository(owner: $owner, name: $name) {

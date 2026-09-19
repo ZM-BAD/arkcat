@@ -14,7 +14,8 @@ import {
   mapTriageUsers, mapTriageLabels, mapTriageMilestones, mapTriageLinked, mapTriageProjects,
   RepoFormPage, EditableContent, PickerRepo, IssueCreated,
   mapRepoForm, mapEditable, mapPickerRepos, mapPickerSearch,
-  IssueTemplateExtras, parseContactLinks, parseIssueFormMeta
+  IssueTemplateExtras, parseContactLinks, parseIssueFormMeta,
+  BranchRefs, BranchNamesPage, mapBranchNamesPage, CompareSummary, mergeComparePage
 } from '../models/RepoSubModels';
 import { PrFilesPage, PrFileItem, mapPrFiles, applyRestPatch, mapFilesCursor, mapFileNode } from '../models/PrDiffModels';
 import { CommitDetailPage, mapCommitDetail } from '../models/PrDiffModels';
@@ -547,6 +548,27 @@ query RepoForm($owner: String!, $name: String!) {
   }
 }`;
 
+/** 分支选择器候选（Compare changes 动线，Spec 043）：默认分支 + refs 全量翻页 */
+const BRANCH_REFS_QUERY = `
+query BranchRefs($owner: String!, $name: String!, $after: String) {
+  repository(owner: $owner, name: $name) {
+    defaultBranchRef { name }
+    refs(refPrefix: "refs/heads/", first: 100, after: $after) {
+      totalCount
+      pageInfo { hasNextPage endCursor }
+      nodes { name }
+    }
+  }
+}`;
+
+/** head 分支 tip 提交时间（Changes 行右侧相对时间） */
+const REF_TIP_QUERY = `
+query RefTip($owner: String!, $name: String!, $qualified: String!) {
+  repository(owner: $owner, name: $name) {
+    ref(qualifiedName: $qualified) { target { ... on Commit { committedDate } } }
+  }
+}`;
+
 /** 编辑 Issue 回填（标题/正文 + viewerCanUpdate 权限门） */
 const ISSUE_EDIT_QUERY = `
 query IssueEdit($owner: String!, $name: String!, $number: Int!) {
@@ -1028,6 +1050,56 @@ export class RepoSubService {
     const variables: Record<string, Object> = { 'owner': owner, 'name': name };
     const data = await graphql(REPO_FORM_QUERY, variables, token);
     return mapRepoForm(data);
+  }
+
+  /** 分支选择器候选（Choose Branch / Choose head ref；fetchAllPages 翻全，排序由页面 orderBranches 处理） */
+  static async fetchBranches(token: string, owner: string, name: string): Promise<BranchRefs> {
+    const variables: Record<string, Object> = { 'owner': owner, 'name': name };
+    const data = await graphql(BRANCH_REFS_QUERY, variables, token);
+    const first = mapBranchNamesPage(data);
+    const names: string[] = first.names;
+    if (first.hasNextPage) {
+      const more = await fetchAllPages<string>(async (cursor): Promise<Page<string>> => {
+        const vars: Record<string, Object> = {
+          'owner': owner, 'name': name,
+          'after': cursor !== null ? cursor : first.endCursor
+        };
+        const next = mapBranchNamesPage(await graphql(BRANCH_REFS_QUERY, vars, token));
+        return { items: next.names, hasNextPage: next.hasNextPage, endCursor: next.endCursor };
+      });
+      for (const n of more) {
+        names.push(n);
+      }
+    }
+    return { defaultBranch: first.defaultBranch, names: names };
+  }
+
+  /** head 分支 tip 提交时间（ISO；ref 不存在/非 commit 返回 ''） */
+  static async fetchRefTipDate(token: string, owner: string, name: string, branch: string): Promise<string> {
+    const variables: Record<string, Object> = {
+      'owner': owner, 'name': name, 'qualified': `refs/heads/${branch}`
+    };
+    const data = await graphql(REF_TIP_QUERY, variables, token);
+    const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
+    const ref = Json.obj(repo, 'ref') ?? ({} as JsonMap);
+    const target = Json.obj(ref, 'target') ?? ({} as JsonMap);
+    return Json.str(target, 'committedDate');
+  }
+
+  /**
+   * Changes 汇总（Spec 043 Compare changes）：GraphQL 无文件级 compare，
+   * 走 REST compare 单请求累加 files/additions/deletions（commits 用 total_commits 精确值）。
+   * ⚠️ 平台上限（2026-09-19 gh 实测）：files 硬上限 300 条不可翻页（per_page 只作用于
+   * commits 数组；page≥2 返回 files=null，Link 头为误导性通用分页）——
+   * >300 文件的 diff 汇总是截断下限，官方 App 走内部接口才有全量（Spec 043 §五/§七）。
+   */
+  static async fetchCompareSummary(token: string, owner: string, name: string,
+    base: string, head: string): Promise<CompareSummary> {
+    const acc: CompareSummary = { files: 0, additions: 0, deletions: 0, commits: 0 };
+    const basehead = `${encodeURIComponent(base)}...${encodeURIComponent(head)}`;
+    const resp = await restGet(`/repos/${owner}/${name}/compare/${basehead}`, token);
+    acc.files = mergeComparePage(acc, resp.body, true);
+    return acc;
   }
 
   /**
