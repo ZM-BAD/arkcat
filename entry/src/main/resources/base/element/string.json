@@ -3013,6 +3013,10 @@
       "value": "Choose Branch"
     },
     {
+      "name": "profile_popular_section",
+      "value": "Popular"
+    },
+    {
       "name": "picker_contribute",
       "value": "Contribute"
     },

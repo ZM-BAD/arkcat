@@ -187,6 +187,7 @@ export struct ProfileView {
           viewerIsFollowing: following,
           isDeveloperProgramMember: profile.isDeveloperProgramMember,
           pinned: profile.pinned,
+          popular: profile.popular,
           repositoriesCount: profile.repositoriesCount,
           organizationsCount: profile.organizationsCount,
           starredCount: profile.starredCount
@@ -197,6 +198,19 @@ export struct ProfileView {
       .catch((e: Error) => {
         promptAction.showToast({ message: this.fmt($r('app.string.profile_action_failed'), e.message) });
       });
+  }
+
+  /** Spec 072：Pinned 态判定（pinned 非空展示 Pinned 区，否则 Popular 兜底） */
+  private pinnedMode(): boolean {
+    return this.profile !== null && this.profile.pinned.length > 0;
+  }
+
+  /** Spec 072：卡片数据源（Pinned 优先，无 Pin 时 Popular；皆空由外层 if 隐藏整区） */
+  private displayRepos(): RepoSummary[] {
+    if (this.profile === null) {
+      return [];
+    }
+    return this.profile.pinned.length > 0 ? this.profile.pinned : this.profile.popular;
   }
 
   /** 带 %1$s 格式化：资源模板 + 参数 → 当前语言文案 */
@@ -313,33 +327,44 @@ export struct ProfileView {
                 }
               })
 
-              // Pinned 横滑双列（Spec 005 官方布局）
-              Row({ space: 6 }) {
-                OctIcon({ res: $r('app.media.oct_pin_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
-                Text($r('app.string.home_pinned_section'))
-                  .fontSize($r('app.float.title_font_size'))
-                  .fontWeight(600)
-                  .fontColor($r('app.color.text_primary'))
-              }
-              .width('100%')
-              Scroll() {
-                Row({ space: 8 }) {
-                  ForEach(this.profile.pinned, (repo: RepoSummary) => {
-                    RepoCard({
-                      repo: repo,
-                      isPinned: true,
-                      onOpen: (): void => {
-                        this.pathStack.pushPathByName('repoDetail', repo.nameWithOwner);
-                      }
-                    })
-                      .width(200)
-                  }, (repo: RepoSummary) => repo.id !== '' ? repo.id : repo.nameWithOwner)
+              // Pinned / Popular 兜底（Spec 072）：有 Pin→Pinned；无 Pin 有可见仓库→Popular（star 降序前 6）；皆空→整区隐藏
+              if (this.profile.pinned.length > 0 || this.profile.popular.length > 0) {
+                Row({ space: 6 }) {
+                  if (this.pinnedMode()) {
+                    OctIcon({ res: $r('app.media.oct_pin_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
+                    Text($r('app.string.home_pinned_section'))
+                      .fontSize($r('app.float.title_font_size'))
+                      .fontWeight(600)
+                      .fontColor($r('app.color.text_primary'))
+                  } else {
+                    OctIcon({ res: $r('app.media.oct_star_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
+                    Text($r('app.string.profile_popular_section'))
+                      .fontSize($r('app.float.title_font_size'))
+                      .fontWeight(600)
+                      .fontColor($r('app.color.text_primary'))
+                  }
                 }
-                .alignItems(VerticalAlign.Top)
+                .width('100%')
+                Scroll() {
+                  Row({ space: 8 }) {
+                    ForEach(this.displayRepos(), (repo: RepoSummary) => {
+                      RepoCard({
+                        repo: repo,
+                        // Popular 复用 Pinned 卡形态（Spec 072：同高度同元素——头像行/两行描述位/金星统计行）
+                        isPinned: true,
+                        onOpen: (): void => {
+                          this.pathStack.pushPathByName('repoDetail', repo.nameWithOwner);
+                        }
+                      })
+                        .width(200)
+                    }, (repo: RepoSummary) => repo.id !== '' ? repo.id : repo.nameWithOwner)
+                  }
+                  .alignItems(VerticalAlign.Top)
+                }
+                .scrollable(ScrollDirection.Horizontal)
+                .width('100%')
+                .scrollBar(BarState.Off)
               }
-              .scrollable(ScrollDirection.Horizontal)
-              .width('100%')
-              .scrollBar(BarState.Off)
 
               // 三导航入口（Spec 035：单容器三行，跳独立列表页）
               ProfileNavRows({

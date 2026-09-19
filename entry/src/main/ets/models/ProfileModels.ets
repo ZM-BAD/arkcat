@@ -21,6 +21,8 @@ export interface UserProfile {
   /** GitHub Developer Program 成员（true 时 Profile 显示 cpu 徽章行） */
   isDeveloperProgramMember: boolean;
   pinned: RepoSummary[];
+  /** Popular 兜底（Spec 072）：star 降序前 6 个自有可见仓库，pinned 为空时 UI 消费 */
+  popular: RepoSummary[];
   repositoriesCount: number;
   organizationsCount: number;
   starredCount: number;
@@ -36,6 +38,13 @@ export function mapUserProfile(data: JsonMap): UserProfile {
   if (pinnedRaw !== null) {
     for (const node of Json.arr(pinnedRaw, 'nodes')) {
       pinned.push(mapRepo(node as JsonMap));
+    }
+  }
+  const popularRaw = Json.obj(userNode, 'popular');
+  const popular: RepoSummary[] = [];
+  if (popularRaw !== null) {
+    for (const node of Json.arr(popularRaw, 'nodes')) {
+      popular.push(mapRepo(node as JsonMap));
     }
   }
   const repositoriesRaw = Json.obj(userNode, 'repositories');
@@ -55,6 +64,7 @@ export function mapUserProfile(data: JsonMap): UserProfile {
     viewerIsFollowing: Json.bool(userNode, 'viewerIsFollowing'),
     isDeveloperProgramMember: Json.bool(userNode, 'isDeveloperProgramMember'),
     pinned: pinned,
+    popular: popular,
     repositoriesCount: repositoriesRaw ? Json.num(repositoriesRaw, 'totalCount') : 0,
     organizationsCount: organizationsRaw ? Json.num(organizationsRaw, 'totalCount') : 0,
     starredCount: starsRaw ? Json.num(starsRaw, 'totalCount') : 0

@@ -34,6 +34,13 @@ query UserProfile($login: String!) {
         primaryLanguage { name color }
       } }
     }
+    popular: repositories(first: 6, ownerAffiliations: OWNER, orderBy: {field: STARGAZERS, direction: DESC}) {
+      nodes { ... on Repository {
+        id name nameWithOwner description stargazerCount forkCount
+        owner { login avatarUrl }
+        primaryLanguage { name color }
+      } }
+    }
     repositories { totalCount }
     starredRepositories { totalCount }
   }
