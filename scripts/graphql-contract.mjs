@@ -270,7 +270,7 @@ statusCheckRollup { state }
     name: 'REF_TIP_QUERY',
     query: `query RefTip($owner: String!, $name: String!, $qualified: String!) {
   repository(owner: $owner, name: $name) {
-    ref(qualifiedName: $qualified) { target { ... on Commit { committedDate } } }
+    ref(qualifiedName: $qualified) { target { ... on Commit { oid committedDate } } }
   }
 }`,
     variables: {"owner": "ZM-BAD", "name": "arkcat", "qualified": "refs/heads/develop"}

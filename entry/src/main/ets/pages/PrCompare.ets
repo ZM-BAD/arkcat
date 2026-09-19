@@ -10,7 +10,7 @@ import { StateView } from '../components/StateView';
 import { RepoSubService } from '../services/RepoSubService';
 import { friendlyError } from '../services/GitHttpClient';
 import { BranchPickResult } from './BranchPicker';
-import { RepoFormPage, CompareSummary } from '../models/RepoSubModels';
+import { RepoFormPage, CompareSummary, RefTip } from '../models/RepoSubModels';
 import { timeParts, TimeParts, groupDigits } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
@@ -104,13 +104,28 @@ export struct PrCompareView {
       });
   }
 
-  /** Changes 汇总：REST compare 分页累加 + tip 时间（tip 失败不阻断汇总行） */
+  /** Changes 汇总：先取 head tip（时间 + oid），再拉 compare（命中 300 上限时服务层
+   *  自动用 Trees diff 补精确文件数并置 filesTruncated，UI 据此隐藏 +/-）。
+   *  tip 失败不阻断汇总（oid 缺省仅跳过补数、省略右侧相对时间）。 */
   private loadChanges(): void {
     const seq = ++this.changesSeq;
     this.changesLoading = true;
     this.changesError = '';
     this.summary = null;
-    RepoSubService.fetchCompareSummary(this.token, this.fOwner, this.fName, this.base, this.head)
+    this.tipIso = '';
+    const base = this.base;
+    const head = this.head;
+    const emptyTip: RefTip = { oid: '', date: '' };
+    RepoSubService.fetchRefTip(this.token, this.fOwner, this.fName, head)
+      .catch((_e: Error): RefTip => emptyTip)
+      .then((tip: RefTip): Promise<CompareSummary> => {
+        if (seq !== this.changesSeq) {
+          const stale: CompareSummary = { files: 0, additions: 0, deletions: 0, commits: 0, filesTruncated: false };
+          return Promise.resolve(stale);
+        }
+        this.tipIso = tip.date;
+        return RepoSubService.fetchCompareSummary(this.token, this.fOwner, this.fName, base, head, tip.oid);
+      })
       .then((s: CompareSummary) => {
         if (seq !== this.changesSeq) {
           return;
@@ -124,15 +139,6 @@ export struct PrCompareView {
         }
         this.changesError = friendlyError(this.getUIContext(), e);
         this.changesLoading = false;
-      });
-    RepoSubService.fetchRefTipDate(this.token, this.fOwner, this.fName, this.head)
-      .then((iso: string) => {
-        if (seq === this.changesSeq) {
-          this.tipIso = iso;
-        }
-      })
-      .catch((_e: Error) => {
-        // tip 时间缺失仅省略右侧相对时间
       });
   }
 
@@ -248,7 +254,8 @@ export struct PrCompareView {
       .fontColor($r('app.color.text_secondary'))
   }
 
-  /** Changes 两行汇总（files changed +A -D / commits + 相对时间） */
+  /** Changes 两行汇总（files changed [+A -D] / commits + 相对时间）。
+   *  命中 compare 300 上限时 +/- 仅为部分和 → filesTruncated 置位，隐藏 +/- 不给可疑数字 */
   @Builder
   changesRows(summary: CompareSummary) {
     Row({ space: 10 }) {
@@ -261,13 +268,15 @@ export struct PrCompareView {
         .layoutWeight(1)
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
-      Text(`+${groupDigits(summary.additions)}`)
-        .fontSize($r('app.float.sub_text_font_size'))
-        .fontColor($r('app.color.diff_add_fg'))
-      Text(`-${groupDigits(summary.deletions)}`)
-        .fontSize($r('app.float.sub_text_font_size'))
-        .fontColor($r('app.color.diff_del_fg'))
-        .margin({ left: 8 })
+      if (!summary.filesTruncated) {
+        Text(`+${groupDigits(summary.additions)}`)
+          .fontSize($r('app.float.sub_text_font_size'))
+          .fontColor($r('app.color.diff_add_fg'))
+        Text(`-${groupDigits(summary.deletions)}`)
+          .fontSize($r('app.float.sub_text_font_size'))
+          .fontColor($r('app.color.diff_del_fg'))
+          .margin({ left: 8 })
+      }
     }
     .width('100%')
     .padding({ top: 10, bottom: 10 })

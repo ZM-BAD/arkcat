@@ -15,7 +15,8 @@ import {
   RepoFormPage, EditableContent, PickerRepo, IssueCreated,
   mapRepoForm, mapEditable, mapPickerRepos, mapPickerSearch,
   IssueTemplateExtras, parseContactLinks, parseIssueFormMeta,
-  BranchRefs, BranchNamesPage, mapBranchNamesPage, CompareSummary, mergeComparePage
+  BranchRefs, BranchNamesPage, mapBranchNamesPage, CompareSummary, mergeComparePage,
+  parseCompareBaseSha, TreeEntries, parseTreeEntries, countTreeDiff, RefTip
 } from '../models/RepoSubModels';
 import { PrFilesPage, PrFileItem, mapPrFiles, applyRestPatch, mapFilesCursor, mapFileNode } from '../models/PrDiffModels';
 import { CommitDetailPage, mapCommitDetail } from '../models/PrDiffModels';
@@ -561,11 +562,11 @@ query BranchRefs($owner: String!, $name: String!, $after: String) {
   }
 }`;
 
-/** head 分支 tip 提交时间（Changes 行右侧相对时间） */
+/** head 分支 tip 提交（Changes 行右侧相对时间 + Trees diff 用的头树 oid） */
 const REF_TIP_QUERY = `
 query RefTip($owner: String!, $name: String!, $qualified: String!) {
   repository(owner: $owner, name: $name) {
-    ref(qualifiedName: $qualified) { target { ... on Commit { committedDate } } }
+    ref(qualifiedName: $qualified) { target { ... on Commit { oid committedDate } } }
   }
 }`;
 
@@ -1074,8 +1075,8 @@ export class RepoSubService {
     return { defaultBranch: first.defaultBranch, names: names };
   }
 
-  /** head 分支 tip 提交时间（ISO；ref 不存在/非 commit 返回 ''） */
-  static async fetchRefTipDate(token: string, owner: string, name: string, branch: string): Promise<string> {
+  /** head 分支 tip（oid + 提交时间 ISO；ref 不存在/非 commit 返回空字段） */
+  static async fetchRefTip(token: string, owner: string, name: string, branch: string): Promise<RefTip> {
     const variables: Record<string, Object> = {
       'owner': owner, 'name': name, 'qualified': `refs/heads/${branch}`
     };
@@ -1083,22 +1084,52 @@ export class RepoSubService {
     const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
     const ref = Json.obj(repo, 'ref') ?? ({} as JsonMap);
     const target = Json.obj(ref, 'target') ?? ({} as JsonMap);
-    return Json.str(target, 'committedDate');
+    const tip: RefTip = { oid: Json.str(target, 'oid'), date: Json.str(target, 'committedDate') };
+    return tip;
+  }
+
+  /** 两分支精确变更文件数（Git Trees 递归 diff；任一树被 GitHub 截断时返回 null 走降级显示） */
+  private static async fetchTreeChangedCount(token: string, owner: string, name: string,
+    baseSha: string, headSha: string): Promise<number | null> {
+    try {
+      const baseResp = await restGet(`/repos/${owner}/${name}/git/trees/${baseSha}?recursive=1`, token);
+      const base: TreeEntries = parseTreeEntries(baseResp.body);
+      const headResp = await restGet(`/repos/${owner}/${name}/git/trees/${headSha}?recursive=1`, token);
+      const head: TreeEntries = parseTreeEntries(headResp.body);
+      if (base.truncated || head.truncated) {
+        return null;
+      }
+      return countTreeDiff(base, head);
+    } catch (e) {
+      return null;
+    }
   }
 
   /**
    * Changes 汇总（Spec 043 Compare changes）：GraphQL 无文件级 compare，
    * 走 REST compare 单请求累加 files/additions/deletions（commits 用 total_commits 精确值）。
-   * ⚠️ 平台上限（2026-09-19 gh 实测）：files 硬上限 300 条不可翻页（per_page 只作用于
-   * commits 数组；page≥2 返回 files=null，Link 头为误导性通用分页）——
-   * >300 文件的 diff 汇总是截断下限，官方 App 走内部接口才有全量（Spec 043 §五/§七）。
+   * ⚠️ 平台上限（2026-09-19 gh 实测+文档核实）：files 硬上限 300 条不可翻页（per_page 只作用于
+   * commits 数组；page≥2 返回 files=null，Link 头为误导性通用分页）。
+   * files 命中 300 上限时：用 Git Trees diff（base_commit.sha × headOid 两棵递归树）补精确文件数，
+   * 并置 filesTruncated=true——此时 +/- 仅为前 300 文件的部分和，UI 隐藏（产品口径：不给可疑数字）；
+   * 树拉取失败/被截断则降级显示 compare 原值。≤300 文件时三个数字全精确，零额外请求。
    */
   static async fetchCompareSummary(token: string, owner: string, name: string,
-    base: string, head: string): Promise<CompareSummary> {
-    const acc: CompareSummary = { files: 0, additions: 0, deletions: 0, commits: 0 };
+    base: string, head: string, headOid: string): Promise<CompareSummary> {
+    const acc: CompareSummary = { files: 0, additions: 0, deletions: 0, commits: 0, filesTruncated: false };
     const basehead = `${encodeURIComponent(base)}...${encodeURIComponent(head)}`;
     const resp = await restGet(`/repos/${owner}/${name}/compare/${basehead}`, token);
     acc.files = mergeComparePage(acc, resp.body, true);
+    if (acc.files >= 300 && headOid !== '') {
+      const baseSha = parseCompareBaseSha(resp.body);
+      if (baseSha !== '') {
+        const exact = await RepoSubService.fetchTreeChangedCount(token, owner, name, baseSha, headOid);
+        if (exact !== null) {
+          acc.files = exact;
+          acc.filesTruncated = true;
+        }
+      }
+    }
     return acc;
   }
 

@@ -93,11 +93,15 @@ query RefTip($owner: String!, $name: String!, $qualified: String!) {
 ```
 
 ```typescript
-// Changes 汇总数据源：GraphQL 无文件级 compare，走 REST（graphql-usage：REST 为 GraphQL 缺口兜底）。
-// GET /repos/{owner}/{repo}/compare/{base}...{head}（单请求）
+// Changes 汇总数据源：GraphQL Comparison（Ref.compare）无文件级字段，走 REST compare 单请求。
+// GET /repos/{owner}/{repo}/compare/{base}...{head}
 // files[] 累加 files/additions/deletions；commits 用 total_commits 精确值。
-// ⚠️ 平台上限（2026-09-19 gh 实测）：files 硬上限 300 条且不可翻页——per_page 只作用于
-// commits 数组，page≥2 返回 files=null（Link 头为误导性通用分页）。
+// ⚠️ 平台上限（官方文档+实测双重核实）：files 硬上限 300 条且只在第一页返回——
+// per_page 只作用于 commits 数组，page≥2 返回 files=null（Link 头为误导性通用分页）。
+// 命中 300 上限时用 Git Trees diff 补精确文件数：
+//   GET /repos/{o}/{r}/git/trees/{base_commit.sha}?recursive=1 + trees/{head tip oid}?recursive=1
+//   （path+sha 逐条对比；任一树 truncated=true 则放弃走降级显示）
+// 此时 additions/deletions 仅为前 300 文件的部分和 → UI 隐藏 +/-（不给可疑数字，见五/七）。
 ```
 
 ```graphql
@@ -131,7 +135,7 @@ mutation ToReady { markPullRequestReadyForReview(input: { pullRequestId: $prId }
 | 项 | 原因 | ArkCat 处理方式 |
 | ---- | ------ | ------------------- |
 | 新建分支（移动端无 commit 推送能力） | API 无“一步创建含 commit 的分支”能力 | head 分支仅在「现有分支列表」中选择（官方移动端同口径）；REST createRef 建空 ref 的兜底不做——空分支无法发起有效比较 |
-| Changes 汇总（files/additions/deletions） | GraphQL 无文件级 compare | REST `GET /repos/{o}/{r}/compare/{base}...{head}` 单请求汇总（commits 用 total_commits 精确值，tip 时间另走 GraphQL ref 查询）；**files 硬上限 300 条且不可翻页（2026-09-19 gh 实测）**，>300 文件的 files/+/- 为截断下限——与官方 App（内部接口全量）的平台能力差，见 §七 |
+| Changes 汇总（files/additions/deletions） | 公开 API 无分支比较的全量行级统计（2026-09-19 调研定案）：REST compare `files` 硬上限 300 条且只在第一页返回（官方文档原文 "up to 300 changed files for the entire comparison"；实测 page≥2 files=null、per_page 只作用于 commits）；GraphQL `Comparison`（Ref.compare）introspection 穷举无文件级字段；原始 `.diff` 文本全量（arkcat main...develop 实测 3.4MB、1171 个文件头）但每次选分支下载数 MB 不可接受且行数统计对不齐二进制/改名/纯权限变更口径；逐 commit 累加因同文件多次修改重复计数为错值 | REST compare 单请求：≤300 文件时 files/+/-/commits 全精确；**命中 300 上限时用 Git Trees 递归 diff（path+sha 对比）补精确文件数，并隐藏 +/- 行数**（产品口径：绝不显示已知不完整的统计值）；commits 行恒精确（total_commits 无截断，250 上限仅作用于 commits 数组）；tip 时间走 GraphQL ref 查询。与官方 App（内部接口全量 +/-）的平台能力差记录于 §七 |
 | 无权编辑 | viewerCanUpdate=false / 403 | 隐藏编辑入口，防护后端错误提示 |
 | 草稿/临时内容 | —— | @Local 草稿键 = `draft_new_issue_{repoId}` |
 | 官方桌面「Assign to / Projects / Milestone」创建即选 | 官方移动端创建流程极简 | 高级项走 044 详情编辑器，创建表单保持最小 |
@@ -163,4 +167,4 @@ mutation ToReady { markPullRequestReadyForReview(input: { pullRequestId: $prId }
 - 走查修正（2026-09-19）：Home/RepoDetail「+」由底部弹层改为**顶栏弹出菜单**（官方口径，AppBar 自绘 menuItems）——Home=Create Issue / New repository（repo octicon、sentence case；建仓端侧未接入走占位 toast，无 PR 项），RepoDetail=Create Issue / New Pull Request（Title Case）。仓库内 Issues 列表卡复用工作区公共 `IssueCard`（与 Home Issues 列表同卡同形态；仓库卡原有 linkedPrCount 芯片随同卡停显，数据链保留）。
 - 走查重写（2026-09-19，官方截图驱动，Create Issue 动线整体重做）：①Home「+」Create Issue 先进 **Choose a repository 整页选仓库页**（新路由 `repoPicker`，viewer.repositories 100 条按最近推送序 + 🔍 客户端搜索，行 = owner 头像 40 + login 灰字 + 仓库名，选中压栈表单）；②表单页 = 两行头部（`owner/name` 灰字 + 粗体 Create Issue + 右上纸飞机发送，替代 Cancel/Create 文字头）+ Title/Body 原生占位（Insert title / Insert optional description）+ **底部属性芯片行**（Assignee/Label/Milestone/Project = octicon person-add/tag/milestone/table；灰底阴影胶囊；选择面板复用 044 Triage 候选与 FilterOptionSheet；createIssue 直收 assigneeIds/labelIds/milestoneId，Project 创建后走 addProjectV2ItemById 挂载；**单选简化**：芯片选中后显示所选项名，再点同项清除）+ 正文聚焦时键盘上方 Markdown 工具条（灰底阴影条，与 041 COMMENT 面板同一组件同一形态）；③**官方创建表单无 Write/Preview 页签 → 预览移除**（§二 旧稿的预览/字数行内校验口径作废，校验改 toast 静默拦截）；创建成功后详情压栈并移除表单与选仓库页。编辑表单同头部（Edit Issue），无芯片行；PrForm 头部同语言对齐、无 PR 属性芯片。
 - 走查增量（2026-09-19 模板动线）：REPO_FORM_QUERY 扩 issueTemplates 的 about/labels/assignees 连接字段与 securityPolicyUrl（headroom 实测：三模板与官方截图逐行对应，模板 YAML 无 milestone/project）；Choose Template 页行数自适应 = templates.length + 固定 No template 行 + 可选 Security 行；表单内模板栏移除（选择上移到选模板页）；属性芯片 Assignee/Label 升级**多选**（FilterOptionSheet 加 multi/selectedKeys，勾选不关面板），芯片文案「首名 +N」；带模板进入自动回填标题/正文 + 按模板 YAML 匹配预置 Assignee/Label（login/name 大小写不敏感）。⚠️ 坑：@Builder 按值参数不刷新——芯片选中文案必须在 Builder 内直读状态（chipSelectedText），不能作参数传入。
-- 走查重写（2026-09-19 官方截图驱动，New PR 动线整体重做）：①RepoDetail「+」/ RepoPrs「+」New Pull Request 改入 **prCompare 整页**（✕ + `owner/name` + Compare changes 两行头部）；base 默认 defaultBranchRef 芯片、compare 未选 = SELECT BRANCH 蓝字；未选 compare 时展示绿圈 git-pull-request 空态卡；选定后 Changes 区块 = 「N files changed +A -D」+「N commits + 相对时间」，页底绿色 CREATE PULL REQUEST 主按钮 + 灰字说明行（Discuss and review the changes in this comparison with others.）。②分支选择走 **branchPicker 整页**（页面标题字面复刻官方：base→Choose Branch、compare→Choose head ref；🔍 常驻内联搜索客户端过滤；分支行 = 浅蓝 mono 芯片，默认分支带 Default 描边徽标，当前选中带蓝底白勾；排序 = 默认分支优先 + 字母序，fetchBranches 翻全）。③数据：分支列表 GraphQL refs 翻页（BranchRefs）；tip 相对时间走 GraphQL ref→Commit.committedDate；Changes 汇总走 REST compare 单请求（GraphQL 无文件级 compare）。**平台能力差（偏离记录）**：REST compare files 硬上限 300 条且不可翻页（实测 page≥2 files=null、per_page 只作用于 commits），官方 App 走内部接口显示全量（如 arkcat main...develop = 1,171 files）——公开 API 无全量口，>300 文件时本页 files/+/- 为截断下限；不引入 Git Trees 客户端 diff 混搭（files 精确但 +/- 仍截断，混合口径更差且拉取重）。④CREATE PULL REQUEST → **Start pull request 表单**（prForm mode=new 改形态：✕ 两行头部 + Title/Description 原生占位 + 页底绿色创建主按钮，base/head 由路由带入不再显示分支行；该页官方截图未覆盖，按 Create Issue 表单骨架 + Compare 页按钮形态实现，⚠️ 待走查校形），创建成功 prDetail 压栈并自移除 prForm + prCompare；编辑模式（Edit Pull Request）形态不变。⑤head=base 与空标题提交前 toast 拦截；无差异 422（No commits between…）经 friendlyError 反馈且表单保留。
+- 走查重写（2026-09-19 官方截图驱动，New PR 动线整体重做）：①RepoDetail「+」/ RepoPrs「+」New Pull Request 改入 **prCompare 整页**（✕ + `owner/name` + Compare changes 两行头部）；base 默认 defaultBranchRef 芯片、compare 未选 = SELECT BRANCH 蓝字；未选 compare 时展示绿圈 git-pull-request 空态卡；选定后 Changes 区块 = 「N files changed +A -D」+「N commits + 相对时间」，页底绿色 CREATE PULL REQUEST 主按钮 + 灰字说明行（Discuss and review the changes in this comparison with others.）。②分支选择走 **branchPicker 整页**（页面标题字面复刻官方：base→Choose Branch、compare→Choose head ref；🔍 常驻内联搜索客户端过滤；分支行 = 浅蓝 mono 芯片，默认分支带 Default 描边徽标，当前选中带蓝底白勾；排序 = 默认分支优先 + 字母序，fetchBranches 翻全）。③数据：分支列表 GraphQL refs 翻页（BranchRefs）；tip（oid+时间）走 GraphQL ref→Commit；Changes 汇总走 REST compare 单请求。**平台能力差与产品口径（2026-09-19 调研定案，偏离记录）**：REST compare files 硬上限 300 且只在首页返回（官方文档+实测双重核实；官方 App 的全量行级统计走内部接口，公开 API 无源——GraphQL Comparison 无文件级字段、原始 .diff 每次数 MB、逐 commit 累加重复计数均为不可用/错值）；**命中 300 上限时用 Git Trees 递归 diff 补精确文件数（base_commit.sha × head tip oid 两棵树 path+sha 对比，树 truncated 则降级），files 行显示全量精确值（如 arkcat main...develop = 1,171 files changed 与官方一致），+/- 行数此时隐藏**——显示已知不完整的部分和（前 300 文件的 +1,889）比不显示更伤信任；≤300 文件的常规分支三个数字全精确且零额外请求。④CREATE PULL REQUEST → **Start pull request 表单**（prForm mode=new 改形态：✕ 两行头部 + Title/Description 原生占位 + 页底绿色创建主按钮，base/head 由路由带入不再显示分支行；该页官方截图未覆盖，按 Create Issue 表单骨架 + Compare 页按钮形态实现，⚠️ 待走查校形），创建成功 prDetail 压栈并自移除 prForm + prCompare；编辑模式（Edit Pull Request）形态不变。⑤head=base 与空标题提交前 toast 拦截；无差异 422（No commits between…）经 friendlyError 反馈且表单保留。

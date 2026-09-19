@@ -30,7 +30,7 @@ import {
   filterTriageByKeyword, diffSelection, singlePickId,
   mapTimeline, actorDisplayLogin, phraseSegments,
   mapRepoForm, mapEditable, mapIssueTemplates, mapBranchRefs, mapPickerRepos, filterReposByKeyword,
-  mapBranchNamesPage, mergeComparePage,
+  mapBranchNamesPage, mergeComparePage, parseCompareBaseSha, parseTreeEntries, countTreeDiff,
   pickerRepoFullName, parseContactLinks, parseIssueFormMeta
 } from '../../entry/src/main/ets/models/RepoSubModels';
 import {
@@ -1886,7 +1886,7 @@ test('mapBranchNamesPage：分支选择器单页映射（Spec 043）', () => {
 });
 
 test('mergeComparePage：REST compare 单页累加（Spec 043 Changes 汇总）', () => {
-  const acc = { files: 0, additions: 0, deletions: 0, commits: 0 };
+  const acc = { files: 0, additions: 0, deletions: 0, commits: 0, filesTruncated: false };
   const n1 = mergeComparePage(acc,
     JSON.stringify({ total_commits: 114, files: [
       { additions: 10, deletions: 2 }, { additions: 1, deletions: 0 }
@@ -1900,6 +1900,27 @@ test('mergeComparePage：REST compare 单页累加（Spec 043 Changes 汇总）'
   assert.equal(acc.commits, 114);
   assert.equal(acc.additions, 16);
   assert.equal(acc.deletions, 42);
+});
+
+test('parseCompareBaseSha/parseTreeEntries/countTreeDiff：Trees diff 补精确文件数（Spec 043）', () => {
+  assert.equal(parseCompareBaseSha('{"base_commit":{"sha":"abc123"},"files":[]}'), 'abc123');
+  assert.equal(parseCompareBaseSha('{"files":[]}'), '');
+  const base = parseTreeEntries(JSON.stringify({ truncated: false, tree: [
+    { path: 'a.txt', sha: 's1', type: 'blob' },
+    { path: 'gone.txt', sha: 's2', type: 'blob' },
+    { path: 'dir', sha: 's3', type: 'tree' }
+  ] }));
+  const head = parseTreeEntries(JSON.stringify({ truncated: false, tree: [
+    { path: 'a.txt', sha: 's1x', type: 'blob' },
+    { path: 'new.txt', sha: 's4', type: 'blob' },
+    { path: 'sub', sha: 's5', type: 'commit' }
+  ] }));
+  assert.equal(base.truncated, false);
+  assert.equal(base.paths.get('a.txt'), 's1');
+  assert.equal(base.paths.has('dir'), false);
+  assert.equal(countTreeDiff(base, head), 4);
+  const trunc = parseTreeEntries(JSON.stringify({ truncated: true, tree: [] }));
+  assert.equal(trunc.truncated, true);
 });
 
 test('mapIssueTemplates/mapBranchRefs：模板与分支映射（Spec 043 测试1/4 数据侧）', () => {

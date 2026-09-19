@@ -1183,12 +1183,16 @@ export function mapBranchNamesPage(data: JsonMap): BranchNamesPage {
   };
 }
 
-/** Changes 汇总（REST compare 累加结果；commits 取首页 total_commits 精确值） */
+/** Changes 汇总（REST compare 累加结果；commits 取 total_commits 精确值）。
+ *  filesTruncated=true 表示命中 compare 300 文件上限、additions/deletions 仅为前 300 文件
+ *  的部分和（files 已用 Git Trees diff 补成精确值）——UI 此时隐藏 +/- 行（产品口径：
+ *  绝不给用户可疑数字，Spec 043 §五/§七） */
 export interface CompareSummary {
   files: number;
   additions: number;
   deletions: number;
   commits: number;
+  filesTruncated: boolean;
 }
 
 /** REST compare 单页解析：累加 files[] 的 additions/deletions，首页回填 total_commits；返回本页文件数供判停 */
@@ -1204,6 +1208,55 @@ export function mergeComparePage(acc: CompareSummary, body: string, isFirst: boo
     acc.deletions += Json.num(f, 'deletions');
   }
   return files.length;
+}
+
+/** REST compare 响应里的 base_commit.sha（Trees diff 的基树） */
+export function parseCompareBaseSha(body: string): string {
+  const page = JSON.parse(body) as JsonMap;
+  const baseCommit = Json.obj(page, 'base_commit') ?? ({} as JsonMap);
+  return Json.str(baseCommit, 'sha');
+}
+
+/** head 分支 tip（Changes 行相对时间 + Trees diff 的头树 oid） */
+export interface RefTip {
+  oid: string;
+  date: string;
+}
+
+/** 递归树解析结果：path→对象 sha（blob 与子模块 commit 指针计入，tree 目录跳过）+ 截断标志 */
+export interface TreeEntries {
+  paths: Map<string, string>;
+  truncated: boolean;
+}
+
+export function parseTreeEntries(body: string): TreeEntries {
+  const page = JSON.parse(body) as JsonMap;
+  const paths = new Map<string, string>();
+  for (const node of Json.arr(page, 'tree')) {
+    const e = node as JsonMap;
+    if (Json.str(e, 'type') === 'tree') {
+      continue;
+    }
+    paths.set(Json.str(e, 'path'), Json.str(e, 'sha'));
+  }
+  return { paths: paths, truncated: Json.bool(page, 'truncated') };
+}
+
+/** 两棵递归树的差异文件数（path 并集上 sha 不同或单侧独有） */
+export function countTreeDiff(base: TreeEntries, head: TreeEntries): number {
+  let count = 0;
+  base.paths.forEach((sha: string, path: string): void => {
+    const headSha = head.paths.get(path);
+    if (headSha === undefined || headSha !== sha) {
+      count += 1;
+    }
+  });
+  head.paths.forEach((sha: string, path: string): void => {
+    if (!base.paths.has(path)) {
+      count += 1;
+    }
+  });
+  return count;
 }
 
 export function mapPickerRepos(data: JsonMap): PickerRepo[] {
