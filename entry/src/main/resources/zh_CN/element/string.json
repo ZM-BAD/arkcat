@@ -2751,6 +2751,14 @@
     {
       "name": "template_security_desc",
       "value": "请查看我们的安全政策了解详情"
+    },
+    {
+      "name": "chip_labels_multi",
+      "value": "标签"
+    },
+    {
+      "name": "chip_assignees_multi",
+      "value": "负责人"
     }
   ]
 }

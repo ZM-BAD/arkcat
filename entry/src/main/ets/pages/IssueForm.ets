@@ -420,24 +420,76 @@ export struct IssueFormView {
     return this.selProject !== null ? this.selProject.title : '';
   }
 
-  /** 底部属性芯片（官方：Assignee/Label/Milestone/Project，横向可滑）；灰底描边阴影小胶囊，多选显示「首个 +N」 */
+  /** 属性芯片选中态（浅蓝 accent-subtle） */
+  private chipIsSelected(kind: string): boolean {
+    return this.chipSelectedText(kind) !== '';
+  }
+
+  /** 芯片前景色（图标/文字/chevron）：选中=蓝，未选=主色/灰 */
+  private chipFg(kind: string): Resource {
+    return this.chipIsSelected(kind) ? $r('app.color.shortcut_blue_fg') : $r('app.color.text_primary');
+  }
+
+  /** 底部属性芯片（官方：Assignee/Label/Milestone/Project，横向可滑）：
+   *  未选=灰底描边；选中=浅蓝底；右侧一律 chevron-down；
+   *  Label/Assignee 多选时显示「数字圆圈 + Labels/Assignees」（数字白字蓝底圆） */
   @Builder
   attrChip(iconRes: Resource, label: Resource, kind: string) {
     Row({ space: 5 }) {
-      OctIcon({ res: iconRes, iconSize: 14, iconColor: $r('app.color.text_primary') })
-      Text(this.chipSelectedText(kind) !== '' ? this.chipSelectedText(kind) : label)
-        .fontSize($r('app.float.caption_font_size'))
-        .fontWeight(this.chipSelectedText(kind) !== '' ? FontWeight.Medium : FontWeight.Normal)
-        .fontColor($r('app.color.text_primary'))
-        .maxLines(1)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
+      if (kind === 'label' && this.selLabels.length > 1) {
+        Text(`${this.selLabels.length}`)
+          .fontSize($r('app.float.caption_font_size'))
+          .fontWeight(FontWeight.Medium)
+          .fontColor(Color.White)
+          .textAlign(TextAlign.Center)
+          .backgroundColor($r('app.color.link_blue'))
+          .borderRadius(9)
+          .width(18)
+          .height(18)
+        Text($r('app.string.chip_labels_multi'))
+          .fontSize($r('app.float.caption_font_size'))
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.shortcut_blue_fg'))
+      } else if (kind === 'assignee' && this.selAssignees.length > 1) {
+        Text(`${this.selAssignees.length}`)
+          .fontSize($r('app.float.caption_font_size'))
+          .fontWeight(FontWeight.Medium)
+          .fontColor(Color.White)
+          .textAlign(TextAlign.Center)
+          .backgroundColor($r('app.color.link_blue'))
+          .borderRadius(9)
+          .width(18)
+          .height(18)
+        Text($r('app.string.chip_assignees_multi'))
+          .fontSize($r('app.float.caption_font_size'))
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.shortcut_blue_fg'))
+      } else {
+        OctIcon({ res: iconRes, iconSize: 14, iconColor: this.chipFg(kind) })
+        Text(this.chipSelectedText(kind) !== '' ? this.chipSelectedText(kind) : label)
+          .fontSize($r('app.float.caption_font_size'))
+          .fontWeight(this.chipIsSelected(kind) ? FontWeight.Medium : FontWeight.Normal)
+          .fontColor(this.chipFg(kind))
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      // 右侧 chevron-down：仅在选中后出现（官方口径）
+      if (this.chipIsSelected(kind)) {
+        OctIcon({
+          res: $r('app.media.oct_chevron_down_16'), iconSize: 14,
+          iconColor: $r('app.color.shortcut_blue_fg')
+        })
+      }
     }
     .height(30)
     .borderRadius(15)
-    .border({ width: 1, color: $r('app.color.divider') })
-    .backgroundColor($r('app.color.bg_page'))
+    .border({
+      width: 1,
+      color: this.chipIsSelected(kind) ? $r('app.color.shortcut_blue_fg') : $r('app.color.divider')
+    })
+    .backgroundColor(this.chipIsSelected(kind) ? $r('app.color.shortcut_blue_bg') : $r('app.color.bg_page'))
     .shadow({ radius: 6, color: $r('app.color.shadow_floating'), offsetY: 2 })
-    .padding({ left: 12, right: 12 })
+    .padding({ left: 12, right: 10 })
     .onClick((): void => this.openSheet(kind))
   }
 

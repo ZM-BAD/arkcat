@@ -2751,6 +2751,14 @@
     {
       "name": "template_security_desc",
       "value": "Please review our security policy for more details"
+    },
+    {
+      "name": "chip_labels_multi",
+      "value": "Labels"
+    },
+    {
+      "name": "chip_assignees_multi",
+      "value": "Assignees"
     }
   ]
 }
