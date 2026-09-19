@@ -42,6 +42,12 @@ import { CommitDetailView } from './CommitDetail';import { NotificationSettingsV
 import { CodeOptionsView } from './CodeOptions';
 import { OpenSourceLibrariesView } from './OpenSourceLibraries';
 import { SettingsAboutView } from './SettingsAbout';
+import { IssueFormView } from './IssueForm';
+import { PrFormView } from './PrForm';
+import { PrCompareView } from './PrCompare';
+import { BranchPickerView } from './BranchPicker';
+import { RepoPickerView } from './RepoPicker';
+import { TemplatePickerView } from './TemplatePicker';
 import { UserListView } from './UserList';
 import { StargazersView } from './Stargazers';
 import { ForksView } from './Forks';
@@ -63,7 +69,8 @@ import { AppLockOverlay, AppLockSettingsView } from './AppLock';
  *  + 应用内浏览器（用户 09-08 定案：该子页也不显示底栏） */
 const TAB_BAR_HIDDEN_ROUTES: string[] = [
   'settings', 'notificationSettings', 'codeOptions', 'accounts', 'tokenSetup', 'achievementDetail',
-  'openSourceLibraries', 'settingsAbout', 'inAppBrowser', 'repoDiscussions', 'appLock'
+  'openSourceLibraries', 'settingsAbout', 'inAppBrowser', 'repoDiscussions', 'appLock',
+  'issueForm', 'prForm', 'prCompare', 'branchPicker', 'repoPicker', 'templatePicker'
 ];
 
 @Entry
@@ -125,6 +132,20 @@ struct Index {
   @State listDetailTick: number = 0;
   /** Create list 页编辑模式参数（''=新建；否则为被编辑列表 id） */
   @State createListEditId: string = '';
+  /** Spec 043 表单路由参数（owner|name|mode|editNumber|templateName|base|head 拆段；owner/name 空=Home 入口先选仓库） */
+  @State formOwner: string = '';
+  @State formName: string = '';
+  @State formMode: string = 'new';
+  @State formEditNumber: number = 0;
+  @State formTemplate: string = '';
+  /** Start pull request 带入的 base/head（Compare changes 页选定） */
+  @State formBase: string = '';
+  @State formHead: string = '';
+  /** 分支选择页路由参数（role|owner|name|current 拆段） */
+  @State pickerRole: string = '';
+  @State pickerOwner: string = '';
+  @State pickerName: string = '';
+  @State pickerCurrent: string = '';
   /** 文件路由参数（Spec 038/011 共用，格式 owner|name|path） */
   @State fileOwner: string = '';
   @State fileRepo: string = '';
@@ -135,8 +156,12 @@ struct Index {
   @State homeWorkVersion: number = 0;
   /** PrFiles 回页刷新计数器：Code Options 返回后递增，重读行号等设置 */
   @State prFilesTick: number = 0;
+  /** prCompare 返回 tick：分支选择页（branchPicker）pop 回后消费回传槽（Spec 043） */
+  @State prCompareTick: number = 0;
   /** prFiles 返回 tick：PrDetail 重拉 reviewThreads（Spec 042 行内评论落点在会话区） */
   @State prDetailTick: number = 0;
+  /** issueDetail 返回 tick：编辑表单（issueForm）pop 回后重拉标题/正文（Spec 043） */
+  @State issueDetailTick: number = 0;
   /** Code Options 返回 tick：CodeViewer/CommitDetail 重读设置（review C3，同 prFilesTick 模式） */
   @State codeOptionsTick: number = 0;
   /** About 页回显信号：从详情页返回可见时自增，重拉 star 态（Spec 069） */
@@ -907,6 +932,28 @@ struct Index {
     }
   }
 
+  /** Spec 043 表单路由参数解析：owner|name|mode|editNumber|templateName|base|head（owner/name 可空=Home 入口先选仓库） */
+  private parseFormParam(param: string): void {
+    const parts = param.split('|');
+    this.formOwner = parts.length > 0 ? parts[0] : '';
+    this.formName = parts.length > 1 ? parts[1] : '';
+    this.formMode = parts.length > 2 && parts[2] !== '' ? parts[2] : 'new';
+    const n = parts.length > 3 ? Number(parts[3]) : 0;
+    this.formEditNumber = isNaN(n) ? 0 : n;
+    this.formTemplate = parts.length > 4 ? parts[4] : '';
+    this.formBase = parts.length > 5 ? parts[5] : '';
+    this.formHead = parts.length > 6 ? parts[6] : '';
+  }
+
+  /** Spec 043 分支选择页路由参数解析：role|owner|name|current */
+  private parsePickerParam(param: string): void {
+    const parts = param.split('|');
+    this.pickerRole = parts.length > 0 ? parts[0] : '';
+    this.pickerOwner = parts.length > 1 ? parts[1] : '';
+    this.pickerName = parts.length > 2 ? parts[2] : '';
+    this.pickerCurrent = parts.length > 3 ? parts[3] : '';
+  }
+
   @Builder
   repoPrsDestination() {
     NavDestination() {
@@ -1063,11 +1110,127 @@ struct Index {
         name: this.repoName,
         number: this.detailNumber,
         token: this.token,
-        pathStack: this.pathStack
+        pathStack: this.pathStack,
+        refreshTick: this.issueDetailTick
       })
     }
     .onReady((context: NavDestinationContext) => {
       this.parseRouteParam(context.pathInfo.param as string);
+    })
+    // 返回刷新（编辑表单 pop 回后重拉标题/正文，Spec 043）；首显由页内 skipFirstTick 跳过
+    .onShown(() => {
+      this.issueDetailTick += 1;
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 043：新建/编辑 Issue 表单（参数 owner|name|mode|editNumber|templateName） */
+  @Builder
+  issueFormDestination() {
+    NavDestination() {
+      IssueFormView({
+        token: this.token,
+        pathStack: this.pathStack,
+        fOwner: this.formOwner,
+        fName: this.formName,
+        fMode: this.formMode,
+        fEditNumber: this.formEditNumber,
+        fTemplate: this.formTemplate
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseFormParam(context.pathInfo.param as string);
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 043：Choose Template 选模板页（参数 owner|name；有官方模板的仓库才入此页） */
+  @Builder
+  templatePickerDestination() {
+    NavDestination() {
+      TemplatePickerView({
+        token: this.token,
+        pathStack: this.pathStack,
+        tpOwner: this.formOwner,
+        tpName: this.formName
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseFormParam(context.pathInfo.param as string);
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 043：Choose a repository 选仓库页（Home「+」→ Create Issue 第一跳） */
+  @Builder
+  repoPickerDestination() {
+    NavDestination() {
+      RepoPickerView({
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .hideTitleBar(true)
+  }
+
+  /** Spec 043：Compare changes 页（参数 owner|name；New PR 动线第一跳） */
+  @Builder
+  prCompareDestination() {
+    NavDestination() {
+      PrCompareView({
+        token: this.token,
+        pathStack: this.pathStack,
+        fOwner: this.formOwner,
+        fName: this.formName,
+        refreshTick: this.prCompareTick
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseFormParam(context.pathInfo.param as string);
+    })
+    .onShown(() => {
+      // 分支选择页 pop 回时触发；首显也触发一次，回传槽为空则视图内忽略
+      this.prCompareTick += 1;
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 043：Choose Branch / Choose head ref 分支选择页（参数 role|owner|name|current） */
+  @Builder
+  branchPickerDestination() {
+    NavDestination() {
+      BranchPickerView({
+        token: this.token,
+        pathStack: this.pathStack,
+        pRole: this.pickerRole,
+        pOwner: this.pickerOwner,
+        pName: this.pickerName,
+        pCurrent: this.pickerCurrent
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parsePickerParam(context.pathInfo.param as string);
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 043：Start pull request / 编辑 PR 表单（参数 owner|name|mode|editNumber||base|head） */
+  @Builder
+  prFormDestination() {
+    NavDestination() {
+      PrFormView({
+        token: this.token,
+        pathStack: this.pathStack,
+        fOwner: this.formOwner,
+        fName: this.formName,
+        fMode: this.formMode,
+        fEditNumber: this.formEditNumber,
+        fBase: this.formBase,
+        fHead: this.formHead
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseFormParam(context.pathInfo.param as string);
     })
     .hideTitleBar(true)
   }
@@ -1257,6 +1420,18 @@ struct Index {
       this.reactionUsersDestination()
     } else if (name === 'issueDetail') {
       this.issueDetailDestination()
+    } else if (name === 'issueForm') {
+      this.issueFormDestination()
+    } else if (name === 'templatePicker') {
+      this.templatePickerDestination()
+    } else if (name === 'repoPicker') {
+      this.repoPickerDestination()
+    } else if (name === 'prCompare') {
+      this.prCompareDestination()
+    } else if (name === 'branchPicker') {
+      this.branchPickerDestination()
+    } else if (name === 'prForm') {
+      this.prFormDestination()
     } else if (name === 'prDetail') {
       this.prDetailDestination()
     } else if (name === 'repoFiles') {

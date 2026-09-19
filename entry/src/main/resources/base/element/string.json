@@ -261,10 +261,6 @@
       "value": "No issues"
     },
     {
-      "name": "issues_new_coming",
-      "value": "Creating an issue will be available in a future spec"
-    },
-    {
       "name": "home_my_work",
       "value": "My Work"
     },
@@ -327,10 +323,6 @@
     {
       "name": "home_feature_coming",
       "value": "This feature will be available in a future spec"
-    },
-    {
-      "name": "home_new_coming",
-      "value": "Creating content will be available in a future version"
     },
     {
       "name": "inbox_menu_inbox",
@@ -2587,6 +2579,306 @@
     {
       "name": "a11y_info",
       "value": "Info"
+    },
+    {
+      "name": "create_new_issue",
+      "value": "Create Issue"
+    },
+    {
+      "name": "create_new_repo",
+      "value": "New repository"
+    },
+    {
+      "name": "create_new_pr",
+      "value": "New Pull Request"
+    },
+    {
+      "name": "form_saved",
+      "value": "Saved"
+    },
+    {
+      "name": "form_new_issue_title",
+      "value": "New Issue"
+    },
+    {
+      "name": "form_edit_issue_title",
+      "value": "Edit Issue"
+    },
+    {
+      "name": "form_new_pr_title",
+      "value": "New Pull Request"
+    },
+    {
+      "name": "form_edit_pr_title",
+      "value": "Edit Pull Request"
+    },
+    {
+      "name": "form_title_label",
+      "value": "Title"
+    },
+    {
+      "name": "form_title_placeholder",
+      "value": "Insert title"
+    },
+    {
+      "name": "form_title_required",
+      "value": "Title is required"
+    },
+    {
+      "name": "form_title_too_long",
+      "value": "Title must be 255 characters or fewer"
+    },
+    {
+      "name": "form_body_placeholder",
+      "value": "Insert optional description"
+    },
+    {
+      "name": "form_repo_required",
+      "value": "Select a repository"
+    },
+    {
+      "name": "form_base_label",
+      "value": "base:"
+    },
+    {
+      "name": "form_head_label",
+      "value": "head:"
+    },
+    {
+      "name": "form_head_pick",
+      "value": "Select head branch"
+    },
+    {
+      "name": "form_branch_base_title",
+      "value": "Choose base branch"
+    },
+    {
+      "name": "form_branch_head_title",
+      "value": "Choose head branch"
+    },
+    {
+      "name": "form_branch_search",
+      "value": "Filter branches"
+    },
+    {
+      "name": "form_head_required",
+      "value": "Choose a head branch"
+    },
+    {
+      "name": "form_head_equals_base",
+      "value": "Head branch must differ from base branch"
+    },
+    {
+      "name": "close_issue",
+      "value": "Close issue"
+    },
+    {
+      "name": "reopen_issue",
+      "value": "Reopen issue"
+    },
+    {
+      "name": "close_reason_title",
+      "value": "Close issue"
+    },
+    {
+      "name": "close_reason_completed",
+      "value": "Completed"
+    },
+    {
+      "name": "close_reason_not_planned",
+      "value": "Not planned"
+    },
+    {
+      "name": "reopen_pr",
+      "value": "Reopen pull request"
+    },
+    {
+      "name": "convert_to_draft",
+      "value": "Convert to draft"
+    },
+    {
+      "name": "mark_ready",
+      "value": "Mark ready for review"
+    },
+    {
+      "name": "repo_picker_title",
+      "value": "Choose a repository"
+    },
+    {
+      "name": "picker_search_hint",
+      "value": "Search"
+    },
+    {
+      "name": "form_body_label",
+      "value": "Body"
+    },
+    {
+      "name": "form_send",
+      "value": "Send"
+    },
+    {
+      "name": "chip_assignee",
+      "value": "Assignee"
+    },
+    {
+      "name": "chip_label",
+      "value": "Label"
+    },
+    {
+      "name": "chip_milestone",
+      "value": "Milestone"
+    },
+    {
+      "name": "chip_project",
+      "value": "Project"
+    },
+    {
+      "name": "template_picker_title",
+      "value": "Choose Template"
+    },
+    {
+      "name": "template_none",
+      "value": "No template"
+    },
+    {
+      "name": "template_none_desc",
+      "value": "Create a blank issue"
+    },
+    {
+      "name": "template_security",
+      "value": "Security Vulnerability"
+    },
+    {
+      "name": "template_security_desc",
+      "value": "Please review our security policy for more details"
+    },
+    {
+      "name": "chip_labels_multi",
+      "value": "Labels"
+    },
+    {
+      "name": "chip_assignees_multi",
+      "value": "Assignees"
+    },
+    {
+      "name": "compare_title",
+      "value": "Compare changes"
+    },
+    {
+      "name": "compare_choose_branches",
+      "value": "Choose branches"
+    },
+    {
+      "name": "compare_select_branch",
+      "value": "SELECT BRANCH"
+    },
+    {
+      "name": "compare_empty_hint",
+      "value": "Choose a branch to compare changes"
+    },
+    {
+      "name": "compare_changes_title",
+      "value": "Changes"
+    },
+    {
+      "name": "compare_files_one",
+      "value": "1 file changed"
+    },
+    {
+      "name": "compare_files_many",
+      "value": "%1$s files changed"
+    },
+    {
+      "name": "compare_commits_one",
+      "value": "1 commit"
+    },
+    {
+      "name": "compare_commits_many",
+      "value": "%1$s commits"
+    },
+    {
+      "name": "compare_create_btn",
+      "value": "CREATE PULL REQUEST"
+    },
+    {
+      "name": "compare_footer",
+      "value": "Discuss and review the changes in this comparison with others."
+    },
+    {
+      "name": "picker_head_title",
+      "value": "Choose head ref"
+    },
+    {
+      "name": "picker_base_title",
+      "value": "Choose Branch"
+    },
+    {
+      "name": "picker_default_badge",
+      "value": "Default"
+    },
+    {
+      "name": "start_pr_title",
+      "value": "Start pull request"
+    },
+    {
+      "name": "start_pr_title_placeholder",
+      "value": "Title"
+    },
+    {
+      "name": "start_pr_desc_placeholder",
+      "value": "Description"
+    },
+    {
+      "name": "ago_just_now",
+      "value": "just now"
+    },
+    {
+      "name": "ago_min_one",
+      "value": "1 minute ago"
+    },
+    {
+      "name": "ago_min_many",
+      "value": "%1$d minutes ago"
+    },
+    {
+      "name": "ago_hour_one",
+      "value": "1 hour ago"
+    },
+    {
+      "name": "ago_hour_many",
+      "value": "%1$d hours ago"
+    },
+    {
+      "name": "ago_day_one",
+      "value": "1 day ago"
+    },
+    {
+      "name": "ago_day_many",
+      "value": "%1$d days ago"
+    },
+    {
+      "name": "ago_month_one",
+      "value": "1 month ago"
+    },
+    {
+      "name": "ago_month_many",
+      "value": "%1$d months ago"
+    },
+    {
+      "name": "ago_year_one",
+      "value": "1 year ago"
+    },
+    {
+      "name": "ago_year_many",
+      "value": "%1$d years ago"
+    },
+    {
+      "name": "compare_head_label",
+      "value": "compare:"
+    },
+    {
+      "name": "picker_branch_search_hint",
+      "value": "Search branches"
     }
   ]
 }

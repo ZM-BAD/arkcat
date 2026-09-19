@@ -81,6 +81,19 @@ export function githubShortTime(parts: TimeParts): string {
   return '';
 }
 
+/** 千分位分组（官方 Changes 汇总「1,171 files changed」口径）；负号由调用方拼接，本函数收非负整数 */
+export function groupDigits(n: number): string {
+  const raw = `${Math.max(0, Math.floor(n))}`;
+  let out = '';
+  for (let i = 0; i < raw.length; i++) {
+    if (i > 0 && (raw.length - i) % 3 === 0) {
+      out += ',';
+    }
+    out += raw.charAt(i);
+  }
+  return out;
+}
+
 /**
  * 头省略（Spec 042 官方对齐，…tup-node action to v7 口径）：超长标题保留**尾部**、前面补 `...`，
  * 且整串必须落在 availWidth 内——否则容器会在结尾再补一个省略号，与官方不符（结尾必须完整可见）。

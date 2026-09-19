@@ -889,36 +889,110 @@ export struct PrDetailView {
     promptAction.showToast({ message: $r('app.string.home_feature_coming') });
   }
 
-  /** 顶栏 ⋮ 菜单（官方五行：Edit / Change Base Branch / Unsubscribe / Lock Conversation / Close PR） */
+  /** 编辑表单入口（⋯ 菜单/正文卡菜单，viewerCanUpdate 门控；Spec 043 元素8） */
+  private openEditPrForm(): void {
+    this.bodyMenuOpen = false;
+    this.pathStack.pushPathByName('prForm', `${this.owner}|${this.name}|edit|${this.number}`);
+  }
+
+  /** draft ↔ ready 切换（OPEN 未合并；viewerCanUpdate 门控，Spec 043 元素10） */
+  private toggleDraft(): void {
+    if (this.detail === null) {
+      return;
+    }
+    const prId = this.detail.subjectId;
+    const toReady = this.detail.isDraft;
+    const task = toReady
+      ? RepoSubService.markPullRequestReadyForReview(this.token, prId)
+      : RepoSubService.convertPullRequestToDraft(this.token, prId);
+    task.then(() => {
+      this.refresh();
+    }).catch((e: Error) => {
+      promptAction.showToast({ message: friendlyError(this.getUIContext(), e) });
+    });
+  }
+
+  /** 关闭 PR（⋯ 菜单 danger 项；成功后重拉状态与时间轴） */
+  private closePr(): void {
+    if (this.detail === null) {
+      return;
+    }
+    RepoSubService.closePullRequest(this.token, this.detail.subjectId)
+      .then(() => {
+        this.refresh();
+      })
+      .catch((e: Error) => {
+        promptAction.showToast({ message: friendlyError(this.getUIContext(), e) });
+      });
+  }
+
+  /** 重开 PR（仅 closed 未合并；成功后重拉） */
+  private reopenPr(): void {
+    if (this.detail === null) {
+      return;
+    }
+    RepoSubService.reopenPullRequest(this.token, this.detail.subjectId)
+      .then(() => {
+        this.refresh();
+      })
+      .catch((e: Error) => {
+        promptAction.showToast({ message: friendlyError(this.getUIContext(), e) });
+      });
+  }
+
+  /**
+   * 顶栏 ⋮ 菜单（官方五行为基底，Spec 043 接线编辑/关闭并加 draft 切换；
+   * 编辑/关闭/draft 按 viewerCanUpdate 门控，Change base/Unsubscribe/Lock 仍占位）。
+   */
   private prMenuItems(): AppBarMenuItem[] {
-    return [
-      {
+    const items: AppBarMenuItem[] = [];
+    const pr = this.detail;
+    if (pr !== null && pr.viewerCanUpdate) {
+      items.push({
         icon: $r('app.media.oct_pencil_16'),
         label: $r('app.string.menu_edit'),
-        onAction: (): void => this.comingSoon()
-      },
-      {
-        icon: $r('app.media.oct_git_branch_16'),
-        label: $r('app.string.menu_change_base'),
-        onAction: (): void => this.comingSoon()
-      },
-      {
-        icon: $r('app.media.oct_bell_slash_16'),
-        label: $r('app.string.menu_unsubscribe'),
-        onAction: (): void => this.comingSoon()
-      },
-      {
-        icon: $r('app.media.oct_lock_16'),
-        label: $r('app.string.menu_lock_conversation'),
-        onAction: (): void => this.comingSoon()
-      },
-      {
-        icon: $r('app.media.oct_git_pull_request_closed_16'),
-        label: $r('app.string.menu_close_pr'),
-        onAction: (): void => this.comingSoon(),
-        danger: true
+        onAction: (): void => this.openEditPrForm()
+      });
+      if (pr.state === 'OPEN' && !pr.merged) {
+        items.push({
+          icon: pr.isDraft
+            ? $r('app.media.oct_git_pull_request_16')
+            : $r('app.media.oct_git_pull_request_draft_16'),
+          label: pr.isDraft
+            ? $r('app.string.mark_ready')
+            : $r('app.string.convert_to_draft'),
+          onAction: (): void => this.toggleDraft()
+        });
+        items.push({
+          icon: $r('app.media.oct_git_pull_request_closed_16'),
+          label: $r('app.string.menu_close_pr'),
+          onAction: (): void => this.closePr(),
+          danger: true
+        });
+      } else if (pr.state === 'CLOSED' && !pr.merged) {
+        items.push({
+          icon: $r('app.media.oct_git_pull_request_16'),
+          label: $r('app.string.reopen_pr'),
+          onAction: (): void => this.reopenPr()
+        });
       }
-    ];
+    }
+    items.push({
+      icon: $r('app.media.oct_git_branch_16'),
+      label: $r('app.string.menu_change_base'),
+      onAction: (): void => this.comingSoon()
+    });
+    items.push({
+      icon: $r('app.media.oct_bell_slash_16'),
+      label: $r('app.string.menu_unsubscribe'),
+      onAction: (): void => this.comingSoon()
+    });
+    items.push({
+      icon: $r('app.media.oct_lock_16'),
+      label: $r('app.string.menu_lock_conversation'),
+      onAction: (): void => this.comingSoon()
+    });
+    return items;
   }
 
   /** 删除确认（仅本人评论有入口）：二次确认 → deleteIssueComment → 刷新 */
@@ -1465,20 +1539,21 @@ export struct PrDetailView {
         this.bodyMenuOpen = false;
         this.quotePrBody();
       })
-      Row({ space: 10 }) {
-        OctIcon({ res: $r('app.media.oct_pencil_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
-        Text($r('app.string.menu_edit'))
-          .fontSize($r('app.float.body_font_size'))
-          .fontColor($r('app.color.text_primary'))
+      if (this.detail?.viewerCanUpdate) {
+        Row({ space: 10 }) {
+          OctIcon({ res: $r('app.media.oct_pencil_16'), iconSize: 16, iconColor: $r('app.color.text_primary') })
+          Text($r('app.string.menu_edit'))
+            .fontSize($r('app.float.body_font_size'))
+            .fontColor($r('app.color.text_primary'))
+        }
+        .width('100%')
+        .height(40)
+        .responseRegion({ x: 0, y: -2, width: '100%', height: '110%' })
+        .padding({ left: 14, right: 14 })
+        .onClick((): void => {
+          this.openEditPrForm();
+        })
       }
-      .width('100%')
-      .height(40)
-      .responseRegion({ x: 0, y: -2, width: '100%', height: '110%' })
-      .padding({ left: 14, right: 14 })
-      .onClick((): void => {
-        this.bodyMenuOpen = false;
-        this.comingSoon();
-      })
       // 灰线分组：Edit（自己的内容）与 Report/Block（平台动作）分开
       // 弹层内 Divider 必须显式给 strokeWidth + 宽度，否则塌成 0 宽不显示
       Divider()

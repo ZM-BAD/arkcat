@@ -8,12 +8,13 @@ import { promptAction } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
 import { RepoDetail, FileEntry, LanguageSlice } from '../models/RepoDetailModels';
 import { RepoService } from '../services/RepoService';
+import { RepoSubService } from '../services/RepoSubService';
 import { WorkService } from '../services/WorkService';
 import { WorkUserList } from '../models/WorkModels';
 import { StarredListSheet, STARRED_SUGGESTIONS } from '../components/StarredListSheet';
 import { MarkdownService, MarkdownFetchResult } from '../services/MarkdownService';
 import { StateView } from '../components/StateView';
-import { AppBar, AppBarAction, AppBarActionCfg } from '../components/AppBar';
+import { AppBar, AppBarAction, AppBarActionCfg, AppBarMenuItem } from '../components/AppBar';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { MarkdownView } from '../components/MarkdownView';
@@ -160,6 +161,38 @@ export struct RepoDetailView {
       .catch((e: Error) => {
         promptAction.showToast({ message: e.message });
       });
+  }
+
+  /**
+   * 「+」弹出菜单（用户 2026-09-19 定案：顶栏弹出菜单而非底部弹层；
+   * 仓库上下文已知：Create Issue / New Pull Request）。
+   */
+  private createMenuItems(): AppBarMenuItem[] {
+    return [
+      {
+        icon: $r('app.media.oct_issue_opened_16'),
+        label: $r('app.string.create_new_issue'),
+        onAction: (): void => {
+          // 官方动线：有模板（含 issue forms/联系链接）先入 Choose Template 页
+          RepoSubService.hasTemplateChooser(this.token, this.owner, this.name)
+            .then((has: boolean): void => {
+              if (has) {
+                this.pathStack.pushPathByName('templatePicker', `${this.owner}|${this.name}`);
+              } else {
+                this.pathStack.pushPathByName('issueForm', `${this.owner}|${this.name}|new|0|`);
+              }
+            });
+        }
+      },
+      {
+        icon: $r('app.media.oct_git_pull_request_16'),
+        label: $r('app.string.create_new_pr'),
+        onAction: (): void => {
+          // 官方动线（Spec 043 2026-09-19 重做）：先进 Compare changes 页选 base/compare
+          this.pathStack.pushPathByName('prCompare', `${this.owner}|${this.name}`);
+        }
+      }
+    ];
   }
 
   /** 列表成员 sheet（单个 bindSheet 引用，避免多 bindSheet 失效） */
@@ -828,8 +861,8 @@ export struct RepoDetailView {
           this.pathStack.pop();
         },
         actions: [
-          new AppBarAction($r('app.media.oct_plus_circle_24'), (): void => this.comingSoon(),
-            { iconColor: $r('app.color.link_blue'), a11y: $r('app.string.a11y_new') }),
+          new AppBarAction($r('app.media.oct_plus_circle_24'), (): void => {
+          }, { iconColor: $r('app.color.link_blue'), a11y: $r('app.string.a11y_new'), menuItems: this.createMenuItems() }),
           new AppBarAction($r('app.media.oct_kebab_horizontal_16'), (): void => this.comingSoon(),
             { rotate90: true, iconColor: $r('app.color.link_blue'), a11y: $r('app.string.a11y_more') })
         ]

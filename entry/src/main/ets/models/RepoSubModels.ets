@@ -175,6 +175,8 @@ export interface IssueDetailPage {
   title: string;
   state: string;
   stateReason: string;
+  /** 编辑权限门（viewerCanUpdate=作者或有写权限；Spec 043 编辑/关闭入口显隐） */
+  viewerCanUpdate: boolean;
   body: string;
   /** 官方渲染 HTML（Spec 040），body 作降级 */
   bodyHTML: string;
@@ -432,6 +434,8 @@ export interface PrDetailPage {
   state: string;
   merged: boolean;
   isDraft: boolean;
+  /** 编辑权限门（viewerCanUpdate=作者或有写权限；Spec 043 编辑/关闭/draft 切换入口显隐） */
+  viewerCanUpdate: boolean;
   body: string;
   /** 官方渲染 HTML（Spec 040），body 作降级 */
   bodyHTML: string;
@@ -1069,6 +1073,394 @@ function mapComment(raw: JsonMap): RepoComment {
   };
 }
 
+// ─────────────── Spec 043：Issue/PR 创建与编辑（表单数据模型）───────────────
+
+/** 官方 Issue 模板（repository.issueTemplates，普通列表非 Connection；filename 为模板文件名） */
+export interface IssueTemplateItem {
+  name: string;
+  title: string;
+  body: string;
+  filename: string;
+  /** 模板描述行（Choose Template 页灰字） */
+  about: string;
+  /** 模板 YAML 预置标签名（创建时自动带上） */
+  labels: string[];
+  /** 模板 YAML 预置负责人 login（创建时自动带上） */
+  assignees: string[];
+}
+
+/** 仓库分支行（refs(refPrefix:"refs/heads/")；New PR base/head 选择） */
+export interface BranchRefItem {
+  name: string;
+  oid: string;
+}
+
+/** Home「+」→ Choose a repository 选仓库页行（官方两行：owner 头像/login 灰字 + 仓库名） */
+export interface PickerRepo {
+  id: string;
+  ownerLogin: string;
+  ownerAvatar: string;
+  name: string;
+}
+
+/** `owner/name` 组合（候选过滤与展示共用） */
+export function pickerRepoFullName(repo: PickerRepo): string {
+  return `${repo.ownerLogin}/${repo.name}`;
+}
+
+export function mapIssueTemplates(data: JsonMap): IssueTemplateItem[] {
+  const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
+  const items: IssueTemplateItem[] = [];
+  for (const nodeItem of Json.arr(repo, 'issueTemplates')) {
+    const it = nodeItem as JsonMap;
+    const labelNames: string[] = [];
+    const labelsConn = Json.obj(it, 'labels');
+    if (labelsConn !== null) {
+      for (const l of Json.arr(labelsConn, 'nodes')) {
+        labelNames.push(Json.str(l as JsonMap, 'name'));
+      }
+    }
+    const assigneeLogins: string[] = [];
+    const assigneesConn = Json.obj(it, 'assignees');
+    if (assigneesConn !== null) {
+      for (const a of Json.arr(assigneesConn, 'nodes')) {
+        assigneeLogins.push(Json.str(a as JsonMap, 'login'));
+      }
+    }
+    items.push({
+      name: Json.str(it, 'name'),
+      title: Json.str(it, 'title'),
+      body: Json.str(it, 'body'),
+      filename: Json.str(it, 'filename'),
+      about: Json.str(it, 'about'),
+      labels: labelNames,
+      assignees: assigneeLogins
+    });
+  }
+  return items;
+}
+
+export function mapBranchRefs(data: JsonMap): BranchRefItem[] {
+  const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
+  const refs = Json.obj(repo, 'refs') ?? ({} as JsonMap);
+  const items: BranchRefItem[] = [];
+  for (const nodeItem of Json.arr(refs, 'nodes')) {
+    const it = nodeItem as JsonMap;
+    const target = Json.obj(it, 'target');
+    items.push({ name: Json.str(it, 'name'), oid: target !== null ? Json.str(target, 'oid') : '' });
+  }
+  return items;
+}
+
+/** 分支选择器候选（Compare changes 动线，Spec 043）：默认分支名 + refs 全量分支名 */
+export interface BranchRefs {
+  defaultBranch: string;
+  names: string[];
+}
+
+/** 分支选择器单页（Compare changes 动线，Spec 043）：分支名数组 + 翻页信息 + 默认分支 */
+export interface BranchNamesPage {
+  names: string[];
+  hasNextPage: boolean;
+  endCursor: string;
+  defaultBranch: string;
+}
+
+export function mapBranchNamesPage(data: JsonMap): BranchNamesPage {
+  const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
+  const dbr = Json.obj(repo, 'defaultBranchRef');
+  const refs = Json.obj(repo, 'refs') ?? ({} as JsonMap);
+  const pageInfo = Json.obj(refs, 'pageInfo') ?? ({} as JsonMap);
+  const names: string[] = [];
+  for (const nodeItem of Json.arr(refs, 'nodes')) {
+    names.push(Json.str(nodeItem as JsonMap, 'name'));
+  }
+  return {
+    names: names,
+    hasNextPage: Json.bool(pageInfo, 'hasNextPage'),
+    endCursor: Json.str(pageInfo, 'endCursor'),
+    defaultBranch: dbr !== null ? Json.str(dbr, 'name') : ''
+  };
+}
+
+/** Changes 汇总（REST compare 累加结果；commits 取 total_commits 精确值）。
+ *  filesTruncated=true 表示命中 compare 300 文件上限、additions/deletions 仅为前 300 文件
+ *  的部分和（files 已用 Git Trees diff 补成精确值）——UI 此时隐藏 +/- 行（产品口径：
+ *  绝不给用户可疑数字，Spec 043 §五/§七） */
+export interface CompareSummary {
+  files: number;
+  additions: number;
+  deletions: number;
+  commits: number;
+  filesTruncated: boolean;
+}
+
+/** REST compare 单页解析：累加 files[] 的 additions/deletions，首页回填 total_commits；返回本页文件数供判停 */
+export function mergeComparePage(acc: CompareSummary, body: string, isFirst: boolean): number {
+  const page = JSON.parse(body) as JsonMap;
+  if (isFirst) {
+    acc.commits = Json.num(page, 'total_commits');
+  }
+  const files = Json.arr(page, 'files');
+  for (const node of files) {
+    const f = node as JsonMap;
+    acc.additions += Json.num(f, 'additions');
+    acc.deletions += Json.num(f, 'deletions');
+  }
+  return files.length;
+}
+
+/** REST compare 响应里的 base_commit.sha（Trees diff 的基树） */
+export function parseCompareBaseSha(body: string): string {
+  const page = JSON.parse(body) as JsonMap;
+  const baseCommit = Json.obj(page, 'base_commit') ?? ({} as JsonMap);
+  return Json.str(baseCommit, 'sha');
+}
+
+/** head 分支 tip（Changes 行相对时间 + Trees diff 的头树 oid） */
+export interface RefTip {
+  oid: string;
+  date: string;
+}
+
+/** 递归树解析结果：path→对象 sha（blob 与子模块 commit 指针计入，tree 目录跳过）+ 截断标志 */
+export interface TreeEntries {
+  paths: Map<string, string>;
+  truncated: boolean;
+}
+
+export function parseTreeEntries(body: string): TreeEntries {
+  const page = JSON.parse(body) as JsonMap;
+  const paths = new Map<string, string>();
+  for (const node of Json.arr(page, 'tree')) {
+    const e = node as JsonMap;
+    if (Json.str(e, 'type') === 'tree') {
+      continue;
+    }
+    paths.set(Json.str(e, 'path'), Json.str(e, 'sha'));
+  }
+  return { paths: paths, truncated: Json.bool(page, 'truncated') };
+}
+
+/** 两棵递归树的差异文件数（path 并集上 sha 不同或单侧独有） */
+export function countTreeDiff(base: TreeEntries, head: TreeEntries): number {
+  let count = 0;
+  base.paths.forEach((sha: string, path: string): void => {
+    const headSha = head.paths.get(path);
+    if (headSha === undefined || headSha !== sha) {
+      count += 1;
+    }
+  });
+  head.paths.forEach((sha: string, path: string): void => {
+    if (!base.paths.has(path)) {
+      count += 1;
+    }
+  });
+  return count;
+}
+
+export function mapPickerRepos(data: JsonMap): PickerRepo[] {
+  const viewer = Json.obj(data, 'viewer') ?? ({} as JsonMap);
+  const items: PickerRepo[] = [];
+  const seen = new Set<string>();
+  // 候选 = 自有/协作/组织成员仓库 ∪ 参与过的仓库（官方列表口径，去重）
+  const collect = (connKey: string): void => {
+    const conn = Json.obj(viewer, connKey) ?? ({} as JsonMap);
+    for (const nodeItem of Json.arr(conn, 'nodes')) {
+      const it = nodeItem as JsonMap;
+      const owner = Json.obj(it, 'owner');
+      const login = owner !== null ? Json.str(owner, 'login') : '';
+      const name = Json.str(it, 'name');
+      const full = `${login}/${name}`;
+      if (login === '' || seen.has(full)) {
+        continue;
+      }
+      seen.add(full);
+      items.push({
+        id: Json.str(it, 'id'),
+        name: name,
+        ownerLogin: login,
+        ownerAvatar: owner !== null ? Json.str(owner, 'avatarUrl') : ''
+      });
+    }
+  };
+  collect('repositories');
+  collect('repositoriesContributedTo');
+  return items;
+}
+
+/** 服务端仓库搜索 → 候选（search.nodes 经 ... on Repository 内联片段返回字段） */
+export function mapPickerSearch(data: JsonMap): PickerRepo[] {
+  const search = Json.obj(data, 'search') ?? ({} as JsonMap);
+  const items: PickerRepo[] = [];
+  for (const nodeItem of Json.arr(search, 'nodes')) {
+    const it = nodeItem as JsonMap;
+    const owner = Json.obj(it, 'owner');
+    items.push({
+      id: Json.str(it, 'id'),
+      name: Json.str(it, 'name'),
+      ownerLogin: owner !== null ? Json.str(owner, 'login') : '',
+      ownerAvatar: owner !== null ? Json.str(owner, 'avatarUrl') : ''
+    });
+  }
+  return items;
+}
+
+/** 仓库候选按关键字过滤（owner/name 组合大小写不敏感包含匹配） */
+export function filterReposByKeyword(repos: PickerRepo[], keyword: string): PickerRepo[] {
+  const q = keyword.trim().toLowerCase();
+  if (q === '') {
+    return repos;
+  }
+  return repos.filter((r: PickerRepo): boolean => pickerRepoFullName(r).toLowerCase().indexOf(q) >= 0);
+}
+
+/** 表单基础数据聚合（REPO_FORM_QUERY 一次取全：新建 Issue/PR 都要用） */
+export interface RepoFormPage {
+  repoId: string;
+  defaultBranch: string;
+  templates: IssueTemplateItem[];
+  branches: BranchRefItem[];
+  /** 安全政策页 URL（仓库有 SECURITY.md 才非空；Choose Template 页 Security 行） */
+  securityPolicyUrl: string;
+}
+
+export function mapRepoForm(data: JsonMap): RepoFormPage {
+  const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
+  const dbr = Json.obj(repo, 'defaultBranchRef');
+  return {
+    repoId: Json.str(repo, 'id'),
+    defaultBranch: dbr !== null ? Json.str(dbr, 'name') : '',
+    templates: mapIssueTemplates(data),
+    branches: mapBranchRefs(data),
+    securityPolicyUrl: Json.str(repo, 'securityPolicyUrl')
+  };
+}
+
+/** 编辑回填内容（Issue/PR 同构：id/title/body + 权限门） */
+export interface EditableContent {
+  id: string;
+  title: string;
+  body: string;
+  viewerCanUpdate: boolean;
+}
+
+/** createIssue 结果（id 供创建后挂 Project，number 供跳详情） */
+export interface IssueCreated {
+  id: string;
+  number: number;
+}
+
+/** 按 field（'issue' | 'pullRequest'）取编辑回填节点 */
+export function mapEditable(data: JsonMap, field: string): EditableContent {
+  const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
+  const node = Json.obj(repo, field) ?? ({} as JsonMap);
+  return {
+    id: Json.str(node, 'id'),
+    title: Json.str(node, 'title'),
+    body: Json.str(node, 'body'),
+    viewerCanUpdate: Json.bool(node, 'viewerCanUpdate')
+  };
+}
+
+/** Choose Template 页：config.yml 联系链接行（外链跳浏览器，官方带 ⧉ 图标） */
+export interface TemplateContactLink {
+  name: string;
+  about: string;
+  url: string;
+}
+
+/** Choose Template 页：issue form（.yml 表单，GraphQL issueTemplates 不返回；移动端跳网页填写） */
+export interface IssueFormTemplate {
+  name: string;
+  description: string;
+  filename: string;
+}
+
+/** .github/ISSUE_TEMPLATE 目录的 forms + contact links 聚合 */
+export interface IssueTemplateExtras {
+  forms: IssueFormTemplate[];
+  contactLinks: TemplateContactLink[];
+}
+
+/** 去行尾回车符 */
+function chomp(line: string): string {
+  return line.endsWith('\r') ? line.substring(0, line.length - 1) : line;
+}
+
+/** 去 YAML 值两端成对引号 */
+function unquote(value: string): string {
+  const v = value.trim();
+  if (v.length >= 2 && ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'")))) {
+    return v.substring(1, v.length - 1);
+  }
+  return v;
+}
+
+/** 解析 config.yml 的 contact_links 段（逐行扫描：`- name:` 开新项，`about:`/`url:` 归属当前项） */
+export function parseContactLinks(yaml: string): TemplateContactLink[] {
+  const items: TemplateContactLink[] = [];
+  const lines = yaml.split('\n');
+  let inSection = false;
+  let current: TemplateContactLink | null = null;
+  for (const raw of lines) {
+    const line = chomp(raw);
+    if (line.trim() === '' || line.trim().startsWith('#')) {
+      continue;
+    }
+    if (/^\S/.test(line)) {
+      // 顶层键：contact_links 段开/关（段前可能有其他顶层键如 blank_issues_enabled，故全文件扫描）
+      inSection = line.startsWith('contact_links:');
+      current = null;
+      continue;
+    }
+    if (!inSection) {
+      continue;
+    }
+    const nameMatch = line.match(/^\s*-\s*name:\s*(.*)$/);
+    if (nameMatch !== null) {
+      current = { name: unquote(nameMatch[1]), about: '', url: '' };
+      items.push(current);
+      continue;
+    }
+    const aboutMatch = line.match(/^\s+about:\s*(.*)$/);
+    if (aboutMatch !== null && current !== null) {
+      current.about = unquote(aboutMatch[1]);
+      continue;
+    }
+    const urlMatch = line.match(/^\s+url:\s*(.*)$/);
+    if (urlMatch !== null && current !== null) {
+      current.url = unquote(urlMatch[1]);
+    }
+  }
+  return items;
+}
+
+/** 解析 issue form（.yml）顶层 name/description（只取未缩进行，忽略 body 块内字段） */
+export function parseIssueFormMeta(yaml: string, filename: string): IssueFormTemplate | null {
+  let name = '';
+  let description = '';
+  for (const raw of yaml.split('\n')) {
+    const line = chomp(raw);
+    if (line.trim() === '' || /^\s/.test(line) || line.trim().startsWith('#')) {
+      continue;
+    }
+    const nameMatch = line.match(/^name:\s*(.*)$/);
+    if (nameMatch !== null && name === '') {
+      name = unquote(nameMatch[1]);
+      continue;
+    }
+    const descMatch = line.match(/^description:\s*(.*)$/);
+    if (descMatch !== null && description === '') {
+      description = unquote(descMatch[1]);
+    }
+  }
+  if (name === '') {
+    return null;
+  }
+  return { name: name, description: description, filename: filename };
+}
+
 export function mapIssueDetail(data: JsonMap): IssueDetailPage {
   const repo = Json.obj(data, 'repository') ?? ({} as JsonMap);
   const issue = Json.obj(repo, 'issue') ?? ({} as JsonMap);
@@ -1092,6 +1484,7 @@ export function mapIssueDetail(data: JsonMap): IssueDetailPage {
     title: Json.str(issue, 'title'),
     state: Json.str(issue, 'state'),
     stateReason: Json.str(issue, 'stateReason'),
+    viewerCanUpdate: Json.bool(issue, 'viewerCanUpdate'),
     body: Json.str(issue, 'body'),
     bodyHTML: Json.str(issue, 'bodyHTML'),
     createdAt: Json.str(issue, 'createdAt'),
@@ -1142,6 +1535,7 @@ export function mapPrDetail(data: JsonMap): PrDetailPage {
     state: Json.str(pr, 'state'),
     merged: Json.bool(pr, 'merged'),
     isDraft: Json.bool(pr, 'isDraft'),
+    viewerCanUpdate: Json.bool(pr, 'viewerCanUpdate'),
     body: Json.str(pr, 'body'),
     bodyHTML: Json.str(pr, 'bodyHTML'),
     createdAt: Json.str(pr, 'createdAt'),

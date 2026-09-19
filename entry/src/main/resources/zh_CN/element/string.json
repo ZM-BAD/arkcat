@@ -261,10 +261,6 @@
       "value": "暂无议题"
     },
     {
-      "name": "issues_new_coming",
-      "value": "新建议题将在后续 Spec 提供"
-    },
-    {
       "name": "home_my_work",
       "value": "我的工作"
     },
@@ -327,10 +323,6 @@
     {
       "name": "home_feature_coming",
       "value": "该功能将在后续 Spec 提供"
-    },
-    {
-      "name": "home_new_coming",
-      "value": "新建功能将在后续版本提供"
     },
     {
       "name": "inbox_menu_inbox",
@@ -2587,6 +2579,306 @@
     {
       "name": "a11y_info",
       "value": "信息"
+    },
+    {
+      "name": "create_new_issue",
+      "value": "创建 Issue"
+    },
+    {
+      "name": "create_new_repo",
+      "value": "新建仓库"
+    },
+    {
+      "name": "create_new_pr",
+      "value": "新建 Pull Request"
+    },
+    {
+      "name": "form_saved",
+      "value": "已保存"
+    },
+    {
+      "name": "form_new_issue_title",
+      "value": "新建议题"
+    },
+    {
+      "name": "form_edit_issue_title",
+      "value": "编辑议题"
+    },
+    {
+      "name": "form_new_pr_title",
+      "value": "新建 Pull Request"
+    },
+    {
+      "name": "form_edit_pr_title",
+      "value": "编辑 Pull Request"
+    },
+    {
+      "name": "form_title_label",
+      "value": "标题"
+    },
+    {
+      "name": "form_title_placeholder",
+      "value": "填写标题"
+    },
+    {
+      "name": "form_title_required",
+      "value": "请输入标题"
+    },
+    {
+      "name": "form_title_too_long",
+      "value": "标题不能超过 255 个字符"
+    },
+    {
+      "name": "form_body_placeholder",
+      "value": "填写选填描述"
+    },
+    {
+      "name": "form_repo_required",
+      "value": "请先选择仓库"
+    },
+    {
+      "name": "form_base_label",
+      "value": "base:"
+    },
+    {
+      "name": "form_head_label",
+      "value": "head:"
+    },
+    {
+      "name": "form_head_pick",
+      "value": "选择 head 分支"
+    },
+    {
+      "name": "form_branch_base_title",
+      "value": "选择 base 分支"
+    },
+    {
+      "name": "form_branch_head_title",
+      "value": "选择 head 分支"
+    },
+    {
+      "name": "form_branch_search",
+      "value": "筛选分支"
+    },
+    {
+      "name": "form_head_required",
+      "value": "请选择 head 分支"
+    },
+    {
+      "name": "form_head_equals_base",
+      "value": "head 分支不能与 base 分支相同"
+    },
+    {
+      "name": "close_issue",
+      "value": "关闭议题"
+    },
+    {
+      "name": "reopen_issue",
+      "value": "重开议题"
+    },
+    {
+      "name": "close_reason_title",
+      "value": "关闭议题"
+    },
+    {
+      "name": "close_reason_completed",
+      "value": "已完成"
+    },
+    {
+      "name": "close_reason_not_planned",
+      "value": "未计划"
+    },
+    {
+      "name": "reopen_pr",
+      "value": "重开 Pull Request"
+    },
+    {
+      "name": "convert_to_draft",
+      "value": "转为草稿"
+    },
+    {
+      "name": "mark_ready",
+      "value": "标记为待审查"
+    },
+    {
+      "name": "repo_picker_title",
+      "value": "选择仓库"
+    },
+    {
+      "name": "picker_search_hint",
+      "value": "搜索"
+    },
+    {
+      "name": "form_body_label",
+      "value": "正文"
+    },
+    {
+      "name": "form_send",
+      "value": "发送"
+    },
+    {
+      "name": "chip_assignee",
+      "value": "负责人"
+    },
+    {
+      "name": "chip_label",
+      "value": "标签"
+    },
+    {
+      "name": "chip_milestone",
+      "value": "里程碑"
+    },
+    {
+      "name": "chip_project",
+      "value": "项目"
+    },
+    {
+      "name": "template_picker_title",
+      "value": "选择模板"
+    },
+    {
+      "name": "template_none",
+      "value": "无模板"
+    },
+    {
+      "name": "template_none_desc",
+      "value": "创建空白议题"
+    },
+    {
+      "name": "template_security",
+      "value": "安全漏洞"
+    },
+    {
+      "name": "template_security_desc",
+      "value": "请查看我们的安全政策了解详情"
+    },
+    {
+      "name": "chip_labels_multi",
+      "value": "标签"
+    },
+    {
+      "name": "chip_assignees_multi",
+      "value": "负责人"
+    },
+    {
+      "name": "compare_title",
+      "value": "比较更改"
+    },
+    {
+      "name": "compare_choose_branches",
+      "value": "选择分支"
+    },
+    {
+      "name": "compare_select_branch",
+      "value": "选择分支"
+    },
+    {
+      "name": "compare_empty_hint",
+      "value": "选择分支以比较更改"
+    },
+    {
+      "name": "compare_changes_title",
+      "value": "更改"
+    },
+    {
+      "name": "compare_files_one",
+      "value": "1 个文件有改动"
+    },
+    {
+      "name": "compare_files_many",
+      "value": "%1$s 个文件有改动"
+    },
+    {
+      "name": "compare_commits_one",
+      "value": "1 次提交"
+    },
+    {
+      "name": "compare_commits_many",
+      "value": "%1$s 次提交"
+    },
+    {
+      "name": "compare_create_btn",
+      "value": "创建 Pull Request"
+    },
+    {
+      "name": "compare_footer",
+      "value": "与其他人讨论并审查此次比较中的更改。"
+    },
+    {
+      "name": "picker_head_title",
+      "value": "选择 head 分支"
+    },
+    {
+      "name": "picker_base_title",
+      "value": "选择分支"
+    },
+    {
+      "name": "picker_default_badge",
+      "value": "默认"
+    },
+    {
+      "name": "start_pr_title",
+      "value": "发起 Pull Request"
+    },
+    {
+      "name": "start_pr_title_placeholder",
+      "value": "标题"
+    },
+    {
+      "name": "start_pr_desc_placeholder",
+      "value": "描述"
+    },
+    {
+      "name": "ago_just_now",
+      "value": "刚刚"
+    },
+    {
+      "name": "ago_min_one",
+      "value": "1 分钟前"
+    },
+    {
+      "name": "ago_min_many",
+      "value": "%1$d 分钟前"
+    },
+    {
+      "name": "ago_hour_one",
+      "value": "1 小时前"
+    },
+    {
+      "name": "ago_hour_many",
+      "value": "%1$d 小时前"
+    },
+    {
+      "name": "ago_day_one",
+      "value": "1 天前"
+    },
+    {
+      "name": "ago_day_many",
+      "value": "%1$d 天前"
+    },
+    {
+      "name": "ago_month_one",
+      "value": "1 个月前"
+    },
+    {
+      "name": "ago_month_many",
+      "value": "%1$d 个月前"
+    },
+    {
+      "name": "ago_year_one",
+      "value": "1 年前"
+    },
+    {
+      "name": "ago_year_many",
+      "value": "%1$d 年前"
+    },
+    {
+      "name": "compare_head_label",
+      "value": "compare:"
+    },
+    {
+      "name": "picker_branch_search_hint",
+      "value": "搜索分支"
     }
   ]
 }

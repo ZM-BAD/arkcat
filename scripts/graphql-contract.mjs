@@ -42,6 +42,8 @@ export default [
     viewerDefaultMergeMethod
     pullRequest(number: $number) {
       id title state merged isDraft body bodyHTML createdAt mergedAt
+      # 编辑权限门（Spec 043：编辑/关闭/draft 切换入口显隐）
+      viewerCanUpdate
       additions deletions
       # 作者关联角色（页头正文卡角色胶囊：AuthorAssociation 全集）
       authorAssociation
@@ -194,5 +196,124 @@ statusCheckRollup { state }
   }
 }`,
     variables: {"owner": "ZM-BAD", "name": "arkcat", "oid": "115eb3488d24d06959d43a0552e5f296c59fcfd9"}
+  },
+  {
+    name: 'ISSUE_DETAIL_QUERY',
+    query: `query IssueDetail($owner: String!, $name: String!, $number: Int!, $first: Int = 20, $after: String) {
+  repository(owner: $owner, name: $name) {
+    issue(number: $number) {
+      id title state stateReason body bodyHTML createdAt
+      # 编辑权限门（Spec 043：编辑/关闭入口显隐）
+      viewerCanUpdate
+      author { login avatarUrl }
+      labels(first: 10) { nodes { name } }
+      comments(first: $first, after: $after) {
+        totalCount
+        pageInfo { hasNextPage endCursor }
+        nodes {
+          id body bodyHTML createdAt
+          author { __typename login avatarUrl }
+          viewerDidAuthor
+          reactionGroups {
+            content viewerHasReacted
+            reactors(first: 8) {
+              totalCount
+              nodes {
+                ... on User { login avatarUrl }
+                ... on Bot { login avatarUrl }
+                ... on Mannequin { login avatarUrl }
+                ... on Organization { login avatarUrl }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}`,
+    variables: {"owner": "ZM-BAD", "name": "arkcat", "number": 33}
+  },
+  {
+    name: 'REPO_FORM_QUERY',
+    query: `query RepoForm($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    id
+    defaultBranchRef { name }
+    issueTemplates {
+      name title body filename about
+      labels(first: 10) { nodes { name } }
+      assignees(first: 10) { nodes { login } }
+    }
+    refs(refPrefix: "refs/heads/", first: 100) {
+      nodes { name target { oid } }
+    }
+    securityPolicyUrl
+  }
+}`,
+    variables: {"owner": "ZM-BAD", "name": "arkcat"}
+  },
+  {
+    name: 'BRANCH_REFS_QUERY',
+    query: `query BranchRefs($owner: String!, $name: String!, $after: String) {
+  repository(owner: $owner, name: $name) {
+    defaultBranchRef { name }
+    refs(refPrefix: "refs/heads/", first: 100, after: $after) {
+      totalCount
+      pageInfo { hasNextPage endCursor }
+      nodes { name }
+    }
+  }
+}`,
+    variables: {"owner": "ZM-BAD", "name": "arkcat"}
+  },
+  {
+    name: 'REF_TIP_QUERY',
+    query: `query RefTip($owner: String!, $name: String!, $qualified: String!) {
+  repository(owner: $owner, name: $name) {
+    ref(qualifiedName: $qualified) { target { ... on Commit { oid committedDate } } }
+  }
+}`,
+    variables: {"owner": "ZM-BAD", "name": "arkcat", "qualified": "refs/heads/develop"}
+  },
+  {
+    name: 'ISSUE_EDIT_QUERY',
+    query: `query IssueEdit($owner: String!, $name: String!, $number: Int!) {
+  repository(owner: $owner, name: $name) {
+    issue(number: $number) { id title body viewerCanUpdate }
+  }
+}`,
+    variables: {"owner": "ZM-BAD", "name": "arkcat", "number": 33}
+  },
+  {
+    name: 'PR_EDIT_QUERY',
+    query: `query PullRequestEdit($owner: String!, $name: String!, $number: Int!) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) { id title body viewerCanUpdate }
+  }
+}`,
+    variables: {"owner": "ZM-BAD", "name": "arkcat", "number": 51}
+  },
+  {
+    name: 'VIEWER_REPOS_QUERY',
+    query: `query PickerRepos($first: Int = 100) {
+  viewer {
+    repositories(first: $first, affiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER], orderBy: { field: PUSHED_AT, direction: DESC }) {
+      nodes { id name owner { login avatarUrl } }
+    }
+    repositoriesContributedTo(first: $first, includeUserRepositories: false) {
+      nodes { id name owner { login avatarUrl } }
+    }
+  }
+}`,
+    variables: {"first": 1}
+  },
+  {
+    name: 'SEARCH_PICKER_REPOS_QUERY',
+    query: `query SearchPickerRepos($query: String!, $first: Int = 20) {
+  search(query: $query, type: REPOSITORY, first: $first) {
+    nodes { ... on Repository { id name owner { login avatarUrl } } }
+  }
+}`,
+    variables: {"query": "hypit in:name", "first": 1}
   },
 ];

@@ -6,14 +6,13 @@
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
-import { LabelPill } from '../components/LabelPill';
+import { IssueCard } from '../components/IssueCard';
 import { WorkFilterBar, WorkFilterOption, WorkFilterState, defaultWorkFilter, isWorkFilterDirty } from '../components/WorkFilterBar';
 import { WorkIssueItem, WorkIssuesPage, WorkLabel } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
 import { StateView } from '../components/StateView';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
 import { WorkEmptyView } from '../components/WorkEmptyView';
-import { CountChip } from '../components/CountChip';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
@@ -161,78 +160,6 @@ export struct WorkIssuesView {
     return parts !== null ? githubShortTime(parts) : '';
   }
 
-  /** 状态图标（Spec 017/024：OPEN 绿 / COMPLETED 紫 / NOT_PLANNED 灰） */
-  private issueIcon(issue: WorkIssueItem): Resource {
-    if (issue.iconKey === 'open') {
-      return $r('app.media.oct_issue_opened_16');
-    }
-    // 官方字形（DESIGN.md §10.1）：not planned=skip、closed=issue-closed
-    return issue.iconKey === 'not_planned'
-      ? $r('app.media.oct_skip_16')
-      : $r('app.media.oct_issue_closed_16');
-  }
-
-  private issueColor(issue: WorkIssueItem): ResourceColor {
-    if (issue.iconKey === 'open') {
-      return $r('app.color.success_text');
-    }
-    return issue.iconKey === 'not_planned' ? $r('app.color.text_secondary') : $r('app.color.shortcut_purple_fg');
-  }
-
-  @Builder
-  issueCard(issue: WorkIssueItem) {
-    Column({ space: 6 }) {
-      Row() {
-        OctIcon({ res: this.issueIcon(issue), iconSize: 18, iconColor: this.issueColor(issue) })
-        Text(`${issue.repoFullName} #${issue.number}`)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .margin({ left: 12 })
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .layoutWeight(1)
-        Text(this.timeText(timeParts(issue.createdAt, Date.now())))
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-      }
-      .width('100%')
-
-      Text(issue.title)
-        .fontSize($r('app.float.body_font_size'))
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.text_primary'))
-        .maxLines(2)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
-        .width('100%')
-
-      if (issue.labels.length > 0 || issue.commentCount > 0) {
-        // 标签数量不定：包横向 Scroll 防溢出卡片，内层行 minWidth 撑满、超宽可滑
-        Scroll() {
-          Row() {
-            ForEach(issue.labels, (label: WorkLabel) => {
-              LabelPill({ labelName: label.name, colorHex: label.color })
-            }, (label: WorkLabel) => label.name)
-            if (issue.commentCount > 0) {
-              CountChip({ icon: $r('app.media.oct_comment_16'), text: `${issue.commentCount}` })
-            }
-          }
-          .constraintSize({ minWidth: '100%' })
-        }
-        .scrollBar(BarState.Off)
-        .width('100%')
-      }
-    }
-    .padding($r('app.float.card_padding'))
-    .borderRadius($r('app.float.card_radius'))
-    .backgroundColor($r('app.color.card_background'))
-    .width('100%')
-    .margin({ bottom: 8 })
-    .onClick(() => {
-      // 与 WorkPrs 同款跳转（review B1：列表项此前漏 onClick 无法进详情）
-      this.pathStack.pushPathByName('issueDetail', `${issue.repoFullName}/${issue.number}`);
-    })
-  }
-
   build() {
     Column() {
       Row() {
@@ -336,7 +263,19 @@ export struct WorkIssuesView {
 
           if (this.shownIssues().length > 0) {
             ForEach(this.shownIssues(), (issue: WorkIssueItem) => {
-              this.issueCard(issue)
+              IssueCard({
+                iconKey: issue.iconKey,
+                repoFullName: issue.repoFullName,
+                number: issue.number,
+                title: issue.title,
+                labels: issue.labels,
+                commentCount: issue.commentCount,
+                timeText: this.timeText(timeParts(issue.createdAt, Date.now())),
+                onTap: (): void => {
+                  // 与 WorkPrs 同款跳转（review B1：列表项此前漏 onClick 无法进详情）
+                  this.pathStack.pushPathByName('issueDetail', `${issue.repoFullName}/${issue.number}`);
+                }
+              })
             }, (issue: WorkIssueItem) => issue.id)
             if (this.hasNextPage) {
               ListLoadingFooter({ show: this.loadingMore })

@@ -18,6 +18,9 @@ export struct FilterOptionSheet {
   /** 候选池（调用方已按搜索词过滤） */
   @Param options: FilterDropdownOption[] = [];
   @Param selectedKey: string = '';
+  /** 多选模式（创建 Issue 属性芯片用）：勾选按 selectedKeys 渲染，点击不关面板（关闭由调用方决定） */
+  @Param multi: boolean = false;
+  @Param selectedKeys: string[] = [];
   /** 行形态：plain=纯文本；label=官方彩色胶囊行（LabelPill large） */
   @Param rowKind: string = 'plain';
   /** true=key 命中 NONE_FILTER_KEY 的行渲染 circle-slash 空值行（No milestone / Assigned to nobody） */
@@ -34,6 +37,11 @@ export struct FilterOptionSheet {
 
   private isNoneRow(key: string): boolean {
     return this.noneRow && key === NONE_FILTER_KEY;
+  }
+
+  /** 行选中态：多选按 selectedKeys，单选按 selectedKey */
+  private isChecked(key: string): boolean {
+    return this.multi ? this.selectedKeys.indexOf(key) >= 0 : this.selectedKey === key;
   }
 
   build() {
@@ -79,7 +87,7 @@ export struct FilterOptionSheet {
                     .maxLines(1)
                     .textOverflow({ overflow: TextOverflow.Ellipsis })
                 }
-                if (this.selectedKey === opt.key) {
+                if (this.isChecked(opt.key)) {
                   OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 16, iconColor: $r('app.color.link_blue') })
                     .margin({ left: 8 })
                 }
@@ -88,7 +96,7 @@ export struct FilterOptionSheet {
               .height(56)
               .padding({ left: 20, right: 16 })
               .onClick((): void => this.onPick(opt.key))
-            }, (opt: FilterDropdownOption) => `${opt.key}_${this.selectedKey === opt.key ? 'on' : 'off'}`)
+            }, (opt: FilterDropdownOption) => `${opt.key}_${this.isChecked(opt.key) ? 'on' : 'off'}`)
           } else {
             // 搜索无结果（与语言面板同款文案）
             Text($r('app.string.filter_no_results'))

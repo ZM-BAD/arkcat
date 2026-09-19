@@ -11,7 +11,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Json, JsonMap } from '../../entry/src/main/ets/utils/Json';
 import {
-  timeParts, githubShortTime, compactCount, notificationTypeKey, headEllipsisByWidth, TimeParts
+  timeParts, githubShortTime, compactCount, notificationTypeKey, headEllipsisByWidth, TimeParts,
+  groupDigits
 } from '../../entry/src/main/ets/utils/Format';
 import { NONE_FILTER_KEY } from '../../entry/src/main/ets/utils/FilterLoading';
 import { parseDiffPatch, fileBaseName } from '../../entry/src/main/ets/utils/Diff';
@@ -27,8 +28,15 @@ import {
   mapReviewThreads, canMergePr, mergeStateReasonKey, reviewStateKey, resolveMergeMethod,
   mapTriageUsers, mapTriageLabels, mapTriageMilestones, mapTriageLinked, mapTriageProjects,
   filterTriageByKeyword, diffSelection, singlePickId,
-  mapTimeline, actorDisplayLogin, phraseSegments
+  mapTimeline, actorDisplayLogin, phraseSegments,
+  mapRepoForm, mapEditable, mapIssueTemplates, mapBranchRefs, mapPickerRepos, filterReposByKeyword,
+  mapBranchNamesPage, mergeComparePage, parseCompareBaseSha, parseTreeEntries, countTreeDiff,
+  pickerRepoFullName, parseContactLinks, parseIssueFormMeta
 } from '../../entry/src/main/ets/models/RepoSubModels';
+import {
+  issueTitleError, canSubmitIssue, validatePrHeads, defaultBaseBranch,
+  parseFormRoute, filterBranches, orderBranches, ISSUE_TITLE_MAX
+} from '../../entry/src/main/ets/utils/IssueFormRules';
 import { mapPrFiles, mapFilesCursor, applyRestPatch, PrFileItem } from '../../entry/src/main/ets/models/PrDiffModels';
 import {
   buildNotificationsPath, pullRefFromUrl, buildPullStatesQuery, mapPullMerged,
@@ -1775,4 +1783,287 @@ test('retryDelayMs：500ms 起步指数退避、4s 封顶', () => {
   assert.equal(retryDelayMs(3), 4000);
   assert.equal(retryDelayMs(4), 4000);
   assert.equal(retryDelayMs(10), 4000);
+});
+
+// ─────────────── Spec 043：Issue/PR 创建与编辑 ───────────────
+
+test('issueTitleError：空/空白/255 上限/合法（Spec 043 测试3）', () => {
+  assert.equal(issueTitleError(''), 'required');
+  assert.equal(issueTitleError('   \n  '), 'required');
+  assert.equal(issueTitleError('a'.repeat(ISSUE_TITLE_MAX)), '');
+  assert.equal(issueTitleError('a'.repeat(ISSUE_TITLE_MAX + 1)), 'too_long');
+  assert.equal(issueTitleError('  Bug: crash on launch  '), '');
+  assert.equal(canSubmitIssue('Bug: crash'), true);
+  assert.equal(canSubmitIssue('  '), false);
+});
+
+test('validatePrHeads：未选 head/head=base/合法（Spec 043 测试5）', () => {
+  assert.equal(validatePrHeads('main', ''), 'head_required');
+  assert.equal(validatePrHeads('main', '   '), 'head_required');
+  assert.equal(validatePrHeads('main', 'main'), 'head_equals_base');
+  assert.equal(validatePrHeads('main', 'feature/x'), '');
+});
+
+test('defaultBaseBranch：默认分支优先/退回首个/空列表（Spec 043 测试4）', () => {
+  assert.equal(defaultBaseBranch('develop', ['main', 'develop']), 'develop');
+  assert.equal(defaultBaseBranch('gone', ['main', 'dev']), 'main');
+  assert.equal(defaultBaseBranch('main', ['main']), 'main');
+  assert.equal(defaultBaseBranch('', []), '');
+});
+
+test('parseFormRoute：五段/缺段/非法数字回落', () => {
+  const r = parseFormRoute('ZM-BAD|arkcat|edit|12');
+  assert.equal(r.owner, 'ZM-BAD');
+  assert.equal(r.name, 'arkcat');
+  assert.equal(r.mode, 'edit');
+  assert.equal(r.editNumber, 12);
+  assert.equal(r.templateName, '');
+  const withTpl = parseFormRoute('ZM-BAD|headroom|new|0|Bug Report');
+  assert.equal(withTpl.templateName, 'Bug Report');
+  const home = parseFormRoute('||new|0');
+  assert.equal(home.owner, '');
+  assert.equal(home.name, '');
+  assert.equal(home.mode, 'new');
+  const bare = parseFormRoute('');
+  assert.equal(bare.mode, 'new');
+  assert.equal(bare.editNumber, 0);
+  assert.equal(bare.templateName, '');
+  const bad = parseFormRoute('a|b|new|x9');
+  assert.equal(bad.editNumber, 0);
+});
+
+test('filterBranches：大小写不敏感过滤/空词全量', () => {
+  const branches = ['main', 'develop', 'Feature/X', 'fix/bug'];
+  assert.deepEqual(filterBranches(branches, ''), branches);
+  assert.deepEqual(filterBranches(branches, 'FEAT'), ['Feature/X']);
+  assert.deepEqual(filterBranches(branches, 'fix/'), ['fix/bug']);
+  assert.deepEqual(filterBranches(branches, 'zzz'), []);
+});
+
+test('orderBranches：默认分支置顶 + 字母序（Spec 043 Choose Branch）', () => {
+  assert.deepEqual(orderBranches(['f_b', 'main', 'a/x'], 'main'), ['main', 'a/x', 'f_b']);
+  assert.deepEqual(orderBranches(['main'], 'main'), ['main']);
+  assert.deepEqual(orderBranches([], 'main'), []);
+  // 默认分支不在列表内（异常数据）：仅按字母序
+  assert.deepEqual(orderBranches(['b', 'a'], 'gone'), ['a', 'b']);
+});
+
+test('groupDigits：千分位分组（Spec 043 Changes 汇总）', () => {
+  assert.equal(groupDigits(0), '0');
+  assert.equal(groupDigits(7), '7');
+  assert.equal(groupDigits(1142), '1,142');
+  assert.equal(groupDigits(1171), '1,171');
+  assert.equal(groupDigits(59985), '59,985');
+  assert.equal(groupDigits(1234567), '1,234,567');
+});
+
+test('parseFormRoute：Start PR 带 base/head 段（Spec 043）', () => {
+  const start = parseFormRoute('ZM-BAD|arkcat|new|0||main|develop');
+  assert.equal(start.mode, 'new');
+  assert.equal(start.base, 'main');
+  assert.equal(start.head, 'develop');
+  // 编辑模式旧参数形态：base/head 留空
+  const edit = parseFormRoute('ZM-BAD|arkcat|edit|5|');
+  assert.equal(edit.base, '');
+  assert.equal(edit.head, '');
+});
+
+test('mapBranchNamesPage：分支选择器单页映射（Spec 043）', () => {
+  const page = mapBranchNamesPage({
+    repository: {
+      defaultBranchRef: { name: 'main' },
+      refs: {
+        totalCount: 3,
+        pageInfo: { hasNextPage: true, endCursor: 'c1' },
+        nodes: [{ name: 'main' }, { name: 'develop' }]
+      }
+    }
+  });
+  assert.equal(page.defaultBranch, 'main');
+  assert.deepEqual(page.names, ['main', 'develop']);
+  assert.equal(page.hasNextPage, true);
+  assert.equal(page.endCursor, 'c1');
+});
+
+test('mergeComparePage：REST compare 单页累加（Spec 043 Changes 汇总）', () => {
+  const acc = { files: 0, additions: 0, deletions: 0, commits: 0, filesTruncated: false };
+  const n1 = mergeComparePage(acc,
+    JSON.stringify({ total_commits: 114, files: [
+      { additions: 10, deletions: 2 }, { additions: 1, deletions: 0 }
+    ] }), true);
+  assert.equal(n1, 2);
+  assert.equal(acc.commits, 114);
+  assert.equal(acc.additions, 11);
+  assert.equal(acc.deletions, 2);
+  const n2 = mergeComparePage(acc, JSON.stringify({ files: [{ additions: 5, deletions: 40 }] }), false);
+  assert.equal(n2, 1);
+  assert.equal(acc.commits, 114);
+  assert.equal(acc.additions, 16);
+  assert.equal(acc.deletions, 42);
+});
+
+test('parseCompareBaseSha/parseTreeEntries/countTreeDiff：Trees diff 补精确文件数（Spec 043）', () => {
+  assert.equal(parseCompareBaseSha('{"base_commit":{"sha":"abc123"},"files":[]}'), 'abc123');
+  assert.equal(parseCompareBaseSha('{"files":[]}'), '');
+  const base = parseTreeEntries(JSON.stringify({ truncated: false, tree: [
+    { path: 'a.txt', sha: 's1', type: 'blob' },
+    { path: 'gone.txt', sha: 's2', type: 'blob' },
+    { path: 'dir', sha: 's3', type: 'tree' }
+  ] }));
+  const head = parseTreeEntries(JSON.stringify({ truncated: false, tree: [
+    { path: 'a.txt', sha: 's1x', type: 'blob' },
+    { path: 'new.txt', sha: 's4', type: 'blob' },
+    { path: 'sub', sha: 's5', type: 'commit' }
+  ] }));
+  assert.equal(base.truncated, false);
+  assert.equal(base.paths.get('a.txt'), 's1');
+  assert.equal(base.paths.has('dir'), false);
+  assert.equal(countTreeDiff(base, head), 4);
+  const trunc = parseTreeEntries(JSON.stringify({ truncated: true, tree: [] }));
+  assert.equal(trunc.truncated, true);
+});
+
+test('mapIssueTemplates/mapBranchRefs：模板与分支映射（Spec 043 测试1/4 数据侧）', () => {
+  const templates = mapIssueTemplates({ repository: { issueTemplates: [
+    {
+      name: 'Bug Report', title: null, body: '**Steps**', filename: 'report-bug.md',
+      about: 'Report a bug in the extension',
+      labels: { nodes: [{ name: 'bug' }] },
+      assignees: { nodes: [{ login: 'ZM-BAD' }] }
+    }
+  ] } });
+  assert.equal(templates.length, 1);
+  assert.equal(templates[0].filename, 'report-bug.md');
+  assert.equal(templates[0].about, 'Report a bug in the extension');
+  assert.deepEqual(templates[0].labels, ['bug']);
+  assert.deepEqual(templates[0].assignees, ['ZM-BAD']);
+  assert.deepEqual(mapIssueTemplates({ repository: { issueTemplates: [] } }), []);
+  const refs = mapBranchRefs({ repository: { refs: { nodes: [
+    { name: 'main', target: { oid: 'a1' } },
+    { name: 'develop', target: { oid: 'b2' } }
+  ] } } });
+  assert.equal(refs.length, 2);
+  assert.equal(refs[1].name, 'develop');
+  assert.equal(refs[1].oid, 'b2');
+});
+
+test('parseContactLinks：config.yml 联系链接解析（Spec 043 模板页外链行）', () => {
+  const yaml = [
+    'blank_issues_enabled: false',
+    'contact_links:',
+    '  - name: Questions and setup help',
+    '    about: Ask here when something is unclear or a command will not run.',
+    '    url: https://github.com/hypit-ai/hypit/discussions',
+    '',
+    '  - name: "Telegram"',
+    "    about: 'The same questions in the Telegram group.'",
+    '    url: https://t.me/hypit',
+    'other_section:',
+    '  - name: nope'
+  ].join('\n');
+  const links = parseContactLinks(yaml);
+  assert.equal(links.length, 2);
+  assert.equal(links[0].name, 'Questions and setup help');
+  assert.equal(links[0].url, 'https://github.com/hypit-ai/hypit/discussions');
+  assert.equal(links[1].name, 'Telegram');
+  assert.equal(links[1].about, 'The same questions in the Telegram group.');
+  // 无 contact_links 段 → 空
+  assert.deepEqual(parseContactLinks('name: x\nbody: y'), []);
+});
+
+test('parseIssueFormMeta：issue form 顶层 name/description 提取（Spec 043）', () => {
+  const form = parseIssueFormMeta([
+    'name: Bug report',
+    'description: Something in Hypit behaves differently than it should.',
+    'title: "[Bug] "',
+    'labels: ["bug"]',
+    'body:',
+    '  - type: markdown',
+    '    attributes:',
+    '      value: |',
+    '        - name: not a top-level field'
+  ].join('\n'), 'bug_report.yml');
+  assert.notEqual(form, null);
+  assert.equal(form?.name, 'Bug report');
+  assert.equal(form?.description, 'Something in Hypit behaves differently than it should.');
+  assert.equal(form?.filename, 'bug_report.yml');
+  // 无 name 的 yaml → null
+  assert.equal(parseIssueFormMeta('description: only desc\nbody:', 'x.yml'), null);
+});
+
+test('mapRepoForm：仓库 id/默认分支/模板/分支聚合', () => {
+  const page = mapRepoForm({
+    repository: {
+      id: 'R_kgDOUJ9eUQ',
+      defaultBranchRef: { name: 'develop' },
+      issueTemplates: [{ name: 'Bug report', title: 'Bug', body: 'B', filename: 'bug.md', about: '', labels: { nodes: [] }, assignees: { nodes: [] } }],
+      refs: { nodes: [{ name: 'main', target: { oid: 'a1' } }] },
+      securityPolicyUrl: 'https://github.com/ZM-BAD/arkcat/security/policy'
+    }
+  });
+  assert.equal(page.repoId, 'R_kgDOUJ9eUQ');
+  assert.equal(page.defaultBranch, 'develop');
+  assert.equal(page.templates.length, 1);
+  assert.equal(page.branches.length, 1);
+  assert.equal(page.securityPolicyUrl, 'https://github.com/ZM-BAD/arkcat/security/policy');
+  // 空仓库（defaultBranchRef=null / refs 空 / 无安全政策）
+  const empty = mapRepoForm({
+    repository: { id: 'R1', defaultBranchRef: null, issueTemplates: [], refs: { nodes: [] }, securityPolicyUrl: null }
+  });
+  assert.equal(empty.defaultBranch, '');
+  assert.equal(empty.branches.length, 0);
+  assert.equal(empty.repoId, 'R1');
+  assert.equal(empty.securityPolicyUrl, '');
+});
+
+test('mapEditable：Issue/PR 编辑回填与权限门', () => {
+  const c = mapEditable(
+    { repository: { issue: { id: 'I1', title: 'T', body: 'B', viewerCanUpdate: true } } }, 'issue');
+  assert.equal(c.id, 'I1');
+  assert.equal(c.viewerCanUpdate, true);
+  const p = mapEditable(
+    { repository: { pullRequest: { id: 'PR1', title: 'T2', body: '', viewerCanUpdate: false } } }, 'pullRequest');
+  assert.equal(p.id, 'PR1');
+  assert.equal(p.viewerCanUpdate, false);
+});
+
+test('mapPickerRepos + filterReposByKeyword：候选映射与过滤（Spec 043 元素1）', () => {
+  const repos = mapPickerRepos({ viewer: { repositories: { nodes: [
+    { id: 'R1', name: 'arkcat', owner: { login: 'ZM-BAD', avatarUrl: 'a.png' } },
+    { id: 'R2', name: 'DAG-chat', owner: { login: 'ZM-BAD', avatarUrl: 'a.png' } }
+  ] } } });
+  assert.equal(repos.length, 2);
+  assert.equal(repos[0].id, 'R1');
+  assert.equal(repos[0].ownerLogin, 'ZM-BAD');
+  assert.equal(repos[0].ownerAvatar, 'a.png');
+  assert.equal(pickerRepoFullName(repos[0]), 'ZM-BAD/arkcat');
+  assert.equal(filterReposByKeyword(repos, 'dag')[0].name, 'DAG-chat');
+  assert.equal(filterReposByKeyword(repos, '  ').length, 2);
+  assert.equal(filterReposByKeyword(repos, 'zzz').length, 0);
+});
+
+test('mapIssueDetail/mapPrDetail：viewerCanUpdate 权限门映射（Spec 043）', () => {
+  const issue = mapIssueDetail({ repository: { issue: {
+    id: 'I1', number: 52, title: 'T', state: 'OPEN', stateReason: null,
+    viewerCanUpdate: true, body: '', bodyHTML: '', createdAt: '2026-09-01T00:00:00Z',
+    author: { login: 'ZM-BAD', avatarUrl: '' },
+    labels: { nodes: [] },
+    comments: { totalCount: 0, nodes: [], pageInfo: { hasNextPage: false, endCursor: '' } }
+  } } });
+  assert.equal(issue.viewerCanUpdate, true);
+  const pr = mapPrDetail({ repository: {
+    viewerPermission: 'ADMIN', owner: { avatarUrl: '' },
+    pullRequest: {
+      id: 'P1', number: 51, title: 'T', state: 'OPEN', merged: false, isDraft: false,
+      viewerCanUpdate: false, body: '', bodyHTML: '', createdAt: '', mergedAt: null,
+      additions: 0, deletions: 0, authorAssociation: 'NONE', reactionGroups: [],
+      author: null, headRefName: 'a', baseRefName: 'b', mergedBy: null, mergeCommit: null,
+      files: null, commits: null, mergeable: 'MERGEABLE', mergeStateStatus: 'CLEAN',
+      viewerMergeHeadlineText: '', viewerMergeBodyText: '',
+      reviews: null, reviewThreads: { totalCount: 0, nodes: [] }, statusCheckRollup: null,
+      labels: { nodes: [] }, assignees: { nodes: [] }, milestone: null,
+      timelineItems: { totalCount: 0, pageInfo: { hasNextPage: false, endCursor: '' }, nodes: [] }
+    }
+  } });
+  assert.equal(pr.viewerCanUpdate, false);
 });

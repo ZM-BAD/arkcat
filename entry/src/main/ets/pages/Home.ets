@@ -10,7 +10,7 @@ import { HomeService } from '../services/HomeService';
 import { friendlyError } from '../services/GitHttpClient';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
-import { AppBar, AppBarAction } from '../components/AppBar';
+import { AppBar, AppBarAction, AppBarMenuItem } from '../components/AppBar';
 import { WorkSection, WorkConfigStore, visibleWorkSections } from '../utils/WorkConfig';
 
 /** 标题栏底部渐变阴影（滚动时显示、回顶部消失） */
@@ -89,6 +89,28 @@ export struct HomeView {
   @Local headerShadow: boolean = false;
   @Local isRefreshing: boolean = false;
 
+  /**
+   * 「+」弹出菜单（用户 2026-09-19 定案：顶栏弹出菜单而非底部弹层；
+   * 官方口径两项：Create Issue / New Repository——Home 无 PR 项，建仓端侧未接入走占位 toast）。
+   */
+  private createMenuItems(): AppBarMenuItem[] {
+    return [
+      {
+        icon: $r('app.media.oct_issue_opened_16'),
+        label: $r('app.string.create_new_issue'),
+        onAction: (): void => {
+          // 官方动线：先整页 Choose a repository（Spec 043，2026-09-19 截图驱动重写）
+          this.pathStack.pushPathByName('repoPicker', '');
+        }
+      },
+      {
+        icon: $r('app.media.oct_repo_16'),
+        label: $r('app.string.create_new_repo'),
+        onAction: (): void => this.comingSoon()
+      }
+    ];
+  }
+
   @Builder
   header() {
     Column() {
@@ -104,8 +126,7 @@ export struct HomeView {
             this.refresh();
           }, { a11y: $r('app.string.a11y_refresh') }),
           new AppBarAction($r('app.media.oct_plus_circle_24'), (): void => {
-            promptAction.showToast({ message: $r('app.string.home_new_coming') });
-          }, { a11y: $r('app.string.a11y_new') })
+          }, { a11y: $r('app.string.a11y_new'), menuItems: this.createMenuItems() })
         ]
       })
       // 底部渐变阴影条：滚动中显示、回顶部消失（if 条件渲染，不依赖 shadow 属性刷新）
