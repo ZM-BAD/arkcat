@@ -524,6 +524,7 @@ export struct IssueFormView {
             .placeholderColor($r('app.color.text_tertiary'))
             .caretColor($r('app.color.link_blue'))
             .backgroundColor(Color.Transparent)
+            .borderRadius(0)
             .padding({ left: 0, right: 0, top: 4 })
             .onChange((v: string) => {
               this.title = v;
@@ -545,6 +546,8 @@ export struct IssueFormView {
             .placeholderColor($r('app.color.text_tertiary'))
             .caretColor($r('app.color.link_blue'))
             .backgroundColor(Color.Transparent)
+            // ⚠️ 必须显式归零：组件默认圆角在水平 padding=0 时会把贴边光标裁成弧形（坑）
+            .borderRadius(0)
             .width('100%')
             .constraintSize({ minHeight: 240 })
             .padding({ left: 0, right: 0, top: 4 })
