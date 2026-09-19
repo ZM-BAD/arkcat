@@ -8,6 +8,7 @@ import { promptAction } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
 import { RepoDetail, FileEntry, LanguageSlice } from '../models/RepoDetailModels';
 import { RepoService } from '../services/RepoService';
+import { RepoSubService } from '../services/RepoSubService';
 import { WorkService } from '../services/WorkService';
 import { WorkUserList } from '../models/WorkModels';
 import { StarredListSheet, STARRED_SUGGESTIONS } from '../components/StarredListSheet';
@@ -172,7 +173,15 @@ export struct RepoDetailView {
         icon: $r('app.media.oct_issue_opened_16'),
         label: $r('app.string.create_new_issue'),
         onAction: (): void => {
-          this.pathStack.pushPathByName('issueForm', `${this.owner}|${this.name}|new|0`);
+          // 官方动线：有模板（含 issue forms/联系链接）先入 Choose Template 页
+          RepoSubService.hasTemplateChooser(this.token, this.owner, this.name)
+            .then((has: boolean): void => {
+              if (has) {
+                this.pathStack.pushPathByName('templatePicker', `${this.owner}|${this.name}`);
+              } else {
+                this.pathStack.pushPathByName('issueForm', `${this.owner}|${this.name}|new|0|`);
+              }
+            });
         }
       },
       {

@@ -155,7 +155,12 @@ export struct TemplatePickerView {
               Column() {
                 ForEach(this.contactLinks, (c: TemplateContactLink) => {
                   Row({ space: 12 }) {
-                    this.rowContent(c.name, c.about)
+                    // 行内容包一层 layoutWeight(1)：rowContent 内部是 width('100%')，否则图标被挤出屏外
+                    Column() {
+                      this.rowContent(c.name, c.about)
+                    }
+                    .layoutWeight(1)
+                    .alignItems(HorizontalAlign.Start)
                     OctIcon({
                       res: $r('app.media.oct_link_external_16'), iconSize: 20,
                       iconColor: $r('app.color.text_secondary')
@@ -178,7 +183,11 @@ export struct TemplatePickerView {
               Column() {
                 ForEach(this.forms, (f: IssueFormTemplate) => {
                   Row({ space: 12 }) {
-                    this.rowContent(f.name, f.description)
+                    Column() {
+                      this.rowContent(f.name, f.description)
+                    }
+                    .layoutWeight(1)
+                    .alignItems(HorizontalAlign.Start)
                     OctIcon({
                       res: $r('app.media.oct_link_external_16'), iconSize: 20,
                       iconColor: $r('app.color.text_secondary')

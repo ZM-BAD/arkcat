@@ -15,6 +15,7 @@ import { PageShadowBar } from '../components/PageShadowBar';
 import { IssueSummary, IssuesPage } from '../models/IssuesModels';
 import { WorkLabel } from '../models/WorkModels';
 import { IssuesService } from '../services/IssuesService';
+import { RepoSubService } from '../services/RepoSubService';
 import { StateView } from '../components/StateView';
 import { WorkEmptyView } from '../components/WorkEmptyView';
 import { ListLoadingFooter } from '../components/ListLoadingFooter';
@@ -552,8 +553,15 @@ export struct IssuesListView {
         .accessibilityDescription($r('app.string.a11y_new'))
         .focusable(true)
         .onClick(() => {
-          // Spec 043：「+」直接进新建 Issue 表单（仓库上下文已知）
-          this.pathStack.pushPathByName('issueForm', `${this.owner}|${this.name}|new|0`);
+          // Spec 043 官方动线：先判定模板（经典模板/issue forms/联系链接任一存在 → Choose Template 页）
+          RepoSubService.hasTemplateChooser(this.token, this.owner, this.name)
+            .then((has: boolean): void => {
+              if (has) {
+                this.pathStack.pushPathByName('templatePicker', `${this.owner}|${this.name}`);
+              } else {
+                this.pathStack.pushPathByName('issueForm', `${this.owner}|${this.name}|new|0|`);
+              }
+            });
         })
       }
       .width('100%')

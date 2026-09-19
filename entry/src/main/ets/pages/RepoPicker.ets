@@ -9,7 +9,7 @@ import { PageShadowBar } from '../components/PageShadowBar';
 import { StateView } from '../components/StateView';
 import { RepoSubService } from '../services/RepoSubService';
 import { friendlyError } from '../services/GitHttpClient';
-import { PickerRepo, RepoFormPage, IssueTemplateExtras, pickerRepoFullName } from '../models/RepoSubModels';
+import { PickerRepo, pickerRepoFullName } from '../models/RepoSubModels';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -82,31 +82,18 @@ export struct RepoPickerView {
   }
 
   /**
-   * 选中仓库：查该仓库模板元数据——经典模板/issue forms/联系链接任一存在即入 Choose Template 页
-   * （官方动线，Spec 043）；全无/查询失败直接进 Create Issue 表单
+   * 选中仓库：模板判定（官方动线，Spec 043——经典模板/issue forms/联系链接任一存在
+   * 即入 Choose Template 页）；全无/查询失败直接进 Create Issue 表单
    */
   private openRepo(repo: PickerRepo): void {
     if (this.tapping !== '') {
       return;
     }
     this.tapping = pickerRepoFullName(repo);
-    let showTemplatePage = false;
-    RepoSubService.fetchRepoForm(this.token, repo.ownerLogin, repo.name)
-      .then((page: RepoFormPage) => {
-        showTemplatePage = page.templates.length > 0;
-        // forms/联系链接在 .github/ISSUE_TEMPLATE（REST contents）；失败按空处理不阻断
-        return RepoSubService.fetchIssueTemplateExtras(this.token, repo.ownerLogin, repo.name)
-          .then((extras: IssueTemplateExtras): void => {
-            if (extras.forms.length > 0 || extras.contactLinks.length > 0) {
-              showTemplatePage = true;
-            }
-          })
-          .catch((): void => {
-          });
-      })
-      .then((): void => {
+    RepoSubService.hasTemplateChooser(this.token, repo.ownerLogin, repo.name)
+      .then((has: boolean) => {
         this.tapping = '';
-        if (showTemplatePage) {
+        if (has) {
           this.pathStack.pushPathByName('templatePicker', `${repo.ownerLogin}|${repo.name}`);
         } else {
           this.pathStack.pushPathByName('issueForm', `${repo.ownerLogin}|${repo.name}|new|0|`);

@@ -1069,6 +1069,23 @@ export class RepoSubService {
     return out;
   }
 
+  /**
+   * 是否需要 Choose Template 选模板页（Spec 043 官方动线判定，所有 Create Issue 入口共用）：
+   * 经典模板 / issue forms / 联系链接任一存在即 true；查询失败按 false（直达表单，服务端兜底）。
+   */
+  static async hasTemplateChooser(token: string, owner: string, name: string): Promise<boolean> {
+    try {
+      const page = await RepoSubService.fetchRepoForm(token, owner, name);
+      if (page.templates.length > 0) {
+        return true;
+      }
+      const extras = await RepoSubService.fetchIssueTemplateExtras(token, owner, name);
+      return extras.forms.length > 0 || extras.contactLinks.length > 0;
+    } catch (e) {
+      return false;
+    }
+  }
+
   /** 编辑 Issue 回填（id/title/body/viewerCanUpdate） */
   static async fetchIssueEdit(token: string, owner: string, name: string, number: number): Promise<EditableContent> {
     const variables: Record<string, Object> = { 'owner': owner, 'name': name, 'number': number };
