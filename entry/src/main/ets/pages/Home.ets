@@ -99,7 +99,8 @@ export struct HomeView {
         icon: $r('app.media.oct_issue_opened_16'),
         label: $r('app.string.create_new_issue'),
         onAction: (): void => {
-          this.pathStack.pushPathByName('issueForm', '||new|0');
+          // 官方动线：先整页 Choose a repository（Spec 043，2026-09-19 截图驱动重写）
+          this.pathStack.pushPathByName('repoPicker', '');
         }
       },
       {

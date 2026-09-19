@@ -16,14 +16,9 @@
 ## 二、整体 UI 结构
 
 1. 入口：Home「+」＝顶栏弹出菜单（Create Issue / New repository〔repo octicon，端侧未接入占位，sentence case〕，无 PR 项）；RepoDetail「+」＝顶栏弹出菜单（Create Issue / New Pull Request）；IssuesList / RepoPrs 顶栏「+」直达对应表单
-2. App Bar：取消 · 标题（New Issue）· 创建
-3. 表单（自定义自绘，贴合官方紧凑型）：
-   - 标题（单行输入，草稿占位）
-   - 模板选择（如有）→ 填充正文
-   - 正文（TextArea + 041 工具栏）
-   - [预览] [正文] 切换 + 字数/校验
-4. 底部操作：关闭/重开（详情页）
-5. 详情页标题行 ⇄ 编辑（pencil）→ 同上表单
+2. Home → Create Issue 第一跳：**Choose a repository 整页选仓库**（两行头部：灰小字 Create Issue + 粗体 Choose a repository + 右上 🔍 内联搜索；行 = owner 头像 + login 灰字 + 仓库名两行行）
+3. Create Issue 表单（官方截图形态）：两行头部（`owner/name` 灰字 + 粗体标题 + 右上纸飞机发送）→ Title/Body 原生占位（Insert title / Insert optional description）→ 底部属性芯片行 Assignee/Label/Milestone/Project（创建即选）→ 正文聚焦时键盘上方 Markdown 工具条；模板行保留（无模板仓库不显示）
+4. 详情页关闭/重开（见元素 9）；详情页标题行 ⇄ 编辑（pencil）→ 同表单头部（Edit Issue）
 
 ---
 
@@ -134,3 +129,4 @@ mutation ToReady { markPullRequestReadyForReview(input: { pullRequestId: $prId }
 - 表单页复用 041 的 Markdown 工具栏组件（拆出 `MarkdownToolbar` 公共组件，041/043 共用）。
 - 实现口径（2026-09-18）：REPO_FORM 单查询聚合仓库 id/默认分支/模板/分支；模板只填充正文（标题不动）；Home「+」无仓库上下文 → 表单内先选仓库（viewer.repositories，affiliations=[OWNER, COLLABORATOR, ORGANIZATION_MEMBER]，first 100 按最近推送序，客户端搜索）。编辑入口统一 viewerCanUpdate 门控：Issue=标题行 pencil + 顶栏 ⋯ 菜单 + 正文卡菜单；PR=顶栏 ⋯ 菜单 + 正文卡菜单。关闭原因面板两档 COMPLETED/NOT_PLANNED（圆形单选 + 红色关闭钮）；PR 关闭/重开/draft 切换挂顶栏 ⋯ 菜单（draft 项按 isDraft 换文案：Convert to draft ↔ Mark ready for review）。Issue/PR 详情查询补 viewerCanUpdate；GraphQL 契约同步至 scripts/graphql-contract.mjs（9 条 gh 实测）。
 - 走查修正（2026-09-19）：Home/RepoDetail「+」由底部弹层改为**顶栏弹出菜单**（官方口径，AppBar 自绘 menuItems）——Home=Create Issue / New repository（repo octicon、sentence case；建仓端侧未接入走占位 toast，无 PR 项），RepoDetail=Create Issue / New Pull Request（Title Case）。仓库内 Issues 列表卡复用工作区公共 `IssueCard`（与 Home Issues 列表同卡同形态；仓库卡原有 linkedPrCount 芯片随同卡停显，数据链保留）。
+- 走查重写（2026-09-19，官方截图驱动，Create Issue 动线整体重做）：①Home「+」Create Issue 先进 **Choose a repository 整页选仓库页**（新路由 `repoPicker`，viewer.repositories 100 条按最近推送序 + 🔍 客户端搜索，行 = owner 头像 40 + login 灰字 + 仓库名，选中压栈表单）；②表单页 = 两行头部（`owner/name` 灰字 + 粗体 Create Issue + 右上纸飞机发送，替代 Cancel/Create 文字头）+ Title/Body 原生占位（Insert title / Insert optional description）+ **底部属性芯片行**（Assignee/Label/Milestone/Project = octicon person-add/tag/milestone/table；选择面板复用 044 Triage 候选与 FilterOptionSheet；createIssue 直收 assigneeIds/labelIds/milestoneId，Project 创建后走 addProjectV2ItemById 挂载；**单选简化**：芯片选中后显示所选项名，再点同项清除）+ 正文聚焦时键盘上方 Markdown 工具条；③**官方创建表单无 Write/Preview 页签 → 预览移除**（§二 旧稿的预览/字数行内校验口径作废，校验改 toast 静默拦截）；创建成功后详情压栈并移除表单与选仓库页。编辑表单同头部（Edit Issue），无芯片行；PrForm 头部同语言对齐、无 PR 属性芯片。

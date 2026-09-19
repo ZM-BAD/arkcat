@@ -1089,10 +1089,17 @@ export interface BranchRefItem {
   oid: string;
 }
 
-/** Home「+」建 Issue/PR 的仓库候选（nameWithOwner 展示 + id 供 createIssue/createPullRequest） */
+/** Home「+」→ Choose a repository 选仓库页行（官方两行：owner 头像/login 灰字 + 仓库名） */
 export interface PickerRepo {
   id: string;
-  nameWithOwner: string;
+  ownerLogin: string;
+  ownerAvatar: string;
+  name: string;
+}
+
+/** `owner/name` 组合（候选过滤与展示共用） */
+export function pickerRepoFullName(repo: PickerRepo): string {
+  return `${repo.ownerLogin}/${repo.name}`;
 }
 
 export function mapIssueTemplates(data: JsonMap): IssueTemplateItem[] {
@@ -1128,18 +1135,24 @@ export function mapPickerRepos(data: JsonMap): PickerRepo[] {
   const items: PickerRepo[] = [];
   for (const nodeItem of Json.arr(reposConn, 'nodes')) {
     const it = nodeItem as JsonMap;
-    items.push({ id: Json.str(it, 'id'), nameWithOwner: Json.str(it, 'nameWithOwner') });
+    const owner = Json.obj(it, 'owner');
+    items.push({
+      id: Json.str(it, 'id'),
+      name: Json.str(it, 'name'),
+      ownerLogin: owner !== null ? Json.str(owner, 'login') : '',
+      ownerAvatar: owner !== null ? Json.str(owner, 'avatarUrl') : ''
+    });
   }
   return items;
 }
 
-/** 仓库候选按关键字过滤（nameWithOwner 大小写不敏感包含匹配） */
+/** 仓库候选按关键字过滤（owner/name 组合大小写不敏感包含匹配） */
 export function filterReposByKeyword(repos: PickerRepo[], keyword: string): PickerRepo[] {
   const q = keyword.trim().toLowerCase();
   if (q === '') {
     return repos;
   }
-  return repos.filter((r: PickerRepo): boolean => r.nameWithOwner.toLowerCase().indexOf(q) >= 0);
+  return repos.filter((r: PickerRepo): boolean => pickerRepoFullName(r).toLowerCase().indexOf(q) >= 0);
 }
 
 /** 表单基础数据聚合（REPO_FORM_QUERY 一次取全：新建 Issue/PR 都要用） */
@@ -1167,6 +1180,12 @@ export interface EditableContent {
   title: string;
   body: string;
   viewerCanUpdate: boolean;
+}
+
+/** createIssue 结果（id 供创建后挂 Project，number 供跳详情） */
+export interface IssueCreated {
+  id: string;
+  number: number;
 }
 
 /** 按 field（'issue' | 'pullRequest'）取编辑回填节点 */

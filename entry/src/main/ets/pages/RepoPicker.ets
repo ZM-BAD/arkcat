@@ -1,0 +1,189 @@
+/**
+ * Choose a repository 选仓库页（Spec 043，官方截图驱动 2026-09-19）：
+ * Home「+」→ Create Issue 的第一跳——整页仓库候选（owner 头像 + login 灰字 + 仓库名两行行），
+ * 右上 🔍 进入顶栏内联搜索（客户端过滤 owner/name）。选中仓库 → 压栈 Create Issue 表单。
+ */
+import { OctIcon } from '../components/OctIcon';
+import { PageShadowBar } from '../components/PageShadowBar';
+import { StateView } from '../components/StateView';
+import { RepoSubService } from '../services/RepoSubService';
+import { friendlyError } from '../services/GitHttpClient';
+import { PickerRepo, filterReposByKeyword, pickerRepoFullName } from '../models/RepoSubModels';
+import { resText } from '../utils/I18n';
+
+@ComponentV2
+export struct RepoPickerView {
+  @Param token: string = '';
+  @Param pathStack: NavPathStack = new NavPathStack();
+  @Local repos: PickerRepo[] = [];
+  @Local loading: boolean = true;
+  @Local errorMsg: string = '';
+  /** 顶栏内联搜索（同 WorkIssues 范式：🔍 进入、✕ 退出） */
+  @Local inSearch: boolean = false;
+  @Local searchQuery: string = '';
+  /** 滚动顶部阴影 */
+  @Local scrollShadow: boolean = false;
+
+  aboutToAppear(): void {
+    this.load();
+  }
+
+  private load(): void {
+    this.loading = true;
+    this.errorMsg = '';
+    RepoSubService.fetchPickerRepos(this.token)
+      .then((list: PickerRepo[]) => {
+        this.repos = list;
+        this.loading = false;
+      })
+      .catch((e: Error) => {
+        this.errorMsg = friendlyError(this.getUIContext(), e);
+        this.loading = false;
+      });
+  }
+
+  private filtered(): PickerRepo[] {
+    return filterReposByKeyword(this.repos, this.searchQuery);
+  }
+
+  private enterSearch(): void {
+    this.inSearch = true;
+  }
+
+  private stringOf(res: Resource): string {
+    return resText(this.getUIContext(), res);
+  }
+
+  build() {
+    Column() {
+      // 两行头部（官方）：灰小字 Create Issue + 粗体 Choose a repository；搜索态整列换输入框
+      Row({ space: 4 }) {
+        Stack() {
+          OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
+        }
+        .width(44)
+        .height(44)
+        .accessibilityDescription($r('app.string.a11y_back'))
+        .focusable(true)
+        .onClick((): void => {
+          this.pathStack.pop();
+        })
+        if (this.inSearch) {
+          TextInput({
+            placeholder: this.stringOf($r('app.string.picker_search_hint')),
+            text: this.searchQuery
+          })
+            .id('repo_picker_search')
+            .layoutWeight(1)
+            .height(44)
+            .fontSize($r('app.float.title_font_size'))
+            .fontColor($r('app.color.text_primary'))
+            .placeholderColor($r('app.color.text_tertiary'))
+            .caretColor($r('app.color.link_blue'))
+            .backgroundColor(Color.Transparent)
+            .onChange((v: string) => {
+              this.searchQuery = v;
+            })
+          // ✕ 仅在有输入内容时出现（官方口径）；点击=清空输入，搜索态保持
+          if (this.searchQuery.trim() !== '') {
+            Stack() {
+              OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 20, iconColor: $r('app.color.text_secondary') })
+            }
+            .width(44)
+            .height(44)
+            .padding(6)
+            .accessibilityDescription($r('app.string.a11y_close'))
+            .focusable(true)
+            .onClick((): void => {
+              this.searchQuery = '';
+            })
+          }
+        } else {
+          Column({ space: 2 }) {
+            Text($r('app.string.create_new_issue'))
+              .fontSize($r('app.float.caption_font_size'))
+              .fontColor($r('app.color.text_secondary'))
+            Text($r('app.string.repo_picker_title'))
+              .fontSize($r('app.float.title_font_size'))
+              .fontWeight(600)
+              .fontColor($r('app.color.text_primary'))
+          }
+          .alignItems(HorizontalAlign.Start)
+          .layoutWeight(1)
+          .margin({ left: 4 })
+
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_search_24'), iconSize: 20, iconColor: $r('app.color.link_blue') })
+          }
+          .width(44)
+          .height(44)
+          .padding(6)
+          .accessibilityDescription($r('app.string.a11y_search'))
+          .focusable(true)
+          .onClick((): void => this.enterSearch())
+        }
+      }
+      .width('100%')
+      .height(56)
+      .padding({ left: 4, right: 4 })
+
+      PageShadowBar({ show: this.scrollShadow })
+
+      Scroll() {
+        Column() {
+          if (this.repos.length > 0) {
+            ForEach(this.filtered(), (repo: PickerRepo) => {
+              Row({ space: 14 }) {
+                if (repo.ownerAvatar !== '') {
+                  Image(repo.ownerAvatar)
+                    .width(40)
+                    .height(40)
+                    .borderRadius(20)
+                    .backgroundColor($r('app.color.heat_empty'))
+                } else {
+                  Circle()
+                    .width(40)
+                    .height(40)
+                    .fill($r('app.color.heat_empty'))
+                }
+                Column({ space: 2 }) {
+                  Text(repo.ownerLogin)
+                    .fontSize($r('app.float.body_font_size'))
+                    .fontColor($r('app.color.text_secondary'))
+                  Text(repo.name)
+                    .fontSize($r('app.float.body_font_size'))
+                    .fontWeight(FontWeight.Medium)
+                    .fontColor($r('app.color.text_primary'))
+                    .maxLines(1)
+                    .textOverflow({ overflow: TextOverflow.Ellipsis })
+                }
+                .alignItems(HorizontalAlign.Start)
+                .layoutWeight(1)
+              }
+              .width('100%')
+              .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+              .onClick((): void => {
+                this.pathStack.pushPathByName('issueForm', `${repo.ownerLogin}|${repo.name}|new|0`);
+              })
+            }, (repo: PickerRepo) => pickerRepoFullName(repo))
+          } else if (this.loading || this.errorMsg !== '') {
+            StateView({ loading: this.loading, error: this.errorMsg, onRetry: () => this.load() })
+          } else {
+            StateView({ empty: true, emptyText: $r('app.string.search_no_results') })
+          }
+        }
+        .width('100%')
+        .padding({ top: 4, bottom: 16 })
+      }
+      .layoutWeight(1)
+      .scrollBar(BarState.Off)
+      .align(Alignment.Top)
+      .onScroll((_x: number, y: number): void => {
+        this.scrollShadow = y > 0.001;
+      })
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor($r('app.color.bg_page'))
+  }
+}

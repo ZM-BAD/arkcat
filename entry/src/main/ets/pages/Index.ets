@@ -44,6 +44,7 @@ import { OpenSourceLibrariesView } from './OpenSourceLibraries';
 import { SettingsAboutView } from './SettingsAbout';
 import { IssueFormView } from './IssueForm';
 import { PrFormView } from './PrForm';
+import { RepoPickerView } from './RepoPicker';
 import { UserListView } from './UserList';
 import { StargazersView } from './Stargazers';
 import { ForksView } from './Forks';
@@ -66,7 +67,7 @@ import { AppLockOverlay, AppLockSettingsView } from './AppLock';
 const TAB_BAR_HIDDEN_ROUTES: string[] = [
   'settings', 'notificationSettings', 'codeOptions', 'accounts', 'tokenSetup', 'achievementDetail',
   'openSourceLibraries', 'settingsAbout', 'inAppBrowser', 'repoDiscussions', 'appLock',
-  'issueForm', 'prForm'
+  'issueForm', 'prForm', 'repoPicker'
 ];
 
 @Entry
@@ -1116,6 +1117,18 @@ struct Index {
     .hideTitleBar(true)
   }
 
+  /** Spec 043：Choose a repository 选仓库页（Home「+」→ Create Issue 第一跳） */
+  @Builder
+  repoPickerDestination() {
+    NavDestination() {
+      RepoPickerView({
+        token: this.token,
+        pathStack: this.pathStack
+      })
+    }
+    .hideTitleBar(true)
+  }
+
   /** Spec 043：新建/编辑 Pull Request 表单（参数 owner|name|mode|editNumber） */
   @Builder
   prFormDestination() {
@@ -1322,6 +1335,8 @@ struct Index {
       this.issueDetailDestination()
     } else if (name === 'issueForm') {
       this.issueFormDestination()
+    } else if (name === 'repoPicker') {
+      this.repoPickerDestination()
     } else if (name === 'prForm') {
       this.prFormDestination()
     } else if (name === 'prDetail') {

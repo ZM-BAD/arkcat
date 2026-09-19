@@ -270,7 +270,7 @@ statusCheckRollup { state }
     query: `query PickerRepos($first: Int = 100) {
   viewer {
     repositories(first: $first, affiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER], orderBy: { field: PUSHED_AT, direction: DESC }) {
-      nodes { id nameWithOwner }
+      nodes { id name owner { login avatarUrl } }
     }
   }
 }`,

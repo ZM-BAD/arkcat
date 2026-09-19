@@ -2593,18 +2593,6 @@
       "value": "New Pull Request"
     },
     {
-      "name": "form_cancel",
-      "value": "Cancel"
-    },
-    {
-      "name": "form_create",
-      "value": "Create"
-    },
-    {
-      "name": "form_save",
-      "value": "Save"
-    },
-    {
       "name": "form_saved",
       "value": "Saved"
     },
@@ -2630,7 +2618,7 @@
     },
     {
       "name": "form_title_placeholder",
-      "value": "Title"
+      "value": "Insert title"
     },
     {
       "name": "form_title_required",
@@ -2642,23 +2630,7 @@
     },
     {
       "name": "form_body_placeholder",
-      "value": "Add a description"
-    },
-    {
-      "name": "form_tab_write",
-      "value": "Write"
-    },
-    {
-      "name": "form_tab_preview",
-      "value": "Preview"
-    },
-    {
-      "name": "form_repo_pick",
-      "value": "Select a repository"
-    },
-    {
-      "name": "form_repo_search",
-      "value": "Search repositories"
+      "value": "Insert optional description"
     },
     {
       "name": "form_repo_required",
@@ -2739,6 +2711,38 @@
     {
       "name": "mark_ready",
       "value": "Mark ready for review"
+    },
+    {
+      "name": "repo_picker_title",
+      "value": "Choose a repository"
+    },
+    {
+      "name": "picker_search_hint",
+      "value": "Search"
+    },
+    {
+      "name": "form_body_label",
+      "value": "Body"
+    },
+    {
+      "name": "form_send",
+      "value": "Send"
+    },
+    {
+      "name": "chip_assignee",
+      "value": "Assignee"
+    },
+    {
+      "name": "chip_label",
+      "value": "Label"
+    },
+    {
+      "name": "chip_milestone",
+      "value": "Milestone"
+    },
+    {
+      "name": "chip_project",
+      "value": "Project"
     }
   ]
 }

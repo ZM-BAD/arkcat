@@ -12,7 +12,7 @@ import {
   ReleaseDetailPage, mapReleaseDetail, ReactionUsersPage, mapReactionUsersPage,
   TriageUser, TriageLabel, TriageMilestone, TriageLinkedItem, TriageProject,
   mapTriageUsers, mapTriageLabels, mapTriageMilestones, mapTriageLinked, mapTriageProjects,
-  RepoFormPage, EditableContent, PickerRepo,
+  RepoFormPage, EditableContent, PickerRepo, IssueCreated,
   mapRepoForm, mapEditable, mapPickerRepos
 } from '../models/RepoSubModels';
 import { PrFilesPage, PrFileItem, mapPrFiles, applyRestPatch, mapFilesCursor, mapFileNode } from '../models/PrDiffModels';
@@ -557,20 +557,28 @@ query PullRequestEdit($owner: String!, $name: String!, $number: Int!) {
   }
 }`;
 
-/** Home「+」建 Issue/PR 的仓库候选（本人/协作/组织成员仓库，按最近推送序） */
+/** Home「+」Choose a repository 选仓库页候选（本人/协作/组织成员仓库，按最近推送序；官方两行行需 owner 头像+login） */
 const VIEWER_REPOS_QUERY = `
 query PickerRepos($first: Int = 100) {
   viewer {
     repositories(first: $first, affiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER], orderBy: { field: PUSHED_AT, direction: DESC }) {
-      nodes { id nameWithOwner }
+      nodes { id name owner { login avatarUrl } }
     }
   }
 }`;
 
-/** 新建 Issue（成功后调用方按返回 number 跳详情） */
+/** 新建 Issue（成功后调用方按返回 number 跳详情；id 供创建后挂 Project） */
 const CREATE_ISSUE_MUTATION = `
 mutation CreateIssue($repositoryId: ID!, $title: String!, $body: String!) {
   createIssue(input: { repositoryId: $repositoryId, title: $title, body: $body }) {
+    issue { id number }
+  }
+}`;
+
+/** 新建 Issue + 创建即选属性（官方表单底部 Assignee/Label/Milestone 芯片；Project 创建后单独挂） */
+const CREATE_ISSUE_ATTRS_MUTATION = `
+mutation CreateIssueWithAttrs($repositoryId: ID!, $title: String!, $body: String!, $assigneeIds: [ID!], $labelIds: [ID!], $milestoneId: ID) {
+  createIssue(input: { repositoryId: $repositoryId, title: $title, body: $body, assigneeIds: $assigneeIds, labelIds: $labelIds, milestoneId: $milestoneId }) {
     issue { id number }
   }
 }`;
@@ -1024,12 +1032,28 @@ export class RepoSubService {
     return mapPickerRepos(data);
   }
 
-  /** 新建 Issue：返回新 Issue 编号（调用方跳详情） */
-  static async createIssue(token: string, repositoryId: string, title: string, body: string): Promise<number> {
-    const variables: Record<string, Object> = { 'repositoryId': repositoryId, 'title': title, 'body': body };
-    const data = await graphql(CREATE_ISSUE_MUTATION, variables, token);
+  /** 新建 Issue：返回新 Issue 的 id + 编号（调用方跳详情 / 挂 Project） */
+  static async createIssue(token: string, repositoryId: string, title: string, body: string,
+    assigneeIds: string[], labelIds: string[], milestoneId: string): Promise<IssueCreated> {
+    const base: Record<string, Object> = { 'repositoryId': repositoryId, 'title': title, 'body': body };
+    let data: JsonMap;
+    if (assigneeIds.length > 0 || labelIds.length > 0 || milestoneId !== '') {
+      const vars: Record<string, Object> = base;
+      if (assigneeIds.length > 0) {
+        vars['assigneeIds'] = assigneeIds;
+      }
+      if (labelIds.length > 0) {
+        vars['labelIds'] = labelIds;
+      }
+      if (milestoneId !== '') {
+        vars['milestoneId'] = milestoneId;
+      }
+      data = await graphql(CREATE_ISSUE_ATTRS_MUTATION, vars, token);
+    } else {
+      data = await graphql(CREATE_ISSUE_MUTATION, base, token);
+    }
     const issue = Json.obj(Json.obj(data, 'createIssue') ?? ({} as JsonMap), 'issue') ?? ({} as JsonMap);
-    return Json.num(issue, 'number');
+    return { id: Json.str(issue, 'id'), number: Json.num(issue, 'number') };
   }
 
   /** 新建 PR：返回新 PR 编号（调用方跳详情） */

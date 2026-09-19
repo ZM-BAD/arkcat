@@ -1,23 +1,24 @@
 /**
- * 新建/编辑 Issue 表单页（Spec 043）：
- * 新建 = 仓库上下文（Home「+」入口可先选仓库）+ 官方模板选择 + 标题/正文（041 工具栏 + 预览）+ createIssue；
- * 编辑 = 回填标题/正文 + updateIssue（入口在详情页标题行 pencil / 菜单，viewerCanUpdate 门控）。
- * 头部为文字动作头（取消 · 标题 · 创建/保存），骨架同 CreateList（文字动作头不进 AppBar 组件）。
+ * 新建/编辑 Issue 表单页（Spec 043，官方截图驱动 2026-09-19 推倒重写）：
+ * 新建 = 两行头部（`owner/name` 灰字 + 粗体 Create Issue + 右上纸飞机发送）+ Title/Body 原生占位
+ * + 底部属性芯片行（Assignee/Label/Milestone/Project，创建即选）+ 正文聚焦时键盘上方 Markdown 工具条；
+ * Home 入口先经 Choose a repository 整页选仓库（RepoPicker），本页仓库上下文恒存在。
+ * 编辑 = 同头部（Edit Issue）回填标题/正文走 updateIssue，无芯片行。
+ * 官方创建表单无 Write/Preview 页签 → 不做预览（spec 043 §七）。
  */
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
-import { MarkdownView } from '../components/MarkdownView';
 import { MarkdownToolbar } from '../components/MarkdownToolbar';
 import { FilterOptionSheet } from '../components/FilterOptionSheet';
 import { FilterDropdownOption } from '../components/FilterDropdownChip';
 import { RepoSubService } from '../services/RepoSubService';
-import { MarkdownService } from '../services/MarkdownService';
 import { friendlyError } from '../services/GitHttpClient';
 import {
-  IssueTemplateItem, PickerRepo, RepoFormPage, EditableContent, filterReposByKeyword
+  IssueTemplateItem, TriageUser, TriageLabel, TriageMilestone, TriageProject,
+  RepoFormPage, EditableContent, IssueCreated
 } from '../models/RepoSubModels';
 import { MarkdownEdit, MarkdownToolKind } from '../utils/MarkdownEdit';
-import { canSubmitIssue, issueTitleError, ISSUE_TITLE_MAX } from '../utils/IssueFormRules';
+import { canSubmitIssue, ISSUE_TITLE_MAX } from '../utils/IssueFormRules';
 import { resText } from '../utils/I18n';
 
 /** 模板面板「空白议题」哨兵 key（不填充任何内容） */
@@ -34,35 +35,39 @@ export struct IssueFormView {
 
   @Local title: string = '';
   @Local body: string = '';
-  @Local mode: string = 'write';
   @Local submitting: boolean = false;
   @Local errorMsg: string = '';
-  /** 标题行内错误：首次提交尝试后展示，输入中实时复检（Spec 043 元素12） */
-  @Local submitAttempted: boolean = false;
-  @Local previewHtml: string = '';
-  @Local previewLoading: boolean = false;
+  /** 正文聚焦时显示键盘上方 Markdown 工具条（官方口径） */
+  @Local bodyFocused: boolean = false;
   @Local selStart: number = 0;
   @Local selEnd: number = 0;
-  /** 生效仓库（Home「+」入口为空，经仓库面板选定后落值） */
+  /** 生效仓库（路由/选仓库页带入，本页恒存在） */
   @Local curOwner: string = '';
   @Local curName: string = '';
   @Local repoId: string = '';
   @Local templates: IssueTemplateItem[] = [];
   /** 编辑模式回填的 Issue 节点 id */
   @Local editId: string = '';
-  /** 单 bindSheet + sheetKind（坑 2：同组件多 bindSheet 只有最后一个生效）：'repo'/'template' */
+  /** 创建即选属性（芯片行，单选简化：再点同项=清除） */
+  @Local selAssignee: TriageUser | null = null;
+  @Local selLabel: TriageLabel | null = null;
+  @Local selMilestone: TriageMilestone | null = null;
+  @Local selProject: TriageProject | null = null;
+  /** 候选池（对应芯片懒加载） */
+  @Local users: TriageUser[] = [];
+  @Local labels: TriageLabel[] = [];
+  @Local milestones: TriageMilestone[] = [];
+  @Local projects: TriageProject[] = [];
+  /** 单 bindSheet + sheetKind（坑 2）：template/assignee/label/milestone/project */
   @Local sheetOpen: boolean = false;
-  @Local sheetKind: string = 'repo';
-  @Local repos: PickerRepo[] = [];
-  @Local repoSearch: string = '';
-  @Local repoSearchShow: boolean = false;
+  @Local sheetKind: string = 'assignee';
   /** 已按该参数初始化（防 aboutToAppear 与 @Monitor 双触发） */
   private loadedFor: string = '';
   private textController: TextAreaController = new TextAreaController();
 
   aboutToAppear(): void {
     this.applyRoute();
-    // 进入页面聚焦标题（官方交互）：动态插入后须下一帧再获焦
+    // 聚焦标题（官方交互）：动态插入后须下一帧再获焦
     setTimeout((): void => {
       this.getUIContext().getFocusController().requestFocus('issue_form_title');
     }, 60);
@@ -87,13 +92,15 @@ export struct IssueFormView {
     this.editId = '';
     this.repoId = '';
     this.templates = [];
-    this.mode = 'write';
-    this.previewHtml = '';
     this.errorMsg = '';
-    this.submitAttempted = false;
+    this.bodyFocused = false;
+    this.selAssignee = null;
+    this.selLabel = null;
+    this.selMilestone = null;
+    this.selProject = null;
     if (this.fMode === 'edit') {
       this.loadEditContent();
-    } else if (this.fOwner !== '' && this.fName !== '') {
+    } else {
       this.loadRepoMeta();
     }
   }
@@ -105,7 +112,21 @@ export struct IssueFormView {
   private headerTitle(): Resource {
     return this.fMode === 'edit'
       ? $r('app.string.form_edit_issue_title')
-      : $r('app.string.form_new_issue_title');
+      : $r('app.string.create_new_issue');
+  }
+
+  /** 仓库元数据（repositoryId + 官方模板；失败不阻断手填提交，服务端兜底校验） */
+  private loadRepoMeta(): void {
+    RepoSubService.fetchRepoForm(this.token, this.curOwner, this.curName)
+      .then((page: RepoFormPage) => {
+        this.repoId = page.repoId;
+        this.templates = page.templates;
+      })
+      .catch((e: Error) => {
+        this.repoId = '';
+        this.templates = [];
+        this.errorMsg = friendlyError(this.getUIContext(), e);
+      });
   }
 
   /** 编辑模式回填（id/title/body；失败保留空表单可手填） */
@@ -124,27 +145,38 @@ export struct IssueFormView {
       });
   }
 
-  /** 仓库元数据（repositoryId + 官方模板；失败不阻断手填提交，服务端兜底校验） */
-  private loadRepoMeta(): void {
-    RepoSubService.fetchRepoForm(this.token, this.curOwner, this.curName)
-      .then((page: RepoFormPage) => {
-        this.repoId = page.repoId;
-        this.templates = page.templates;
-      })
-      .catch((e: Error) => {
-        this.repoId = '';
-        this.templates = [];
-        this.errorMsg = friendlyError(this.getUIContext(), e);
-      });
-  }
-
-  private openRepoSheet(): void {
-    this.sheetKind = 'repo';
+  /** 打开芯片/模板选择面板（候选懒加载，失败 toast 不阻断） */
+  private openSheet(kind: string): void {
+    this.sheetKind = kind;
     this.sheetOpen = true;
-    if (this.repos.length === 0) {
-      RepoSubService.fetchPickerRepos(this.token)
-        .then((list: PickerRepo[]) => {
-          this.repos = list;
+    if (kind === 'assignee' && this.users.length === 0) {
+      RepoSubService.fetchTriageAssignees(this.token, this.curOwner, this.curName)
+        .then((list: TriageUser[]) => {
+          this.users = list;
+        })
+        .catch((e: Error) => {
+          promptAction.showToast({ message: friendlyError(this.getUIContext(), e) });
+        });
+    } else if (kind === 'label' && this.labels.length === 0) {
+      RepoSubService.fetchTriageLabels(this.token, this.curOwner, this.curName)
+        .then((list: TriageLabel[]) => {
+          this.labels = list;
+        })
+        .catch((e: Error) => {
+          promptAction.showToast({ message: friendlyError(this.getUIContext(), e) });
+        });
+    } else if (kind === 'milestone' && this.milestones.length === 0) {
+      RepoSubService.fetchTriageMilestones(this.token, this.curOwner, this.curName)
+        .then((list: TriageMilestone[]) => {
+          this.milestones = list;
+        })
+        .catch((e: Error) => {
+          promptAction.showToast({ message: friendlyError(this.getUIContext(), e) });
+        });
+    } else if (kind === 'project' && this.projects.length === 0) {
+      RepoSubService.fetchTriageProjects(this.token, this.curOwner, this.curName, 'RECENT')
+        .then((list: TriageProject[]) => {
+          this.projects = list;
         })
         .catch((e: Error) => {
           promptAction.showToast({ message: friendlyError(this.getUIContext(), e) });
@@ -152,27 +184,20 @@ export struct IssueFormView {
     }
   }
 
-  private pickRepo(key: string): void {
-    for (const r of this.repos) {
-      if (r.nameWithOwner === key) {
-        const idx = r.nameWithOwner.indexOf('/');
-        this.curOwner = idx > 0 ? r.nameWithOwner.substring(0, idx) : r.nameWithOwner;
-        this.curName = idx > 0 ? r.nameWithOwner.substring(idx + 1) : '';
-        this.repoId = r.id;
-        break;
-      }
+  /** 单选通用：再点同项=清除 */
+  private pickById(kind: string, key: string): void {
+    if (kind === 'assignee') {
+      this.selAssignee = this.selAssignee?.id === key ? null : this.users.find((u: TriageUser): boolean => u.id === key) ?? null;
+    } else if (kind === 'label') {
+      this.selLabel = this.selLabel?.id === key ? null : this.labels.find((l: TriageLabel): boolean => l.id === key) ?? null;
+    } else if (kind === 'milestone') {
+      this.selMilestone = this.selMilestone?.id === key
+        ? null : this.milestones.find((m: TriageMilestone): boolean => m.id === key) ?? null;
+    } else if (kind === 'project') {
+      this.selProject = this.selProject?.id === key
+        ? null : this.projects.find((p: TriageProject): boolean => p.id === key) ?? null;
     }
     this.sheetOpen = false;
-    this.templates = [];
-    this.loadRepoMeta();
-  }
-
-  private repoOptions(): FilterDropdownOption[] {
-    const options: FilterDropdownOption[] = [];
-    for (const r of filterReposByKeyword(this.repos, this.repoSearch)) {
-      options.push({ key: r.nameWithOwner, label: r.nameWithOwner });
-    }
-    return options;
   }
 
   private templateOptions(): FilterDropdownOption[] {
@@ -185,7 +210,7 @@ export struct IssueFormView {
     return options;
   }
 
-  /** 官方口径：模板只填充正文（Spec 043 元素2），标题不动 */
+  /** 官方口径：模板只填充正文（标题不动） */
   private pickTemplate(key: string): void {
     if (key !== BLANK_TEMPLATE_KEY) {
       for (const t of this.templates) {
@@ -198,53 +223,35 @@ export struct IssueFormView {
     this.sheetOpen = false;
   }
 
+  private plainOptions(keys: string[], values: string[]): FilterDropdownOption[] {
+    const options: FilterDropdownOption[] = [];
+    for (let i = 0; i < keys.length; i++) {
+      options.push({ key: keys[i], label: values[i] });
+    }
+    return options;
+  }
+
+  private labelColorOf(key: string): string {
+    const hit = this.labels.find((l: TriageLabel): boolean => l.id === key);
+    return hit !== undefined ? hit.color : '';
+  }
+
   private onTool(kind: string): void {
-    const ins = MarkdownEdit.apply(this.body, this.selStart, this.selEnd, kind as MarkdownToolKind);
+    const ins = MarkdownEdit.apply(this.body, 0, 0, kind as MarkdownToolKind);
     this.body = ins.text;
     this.textController.setTextSelection(ins.selStart, ins.selEnd);
-  }
-
-  private togglePreview(): void {
-    if (this.mode === 'write') {
-      this.mode = 'preview';
-      this.loadPreview();
-    } else {
-      this.mode = 'write';
-    }
-  }
-
-  private loadPreview(): void {
-    if (this.body.trim() === '') {
-      this.previewHtml = '';
-      return;
-    }
-    this.previewLoading = true;
-    MarkdownService.renderMarkdown(this.token, this.body, `${this.curOwner}/${this.curName}`)
-      .then((html: string) => {
-        this.previewHtml = html;
-        this.previewLoading = false;
-      })
-      .catch((e: Error) => {
-        this.previewHtml = '';
-        this.previewLoading = false;
-        this.errorMsg = friendlyError(this.getUIContext(), e);
-      });
-  }
-
-  /** 标题行内错误：提交尝试过或已超长才展示（输入中不打扰） */
-  private titleError(): string {
-    if (!this.submitAttempted && this.title.length <= ISSUE_TITLE_MAX) {
-      return '';
-    }
-    return issueTitleError(this.title);
   }
 
   private submit(): void {
     if (this.submitting) {
       return;
     }
-    this.submitAttempted = true;
     if (!canSubmitIssue(this.title)) {
+      // 官方表单无行内错误 UI：客户端静默拦截 + toast
+      promptAction.showToast({
+        message: this.title.trim() === ''
+          ? $r('app.string.form_title_required') : $r('app.string.form_title_too_long')
+      });
       return;
     }
     if (this.fMode === 'edit') {
@@ -266,17 +273,26 @@ export struct IssueFormView {
       return;
     }
     if (this.repoId === '') {
-      this.errorMsg = this.stringOf($r('app.string.form_repo_required'));
+      promptAction.showToast({ message: $r('app.string.form_repo_required') });
       return;
     }
     this.submitting = true;
     this.errorMsg = '';
-    RepoSubService.createIssue(this.token, this.repoId, this.title.trim(), this.body)
-      .then((number: number) => {
+    RepoSubService.createIssue(this.token, this.repoId, this.title.trim(), this.body,
+      this.selAssignee !== null ? [this.selAssignee.id] : [],
+      this.selLabel !== null ? [this.selLabel.id] : [],
+      this.selMilestone !== null ? this.selMilestone.id : '')
+      .then((created: IssueCreated) => {
+        // Project 在创建后单独挂（createIssue 无 projectIds 入参走 044 通道；失败不影响建 Issue）
+        if (this.selProject !== null && created.id !== '') {
+          RepoSubService.addPrToProject(this.token, created.id, this.selProject.id).catch((): void => {
+          });
+        }
         this.submitting = false;
-        // 详情压栈并自移除：返回键回到来源列表（列表页已有 onShown tick 自刷）
-        this.pathStack.pushPathByName('issueDetail', `${this.curOwner}/${this.curName}/${number}`);
+        // 详情压栈并自移除（连同选仓库页）：返回键回 Home
+        this.pathStack.pushPathByName('issueDetail', `${this.curOwner}/${this.curName}/${created.number}`);
         this.pathStack.removeByName('issueForm');
+        this.pathStack.removeByName('repoPicker');
       })
       .catch((e: Error) => {
         // 4xx 错误保留草稿内容（Spec 043 测试9）
@@ -285,123 +301,101 @@ export struct IssueFormView {
       });
   }
 
+  /** 两行头部（官方）：← + `owner/name` 灰字/粗体标题 + 右上纸飞机发送 */
   @Builder
   formHeader() {
-    Row({ space: 8 }) {
-      Text($r('app.string.form_cancel'))
-        .fontSize($r('app.float.sub_text_font_size'))
-        .fontColor($r('app.color.link_blue'))
-        .padding({ left: 12, right: 6, top: 6, bottom: 6 })
-        .responseRegion({ x: -6, y: -7, width: '130%', height: '147%' })
-        .onClick((): void => {
-          this.pathStack.pop();
-        })
-      Text(this.headerTitle())
-        .fontSize($r('app.float.title_font_size'))
-        .fontWeight(600)
-        .fontColor($r('app.color.text_primary'))
-        .textAlign(TextAlign.Center)
-        .maxLines(1)
-        .layoutWeight(1)
-      Text(this.fMode === 'edit' ? $r('app.string.form_save') : $r('app.string.form_create'))
-        .fontSize($r('app.float.sub_text_font_size'))
-        .fontWeight(FontWeight.Medium)
-        .fontColor(this.submitting ? $r('app.color.text_tertiary') : $r('app.color.link_blue'))
-        .padding({ left: 6, right: 12, top: 6, bottom: 6 })
-        .responseRegion({ x: -6, y: -7, width: '130%', height: '147%' })
-        .onClick((): void => this.submit())
-    }
-    .width('100%')
-    .height(48)
-  }
+    Row({ space: 4 }) {
+      Stack() {
+        OctIcon({ res: $r('app.media.oct_arrow_left_24'), iconSize: 20, iconColor: $r('app.color.text_primary') })
+      }
+      .width(44)
+      .height(44)
+      .accessibilityDescription($r('app.string.a11y_back'))
+      .focusable(true)
+      .onClick((): void => {
+        this.pathStack.pop();
+      })
+      Column({ space: 2 }) {
+        Text(`${this.curOwner}/${this.curName}`)
+          .fontSize($r('app.float.caption_font_size'))
+          .fontColor($r('app.color.text_secondary'))
+        Text(this.headerTitle())
+          .fontSize($r('app.float.title_font_size'))
+          .fontWeight(600)
+          .fontColor($r('app.color.text_primary'))
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .alignItems(HorizontalAlign.Start)
+      .layoutWeight(1)
+      .margin({ left: 4 })
 
-  /** 仓库行（新建模式）：已选显示仓库名，未选为蓝色引导文案 */
-  @Builder
-  repoRow() {
-    Row({ space: 8 }) {
-      OctIcon({ res: $r('app.media.oct_repo_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
-      Text(this.curOwner !== '' ? `${this.curOwner}/${this.curName}` : this.stringOf($r('app.string.form_repo_pick')))
-        .fontSize($r('app.float.sub_text_font_size'))
-        .fontColor(this.curOwner !== '' ? $r('app.color.text_primary') : $r('app.color.link_blue'))
-        .layoutWeight(1)
-        .maxLines(1)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
-      OctIcon({ res: $r('app.media.oct_chevron_down_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+      Stack() {
+        OctIcon({
+          res: $r('app.media.oct_paper_airplane_16'), iconSize: 22,
+          iconColor: this.submitting ? $r('app.color.text_tertiary') : $r('app.color.link_blue')
+        })
+      }
+      .width(44)
+      .height(44)
+      .accessibilityDescription($r('app.string.form_send'))
+      .focusable(true)
+      .onClick((): void => this.submit())
     }
     .width('100%')
-    .height(44)
-    .borderRadius($r('app.float.card_radius'))
-    .backgroundColor($r('app.color.bg_page'))
-    .padding({ left: 12, right: 12 })
-    .margin({ bottom: 4 })
-    .onClick((): void => this.openRepoSheet())
+    .height(56)
+    .padding({ left: 4, right: 4 })
   }
 
   /** 模板行（新建模式且有官方模板时显示，Spec 043 元素2） */
   @Builder
   templateRow() {
-    Row({ space: 8 }) {
-      OctIcon({ res: $r('app.media.oct_file_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+    Row({ space: 6 }) {
+      OctIcon({ res: $r('app.media.oct_file_16'), iconSize: 14, iconColor: $r('app.color.link_blue') })
       Text($r('app.string.form_template_add'))
         .fontSize($r('app.float.sub_text_font_size'))
         .fontColor($r('app.color.link_blue'))
-        .layoutWeight(1)
-      OctIcon({ res: $r('app.media.oct_chevron_down_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
     }
     .width('100%')
-    .height(40)
-    .margin({ bottom: 4 })
-    .onClick((): void => {
-      this.sheetKind = 'template';
-      this.sheetOpen = true;
-    })
+    .height(32)
+    .margin({ bottom: 8 })
+    .onClick((): void => this.openSheet('template'))
   }
 
-  /** Edit / Preview 页签（同 041 评论输入页：等分 + 选中蓝下划线） */
+  /** 底部属性芯片（官方：Assignee/Label/Milestone/Project，横向可滑）；选中后芯片文案换为所选项 */
   @Builder
-  editorTab(label: ResourceStr, key: string) {
-    Column() {
-      Text(label)
+  attrChip(iconRes: Resource, label: Resource, kind: string, selected: string) {
+    Row({ space: 6 }) {
+      OctIcon({ res: iconRes, iconSize: 16, iconColor: $r('app.color.text_primary') })
+      Text(selected !== '' ? selected : label)
         .fontSize($r('app.float.sub_text_font_size'))
+        .fontWeight(selected !== '' ? FontWeight.Medium : FontWeight.Normal)
         .fontColor($r('app.color.text_primary'))
-      Row()
-        .width('100%')
-        .height(2)
-        .backgroundColor(this.mode === key ? $r('app.color.link_blue') : Color.Transparent)
-        .margin({ top: 10 })
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
     }
-    .layoutWeight(1)
-    .alignItems(HorizontalAlign.Center)
-    .padding({ top: 8 })
-    .onClick((): void => {
-      if (this.mode !== key) {
-        this.togglePreview();
-      }
-    })
+    .height(36)
+    .borderRadius(18)
+    .border({ width: 1, color: $r('app.color.divider') })
+    .backgroundColor($r('app.color.card_background'))
+    .padding({ left: 14, right: 14 })
+    .onClick((): void => this.openSheet(kind))
   }
 
   build() {
     Column() {
       this.formHeader()
-      Divider()
-        .color($r('app.color.divider'))
-        .strokeWidth(1)
-        .width('100%')
 
       Scroll() {
         Column() {
-          if (this.fMode === 'new') {
-            this.repoRow()
-            if (this.templates.length > 0) {
-              this.templateRow()
-            }
+          if (this.fMode === 'new' && this.templates.length > 0) {
+            this.templateRow()
           }
 
           Text($r('app.string.form_title_label'))
-            .fontSize($r('app.float.caption_font_size'))
+            .fontSize($r('app.float.body_font_size'))
             .fontColor($r('app.color.text_secondary'))
             .width('100%')
-            .padding({ top: 12, bottom: 4 })
           TextInput({
             placeholder: this.stringOf($r('app.string.form_title_placeholder')),
             text: this.title
@@ -412,84 +406,43 @@ export struct IssueFormView {
             .placeholderColor($r('app.color.text_tertiary'))
             .caretColor($r('app.color.link_blue'))
             .backgroundColor(Color.Transparent)
-            .padding({ left: 0, right: 0 })
+            .padding({ left: 0, right: 0, top: 4 })
             .onChange((v: string) => {
               this.title = v;
             })
-          if (this.titleError() !== '') {
-            Text(this.titleError() === 'required'
-              ? $r('app.string.form_title_required') : $r('app.string.form_title_too_long'))
-              .fontSize($r('app.float.caption_font_size'))
-              .fontColor($r('app.color.danger_text'))
-              .width('100%')
-              .padding({ top: 4 })
-          }
-          if (this.title.length > ISSUE_TITLE_MAX - 55) {
-            Text(`${this.title.length} / ${ISSUE_TITLE_MAX}`)
-              .fontSize($r('app.float.caption_font_size'))
-              .fontColor(this.title.length > ISSUE_TITLE_MAX
-                ? $r('app.color.danger_text') : $r('app.color.text_tertiary'))
-              .width('100%')
-              .textAlign(TextAlign.End)
-              .padding({ top: 2 })
-          }
 
-          // Edit / Preview 页签 + 全幅细分隔线（同 041）
-          Row() {
-            this.editorTab($r('app.string.form_tab_write'), 'write')
-            this.editorTab($r('app.string.form_tab_preview'), 'preview')
-          }
-          .width('100%')
-          .margin({ top: 16 })
-          Divider()
-            .color($r('app.color.divider'))
-            .strokeWidth(1)
+          Text($r('app.string.form_body_label'))
+            .fontSize($r('app.float.body_font_size'))
+            .fontColor($r('app.color.text_secondary'))
             .width('100%')
-
-          if (this.mode === 'write') {
-            TextArea({
-              text: this.body,
-              placeholder: this.stringOf($r('app.string.form_body_placeholder')),
-              controller: this.textController
+            .padding({ top: 20 })
+          TextArea({
+            text: this.body,
+            placeholder: this.stringOf($r('app.string.form_body_placeholder')),
+            controller: this.textController
+          })
+            .fontSize($r('app.float.menu_font_size'))
+            .fontColor($r('app.color.text_primary'))
+            .placeholderFont({ size: $r('app.float.menu_font_size') })
+            .placeholderColor($r('app.color.text_tertiary'))
+            .caretColor($r('app.color.link_blue'))
+            .backgroundColor(Color.Transparent)
+            .width('100%')
+            .constraintSize({ minHeight: 240 })
+            .padding({ left: 0, right: 0, top: 4 })
+            .onChange((v: string) => {
+              this.body = v;
             })
-              .fontSize($r('app.float.sub_text_font_size'))
-              .fontColor($r('app.color.text_primary'))
-              .placeholderFont({ size: $r('app.float.sub_text_font_size') })
-              .placeholderColor($r('app.color.text_tertiary'))
-              .backgroundColor(Color.Transparent)
-              .borderRadius(0)
-              .width('100%')
-              .constraintSize({ minHeight: 180 })
-              .padding({ left: 0, right: 0, top: 12 })
-              .onChange((v: string) => {
-                this.body = v;
-              })
-              .onTextSelectionChange((start: number, end: number) => {
-                this.selStart = start;
-                this.selEnd = end;
-              })
-            MarkdownToolbar({ showReply: false, onTool: (kind: string): void => this.onTool(kind) })
-          } else {
-            Column() {
-              if (this.previewLoading) {
-                LoadingProgress()
-                  .width(28)
-                  .height(28)
-                  .color($r('app.color.text_tertiary'))
-                  .margin({ top: 24 })
-              } else {
-                MarkdownView({
-                  html: this.previewHtml,
-                  fallbackText: this.body,
-                  collapse: false,
-                  foldThreshold: 0
-                })
-              }
-            }
-            .width('100%')
-            .alignItems(HorizontalAlign.Start)
-            .padding({ top: 12 })
-          }
+            .onFocus((): void => {
+              this.bodyFocused = true;
+            })
+            .onBlur((): void => {
+              this.bodyFocused = false;
+            })
+            .onTextSelectionChange((start: number, end: number) => {
+              this.selStart = start;
+              this.selEnd = end;
+            })
 
           if (this.errorMsg !== '') {
             Text(this.errorMsg)
@@ -506,10 +459,40 @@ export struct IssueFormView {
       .layoutWeight(1)
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
+
+      // 底部属性芯片行（新建模式，官方创建即选）
+      if (this.fMode === 'new') {
+        Scroll() {
+          Row({ space: 8 }) {
+            this.attrChip($r('app.media.oct_person_add_16'), $r('app.string.chip_assignee'), 'assignee',
+              this.selAssignee !== null ? this.selAssignee.login : '')
+            this.attrChip($r('app.media.oct_tag_16'), $r('app.string.chip_label'), 'label',
+              this.selLabel !== null ? this.selLabel.name : '')
+            this.attrChip($r('app.media.oct_milestone_16'), $r('app.string.chip_milestone'), 'milestone',
+              this.selMilestone !== null ? this.selMilestone.title : '')
+            this.attrChip($r('app.media.oct_table_16'), $r('app.string.chip_project'), 'project',
+              this.selProject !== null ? this.selProject.title : '')
+          }
+          .padding({ left: 16, right: 16 })
+        }
+        .scrollable(ScrollDirection.Horizontal)
+        .scrollBar(BarState.Off)
+        .width('100%')
+        .padding({ top: 8, bottom: 10 })
+      }
+
+      // 正文聚焦时：键盘上方 Markdown 工具条（官方口径）
+      if (this.bodyFocused) {
+        Divider()
+          .color($r('app.color.divider'))
+          .strokeWidth(1)
+          .width('100%')
+        MarkdownToolbar({ showReply: false, onTool: (kind: string): void => this.onTool(kind) })
+      }
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.bg_page'))
+    .backgroundColor($r('app.color.card_background'))
     .bindSheet($$this.sheetOpen, this.formSheet(), {
       height: 560,
       detents: [560, SheetSize.LARGE],
@@ -522,36 +505,66 @@ export struct IssueFormView {
     })
   }
 
-  /** 弹层内容分派（单 bindSheet + sheetKind）：仓库候选 / Issue 模板 */
+  /** 弹层内容分派（单 bindSheet + sheetKind）：模板/负责人/标签/里程碑/项目 */
   @Builder
   formSheet() {
-    if (this.sheetKind === 'repo') {
+    if (this.sheetKind === 'template') {
       FilterOptionSheet({
-        title: $r('app.string.form_repo_pick'),
-        searchPlaceholder: $r('app.string.form_repo_search'),
-        options: this.repoOptions(),
-        selectedKey: this.curOwner !== '' ? `${this.curOwner}/${this.curName}` : '',
-        searchShow: this.repoSearchShow,
-        searchText: this.repoSearch,
-        onPick: (key: string): void => this.pickRepo(key),
+        title: $r('app.string.form_template_title'),
+        searchPlaceholder: $r('app.string.meta_editor_search'),
+        options: this.templateOptions(),
+        selectedKey: '',
+        onPick: (key: string): void => this.pickTemplate(key),
         onClose: (): void => {
           this.sheetOpen = false;
-        },
-        onSearchToggle: (): void => {
-          this.repoSearchShow = !this.repoSearchShow;
-          this.repoSearch = '';
-        },
-        onSearchChange: (v: string): void => {
-          this.repoSearch = v;
+        }
+      })
+    } else if (this.sheetKind === 'assignee') {
+      FilterOptionSheet({
+        title: $r('app.string.meta_editor_select_assignees'),
+        searchPlaceholder: $r('app.string.meta_editor_search'),
+        options: this.plainOptions(this.users.map((u: TriageUser): string => u.id),
+          this.users.map((u: TriageUser): string => u.login)),
+        selectedKey: this.selAssignee !== null ? this.selAssignee.id : '',
+        onPick: (key: string): void => this.pickById('assignee', key),
+        onClose: (): void => {
+          this.sheetOpen = false;
+        }
+      })
+    } else if (this.sheetKind === 'label') {
+      FilterOptionSheet({
+        title: $r('app.string.meta_editor_select_labels'),
+        searchPlaceholder: $r('app.string.meta_editor_search'),
+        options: this.plainOptions(this.labels.map((l: TriageLabel): string => l.id),
+          this.labels.map((l: TriageLabel): string => l.name)),
+        selectedKey: this.selLabel !== null ? this.selLabel.id : '',
+        rowKind: 'label',
+        labelColorOf: (key: string): string => this.labelColorOf(key),
+        onPick: (key: string): void => this.pickById('label', key),
+        onClose: (): void => {
+          this.sheetOpen = false;
+        }
+      })
+    } else if (this.sheetKind === 'milestone') {
+      FilterOptionSheet({
+        title: $r('app.string.meta_editor_select_milestone'),
+        searchPlaceholder: $r('app.string.meta_editor_search'),
+        options: this.plainOptions(this.milestones.map((m: TriageMilestone): string => m.id),
+          this.milestones.map((m: TriageMilestone): string => m.title)),
+        selectedKey: this.selMilestone !== null ? this.selMilestone.id : '',
+        onPick: (key: string): void => this.pickById('milestone', key),
+        onClose: (): void => {
+          this.sheetOpen = false;
         }
       })
     } else {
       FilterOptionSheet({
-        title: $r('app.string.form_template_title'),
-        searchPlaceholder: $r('app.string.form_repo_search'),
-        options: this.templateOptions(),
-        selectedKey: '',
-        onPick: (key: string): void => this.pickTemplate(key),
+        title: $r('app.string.meta_editor_select_projects'),
+        searchPlaceholder: $r('app.string.meta_editor_search'),
+        options: this.plainOptions(this.projects.map((p: TriageProject): string => p.id),
+          this.projects.map((p: TriageProject): string => p.title)),
+        selectedKey: this.selProject !== null ? this.selProject.id : '',
+        onPick: (key: string): void => this.pickById('project', key),
         onClose: (): void => {
           this.sheetOpen = false;
         }

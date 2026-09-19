@@ -2593,18 +2593,6 @@
       "value": "新建 Pull Request"
     },
     {
-      "name": "form_cancel",
-      "value": "取消"
-    },
-    {
-      "name": "form_create",
-      "value": "创建"
-    },
-    {
-      "name": "form_save",
-      "value": "保存"
-    },
-    {
       "name": "form_saved",
       "value": "已保存"
     },
@@ -2630,7 +2618,7 @@
     },
     {
       "name": "form_title_placeholder",
-      "value": "标题"
+      "value": "填写标题"
     },
     {
       "name": "form_title_required",
@@ -2642,23 +2630,7 @@
     },
     {
       "name": "form_body_placeholder",
-      "value": "添加描述（选填）"
-    },
-    {
-      "name": "form_tab_write",
-      "value": "编写"
-    },
-    {
-      "name": "form_tab_preview",
-      "value": "预览"
-    },
-    {
-      "name": "form_repo_pick",
-      "value": "选择仓库"
-    },
-    {
-      "name": "form_repo_search",
-      "value": "搜索仓库"
+      "value": "填写选填描述"
     },
     {
       "name": "form_repo_required",
@@ -2739,6 +2711,38 @@
     {
       "name": "mark_ready",
       "value": "标记为待审查"
+    },
+    {
+      "name": "repo_picker_title",
+      "value": "选择仓库"
+    },
+    {
+      "name": "picker_search_hint",
+      "value": "搜索"
+    },
+    {
+      "name": "form_body_label",
+      "value": "正文"
+    },
+    {
+      "name": "form_send",
+      "value": "发送"
+    },
+    {
+      "name": "chip_assignee",
+      "value": "负责人"
+    },
+    {
+      "name": "chip_label",
+      "value": "标签"
+    },
+    {
+      "name": "chip_milestone",
+      "value": "里程碑"
+    },
+    {
+      "name": "chip_project",
+      "value": "项目"
     }
   ]
 }

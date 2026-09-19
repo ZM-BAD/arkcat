@@ -28,7 +28,8 @@ import {
   mapTriageUsers, mapTriageLabels, mapTriageMilestones, mapTriageLinked, mapTriageProjects,
   filterTriageByKeyword, diffSelection, singlePickId,
   mapTimeline, actorDisplayLogin, phraseSegments,
-  mapRepoForm, mapEditable, mapIssueTemplates, mapBranchRefs, mapPickerRepos, filterReposByKeyword
+  mapRepoForm, mapEditable, mapIssueTemplates, mapBranchRefs, mapPickerRepos, filterReposByKeyword,
+  pickerRepoFullName
 } from '../../entry/src/main/ets/models/RepoSubModels';
 import {
   issueTitleError, canSubmitIssue, validatePrHeads, defaultBaseBranch,
@@ -1884,12 +1885,15 @@ test('mapEditable：Issue/PR 编辑回填与权限门', () => {
 
 test('mapPickerRepos + filterReposByKeyword：候选映射与过滤（Spec 043 元素1）', () => {
   const repos = mapPickerRepos({ viewer: { repositories: { nodes: [
-    { id: 'R1', nameWithOwner: 'ZM-BAD/arkcat' },
-    { id: 'R2', nameWithOwner: 'ZM-BAD/DAG-chat' }
+    { id: 'R1', name: 'arkcat', owner: { login: 'ZM-BAD', avatarUrl: 'a.png' } },
+    { id: 'R2', name: 'DAG-chat', owner: { login: 'ZM-BAD', avatarUrl: 'a.png' } }
   ] } } });
   assert.equal(repos.length, 2);
   assert.equal(repos[0].id, 'R1');
-  assert.equal(filterReposByKeyword(repos, 'dag')[0].nameWithOwner, 'ZM-BAD/DAG-chat');
+  assert.equal(repos[0].ownerLogin, 'ZM-BAD');
+  assert.equal(repos[0].ownerAvatar, 'a.png');
+  assert.equal(pickerRepoFullName(repos[0]), 'ZM-BAD/arkcat');
+  assert.equal(filterReposByKeyword(repos, 'dag')[0].name, 'DAG-chat');
   assert.equal(filterReposByKeyword(repos, '  ').length, 2);
   assert.equal(filterReposByKeyword(repos, 'zzz').length, 0);
 });
