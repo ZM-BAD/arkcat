@@ -9,7 +9,7 @@
 
 - [x] 免费、开源（GPL-3.0-only）、**零盈利**：完全不做任何盈利性目的，图技术口碑与名声
 - [x] 非官方声明落地于 README（英/中）双文
-- [x] 项目版权声明落地（`README.md` / `README_zh.md` 许可证段：`Copyright © 2026 周铭`）
+- [x] 项目版权声明落地（`README.md` / `README_en.md` 许可证段：`Copyright © 2026 周铭`）
 - [x] 不使用 GitHub logo / Octocat / 官方插画素材（品牌红线）——Filter Activity 的 Recommendations 行已换中性图标 `oct_graph_stacked_area_16`，`resources/base/media/` 无任何品牌徽标
 - [ ] 应用内「关于」页补充非官方声明（后续发布批次）
 
