@@ -29,7 +29,7 @@ import {
   filterTriageByKeyword, diffSelection, singlePickId,
   mapTimeline, actorDisplayLogin, phraseSegments,
   mapRepoForm, mapEditable, mapIssueTemplates, mapBranchRefs, mapPickerRepos, filterReposByKeyword,
-  pickerRepoFullName
+  pickerRepoFullName, parseContactLinks, parseIssueFormMeta
 } from '../../entry/src/main/ets/models/RepoSubModels';
 import {
   issueTitleError, canSubmitIssue, validatePrHeads, defaultBaseBranch,
@@ -1860,6 +1860,50 @@ test('mapIssueTemplates/mapBranchRefs：模板与分支映射（Spec 043 测试1
   assert.equal(refs.length, 2);
   assert.equal(refs[1].name, 'develop');
   assert.equal(refs[1].oid, 'b2');
+});
+
+test('parseContactLinks：config.yml 联系链接解析（Spec 043 模板页外链行）', () => {
+  const yaml = [
+    'blank_issues_enabled: false',
+    'contact_links:',
+    '  - name: Questions and setup help',
+    '    about: Ask here when something is unclear or a command will not run.',
+    '    url: https://github.com/hypit-ai/hypit/discussions',
+    '',
+    '  - name: "Telegram"',
+    "    about: 'The same questions in the Telegram group.'",
+    '    url: https://t.me/hypit',
+    'other_section:',
+    '  - name: nope'
+  ].join('\n');
+  const links = parseContactLinks(yaml);
+  assert.equal(links.length, 2);
+  assert.equal(links[0].name, 'Questions and setup help');
+  assert.equal(links[0].url, 'https://github.com/hypit-ai/hypit/discussions');
+  assert.equal(links[1].name, 'Telegram');
+  assert.equal(links[1].about, 'The same questions in the Telegram group.');
+  // 无 contact_links 段 → 空
+  assert.deepEqual(parseContactLinks('name: x\nbody: y'), []);
+});
+
+test('parseIssueFormMeta：issue form 顶层 name/description 提取（Spec 043）', () => {
+  const form = parseIssueFormMeta([
+    'name: Bug report',
+    'description: Something in Hypit behaves differently than it should.',
+    'title: "[Bug] "',
+    'labels: ["bug"]',
+    'body:',
+    '  - type: markdown',
+    '    attributes:',
+    '      value: |',
+    '        - name: not a top-level field'
+  ].join('\n'), 'bug_report.yml');
+  assert.notEqual(form, null);
+  assert.equal(form?.name, 'Bug report');
+  assert.equal(form?.description, 'Something in Hypit behaves differently than it should.');
+  assert.equal(form?.filename, 'bug_report.yml');
+  // 无 name 的 yaml → null
+  assert.equal(parseIssueFormMeta('description: only desc\nbody:', 'x.yml'), null);
 });
 
 test('mapRepoForm：仓库 id/默认分支/模板/分支聚合', () => {

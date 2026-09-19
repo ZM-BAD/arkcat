@@ -1154,9 +1154,39 @@ export function mapBranchRefs(data: JsonMap): BranchRefItem[] {
 
 export function mapPickerRepos(data: JsonMap): PickerRepo[] {
   const viewer = Json.obj(data, 'viewer') ?? ({} as JsonMap);
-  const reposConn = Json.obj(viewer, 'repositories') ?? ({} as JsonMap);
   const items: PickerRepo[] = [];
-  for (const nodeItem of Json.arr(reposConn, 'nodes')) {
+  const seen = new Set<string>();
+  // 候选 = 自有/协作/组织成员仓库 ∪ 参与过的仓库（官方列表口径，去重）
+  const collect = (connKey: string): void => {
+    const conn = Json.obj(viewer, connKey) ?? ({} as JsonMap);
+    for (const nodeItem of Json.arr(conn, 'nodes')) {
+      const it = nodeItem as JsonMap;
+      const owner = Json.obj(it, 'owner');
+      const login = owner !== null ? Json.str(owner, 'login') : '';
+      const name = Json.str(it, 'name');
+      const full = `${login}/${name}`;
+      if (login === '' || seen.has(full)) {
+        continue;
+      }
+      seen.add(full);
+      items.push({
+        id: Json.str(it, 'id'),
+        name: name,
+        ownerLogin: login,
+        ownerAvatar: owner !== null ? Json.str(owner, 'avatarUrl') : ''
+      });
+    }
+  };
+  collect('repositories');
+  collect('repositoriesContributedTo');
+  return items;
+}
+
+/** 服务端仓库搜索 → 候选（search.nodes 经 ... on Repository 内联片段返回字段） */
+export function mapPickerSearch(data: JsonMap): PickerRepo[] {
+  const search = Json.obj(data, 'search') ?? ({} as JsonMap);
+  const items: PickerRepo[] = [];
+  for (const nodeItem of Json.arr(search, 'nodes')) {
     const it = nodeItem as JsonMap;
     const owner = Json.obj(it, 'owner');
     items.push({
@@ -1224,6 +1254,104 @@ export function mapEditable(data: JsonMap, field: string): EditableContent {
     body: Json.str(node, 'body'),
     viewerCanUpdate: Json.bool(node, 'viewerCanUpdate')
   };
+}
+
+/** Choose Template 页：config.yml 联系链接行（外链跳浏览器，官方带 ⧉ 图标） */
+export interface TemplateContactLink {
+  name: string;
+  about: string;
+  url: string;
+}
+
+/** Choose Template 页：issue form（.yml 表单，GraphQL issueTemplates 不返回；移动端跳网页填写） */
+export interface IssueFormTemplate {
+  name: string;
+  description: string;
+  filename: string;
+}
+
+/** .github/ISSUE_TEMPLATE 目录的 forms + contact links 聚合 */
+export interface IssueTemplateExtras {
+  forms: IssueFormTemplate[];
+  contactLinks: TemplateContactLink[];
+}
+
+/** 去行尾回车符 */
+function chomp(line: string): string {
+  return line.endsWith('\r') ? line.substring(0, line.length - 1) : line;
+}
+
+/** 去 YAML 值两端成对引号 */
+function unquote(value: string): string {
+  const v = value.trim();
+  if (v.length >= 2 && ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'")))) {
+    return v.substring(1, v.length - 1);
+  }
+  return v;
+}
+
+/** 解析 config.yml 的 contact_links 段（逐行扫描：`- name:` 开新项，`about:`/`url:` 归属当前项） */
+export function parseContactLinks(yaml: string): TemplateContactLink[] {
+  const items: TemplateContactLink[] = [];
+  const lines = yaml.split('\n');
+  let inSection = false;
+  let current: TemplateContactLink | null = null;
+  for (const raw of lines) {
+    const line = chomp(raw);
+    if (line.trim() === '' || line.trim().startsWith('#')) {
+      continue;
+    }
+    if (/^\S/.test(line)) {
+      // 顶层键：contact_links 段开/关（段前可能有其他顶层键如 blank_issues_enabled，故全文件扫描）
+      inSection = line.startsWith('contact_links:');
+      current = null;
+      continue;
+    }
+    if (!inSection) {
+      continue;
+    }
+    const nameMatch = line.match(/^\s*-\s*name:\s*(.*)$/);
+    if (nameMatch !== null) {
+      current = { name: unquote(nameMatch[1]), about: '', url: '' };
+      items.push(current);
+      continue;
+    }
+    const aboutMatch = line.match(/^\s+about:\s*(.*)$/);
+    if (aboutMatch !== null && current !== null) {
+      current.about = unquote(aboutMatch[1]);
+      continue;
+    }
+    const urlMatch = line.match(/^\s+url:\s*(.*)$/);
+    if (urlMatch !== null && current !== null) {
+      current.url = unquote(urlMatch[1]);
+    }
+  }
+  return items;
+}
+
+/** 解析 issue form（.yml）顶层 name/description（只取未缩进行，忽略 body 块内字段） */
+export function parseIssueFormMeta(yaml: string, filename: string): IssueFormTemplate | null {
+  let name = '';
+  let description = '';
+  for (const raw of yaml.split('\n')) {
+    const line = chomp(raw);
+    if (line.trim() === '' || /^\s/.test(line) || line.trim().startsWith('#')) {
+      continue;
+    }
+    const nameMatch = line.match(/^name:\s*(.*)$/);
+    if (nameMatch !== null && name === '') {
+      name = unquote(nameMatch[1]);
+      continue;
+    }
+    const descMatch = line.match(/^description:\s*(.*)$/);
+    if (descMatch !== null && description === '') {
+      description = unquote(descMatch[1]);
+    }
+  }
+  if (name === '') {
+    return null;
+  }
+  return { name: name, description: description, filename: filename };
 }
 
 export function mapIssueDetail(data: JsonMap): IssueDetailPage {

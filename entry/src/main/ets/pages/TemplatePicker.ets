@@ -10,7 +10,7 @@ import { PageShadowBar } from '../components/PageShadowBar';
 import { StateView } from '../components/StateView';
 import { RepoSubService } from '../services/RepoSubService';
 import { friendlyError } from '../services/GitHttpClient';
-import { IssueTemplateItem } from '../models/RepoSubModels';
+import { IssueFormTemplate, IssueTemplateItem, IssueTemplateExtras, RepoFormPage, TemplateContactLink } from '../models/RepoSubModels';
 
 @ComponentV2
 export struct TemplatePickerView {
@@ -19,6 +19,10 @@ export struct TemplatePickerView {
   @Param tpOwner: string = '';
   @Param tpName: string = '';
   @Local templates: IssueTemplateItem[] = [];
+  /** issue forms（.yml 表单，GraphQL 不返回；移动端外链跳网页填写） */
+  @Local forms: IssueFormTemplate[] = [];
+  /** config.yml 联系链接（外链） */
+  @Local contactLinks: TemplateContactLink[] = [];
   @Local securityUrl: string = '';
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
@@ -33,9 +37,15 @@ export struct TemplatePickerView {
     this.loading = true;
     this.errorMsg = '';
     RepoSubService.fetchRepoForm(this.token, this.tpOwner, this.tpName)
-      .then((page) => {
+      .then((page: RepoFormPage) => {
         this.templates = page.templates;
         this.securityUrl = page.securityPolicyUrl;
+        // 表单/联系链接走 REST contents（.github/ISSUE_TEMPLATE 目录），失败按空处理不阻断
+        return RepoSubService.fetchIssueTemplateExtras(this.token, this.tpOwner, this.tpName);
+      })
+      .then((extras: IssueTemplateExtras) => {
+        this.forms = extras.forms;
+        this.contactLinks = extras.contactLinks;
         this.loading = false;
       })
       .catch((e: Error) => {
@@ -47,6 +57,13 @@ export struct TemplatePickerView {
   /** 选模板进表单（模板名走路由第 5 段，表单自行拉元数据回填正文/标题/属性） */
   private openForm(templateName: string): void {
     this.pathStack.pushPathByName('issueForm', `${this.tpOwner}|${this.tpName}|new|0|${templateName}`);
+  }
+
+  /** 外链（联系链接 / issue form 网页填写）进应用内浏览器 */
+  private openExternal(title: string, url: string): void {
+    if (url !== '') {
+      this.pathStack.pushPathByName('inAppBrowser', `${title}|${url}`);
+    }
   }
 
   /** Security 行：应用内浏览器打开安全政策页 */
@@ -133,7 +150,54 @@ export struct TemplatePickerView {
             .backgroundColor($r('app.color.card_background'))
             .padding({ top: 6, bottom: 6 })
 
-            // 分组二（白卡，有安全政策才显示）：Security 行 + 右侧外链图标
+            // 分组二（白卡，config.yml 有 contact_links 才显示）：联系链接行，右侧外链图标
+            if (this.contactLinks.length > 0) {
+              Column() {
+                ForEach(this.contactLinks, (c: TemplateContactLink) => {
+                  Row({ space: 12 }) {
+                    this.rowContent(c.name, c.about)
+                    OctIcon({
+                      res: $r('app.media.oct_link_external_16'), iconSize: 20,
+                      iconColor: $r('app.color.text_secondary')
+                    })
+                  }
+                  .width('100%')
+                  .padding({ left: 16, right: 16, top: 14, bottom: 14 })
+                  .alignItems(VerticalAlign.Top)
+                  .onClick((): void => this.openExternal(c.name, c.url))
+                }, (c: TemplateContactLink) => c.name)
+              }
+              .width('100%')
+              .backgroundColor($r('app.color.card_background'))
+              .padding({ top: 6, bottom: 6 })
+              .margin({ top: 8 })
+            }
+
+            // 分组三（白卡，issue forms 才显示）：.yml 表单移动端不能原生填 → 外链跳网页（官方同款）
+            if (this.forms.length > 0) {
+              Column() {
+                ForEach(this.forms, (f: IssueFormTemplate) => {
+                  Row({ space: 12 }) {
+                    this.rowContent(f.name, f.description)
+                    OctIcon({
+                      res: $r('app.media.oct_link_external_16'), iconSize: 20,
+                      iconColor: $r('app.color.text_secondary')
+                    })
+                  }
+                  .width('100%')
+                  .padding({ left: 16, right: 16, top: 14, bottom: 14 })
+                  .alignItems(VerticalAlign.Top)
+                  .onClick((): void => this.openExternal(f.name,
+                    `https://github.com/${this.tpOwner}/${this.tpName}/issues/new?template=${f.filename}`))
+                }, (f: IssueFormTemplate) => f.filename)
+              }
+              .width('100%')
+              .backgroundColor($r('app.color.card_background'))
+              .padding({ top: 6, bottom: 6 })
+              .margin({ top: 8 })
+            }
+
+            // 分组四（白卡，有安全政策才显示）：Security 行 + 右侧外链图标
             if (this.securityUrl !== '') {
               Row() {
                 Column({ space: 4 }) {

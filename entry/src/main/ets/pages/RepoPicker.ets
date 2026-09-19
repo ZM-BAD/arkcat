@@ -9,7 +9,7 @@ import { PageShadowBar } from '../components/PageShadowBar';
 import { StateView } from '../components/StateView';
 import { RepoSubService } from '../services/RepoSubService';
 import { friendlyError } from '../services/GitHttpClient';
-import { PickerRepo, RepoFormPage, filterReposByKeyword, pickerRepoFullName } from '../models/RepoSubModels';
+import { PickerRepo, RepoFormPage, IssueTemplateExtras, pickerRepoFullName } from '../models/RepoSubModels';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -19,9 +19,11 @@ export struct RepoPickerView {
   @Local repos: PickerRepo[] = [];
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
-  /** 顶栏内联搜索（同 WorkIssues 范式：🔍 进入、✕ 清空） */
+  /** 顶栏内联搜索（同 WorkIssues 范式：🔍 进入、✕ 清空）；搜索为服务端全网仓库检索 */
   @Local inSearch: boolean = false;
   @Local searchQuery: string = '';
+  @Local searchResults: PickerRepo[] = [];
+  private searchSeq: number = 0;
   /** 滚动顶部阴影 */
   @Local scrollShadow: boolean = false;
   /** 行点击中（查模板元数据期间防连点） */
@@ -45,8 +47,34 @@ export struct RepoPickerView {
       });
   }
 
-  private filtered(): PickerRepo[] {
-    return filterReposByKeyword(this.repos, this.searchQuery);
+  /** 列表数据源：搜索态（有关键字）= 服务端结果；否则 = 全量候选 */
+  private listSource(): PickerRepo[] {
+    if (this.inSearch && this.searchQuery.trim() !== '') {
+      return this.searchResults;
+    }
+    return this.repos;
+  }
+
+  /** 服务端仓库搜索（公开仓库亦可检索，竞态按代际丢弃） */
+  private runSearch(): void {
+    const q = this.searchQuery.trim();
+    const seq = ++this.searchSeq;
+    if (q === '') {
+      this.searchResults = [];
+      return;
+    }
+    RepoSubService.searchPickerRepos(this.token, q)
+      .then((list: PickerRepo[]) => {
+        if (seq === this.searchSeq) {
+          this.searchResults = list;
+        }
+      })
+      .catch((e: Error) => {
+        if (seq === this.searchSeq) {
+          this.searchResults = [];
+          promptAction.showToast({ message: friendlyError(this.getUIContext(), e) });
+        }
+      });
   }
 
   private enterSearch(): void {
@@ -54,22 +82,35 @@ export struct RepoPickerView {
   }
 
   /**
-   * 选中仓库：查该仓库模板元数据——有官方模板先入 Choose Template 页（官方动线，Spec 043），
-   * 无模板/查询失败直接进 Create Issue 表单
+   * 选中仓库：查该仓库模板元数据——经典模板/issue forms/联系链接任一存在即入 Choose Template 页
+   * （官方动线，Spec 043）；全无/查询失败直接进 Create Issue 表单
    */
   private openRepo(repo: PickerRepo): void {
     if (this.tapping !== '') {
       return;
     }
     this.tapping = pickerRepoFullName(repo);
+    let showTemplatePage = false;
     RepoSubService.fetchRepoForm(this.token, repo.ownerLogin, repo.name)
       .then((page: RepoFormPage) => {
-        if (page.templates.length > 0) {
+        showTemplatePage = page.templates.length > 0;
+        // forms/联系链接在 .github/ISSUE_TEMPLATE（REST contents）；失败按空处理不阻断
+        return RepoSubService.fetchIssueTemplateExtras(this.token, repo.ownerLogin, repo.name)
+          .then((extras: IssueTemplateExtras): void => {
+            if (extras.forms.length > 0 || extras.contactLinks.length > 0) {
+              showTemplatePage = true;
+            }
+          })
+          .catch((): void => {
+          });
+      })
+      .then((): void => {
+        this.tapping = '';
+        if (showTemplatePage) {
           this.pathStack.pushPathByName('templatePicker', `${repo.ownerLogin}|${repo.name}`);
         } else {
           this.pathStack.pushPathByName('issueForm', `${repo.ownerLogin}|${repo.name}|new|0|`);
         }
-        this.tapping = '';
       })
       .catch((e: Error) => {
         this.tapping = '';
@@ -110,6 +151,7 @@ export struct RepoPickerView {
             .backgroundColor(Color.Transparent)
             .onChange((v: string) => {
               this.searchQuery = v;
+              this.runSearch();
             })
           // ✕ 仅在有输入内容时出现（官方口径）；点击=清空输入，搜索态保持
           if (this.searchQuery.trim() !== '') {
@@ -158,8 +200,8 @@ export struct RepoPickerView {
 
       Scroll() {
         Column() {
-          if (this.repos.length > 0) {
-            ForEach(this.filtered(), (repo: PickerRepo) => {
+          if (this.listSource().length > 0) {
+            ForEach(this.listSource(), (repo: PickerRepo) => {
               Row({ space: 14 }) {
                 if (repo.ownerAvatar !== '') {
                   Image(repo.ownerAvatar)

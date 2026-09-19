@@ -13,7 +13,8 @@ import {
   TriageUser, TriageLabel, TriageMilestone, TriageLinkedItem, TriageProject,
   mapTriageUsers, mapTriageLabels, mapTriageMilestones, mapTriageLinked, mapTriageProjects,
   RepoFormPage, EditableContent, PickerRepo, IssueCreated,
-  mapRepoForm, mapEditable, mapPickerRepos
+  mapRepoForm, mapEditable, mapPickerRepos, mapPickerSearch,
+  IssueTemplateExtras, parseContactLinks, parseIssueFormMeta
 } from '../models/RepoSubModels';
 import { PrFilesPage, PrFileItem, mapPrFiles, applyRestPatch, mapFilesCursor, mapFileNode } from '../models/PrDiffModels';
 import { CommitDetailPage, mapCommitDetail } from '../models/PrDiffModels';
@@ -562,13 +563,25 @@ query PullRequestEdit($owner: String!, $name: String!, $number: Int!) {
   }
 }`;
 
-/** Home「+」Choose a repository 选仓库页候选（本人/协作/组织成员仓库，按最近推送序；官方两行行需 owner 头像+login） */
+/** Home「+」Choose a repository 选仓库页候选（本人/协作/组织成员仓库 + 本人参与过的仓库，按最近推送序；
+ *  官方列表口径 = 两者并集——公开仓库如 hypit-ai/hypit 即来自 contributedTo） */
 const VIEWER_REPOS_QUERY = `
 query PickerRepos($first: Int = 100) {
   viewer {
     repositories(first: $first, affiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER], orderBy: { field: PUSHED_AT, direction: DESC }) {
       nodes { id name owner { login avatarUrl } }
     }
+    repositoriesContributedTo(first: $first, includeUserRepositories: false) {
+      nodes { id name owner { login avatarUrl } }
+    }
+  }
+}`;
+
+/** 选仓库页搜索（官方为服务端全网仓库检索，公开仓库亦可建 Issue） */
+const SEARCH_PICKER_REPOS_QUERY = `
+query SearchPickerRepos($query: String!, $first: Int = 20) {
+  search(query: $query, type: REPOSITORY, first: $first) {
+    nodes { ... on Repository { id name owner { login avatarUrl } } }
   }
 }`;
 
@@ -1017,6 +1030,45 @@ export class RepoSubService {
     return mapRepoForm(data);
   }
 
+  /**
+   * .github/ISSUE_TEMPLATE 目录补全（Spec 043：GraphQL issueTemplates 不含 issue forms(.yml)
+   * 与 config.yml 联系链接——官方模板页同样展示，forms/联系链接均外链跳网页）。
+   * 目录不存在（无模板仓库 404）返回空聚合；单文件失败跳过不阻断。
+   */
+  static async fetchIssueTemplateExtras(token: string, owner: string, name: string): Promise<IssueTemplateExtras> {
+    const out: IssueTemplateExtras = { forms: [], contactLinks: [] };
+    const files: string[] = [];
+    try {
+      const listing = await restGet(`/repos/${owner}/${name}/contents/.github/ISSUE_TEMPLATE`, token);
+      const arr: Object[] = JSON.parse(listing.body) as Object[];
+      for (const node of arr) {
+        const fileName = Json.str(node as JsonMap, 'name');
+        if (fileName.endsWith('.yml') || fileName.endsWith('.yaml')) {
+          files.push(fileName);
+        }
+      }
+    } catch (e) {
+      return out;
+    }
+    for (const fileName of files) {
+      try {
+        const resp = await restGet(`/repos/${owner}/${name}/contents/.github/ISSUE_TEMPLATE/${fileName}`,
+          token, 'application/vnd.github.raw');
+        if (fileName === 'config.yml' || fileName === 'config.yaml') {
+          out.contactLinks = parseContactLinks(resp.body);
+        } else {
+          const meta = parseIssueFormMeta(resp.body, fileName);
+          if (meta !== null) {
+            out.forms.push(meta);
+          }
+        }
+      } catch (e) {
+        // 单文件拉取失败跳过
+      }
+    }
+    return out;
+  }
+
   /** 编辑 Issue 回填（id/title/body/viewerCanUpdate） */
   static async fetchIssueEdit(token: string, owner: string, name: string, number: number): Promise<EditableContent> {
     const variables: Record<string, Object> = { 'owner': owner, 'name': name, 'number': number };
@@ -1031,10 +1083,17 @@ export class RepoSubService {
     return mapEditable(data, 'pullRequest');
   }
 
-  /** Home「+」仓库候选（本人/协作/组织成员仓库，按最近推送序） */
+  /** Home「+」仓库候选（本人/协作/组织成员/参与过的仓库并集，按最近推送序） */
   static async fetchPickerRepos(token: string): Promise<PickerRepo[]> {
     const data = await graphql(VIEWER_REPOS_QUERY, { 'first': 100 }, token);
     return mapPickerRepos(data);
+  }
+
+  /** 选仓库页服务端仓库搜索（query 原样下发，官方按最佳匹配排序） */
+  static async searchPickerRepos(token: string, keyword: string): Promise<PickerRepo[]> {
+    const variables: Record<string, Object> = { 'query': keyword, 'first': 20 };
+    const data = await graphql(SEARCH_PICKER_REPOS_QUERY, variables, token);
+    return mapPickerSearch(data);
   }
 
   /** 新建 Issue：返回新 Issue 的 id + 编号（调用方跳详情 / 挂 Project） */

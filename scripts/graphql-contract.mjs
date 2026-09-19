@@ -277,8 +277,20 @@ statusCheckRollup { state }
     repositories(first: $first, affiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER], orderBy: { field: PUSHED_AT, direction: DESC }) {
       nodes { id name owner { login avatarUrl } }
     }
+    repositoriesContributedTo(first: $first, includeUserRepositories: false) {
+      nodes { id name owner { login avatarUrl } }
+    }
   }
 }`,
     variables: {"first": 1}
+  },
+  {
+    name: 'SEARCH_PICKER_REPOS_QUERY',
+    query: `query SearchPickerRepos($query: String!, $first: Int = 20) {
+  search(query: $query, type: REPOSITORY, first: $first) {
+    nodes { ... on Repository { id name owner { login avatarUrl } } }
+  }
+}`,
+    variables: {"query": "hypit in:name", "first": 1}
   },
 ];

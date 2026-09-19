@@ -17,7 +17,7 @@
 
 1. 入口：Home「+」＝顶栏弹出菜单（Create Issue / New repository〔repo octicon，端侧未接入占位，sentence case〕，无 PR 项）；RepoDetail「+」＝顶栏弹出菜单（Create Issue / New Pull Request）；IssuesList / RepoPrs 顶栏「+」直达对应表单
 2. Home → Create Issue 第一跳：**Choose a repository 整页选仓库**（两行头部：灰小字 Create Issue + 粗体 Choose a repository + 右上 🔍 内联搜索〔就地变搜索框：placeholder=Search；✕ 有输入才出现，点击=清空〕；行 = owner 头像 + login 灰字 + 仓库名两行行）
-3. 选中仓库有官方模板 → **Choose Template 选模板页**（两行头部：owner/name + 粗体 Choose Template；行 = 模板 name（黑）+ about（灰），行数随 issueTemplates 自适应；固定尾行 No template/Create a blank issue；仓库有安全政策时追加独立分组 Security 行〔外链图标 → securityPolicyUrl 应用内浏览器〕）；无模板直达表单
+3. 选中仓库有官方模板 → **Choose Template 选模板页**（两行头部：owner/name + 粗体 Choose Template；行 = 模板 name（黑）+ about（灰），行数随 issueTemplates 自适应；固定尾行 No template/Create a blank issue；仓库有安全政策时追加独立分组 Security 行〔外链图标 → securityPolicyUrl 应用内浏览器〕）；无模板直达表单。**模板校验覆盖三类机制（2026-09-19 hypit 实测定案）**：①经典模板（.md，GraphQL issueTemplates，原生预填）②issue forms（.yml，GraphQL 不返回——REST contents 读 .github/ISSUE_TEMPLATE 目录，移动端外链跳 issues/new?template=文件名）③config.yml 联系链接（外链）；任一存在即入选模板页，页序 = 模板+No template → 联系链接 → 表单 → Security
 4. Create Issue 表单（官方截图形态）：两行头部（`owner/name` 灰字 + 粗体标题 + 右上纸飞机发送）→ Title/Body 原生占位（Insert title / Insert optional description）→ 底部属性芯片行 Assignee/Label/Milestone/Project（灰底描边阴影小胶囊；键盘弹起随底部栈贴键盘上端；正文聚焦时键盘上方灰底 Markdown 工具条；官方无 Write/Preview 页签）；带模板进入自动回填标题/正文并按模板 YAML 自动带 Assignee/Label（多选芯片；GitHub 模板无 milestone/project，保持未选）
 5. 详情页关闭/重开（见元素 9）；详情页标题行 ⇄ 编辑（pencil）→ 同表单头部（Edit Issue）
 
