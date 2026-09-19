@@ -2879,6 +2879,138 @@
     {
       "name": "picker_branch_search_hint",
       "value": "Search branches"
+    },
+    {
+      "name": "repo_create_general",
+      "value": "General"
+    },
+    {
+      "name": "repo_create_configuration",
+      "value": "Configuration"
+    },
+    {
+      "name": "repo_create_owner",
+      "value": "Owner"
+    },
+    {
+      "name": "repo_create_name_label",
+      "value": "Repository name"
+    },
+    {
+      "name": "repo_create_name_placeholder",
+      "value": "Enter a repository name"
+    },
+    {
+      "name": "repo_create_name_hint",
+      "value": "Great repository names are short and memorable"
+    },
+    {
+      "name": "repo_create_desc_label",
+      "value": "Description (optional)"
+    },
+    {
+      "name": "repo_create_desc_placeholder",
+      "value": "Enter a description"
+    },
+    {
+      "name": "repo_create_counter",
+      "value": "%d / %d characters"
+    },
+    {
+      "name": "repo_create_next",
+      "value": "Next"
+    },
+    {
+      "name": "repo_create_create",
+      "value": "Create"
+    },
+    {
+      "name": "repo_create_save",
+      "value": "Save"
+    },
+    {
+      "name": "repo_create_visibility_label",
+      "value": "Visibility: "
+    },
+    {
+      "name": "repo_create_visibility_private",
+      "value": "Private"
+    },
+    {
+      "name": "repo_create_visibility_public",
+      "value": "Public"
+    },
+    {
+      "name": "repo_create_visibility_desc",
+      "value": "You choose who can see and commit to this repository."
+    },
+    {
+      "name": "repo_create_private_repo",
+      "value": "Private repository"
+    },
+    {
+      "name": "repo_create_start_template",
+      "value": "Start with a template"
+    },
+    {
+      "name": "repo_create_select",
+      "value": "Select"
+    },
+    {
+      "name": "repo_create_add_readme",
+      "value": "Add README"
+    },
+    {
+      "name": "repo_create_readme_hint",
+      "value": "Can be used for longer descriptions."
+    },
+    {
+      "name": "repo_create_add_gitignore",
+      "value": "Add .gitignore"
+    },
+    {
+      "name": "repo_create_gitignore_hint",
+      "value": "Tells git which files not to track."
+    },
+    {
+      "name": "repo_create_add_license",
+      "value": "Add license"
+    },
+    {
+      "name": "repo_create_license_hint",
+      "value": "Explains how others can use your code."
+    },
+    {
+      "name": "repo_create_choose_template",
+      "value": "Choose a template"
+    },
+    {
+      "name": "repo_create_choose_license",
+      "value": "Choose a license"
+    },
+    {
+      "name": "repo_create_subtitle_template_repo",
+      "value": "Repository template"
+    },
+    {
+      "name": "repo_create_search_gitignore",
+      "value": "Search gitignore templates"
+    },
+    {
+      "name": "repo_create_search_template_repos",
+      "value": "Search template repositories"
+    },
+    {
+      "name": "repo_create_search_licenses",
+      "value": "Search licenses"
+    },
+    {
+      "name": "repo_create_error_empty_name",
+      "value": "Repository name can't be empty"
+    },
+    {
+      "name": "repo_create_error_invalid_name",
+      "value": "Repository name already exists or is invalid"
     }
   ]
 }

@@ -37,6 +37,12 @@ import {
   issueTitleError, canSubmitIssue, validatePrHeads, defaultBaseBranch,
   parseFormRoute, filterBranches, orderBranches, ISSUE_TITLE_MAX
 } from '../../entry/src/main/ets/utils/IssueFormRules';
+import {
+  shouldAutoInit, buildCreateRepoBody, isValidRepoName, visibilityEnum,
+  mapRestLicenses, mapGitignoreTemplates, mapTemplateRepos, mapViewerId,
+  filterPickerItems, mapRestCreatedRepo, mapTemplateCreatedRepo,
+  PickerItem, NewRepoForm
+} from '../../entry/src/main/ets/models/RepoCreateModels';
 import { mapPrFiles, mapFilesCursor, applyRestPatch, PrFileItem } from '../../entry/src/main/ets/models/PrDiffModels';
 import {
   buildNotificationsPath, pullRefFromUrl, buildPullStatesQuery, mapPullMerged,
@@ -2066,4 +2072,103 @@ test('mapIssueDetail/mapPrDetail：viewerCanUpdate 权限门映射（Spec 043）
     }
   } });
   assert.equal(pr.viewerCanUpdate, false);
+});
+
+// —— Spec 070：创建新仓库（models/RepoCreateModels） ——
+
+const BASE_FORM: NewRepoForm = {
+  name: 'demo', description: '', isPrivate: true, addReadme: false,
+  ownerId: 'U1', gitignoreTemplate: '', licenseTemplate: '', templateRepoId: ''
+};
+
+test('Spec 070 shouldAutoInit/buildCreateRepoBody：初始内容联动与 body 组装', () => {
+  assert.equal(shouldAutoInit(BASE_FORM), false);
+  assert.equal(shouldAutoInit({ ...BASE_FORM, addReadme: true }), true);
+  assert.equal(shouldAutoInit({ ...BASE_FORM, gitignoreTemplate: 'Node' }), true);
+  assert.equal(shouldAutoInit({ ...BASE_FORM, licenseTemplate: 'MIT' }), true);
+
+  const body = JSON.parse(buildCreateRepoBody(BASE_FORM)) as Record<string, Object>;
+  assert.equal(body['name'], 'demo');
+  assert.equal(body['private'], true);
+  assert.equal(body['auto_init'], false);
+  assert.ok(!('description' in body));
+  assert.ok(!('gitignore_template' in body));
+  assert.ok(!('license_template' in body));
+  assert.ok(!('templateRepoId' in body));
+
+  const full = JSON.parse(buildCreateRepoBody({
+    ...BASE_FORM, description: 'd', isPrivate: false,
+    gitignoreTemplate: 'Node', licenseTemplate: 'MIT'
+  })) as Record<string, Object>;
+  assert.equal(full['description'], 'd');
+  assert.equal(full['private'], false);
+  assert.equal(full['auto_init'], true);
+  assert.equal(full['gitignore_template'], 'Node');
+  assert.equal(full['license_template'], 'MIT');
+});
+
+test('Spec 070 isValidRepoName/visibilityEnum：名称校验与可见性枚举', () => {
+  assert.equal(isValidRepoName(' demo '), true);
+  assert.equal(isValidRepoName('   '), false);
+  assert.equal(isValidRepoName(''), false);
+  assert.equal(isValidRepoName('x'.repeat(101)), false);
+  assert.equal(isValidRepoName('x'.repeat(100)), true);
+  assert.equal(visibilityEnum(true), 'PRIVATE');
+  assert.equal(visibilityEnum(false), 'PUBLIC');
+});
+
+test('Spec 070 mapRestLicenses：官方 13 精选集过滤与 API 序保持', () => {
+  const body = JSON.stringify([
+    { key: '0bsd', name: 'Zero-Clause BSD', spdx_id: '0BSD' },
+    { key: 'agpl-3.0', name: 'GNU Affero General Public License v3.0', spdx_id: 'AGPL-3.0' },
+    { key: 'apache-2.0', name: 'Apache License 2.0', spdx_id: 'Apache-2.0' },
+    { key: 'mit', name: 'MIT License', spdx_id: 'MIT' },
+    { key: 'other', name: 'Other', spdx_id: 'NOASSERTION' }
+  ]);
+  const items = mapRestLicenses(body);
+  assert.equal(items.length, 3);
+  assert.equal(items[0].key, 'AGPL-3.0');
+  assert.equal(items[0].label, 'GNU Affero General Public License v3.0');
+  assert.equal(items[0].sublabel, 'AGPL-3.0');
+  assert.equal(items[2].key, 'MIT');
+});
+
+test('Spec 070 mapGitignoreTemplates：字符串数组映射与非字符串剔除', () => {
+  const items = mapGitignoreTemplates(JSON.stringify(['AL', 'Actionscript', 'Ada', 42, null, '']));
+  assert.equal(items.length, 3);
+  assert.equal(items[0].key, 'AL');
+  assert.equal(items[0].label, 'AL');
+  assert.equal(items[0].sublabel, '');
+});
+
+test('Spec 070 mapTemplateRepos/mapViewerId：isTemplate 过滤与字段提取', () => {
+  const data: JsonMap = { viewer: { id: 'U1', repositories: { nodes: [
+    { id: 'R1', name: 'tpl', isTemplate: true, owner: { login: 'ZM-BAD' } },
+    { id: 'R2', name: 'plain', isTemplate: false, owner: { login: 'ZM-BAD' } }
+  ] } } };
+  const items = mapTemplateRepos(data);
+  assert.equal(items.length, 1);
+  assert.equal(items[0].key, 'R1');
+  assert.equal(items[0].label, 'tpl');
+  assert.equal(mapViewerId(data), 'U1');
+});
+
+test('Spec 070 filterPickerItems/mapCreatedRepo：搜索过滤与建仓结果映射', () => {
+  const items: PickerItem[] = [
+    { key: 'MIT', label: 'MIT License', sublabel: 'MIT' },
+    { key: 'Apache-2.0', label: 'Apache License 2.0', sublabel: 'Apache-2.0' }
+  ];
+  assert.equal(filterPickerItems(items, '  ').length, 2);
+  assert.equal(filterPickerItems(items, 'mit')[0].key, 'MIT');
+  assert.equal(filterPickerItems(items, 'APACHE')[0].key, 'Apache-2.0');
+  assert.equal(filterPickerItems(items, 'zzz').length, 0);
+
+  const created = mapRestCreatedRepo(JSON.stringify({ name: 'demo', owner: { login: 'ZM-BAD' } }));
+  assert.equal(created.owner, 'ZM-BAD');
+  assert.equal(created.name, 'demo');
+  const tpl = mapTemplateCreatedRepo({
+    createRepositoryFromTemplate: { repository: { name: 'demo', owner: { login: 'ZM-BAD' } } }
+  });
+  assert.equal(tpl.owner, 'ZM-BAD');
+  assert.equal(tpl.name, 'demo');
 });

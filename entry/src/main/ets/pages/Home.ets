@@ -11,6 +11,7 @@ import { friendlyError } from '../services/GitHttpClient';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
 import { AppBar, AppBarAction, AppBarMenuItem } from '../components/AppBar';
+import { NewRepositorySheet } from '../components/NewRepositorySheet';
 import { WorkSection, WorkConfigStore, visibleWorkSections } from '../utils/WorkConfig';
 
 /** 标题栏底部渐变阴影（滚动时显示、回顶部消失） */
@@ -34,6 +35,8 @@ export struct HomeView {
   @Local viewer: ViewerBasic | null = null;
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
+  /** Spec 070：New repository 两步弹层 */
+  @Local newRepoOpen: boolean = false;
   @Local workStore: WorkConfigStore = WorkConfigStore.instance;
   @Param workVersion: number = 0;
   /** Spec 060：viewer 探针结果上报（底栏 tab4 头像复用同一次请求，不再单独发 viewer 查询） */
@@ -91,7 +94,7 @@ export struct HomeView {
 
   /**
    * 「+」弹出菜单（用户 2026-09-19 定案：顶栏弹出菜单而非底部弹层；
-   * 官方口径两项：Create Issue / New Repository——Home 无 PR 项，建仓端侧未接入走占位 toast）。
+   * 官方口径两项：Create Issue / New Repository——建仓流程见 Spec 070，底部弹出两步弹层）。
    */
   private createMenuItems(): AppBarMenuItem[] {
     return [
@@ -106,7 +109,9 @@ export struct HomeView {
       {
         icon: $r('app.media.oct_repo_16'),
         label: $r('app.string.create_new_repo'),
-        onAction: (): void => this.comingSoon()
+        onAction: (): void => {
+          this.newRepoOpen = true;
+        }
       }
     ];
   }
@@ -358,5 +363,33 @@ export struct HomeView {
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
+    // Spec 070：New repository 两步弹层（官方为自底部弹出近全屏，dragBar 对应官方抓取条）
+    .bindSheet(this.newRepoOpen!!, this.newRepoSheet(), {
+      height: SheetSize.LARGE,
+      showClose: false,
+      // LARGE 档框架不渲染 dragBar，抓取条在弹层内容里自绘（官方口径）
+      dragBar: false,
+      backgroundColor: $r('app.color.card_background'),
+      onDisappear: (): void => {
+        this.newRepoOpen = false;
+      }
+    })
+  }
+
+  /** 弹层内容：创建成功关弹层并跳新仓库详情（官方动线）；General ✕ 关整个流程 */
+  @Builder
+  newRepoSheet() {
+    NewRepositorySheet({
+      token: this.token,
+      ownerLoginHint: this.viewer !== null ? this.viewer.login : '',
+      ownerAvatarHint: this.viewer !== null ? this.viewer.avatarUrl : '',
+      onDismiss: (): void => {
+        this.newRepoOpen = false;
+      },
+      onCreated: (owner: string, name: string): void => {
+        this.newRepoOpen = false;
+        this.pathStack.pushPathByName('repoDetail', `${owner}/${name}`);
+      }
+    })
   }
 }

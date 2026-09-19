@@ -2879,6 +2879,138 @@
     {
       "name": "picker_branch_search_hint",
       "value": "搜索分支"
+    },
+    {
+      "name": "repo_create_general",
+      "value": "通用"
+    },
+    {
+      "name": "repo_create_configuration",
+      "value": "配置"
+    },
+    {
+      "name": "repo_create_owner",
+      "value": "所有者"
+    },
+    {
+      "name": "repo_create_name_label",
+      "value": "仓库名称"
+    },
+    {
+      "name": "repo_create_name_placeholder",
+      "value": "输入仓库名称"
+    },
+    {
+      "name": "repo_create_name_hint",
+      "value": "好的仓库名称简短好记"
+    },
+    {
+      "name": "repo_create_desc_label",
+      "value": "描述（可选）"
+    },
+    {
+      "name": "repo_create_desc_placeholder",
+      "value": "输入描述"
+    },
+    {
+      "name": "repo_create_counter",
+      "value": "%d / %d 个字符"
+    },
+    {
+      "name": "repo_create_next",
+      "value": "下一步"
+    },
+    {
+      "name": "repo_create_create",
+      "value": "创建"
+    },
+    {
+      "name": "repo_create_save",
+      "value": "保存"
+    },
+    {
+      "name": "repo_create_visibility_label",
+      "value": "可见性："
+    },
+    {
+      "name": "repo_create_visibility_private",
+      "value": "私有"
+    },
+    {
+      "name": "repo_create_visibility_public",
+      "value": "公开"
+    },
+    {
+      "name": "repo_create_visibility_desc",
+      "value": "由你决定谁可以查看和提交此仓库。"
+    },
+    {
+      "name": "repo_create_private_repo",
+      "value": "私有仓库"
+    },
+    {
+      "name": "repo_create_start_template",
+      "value": "从模板开始"
+    },
+    {
+      "name": "repo_create_select",
+      "value": "选择"
+    },
+    {
+      "name": "repo_create_add_readme",
+      "value": "添加 README"
+    },
+    {
+      "name": "repo_create_readme_hint",
+      "value": "可用于更长的描述。"
+    },
+    {
+      "name": "repo_create_add_gitignore",
+      "value": "添加 .gitignore"
+    },
+    {
+      "name": "repo_create_gitignore_hint",
+      "value": "告诉 git 哪些文件不需要跟踪。"
+    },
+    {
+      "name": "repo_create_add_license",
+      "value": "添加许可证"
+    },
+    {
+      "name": "repo_create_license_hint",
+      "value": "说明他人可以如何使用你的代码。"
+    },
+    {
+      "name": "repo_create_choose_template",
+      "value": "选择模板"
+    },
+    {
+      "name": "repo_create_choose_license",
+      "value": "选择许可证"
+    },
+    {
+      "name": "repo_create_subtitle_template_repo",
+      "value": "仓库模板"
+    },
+    {
+      "name": "repo_create_search_gitignore",
+      "value": "搜索 gitignore 模板"
+    },
+    {
+      "name": "repo_create_search_template_repos",
+      "value": "搜索模板仓库"
+    },
+    {
+      "name": "repo_create_search_licenses",
+      "value": "搜索许可证"
+    },
+    {
+      "name": "repo_create_error_empty_name",
+      "value": "仓库名称不能为空"
+    },
+    {
+      "name": "repo_create_error_invalid_name",
+      "value": "仓库名称已存在或无效"
     }
   ]
 }
