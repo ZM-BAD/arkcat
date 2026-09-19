@@ -52,9 +52,9 @@
 | 039 | [primer-design-system.md](039-primer-design-system.md) | GitHub Primer 设计系统接入（横向规范） | Level 4 | implemented |
 | 040 | [markdown-render.md](040-markdown-render.md) | Markdown 渲染底座（MarkdownView + MarkdownService，横向） | Level 4 | implemented |
 | 041 | [comments-reactions.md](041-comments-reactions.md) | 评论与反应（Issue/PR 统一书写链路） | Level 3 | implemented |
-| 042 | [pr-review-merge.md](042-pr-review-merge.md) | PR 代码审阅与合并（review threads + merge 选项） | Level 3 | draft |
-| 043 | [issue-pr-create-edit.md](043-issue-pr-create-edit.md) | Issue/PR 创建与编辑（生命周期） | Level 3 | draft |
-| 044 | [triage-editors.md](044-triage-editors.md) | Issue/PR 元数据编排（Labels/Assignees/Milestone/Projects） | Level 3 | draft |
+| 042 | [pr-review-merge.md](042-pr-review-merge.md) | PR 代码审阅与合并（review threads + merge 选项） | Level 3 | implemented |
+| 043 | [issue-pr-create-edit.md](043-issue-pr-create-edit.md) | Issue/PR 创建与编辑（生命周期） | Level 3 | implemented |
+| 044 | [triage-editors.md](044-triage-editors.md) | Issue/PR 元数据编排（Labels/Assignees/Milestone/Projects） | Level 3 | implemented |
 | 045 | [notifications-subscriptions.md](045-notifications-subscriptions.md) | 通知与订阅增强（Inbox 高级 + 仓库 Watch） | Level 3 | draft |
 | 046 | [search-full.md](046-search-full.md) | 搜索全类型与最近搜索（Search 六类详情） | Level 3 | implemented |
 | 047 | [releases-detail-download.md](047-releases-detail-download.md) | Release 详情与资产下载 | Level 3 | implemented |
@@ -70,13 +70,16 @@
 | 057 | [oauth-login.md](057-oauth-login.md) | OAuth 登录（Device Flow） | Level 0 | implemented |
 | 058 | [copilot-ui.md](058-copilot-ui.md) | Copilot UI 架子（已被 059 取代：mock 换真实 API） | Level 1 | deprecated |
 | 059 | [copilot-chat.md](059-copilot-chat.md) | Copilot 真实对话（已被 060 移除：上架合规，Copilot 三关无解） | Level 1 | deprecated |
-| 060 | [profile-tab-remove-copilot.md](060-profile-tab-remove-copilot.md) | 底栏结构调整（tab4 = 我的主页 Tab，图标为账号头像）+ Copilot 移除 | Level 1 | approved |
-| 061 | [share-system-panel.md](061-share-system-panel.md) | 全应用分享按钮统一走系统分享面板（ShareKit） | Level 1 | approved |
-| 062 | [secondary-header-icons.md](062-secondary-header-icons.md) | 二级页顶栏图标统一（share-android 蓝 + 蓝色竖三点；含 Issue 详情） | Level 2 | approved |
+| 060 | [profile-tab-remove-copilot.md](060-profile-tab-remove-copilot.md) | 底栏结构调整（tab4 = 我的主页 Tab，图标为账号头像）+ Copilot 移除 | Level 1 | implemented |
+| 061 | [share-system-panel.md](061-share-system-panel.md) | 全应用分享按钮统一走系统分享面板（ShareKit） | Level 1 | implemented |
+| 062 | [secondary-header-icons.md](062-secondary-header-icons.md) | 二级页顶栏图标统一（share-android 蓝 + 蓝色竖三点；含 Issue 详情） | Level 2 | implemented |
 | 063 | [issues-list-header.md](063-issues-list-header.md) | 仓库 Issue 列表顶栏改版（两行标题 owner/name + 顶栏内联搜索 + circle-plus） | Level 3 | implemented |
 | 064 | [open-source-libraries.md](064-open-source-libraries.md) | 开源库披露页（Octicons/Primer MIT 条目） | Level 3 | implemented |
 | 065 | [share-feedback-discussions.md](065-share-feedback-discussions.md) | Share Feedback → 仓库 Discussions（REST 开启 has_discussions + repo 限定模式） | Level 3 | implemented |
-| 066 | [app-lock.md](066-app-lock.md) | App Lock（设备凭据锁定：Toggle 子页 + 后台回前台/冷启动系统认证） | Level 3 | draft |
+| 066 | [app-lock.md](066-app-lock.md) | App Lock（设备凭据锁定：Toggle 子页 + 后台回前台/冷启动系统认证） | Level 3 | implemented |
+| 067 | [appbar-unification.md](067-appbar-unification.md) | 统一 App Bar 组件（行高 48/内边距 16/中心距 44/图标 20） | Level 2 | implemented |
+| 068 | [filter-interaction.md](068-filter-interaction.md) | 筛选交互统一约定（dirty 徽标/RESET ALL FILTERS/面板规范，全库跨页） | Level — | implemented |
+| 069 | [settings-about.md](069-settings-about.md) | Settings About 行与关于页（备案号/Star 引导仓库行，静态零网络） | Level 2 | implemented |
 
 ## 覆盖率
 

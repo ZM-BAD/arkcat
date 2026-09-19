@@ -3,7 +3,7 @@
 > BFS Level: 3
 > 关联截图: 官方「New Issue」表单；官方「Compare changes / Choose Branch / Choose head ref」创建 PR 动线（2026-09-19）；Issue/PR 标题行 pencil 编辑入口
 > 上游 Spec: 030（IssueDetail）、031（PrDetail）、007（IssuesList）、027（RepoPrs）
-> 状态: implemented（2026-09-18 基于 develop 同名重建批；2026-09-19 PR 创建动线按官方截图推倒重做）
+> 状态: implemented（2026-09-19 随 PR #54 合入 develop；Issue/PR 创建动线与模板机制均按官方截图定稿）
 
 ---
 

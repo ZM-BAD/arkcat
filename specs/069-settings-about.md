@@ -3,7 +3,7 @@
 > BFS Level: 2
 > 关联截图: 无官方对照页（官方 Settings 无 About 入口；样式沿用 Spec 014 Settings 骨架）
 > 上游 Spec: 014（Settings）
-> 状态: approved（2026-09-17，用户提出诉求并拍板方向）
+> 状态: implemented（2026-09-20 状态回写：About 行与关于页已入 develop=70c2893；§六 模拟器实测项走查通过后勾选）
 
 ---
 
@@ -71,8 +71,8 @@ query RepoStarState($owner: String!, $name: String!) {
 
 ## 六、TDD 验收标准
 
-- [ ] bash scripts/check-spec.sh 通过
-- [ ] 宿主单测不回归（bash scripts/ut/run-local-tests.sh）
+- [x] bash scripts/check-spec.sh 通过
+- [x] 宿主单测不回归（bash scripts/ut/run-local-tests.sh）
 - [ ] Settings More Options 出现 About 行（Open Source 与 Sign Out 之间），点击进入关于页
 - [ ] 头部显示图标/名称/版本号，版本号与 bundle 清单一致
 - [ ] Star 引导文案点击无任何动作

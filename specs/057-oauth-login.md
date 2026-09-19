@@ -3,7 +3,7 @@
 > BFS Level: 0
 > 关联截图: 无官方参考图——GitHub OAuth Device Flow 标准交互（gh CLI 同款流程）
 > 上游 Spec: 无（TokenSetup 为初始脚手架既成实现，本 Spec 将其纳入范围）
-> 状态: implemented（2026-09-08 随 PR #41 合入 develop；端到端授权与 sign out 验收通过）
+> 状态: implemented（2026-09-08 随 PR #41 合入 develop；2026-09-17 随 PR #52 修订收敛为 Device Flow 单一路径）
 
 ---
 
