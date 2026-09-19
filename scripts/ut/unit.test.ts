@@ -1809,12 +1809,15 @@ test('defaultBaseBranch：默认分支优先/退回首个/空列表（Spec 043 �
   assert.equal(defaultBaseBranch('', []), '');
 });
 
-test('parseFormRoute：四段/缺段/非法数字回落', () => {
+test('parseFormRoute：五段/缺段/非法数字回落', () => {
   const r = parseFormRoute('ZM-BAD|arkcat|edit|12');
   assert.equal(r.owner, 'ZM-BAD');
   assert.equal(r.name, 'arkcat');
   assert.equal(r.mode, 'edit');
   assert.equal(r.editNumber, 12);
+  assert.equal(r.templateName, '');
+  const withTpl = parseFormRoute('ZM-BAD|headroom|new|0|Bug Report');
+  assert.equal(withTpl.templateName, 'Bug Report');
   const home = parseFormRoute('||new|0');
   assert.equal(home.owner, '');
   assert.equal(home.name, '');
@@ -1822,6 +1825,7 @@ test('parseFormRoute：四段/缺段/非法数字回落', () => {
   const bare = parseFormRoute('');
   assert.equal(bare.mode, 'new');
   assert.equal(bare.editNumber, 0);
+  assert.equal(bare.templateName, '');
   const bad = parseFormRoute('a|b|new|x9');
   assert.equal(bad.editNumber, 0);
 });
@@ -1836,10 +1840,18 @@ test('filterBranches：大小写不敏感过滤/空词全量', () => {
 
 test('mapIssueTemplates/mapBranchRefs：模板与分支映射（Spec 043 测试1/4 数据侧）', () => {
   const templates = mapIssueTemplates({ repository: { issueTemplates: [
-    { name: 'Bug report', title: 'Bug', body: '**Steps**', filename: 'bug_report.md' }
+    {
+      name: 'Bug Report', title: null, body: '**Steps**', filename: 'report-bug.md',
+      about: 'Report a bug in the extension',
+      labels: { nodes: [{ name: 'bug' }] },
+      assignees: { nodes: [{ login: 'ZM-BAD' }] }
+    }
   ] } });
   assert.equal(templates.length, 1);
-  assert.equal(templates[0].filename, 'bug_report.md');
+  assert.equal(templates[0].filename, 'report-bug.md');
+  assert.equal(templates[0].about, 'Report a bug in the extension');
+  assert.deepEqual(templates[0].labels, ['bug']);
+  assert.deepEqual(templates[0].assignees, ['ZM-BAD']);
   assert.deepEqual(mapIssueTemplates({ repository: { issueTemplates: [] } }), []);
   const refs = mapBranchRefs({ repository: { refs: { nodes: [
     { name: 'main', target: { oid: 'a1' } },
@@ -1855,21 +1867,24 @@ test('mapRepoForm：仓库 id/默认分支/模板/分支聚合', () => {
     repository: {
       id: 'R_kgDOUJ9eUQ',
       defaultBranchRef: { name: 'develop' },
-      issueTemplates: [{ name: 'Bug report', title: 'Bug', body: 'B', filename: 'bug.md' }],
-      refs: { nodes: [{ name: 'main', target: { oid: 'a1' } }] }
+      issueTemplates: [{ name: 'Bug report', title: 'Bug', body: 'B', filename: 'bug.md', about: '', labels: { nodes: [] }, assignees: { nodes: [] } }],
+      refs: { nodes: [{ name: 'main', target: { oid: 'a1' } }] },
+      securityPolicyUrl: 'https://github.com/ZM-BAD/arkcat/security/policy'
     }
   });
   assert.equal(page.repoId, 'R_kgDOUJ9eUQ');
   assert.equal(page.defaultBranch, 'develop');
   assert.equal(page.templates.length, 1);
   assert.equal(page.branches.length, 1);
-  // 空仓库（defaultBranchRef=null / refs 空）
+  assert.equal(page.securityPolicyUrl, 'https://github.com/ZM-BAD/arkcat/security/policy');
+  // 空仓库（defaultBranchRef=null / refs 空 / 无安全政策）
   const empty = mapRepoForm({
-    repository: { id: 'R1', defaultBranchRef: null, issueTemplates: [], refs: { nodes: [] } }
+    repository: { id: 'R1', defaultBranchRef: null, issueTemplates: [], refs: { nodes: [] }, securityPolicyUrl: null }
   });
   assert.equal(empty.defaultBranch, '');
   assert.equal(empty.branches.length, 0);
   assert.equal(empty.repoId, 'R1');
+  assert.equal(empty.securityPolicyUrl, '');
 });
 
 test('mapEditable：Issue/PR 编辑回填与权限门', () => {

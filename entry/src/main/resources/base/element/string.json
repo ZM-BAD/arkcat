@@ -2637,18 +2637,6 @@
       "value": "Select a repository"
     },
     {
-      "name": "form_template_add",
-      "value": "Add a template"
-    },
-    {
-      "name": "form_template_title",
-      "value": "Choose a template"
-    },
-    {
-      "name": "form_template_blank",
-      "value": "Blank issue"
-    },
-    {
       "name": "form_base_label",
       "value": "base:"
     },
@@ -2743,6 +2731,26 @@
     {
       "name": "chip_project",
       "value": "Project"
+    },
+    {
+      "name": "template_picker_title",
+      "value": "Choose Template"
+    },
+    {
+      "name": "template_none",
+      "value": "No template"
+    },
+    {
+      "name": "template_none_desc",
+      "value": "Create a blank issue"
+    },
+    {
+      "name": "template_security",
+      "value": "Security Vulnerability"
+    },
+    {
+      "name": "template_security_desc",
+      "value": "Please review our security policy for more details"
     }
   ]
 }

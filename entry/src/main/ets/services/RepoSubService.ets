@@ -528,16 +528,21 @@ mutation AddProjectItem($projectId: ID!, $contentId: ID!) {
 
 // ─────────────── Spec 043：Issue/PR 创建与编辑 ───────────────
 
-/** 表单基础数据（New Issue / New PR 共用）：仓库 id/默认分支 + 官方 Issue 模板 + 分支列表 */
+/** 表单基础数据（New Issue / New PR 共用）：仓库 id/默认分支 + 官方 Issue 模板 + 分支列表 + 安全政策 */
 const REPO_FORM_QUERY = `
 query RepoForm($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
     id
     defaultBranchRef { name }
-    issueTemplates { name title body filename }
+    issueTemplates {
+      name title body filename about
+      labels(first: 10) { nodes { name } }
+      assignees(first: 10) { nodes { login } }
+    }
     refs(refPrefix: "refs/heads/", first: 100) {
       nodes { name target { oid } }
     }
+    securityPolicyUrl
   }
 }`;
 

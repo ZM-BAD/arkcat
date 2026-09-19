@@ -1081,6 +1081,12 @@ export interface IssueTemplateItem {
   title: string;
   body: string;
   filename: string;
+  /** 模板描述行（Choose Template 页灰字） */
+  about: string;
+  /** 模板 YAML 预置标签名（创建时自动带上） */
+  labels: string[];
+  /** 模板 YAML 预置负责人 login（创建时自动带上） */
+  assignees: string[];
 }
 
 /** 仓库分支行（refs(refPrefix:"refs/heads/")；New PR base/head 选择） */
@@ -1107,11 +1113,28 @@ export function mapIssueTemplates(data: JsonMap): IssueTemplateItem[] {
   const items: IssueTemplateItem[] = [];
   for (const nodeItem of Json.arr(repo, 'issueTemplates')) {
     const it = nodeItem as JsonMap;
+    const labelNames: string[] = [];
+    const labelsConn = Json.obj(it, 'labels');
+    if (labelsConn !== null) {
+      for (const l of Json.arr(labelsConn, 'nodes')) {
+        labelNames.push(Json.str(l as JsonMap, 'name'));
+      }
+    }
+    const assigneeLogins: string[] = [];
+    const assigneesConn = Json.obj(it, 'assignees');
+    if (assigneesConn !== null) {
+      for (const a of Json.arr(assigneesConn, 'nodes')) {
+        assigneeLogins.push(Json.str(a as JsonMap, 'login'));
+      }
+    }
     items.push({
       name: Json.str(it, 'name'),
       title: Json.str(it, 'title'),
       body: Json.str(it, 'body'),
-      filename: Json.str(it, 'filename')
+      filename: Json.str(it, 'filename'),
+      about: Json.str(it, 'about'),
+      labels: labelNames,
+      assignees: assigneeLogins
     });
   }
   return items;
@@ -1161,6 +1184,8 @@ export interface RepoFormPage {
   defaultBranch: string;
   templates: IssueTemplateItem[];
   branches: BranchRefItem[];
+  /** 安全政策页 URL（仓库有 SECURITY.md 才非空；Choose Template 页 Security 行） */
+  securityPolicyUrl: string;
 }
 
 export function mapRepoForm(data: JsonMap): RepoFormPage {
@@ -1170,7 +1195,8 @@ export function mapRepoForm(data: JsonMap): RepoFormPage {
     repoId: Json.str(repo, 'id'),
     defaultBranch: dbr !== null ? Json.str(dbr, 'name') : '',
     templates: mapIssueTemplates(data),
-    branches: mapBranchRefs(data)
+    branches: mapBranchRefs(data),
+    securityPolicyUrl: Json.str(repo, 'securityPolicyUrl')
   };
 }
 

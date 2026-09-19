@@ -2637,18 +2637,6 @@
       "value": "请先选择仓库"
     },
     {
-      "name": "form_template_add",
-      "value": "添加模板"
-    },
-    {
-      "name": "form_template_title",
-      "value": "选择模板"
-    },
-    {
-      "name": "form_template_blank",
-      "value": "空白议题"
-    },
-    {
       "name": "form_base_label",
       "value": "base:"
     },
@@ -2743,6 +2731,26 @@
     {
       "name": "chip_project",
       "value": "项目"
+    },
+    {
+      "name": "template_picker_title",
+      "value": "选择模板"
+    },
+    {
+      "name": "template_none",
+      "value": "无模板"
+    },
+    {
+      "name": "template_none_desc",
+      "value": "创建空白议题"
+    },
+    {
+      "name": "template_security",
+      "value": "安全漏洞"
+    },
+    {
+      "name": "template_security_desc",
+      "value": "请查看我们的安全政策了解详情"
     }
   ]
 }

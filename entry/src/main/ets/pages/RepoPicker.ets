@@ -3,12 +3,13 @@
  * Home「+」→ Create Issue 的第一跳——整页仓库候选（owner 头像 + login 灰字 + 仓库名两行行），
  * 右上 🔍 进入顶栏内联搜索（客户端过滤 owner/name）。选中仓库 → 压栈 Create Issue 表单。
  */
+import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { StateView } from '../components/StateView';
 import { RepoSubService } from '../services/RepoSubService';
 import { friendlyError } from '../services/GitHttpClient';
-import { PickerRepo, filterReposByKeyword, pickerRepoFullName } from '../models/RepoSubModels';
+import { PickerRepo, RepoFormPage, filterReposByKeyword, pickerRepoFullName } from '../models/RepoSubModels';
 import { resText } from '../utils/I18n';
 
 @ComponentV2
@@ -18,11 +19,13 @@ export struct RepoPickerView {
   @Local repos: PickerRepo[] = [];
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
-  /** 顶栏内联搜索（同 WorkIssues 范式：🔍 进入、✕ 退出） */
+  /** 顶栏内联搜索（同 WorkIssues 范式：🔍 进入、✕ 清空） */
   @Local inSearch: boolean = false;
   @Local searchQuery: string = '';
   /** 滚动顶部阴影 */
   @Local scrollShadow: boolean = false;
+  /** 行点击中（查模板元数据期间防连点） */
+  @Local tapping: string = '';
 
   aboutToAppear(): void {
     this.load();
@@ -48,6 +51,30 @@ export struct RepoPickerView {
 
   private enterSearch(): void {
     this.inSearch = true;
+  }
+
+  /**
+   * 选中仓库：查该仓库模板元数据——有官方模板先入 Choose Template 页（官方动线，Spec 043），
+   * 无模板/查询失败直接进 Create Issue 表单
+   */
+  private openRepo(repo: PickerRepo): void {
+    if (this.tapping !== '') {
+      return;
+    }
+    this.tapping = pickerRepoFullName(repo);
+    RepoSubService.fetchRepoForm(this.token, repo.ownerLogin, repo.name)
+      .then((page: RepoFormPage) => {
+        if (page.templates.length > 0) {
+          this.pathStack.pushPathByName('templatePicker', `${repo.ownerLogin}|${repo.name}`);
+        } else {
+          this.pathStack.pushPathByName('issueForm', `${repo.ownerLogin}|${repo.name}|new|0|`);
+        }
+        this.tapping = '';
+      })
+      .catch((e: Error) => {
+        this.tapping = '';
+        promptAction.showToast({ message: friendlyError(this.getUIContext(), e) });
+      });
   }
 
   private stringOf(res: Resource): string {
@@ -162,9 +189,8 @@ export struct RepoPickerView {
               }
               .width('100%')
               .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-              .onClick((): void => {
-                this.pathStack.pushPathByName('issueForm', `${repo.ownerLogin}|${repo.name}|new|0`);
-              })
+              .opacity(this.tapping !== '' && this.tapping !== pickerRepoFullName(repo) ? 0.5 : 1)
+              .onClick((): void => this.openRepo(repo))
             }, (repo: PickerRepo) => pickerRepoFullName(repo))
           } else if (this.loading || this.errorMsg !== '') {
             StateView({ loading: this.loading, error: this.errorMsg, onRetry: () => this.load() })

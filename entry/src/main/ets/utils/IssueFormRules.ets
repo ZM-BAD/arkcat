@@ -45,15 +45,17 @@ export function defaultBaseBranch(defaultBranch: string, branches: string[]): st
   return branches.length > 0 ? branches[0] : '';
 }
 
-/** 表单路由参数（owner|name|mode|editNumber；owner/name 为空 = Home 入口先选仓库） */
+/** 表单路由参数（owner|name|mode|editNumber|templateName；owner/name 为空 = Home 入口先选仓库；
+ * templateName 非空 = 从 Choose Template 页带模板进入） */
 export interface FormRoute {
   owner: string;
   name: string;
   mode: string;
   editNumber: number;
+  templateName: string;
 }
 
-/** 解析表单路由参数：缺段/非法段回落默认值（mode=new，editNumber=0） */
+/** 解析表单路由参数：缺段/非法段回落默认值（mode=new，editNumber=0，templateName=''） */
 export function parseFormRoute(param: string): FormRoute {
   const parts: string[] = param.split('|');
   const numberRaw: string = parts.length > 3 ? parts[3] : '0';
@@ -62,7 +64,8 @@ export function parseFormRoute(param: string): FormRoute {
     owner: parts.length > 0 ? parts[0] : '',
     name: parts.length > 1 ? parts[1] : '',
     mode: parts.length > 2 && parts[2] !== '' ? parts[2] : 'new',
-    editNumber: isNaN(parsed) ? 0 : parsed
+    editNumber: isNaN(parsed) ? 0 : parsed,
+    templateName: parts.length > 4 ? parts[4] : ''
   };
 }
 

@@ -45,6 +45,7 @@ import { SettingsAboutView } from './SettingsAbout';
 import { IssueFormView } from './IssueForm';
 import { PrFormView } from './PrForm';
 import { RepoPickerView } from './RepoPicker';
+import { TemplatePickerView } from './TemplatePicker';
 import { UserListView } from './UserList';
 import { StargazersView } from './Stargazers';
 import { ForksView } from './Forks';
@@ -67,7 +68,7 @@ import { AppLockOverlay, AppLockSettingsView } from './AppLock';
 const TAB_BAR_HIDDEN_ROUTES: string[] = [
   'settings', 'notificationSettings', 'codeOptions', 'accounts', 'tokenSetup', 'achievementDetail',
   'openSourceLibraries', 'settingsAbout', 'inAppBrowser', 'repoDiscussions', 'appLock',
-  'issueForm', 'prForm', 'repoPicker'
+  'issueForm', 'prForm', 'repoPicker', 'templatePicker'
 ];
 
 @Entry
@@ -129,11 +130,12 @@ struct Index {
   @State listDetailTick: number = 0;
   /** Create list 页编辑模式参数（''=新建；否则为被编辑列表 id） */
   @State createListEditId: string = '';
-  /** Spec 043 表单路由参数（owner|name|mode|editNumber 拆段；owner/name 空=Home 入口先选仓库） */
+  /** Spec 043 表单路由参数（owner|name|mode|editNumber|templateName 拆段；owner/name 空=Home 入口先选仓库） */
   @State formOwner: string = '';
   @State formName: string = '';
   @State formMode: string = 'new';
   @State formEditNumber: number = 0;
+  @State formTemplate: string = '';
   /** 文件路由参数（Spec 038/011 共用，格式 owner|name|path） */
   @State fileOwner: string = '';
   @State fileRepo: string = '';
@@ -918,7 +920,7 @@ struct Index {
     }
   }
 
-  /** Spec 043 表单路由参数解析：owner|name|mode|editNumber（owner/name 可空=Home 入口先选仓库） */
+  /** Spec 043 表单路由参数解析：owner|name|mode|editNumber|templateName（owner/name 可空=Home 入口先选仓库） */
   private parseFormParam(param: string): void {
     const parts = param.split('|');
     this.formOwner = parts.length > 0 ? parts[0] : '';
@@ -926,6 +928,7 @@ struct Index {
     this.formMode = parts.length > 2 && parts[2] !== '' ? parts[2] : 'new';
     const n = parts.length > 3 ? Number(parts[3]) : 0;
     this.formEditNumber = isNaN(n) ? 0 : n;
+    this.formTemplate = parts.length > 4 ? parts[4] : '';
   }
 
   @Builder
@@ -1098,7 +1101,7 @@ struct Index {
     .hideTitleBar(true)
   }
 
-  /** Spec 043：新建/编辑 Issue 表单（参数 owner|name|mode|editNumber） */
+  /** Spec 043：新建/编辑 Issue 表单（参数 owner|name|mode|editNumber|templateName） */
   @Builder
   issueFormDestination() {
     NavDestination() {
@@ -1108,7 +1111,25 @@ struct Index {
         fOwner: this.formOwner,
         fName: this.formName,
         fMode: this.formMode,
-        fEditNumber: this.formEditNumber
+        fEditNumber: this.formEditNumber,
+        fTemplate: this.formTemplate
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.parseFormParam(context.pathInfo.param as string);
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 043：Choose Template 选模板页（参数 owner|name；有官方模板的仓库才入此页） */
+  @Builder
+  templatePickerDestination() {
+    NavDestination() {
+      TemplatePickerView({
+        token: this.token,
+        pathStack: this.pathStack,
+        tpOwner: this.formOwner,
+        tpName: this.formName
       })
     }
     .onReady((context: NavDestinationContext) => {
@@ -1335,6 +1356,8 @@ struct Index {
       this.issueDetailDestination()
     } else if (name === 'issueForm') {
       this.issueFormDestination()
+    } else if (name === 'templatePicker') {
+      this.templatePickerDestination()
     } else if (name === 'repoPicker') {
       this.repoPickerDestination()
     } else if (name === 'prForm') {

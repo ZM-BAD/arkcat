@@ -239,10 +239,15 @@ statusCheckRollup { state }
   repository(owner: $owner, name: $name) {
     id
     defaultBranchRef { name }
-    issueTemplates { name title body filename }
+    issueTemplates {
+      name title body filename about
+      labels(first: 10) { nodes { name } }
+      assignees(first: 10) { nodes { login } }
+    }
     refs(refPrefix: "refs/heads/", first: 100) {
       nodes { name target { oid } }
     }
+    securityPolicyUrl
   }
 }`,
     variables: {"owner": "ZM-BAD", "name": "arkcat"}

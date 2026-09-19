@@ -1,8 +1,9 @@
 /**
  * 新建/编辑 Issue 表单页（Spec 043，官方截图驱动 2026-09-19 推倒重写）：
  * 新建 = 两行头部（`owner/name` 灰字 + 粗体 Create Issue + 右上纸飞机发送）+ Title/Body 原生占位
- * + 底部属性芯片行（Assignee/Label/Milestone/Project，创建即选）+ 正文聚焦时键盘上方 Markdown 工具条；
- * Home 入口先经 Choose a repository 整页选仓库（RepoPicker），本页仓库上下文恒存在。
+ * + 底部属性芯片行（Assignee/Label/Milestone/Project）+ 正文聚焦时键盘上方 Markdown 工具条；
+ * 经 Choose Template 带模板进入时：自动回填标题/正文，并按模板 YAML 自动带上 Assignee/Label
+ * （GitHub 模板不含 milestone/project，这两项保持未选）。Assignee/Label 为多选（再点同项移除）。
  * 编辑 = 同头部（Edit Issue）回填标题/正文走 updateIssue，无芯片行。
  * 官方创建表单无 Write/Preview 页签 → 不做预览（spec 043 §七）。
  */
@@ -14,15 +15,12 @@ import { FilterDropdownOption } from '../components/FilterDropdownChip';
 import { RepoSubService } from '../services/RepoSubService';
 import { friendlyError } from '../services/GitHttpClient';
 import {
-  IssueTemplateItem, TriageUser, TriageLabel, TriageMilestone, TriageProject,
+  TriageUser, TriageLabel, TriageMilestone, TriageProject, IssueTemplateItem,
   RepoFormPage, EditableContent, IssueCreated
 } from '../models/RepoSubModels';
 import { MarkdownEdit, MarkdownToolKind } from '../utils/MarkdownEdit';
 import { canSubmitIssue, ISSUE_TITLE_MAX } from '../utils/IssueFormRules';
 import { resText } from '../utils/I18n';
-
-/** 模板面板「空白议题」哨兵 key（不填充任何内容） */
-const BLANK_TEMPLATE_KEY: string = '__blank';
 
 @ComponentV2
 export struct IssueFormView {
@@ -32,6 +30,8 @@ export struct IssueFormView {
   @Param fName: string = '';
   @Param fMode: string = 'new';
   @Param fEditNumber: number = 0;
+  /** Choose Template 页带进来的模板名（'' = 无模板/空白议题） */
+  @Param fTemplate: string = '';
 
   @Local title: string = '';
   @Local body: string = '';
@@ -45,20 +45,19 @@ export struct IssueFormView {
   @Local curOwner: string = '';
   @Local curName: string = '';
   @Local repoId: string = '';
-  @Local templates: IssueTemplateItem[] = [];
   /** 编辑模式回填的 Issue 节点 id */
   @Local editId: string = '';
-  /** 创建即选属性（芯片行，单选简化：再点同项=清除） */
-  @Local selAssignee: TriageUser | null = null;
-  @Local selLabel: TriageLabel | null = null;
+  /** 创建即选属性：Assignee/Label 多选（模板可预置多个），Milestone/Project 单选 */
+  @Local selAssignees: TriageUser[] = [];
+  @Local selLabels: TriageLabel[] = [];
   @Local selMilestone: TriageMilestone | null = null;
   @Local selProject: TriageProject | null = null;
-  /** 候选池（对应芯片懒加载） */
+  /** 候选池（对应芯片懒加载；模板预填属性时也会拉） */
   @Local users: TriageUser[] = [];
   @Local labels: TriageLabel[] = [];
   @Local milestones: TriageMilestone[] = [];
   @Local projects: TriageProject[] = [];
-  /** 单 bindSheet + sheetKind（坑 2）：template/assignee/label/milestone/project */
+  /** 单 bindSheet + sheetKind（坑 2）：assignee/label/milestone/project */
   @Local sheetOpen: boolean = false;
   @Local sheetKind: string = 'assignee';
   /** 已按该参数初始化（防 aboutToAppear 与 @Monitor 双触发） */
@@ -74,13 +73,13 @@ export struct IssueFormView {
   }
 
   // 路由参数晚于 aboutToAppear（坑：keyed 首拉必配 @Monitor）
-  @Monitor('fOwner', 'fName', 'fMode', 'fEditNumber')
+  @Monitor('fOwner', 'fName', 'fMode', 'fEditNumber', 'fTemplate')
   onRouteChanged(): void {
     this.applyRoute();
   }
 
   private applyRoute(): void {
-    const key = `${this.fOwner}|${this.fName}|${this.fMode}|${this.fEditNumber}`;
+    const key = `${this.fOwner}|${this.fName}|${this.fMode}|${this.fEditNumber}|${this.fTemplate}`;
     if (key === this.loadedFor) {
       return;
     }
@@ -91,11 +90,10 @@ export struct IssueFormView {
     this.body = '';
     this.editId = '';
     this.repoId = '';
-    this.templates = [];
     this.errorMsg = '';
     this.bodyFocused = false;
-    this.selAssignee = null;
-    this.selLabel = null;
+    this.selAssignees = [];
+    this.selLabels = [];
     this.selMilestone = null;
     this.selProject = null;
     if (this.fMode === 'edit') {
@@ -115,17 +113,77 @@ export struct IssueFormView {
       : $r('app.string.create_new_issue');
   }
 
-  /** 仓库元数据（repositoryId + 官方模板；失败不阻断手填提交，服务端兜底校验） */
+  /** 仓库元数据（repositoryId；带模板进入时顺路回填模板内容与预置属性） */
   private loadRepoMeta(): void {
     RepoSubService.fetchRepoForm(this.token, this.curOwner, this.curName)
       .then((page: RepoFormPage) => {
         this.repoId = page.repoId;
-        this.templates = page.templates;
+        if (this.fTemplate !== '') {
+          this.applyTemplateByName(page.templates, this.fTemplate);
+        }
       })
       .catch((e: Error) => {
         this.repoId = '';
-        this.templates = [];
         this.errorMsg = friendlyError(this.getUIContext(), e);
+      });
+  }
+
+  /** 按名应用模板：回填标题/正文，并按模板 YAML 自动带上 Assignee/Label */
+  private applyTemplateByName(templates: IssueTemplateItem[], name: string): void {
+    let hit: IssueTemplateItem | null = null;
+    for (const t of templates) {
+      if (t.name === name) {
+        hit = t;
+        break;
+      }
+    }
+    if (hit === null) {
+      return;
+    }
+    if (hit.title !== '') {
+      this.title = hit.title;
+    }
+    this.body = hit.body;
+    if (hit.assignees.length > 0 || hit.labels.length > 0) {
+      this.seedAttrsFromTemplate(hit.assignees, hit.labels);
+    }
+  }
+
+  /** 模板预置属性 → 拉候选按 login/名字匹配（大小写不敏感）；失败静默（属性可选，不阻断） */
+  private seedAttrsFromTemplate(assigneeLogins: string[], labelNames: string[]): void {
+    RepoSubService.fetchTriageAssignees(this.token, this.curOwner, this.curName)
+      .then((list: TriageUser[]) => {
+        this.users = list;
+        const seeded: TriageUser[] = [];
+        for (const login of assigneeLogins) {
+          const q = login.toLowerCase();
+          for (const u of list) {
+            if (u.login.toLowerCase() === q && seeded.indexOf(u) < 0) {
+              seeded.push(u);
+              break;
+            }
+          }
+        }
+        this.selAssignees = seeded;
+      })
+      .catch((): void => {
+      });
+    RepoSubService.fetchTriageLabels(this.token, this.curOwner, this.curName)
+      .then((list: TriageLabel[]) => {
+        this.labels = list;
+        const seeded: TriageLabel[] = [];
+        for (const name of labelNames) {
+          const q = name.toLowerCase();
+          for (const l of list) {
+            if (l.name.toLowerCase() === q && seeded.indexOf(l) < 0) {
+              seeded.push(l);
+              break;
+            }
+          }
+        }
+        this.selLabels = seeded;
+      })
+      .catch((): void => {
       });
   }
 
@@ -145,7 +203,7 @@ export struct IssueFormView {
       });
   }
 
-  /** 打开芯片/模板选择面板（候选懒加载，失败 toast 不阻断） */
+  /** 打开属性选择面板（候选懒加载；模板预填已拉过则直接用） */
   private openSheet(kind: string): void {
     this.sheetKind = kind;
     this.sheetOpen = true;
@@ -184,41 +242,34 @@ export struct IssueFormView {
     }
   }
 
-  /** 单选通用：再点同项=清除 */
+  /** Assignee/Label 多选切换（面板保持打开）；Milestone/Project 单选（选中即关） */
   private pickById(kind: string, key: string): void {
     if (kind === 'assignee') {
-      this.selAssignee = this.selAssignee?.id === key ? null : this.users.find((u: TriageUser): boolean => u.id === key) ?? null;
-    } else if (kind === 'label') {
-      this.selLabel = this.selLabel?.id === key ? null : this.labels.find((l: TriageLabel): boolean => l.id === key) ?? null;
-    } else if (kind === 'milestone') {
+      const hit = this.users.find((u: TriageUser): boolean => u.id === key);
+      if (hit === undefined) {
+        return;
+      }
+      this.selAssignees = this.selAssignees.indexOf(hit) >= 0
+        ? this.selAssignees.filter((u: TriageUser): boolean => u !== hit)
+        : this.selAssignees.concat([hit]);
+      return;
+    }
+    if (kind === 'label') {
+      const hit = this.labels.find((l: TriageLabel): boolean => l.id === key);
+      if (hit === undefined) {
+        return;
+      }
+      this.selLabels = this.selLabels.indexOf(hit) >= 0
+        ? this.selLabels.filter((l: TriageLabel): boolean => l !== hit)
+        : this.selLabels.concat([hit]);
+      return;
+    }
+    if (kind === 'milestone') {
       this.selMilestone = this.selMilestone?.id === key
         ? null : this.milestones.find((m: TriageMilestone): boolean => m.id === key) ?? null;
     } else if (kind === 'project') {
       this.selProject = this.selProject?.id === key
         ? null : this.projects.find((p: TriageProject): boolean => p.id === key) ?? null;
-    }
-    this.sheetOpen = false;
-  }
-
-  private templateOptions(): FilterDropdownOption[] {
-    const options: FilterDropdownOption[] = [
-      { key: BLANK_TEMPLATE_KEY, label: this.stringOf($r('app.string.form_template_blank')) }
-    ];
-    for (const t of this.templates) {
-      options.push({ key: t.name, label: t.name });
-    }
-    return options;
-  }
-
-  /** 官方口径：模板只填充正文（标题不动） */
-  private pickTemplate(key: string): void {
-    if (key !== BLANK_TEMPLATE_KEY) {
-      for (const t of this.templates) {
-        if (t.name === key) {
-          this.body = t.body;
-          break;
-        }
-      }
     }
     this.sheetOpen = false;
   }
@@ -237,7 +288,7 @@ export struct IssueFormView {
   }
 
   private onTool(kind: string): void {
-    const ins = MarkdownEdit.apply(this.body, 0, 0, kind as MarkdownToolKind);
+    const ins = MarkdownEdit.apply(this.body, this.selStart, this.selEnd, kind as MarkdownToolKind);
     this.body = ins.text;
     this.textController.setTextSelection(ins.selStart, ins.selEnd);
   }
@@ -278,9 +329,16 @@ export struct IssueFormView {
     }
     this.submitting = true;
     this.errorMsg = '';
+    const assigneeIds: string[] = [];
+    for (const u of this.selAssignees) {
+      assigneeIds.push(u.id);
+    }
+    const labelIds: string[] = [];
+    for (const l of this.selLabels) {
+      labelIds.push(l.id);
+    }
     RepoSubService.createIssue(this.token, this.repoId, this.title.trim(), this.body,
-      this.selAssignee !== null ? [this.selAssignee.id] : [],
-      this.selLabel !== null ? [this.selLabel.id] : [],
+      assigneeIds, labelIds,
       this.selMilestone !== null ? this.selMilestone.id : '')
       .then((created: IssueCreated) => {
         // Project 在创建后单独挂（createIssue 无 projectIds 入参走 044 通道；失败不影响建 Issue）
@@ -289,10 +347,11 @@ export struct IssueFormView {
           });
         }
         this.submitting = false;
-        // 详情压栈并自移除（连同选仓库页）：返回键回 Home
+        // 详情压栈并自移除（连同选仓库/选模板页）：返回键回 Home
         this.pathStack.pushPathByName('issueDetail', `${this.curOwner}/${this.curName}/${created.number}`);
         this.pathStack.removeByName('issueForm');
         this.pathStack.removeByName('repoPicker');
+        this.pathStack.removeByName('templatePicker');
       })
       .catch((e: Error) => {
         // 4xx 错误保留草稿内容（Spec 043 测试9）
@@ -347,29 +406,28 @@ export struct IssueFormView {
     .padding({ left: 4, right: 4 })
   }
 
-  /** 模板行（新建模式且有官方模板时显示，Spec 043 元素2） */
-  @Builder
-  templateRow() {
-    Row({ space: 6 }) {
-      OctIcon({ res: $r('app.media.oct_file_16'), iconSize: 14, iconColor: $r('app.color.link_blue') })
-      Text($r('app.string.form_template_add'))
-        .fontSize($r('app.float.sub_text_font_size'))
-        .fontColor($r('app.color.link_blue'))
+  /** 芯片选中文案（坑：@Builder 按值参数不刷新——状态须在 Builder 内部直读，不能作参数传入） */
+  private chipSelectedText(kind: string): string {
+    if (kind === 'assignee') {
+      return this.multiChipText(this.selAssignees.map((u: TriageUser): string => u.login));
     }
-    .width('100%')
-    .height(32)
-    .margin({ bottom: 8 })
-    .onClick((): void => this.openSheet('template'))
+    if (kind === 'label') {
+      return this.multiChipText(this.selLabels.map((l: TriageLabel): string => l.name));
+    }
+    if (kind === 'milestone') {
+      return this.selMilestone !== null ? this.selMilestone.title : '';
+    }
+    return this.selProject !== null ? this.selProject.title : '';
   }
 
-  /** 底部属性芯片（官方：Assignee/Label/Milestone/Project，横向可滑）；灰底描边阴影小胶囊，选中后显示所选项 */
+  /** 底部属性芯片（官方：Assignee/Label/Milestone/Project，横向可滑）；灰底描边阴影小胶囊，多选显示「首个 +N」 */
   @Builder
-  attrChip(iconRes: Resource, label: Resource, kind: string, selected: string) {
+  attrChip(iconRes: Resource, label: Resource, kind: string) {
     Row({ space: 5 }) {
       OctIcon({ res: iconRes, iconSize: 14, iconColor: $r('app.color.text_primary') })
-      Text(selected !== '' ? selected : label)
+      Text(this.chipSelectedText(kind) !== '' ? this.chipSelectedText(kind) : label)
         .fontSize($r('app.float.caption_font_size'))
-        .fontWeight(selected !== '' ? FontWeight.Medium : FontWeight.Normal)
+        .fontWeight(this.chipSelectedText(kind) !== '' ? FontWeight.Medium : FontWeight.Normal)
         .fontColor($r('app.color.text_primary'))
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -383,16 +441,23 @@ export struct IssueFormView {
     .onClick((): void => this.openSheet(kind))
   }
 
+  /** 多选芯片文案：无=占位 label；1 个=名称；多个=首名 +N */
+  private multiChipText(names: string[]): string {
+    if (names.length === 0) {
+      return '';
+    }
+    if (names.length === 1) {
+      return names[0];
+    }
+    return `${names[0]} +${names.length - 1}`;
+  }
+
   build() {
     Column() {
       this.formHeader()
 
       Scroll() {
         Column() {
-          if (this.fMode === 'new' && this.templates.length > 0) {
-            this.templateRow()
-          }
-
           Text($r('app.string.form_title_label'))
             .fontSize($r('app.float.body_font_size'))
             .fontColor($r('app.color.text_secondary'))
@@ -461,18 +526,14 @@ export struct IssueFormView {
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
 
-      // 底部属性芯片行（新建模式，官方创建即选）
+      // 底部属性芯片行（新建模式，官方创建即选；键盘弹起时随底部栈贴键盘上端）
       if (this.fMode === 'new') {
         Scroll() {
           Row({ space: 8 }) {
-            this.attrChip($r('app.media.oct_person_add_16'), $r('app.string.chip_assignee'), 'assignee',
-              this.selAssignee !== null ? this.selAssignee.login : '')
-            this.attrChip($r('app.media.oct_tag_16'), $r('app.string.chip_label'), 'label',
-              this.selLabel !== null ? this.selLabel.name : '')
-            this.attrChip($r('app.media.oct_milestone_16'), $r('app.string.chip_milestone'), 'milestone',
-              this.selMilestone !== null ? this.selMilestone.title : '')
-            this.attrChip($r('app.media.oct_table_16'), $r('app.string.chip_project'), 'project',
-              this.selProject !== null ? this.selProject.title : '')
+            this.attrChip($r('app.media.oct_person_add_16'), $r('app.string.chip_assignee'), 'assignee')
+            this.attrChip($r('app.media.oct_tag_16'), $r('app.string.chip_label'), 'label')
+            this.attrChip($r('app.media.oct_milestone_16'), $r('app.string.chip_milestone'), 'milestone')
+            this.attrChip($r('app.media.oct_table_16'), $r('app.string.chip_project'), 'project')
           }
           .padding({ left: 16, right: 16 })
         }
@@ -502,27 +563,18 @@ export struct IssueFormView {
     })
   }
 
-  /** 弹层内容分派（单 bindSheet + sheetKind）：模板/负责人/标签/里程碑/项目 */
+  /** 弹层内容分派（单 bindSheet + sheetKind）：负责人/标签=多选不关面板，里程碑/项目=单选即关 */
   @Builder
   formSheet() {
-    if (this.sheetKind === 'template') {
-      FilterOptionSheet({
-        title: $r('app.string.form_template_title'),
-        searchPlaceholder: $r('app.string.meta_editor_search'),
-        options: this.templateOptions(),
-        selectedKey: '',
-        onPick: (key: string): void => this.pickTemplate(key),
-        onClose: (): void => {
-          this.sheetOpen = false;
-        }
-      })
-    } else if (this.sheetKind === 'assignee') {
+    if (this.sheetKind === 'assignee') {
       FilterOptionSheet({
         title: $r('app.string.meta_editor_select_assignees'),
         searchPlaceholder: $r('app.string.meta_editor_search'),
         options: this.plainOptions(this.users.map((u: TriageUser): string => u.id),
           this.users.map((u: TriageUser): string => u.login)),
-        selectedKey: this.selAssignee !== null ? this.selAssignee.id : '',
+        selectedKey: '',
+        multi: true,
+        selectedKeys: this.selAssignees.map((u: TriageUser): string => u.id),
         onPick: (key: string): void => this.pickById('assignee', key),
         onClose: (): void => {
           this.sheetOpen = false;
@@ -534,7 +586,9 @@ export struct IssueFormView {
         searchPlaceholder: $r('app.string.meta_editor_search'),
         options: this.plainOptions(this.labels.map((l: TriageLabel): string => l.id),
           this.labels.map((l: TriageLabel): string => l.name)),
-        selectedKey: this.selLabel !== null ? this.selLabel.id : '',
+        selectedKey: '',
+        multi: true,
+        selectedKeys: this.selLabels.map((l: TriageLabel): string => l.id),
         rowKind: 'label',
         labelColorOf: (key: string): string => this.labelColorOf(key),
         onPick: (key: string): void => this.pickById('label', key),
