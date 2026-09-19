@@ -3,7 +3,7 @@
 > BFS Level: 2
 > 关联截图: 官方 App 2026-09-20 截图 1 张（Repositories/Organizations/Starred 下方 Sponsoring 粉块心形 + Projects 灰块表格，含计数）
 > 上游 Spec: 005（User Profile 导航行）、035（ProfileNavRows）
-> 状态: draft
+> 状态: implemented（2026-09-20 状态回写：随 PR #55 squash 合并 develop=baa9029，CI 绿；走查确认后合并）
 
 ---
 
@@ -64,10 +64,10 @@ query UserProfile($login: String!) {
 
 - [x] bash scripts/check-spec.sh 通过
 - [x] 宿主单测不回归（bash scripts/ut/run-local-tests.sh）
-- [ ] 模拟器：五行顺序与配色（Repositories 深灰 / Organizations 橙 / Starred 黄 / Sponsoring 粉 / Projects 灰）、计数正确；**Sponsoring/Projects 计数为 0 时对应行不显示**
-- [ ] 模拟器：Sponsoring / Projects 行点击出占位 toast；既有三行跳转不回归
-- [ ] 模拟器：关注/取关后两行计数不丢（乐观更新透传）
-- [ ] base/zh_CN 新增 key 对齐；硬编码颜色/字号门禁通过
+- [x] 模拟器：五行顺序与配色（Repositories 深灰 / Organizations 橙 / Starred 黄 / Sponsoring 粉 / Projects 灰）、计数正确；**Sponsoring/Projects 计数为 0 时对应行不显示**
+- [x] 模拟器：Sponsoring / Projects 行点击出占位 toast；既有三行跳转不回归
+- [x] 模拟器：关注/取关后两行计数不丢（乐观更新透传）
+- [x] base/zh_CN 新增 key 对齐；硬编码颜色/字号门禁通过
 
 ---
 

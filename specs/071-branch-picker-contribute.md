@@ -3,7 +3,7 @@
 > BFS Level: 2
 > 关联截图: 官方 App 2026-09-20 截图 2 张（RepoDetail 分支行 → Choose Branch 右上 CONTRIBUTE → Compare changes 空态）
 > 上游 Spec: 006（RepoDetail 分支行）、043（branchPicker / prCompare）
-> 状态: draft
+> 状态: implemented（2026-09-20 状态回写：随 PR #55 squash 合并 develop=baa9029，CI 绿；走查确认后合并）
 
 ---
 
@@ -60,11 +60,11 @@
 
 - [x] bash scripts/check-spec.sh 通过
 - [x] 宿主单测不回归（bash scripts/ut/run-local-tests.sh）
-- [ ] 模拟器：RepoDetail 分支行 CHANGE → Choose Branch（标题/CONTRIBUTE 钮/默认分支徽标+蓝勾/搜索过滤）
-- [ ] 模拟器：CONTRIBUTE → Compare changes 空态「Choose a branch to compare changes」，base=默认分支、compare=SELECT BRANCH
-- [ ] 模拟器：Choose Branch 分支行点击不关页、无副作用；✕ 返回仓库详情；Compare changes ✕ 返回 Choose Branch
-- [ ] 回归：prCompare 内 base/head 分支选择回传（BranchPickResult 槽）不回归
-- [ ] base/zh_CN 新增 key 对齐；硬编码颜色/字号门禁通过
+- [x] 模拟器：RepoDetail 分支行 CHANGE → Choose Branch（标题/CONTRIBUTE 钮/默认分支徽标+蓝勾/搜索过滤）
+- [x] 模拟器：CONTRIBUTE → Compare changes 空态「Choose a branch to compare changes」，base=默认分支、compare=SELECT BRANCH
+- [x] 模拟器：Choose Branch 分支行点击不关页、无副作用；✕ 返回仓库详情；Compare changes ✕ 返回 Choose Branch
+- [x] 回归：prCompare 内 base/head 分支选择回传（BranchPickResult 槽）不回归
+- [x] base/zh_CN 新增 key 对齐；硬编码颜色/字号门禁通过
 
 ---
 

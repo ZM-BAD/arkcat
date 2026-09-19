@@ -3,7 +3,7 @@
 > BFS Level: 2
 > 关联截图: 无官方对照截图（官方 App 无 Pin 用户的主页展示 Popular repositories 区；用户 2026-09-20 口述驱动）
 > 上游 Spec: 005（User Profile Pinned 区）、035（Profile 改造）
-> 状态: draft
+> 状态: implemented（2026-09-20 状态回写：随 PR #55 squash 合并 develop=baa9029，CI 绿；走查确认后合并）
 
 ---
 
@@ -71,11 +71,11 @@ query UserProfile($login: String!) {
 - [x] bash scripts/check-spec.sh 通过
 - [x] 宿主单测不回归（bash scripts/ut/run-local-tests.sh）
 - [x] 宿主单测：mapProfile popular 映射（节点→RepoSummary、pinned 空场景、字段透传）
-- [ ] 模拟器：无 Pin 用户主页显示 star 图标 + Popular 标题，卡片按 star 降序、最多 6 张，点击进仓库详情
-- [ ] 模拟器：有 Pin 用户主页不变（Pinned 态回归）
-- [ ] 模拟器：无任何可见仓库用户主页，标题行与卡片行都不展示
-- [ ] 模拟器：本人主页（tab4）无 Pin 时同样出现 Popular；关注/取关后区块不消失（toggleFollow 重建透传 popular）
-- [ ] base/zh_CN 新增 key 对齐；硬编码颜色/字号门禁通过
+- [x] 模拟器：无 Pin 用户主页显示 star 图标 + Popular 标题，卡片按 star 降序、最多 6 张，点击进仓库详情
+- [x] 模拟器：有 Pin 用户主页不变（Pinned 态回归）
+- [x] 模拟器：无任何可见仓库用户主页，标题行与卡片行都不展示
+- [x] 模拟器：本人主页（tab4）无 Pin 时同样出现 Popular；关注/取关后区块不消失（toggleFollow 重建透传 popular）
+- [x] base/zh_CN 新增 key 对齐；硬编码颜色/字号门禁通过
 
 ---
 
