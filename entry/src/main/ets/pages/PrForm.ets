@@ -366,12 +366,8 @@ export struct PrFormView {
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
 
-      // 正文聚焦时：键盘上方 Markdown 工具条
+      // 正文聚焦时：键盘上方 Markdown 工具条（灰底）
       if (this.bodyFocused) {
-        Divider()
-          .color($r('app.color.divider'))
-          .strokeWidth(1)
-          .width('100%')
         MarkdownToolbar({ showReply: false, onTool: (kind: string): void => this.onTool(kind) })
       }
     }

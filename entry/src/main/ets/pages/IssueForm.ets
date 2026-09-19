@@ -362,23 +362,24 @@ export struct IssueFormView {
     .onClick((): void => this.openSheet('template'))
   }
 
-  /** 底部属性芯片（官方：Assignee/Label/Milestone/Project，横向可滑）；选中后芯片文案换为所选项 */
+  /** 底部属性芯片（官方：Assignee/Label/Milestone/Project，横向可滑）；灰底描边阴影小胶囊，选中后显示所选项 */
   @Builder
   attrChip(iconRes: Resource, label: Resource, kind: string, selected: string) {
-    Row({ space: 6 }) {
-      OctIcon({ res: iconRes, iconSize: 16, iconColor: $r('app.color.text_primary') })
+    Row({ space: 5 }) {
+      OctIcon({ res: iconRes, iconSize: 14, iconColor: $r('app.color.text_primary') })
       Text(selected !== '' ? selected : label)
-        .fontSize($r('app.float.sub_text_font_size'))
+        .fontSize($r('app.float.caption_font_size'))
         .fontWeight(selected !== '' ? FontWeight.Medium : FontWeight.Normal)
         .fontColor($r('app.color.text_primary'))
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
     }
-    .height(36)
-    .borderRadius(18)
+    .height(30)
+    .borderRadius(15)
     .border({ width: 1, color: $r('app.color.divider') })
-    .backgroundColor($r('app.color.card_background'))
-    .padding({ left: 14, right: 14 })
+    .backgroundColor($r('app.color.bg_page'))
+    .shadow({ radius: 6, color: $r('app.color.shadow_floating'), offsetY: 2 })
+    .padding({ left: 12, right: 12 })
     .onClick((): void => this.openSheet(kind))
   }
 
@@ -481,12 +482,8 @@ export struct IssueFormView {
         .padding({ top: 8, bottom: 10 })
       }
 
-      // 正文聚焦时：键盘上方 Markdown 工具条（官方口径）
+      // 正文聚焦时：键盘上方 Markdown 工具条（灰底，官方口径）
       if (this.bodyFocused) {
-        Divider()
-          .color($r('app.color.divider'))
-          .strokeWidth(1)
-          .width('100%')
         MarkdownToolbar({ showReply: false, onTool: (kind: string): void => this.onTool(kind) })
       }
     }

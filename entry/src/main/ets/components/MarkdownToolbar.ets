@@ -25,6 +25,7 @@ export struct MarkdownToolbar {
   }
 
   build() {
+    // 灰底工具条（用户 2026-09-19 定案：COMMENT 面板与创建表单统一灰色阴影底）
     Scroll() {
       Row({ space: 4 }) {
         this.toolBtn($r('app.media.oct_bold_16'), 'bold')
@@ -50,5 +51,7 @@ export struct MarkdownToolbar {
     .width('100%')
     .height(48)
     .align(Alignment.Start)
+    .backgroundColor($r('app.color.bg_page'))
+    .shadow({ radius: 6, color: $r('app.color.shadow_floating'), offsetY: -1 })
   }
 }

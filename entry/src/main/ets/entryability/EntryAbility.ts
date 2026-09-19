@@ -3,6 +3,7 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { preferences } from '@kit.ArkData';
 import { i18n } from '@kit.LocalizationKit';
+import { KeyboardAvoidMode } from '@ohos.arkui.UIContext';
 import { KEY_APP_LOCK, APP_LOCK_ENABLED_KEY, APP_LOCK_LOCKED_KEY, normalizeAppLockPref } from '../utils/AppLock';
 
 const TAG = '[ArkCat]';
@@ -57,6 +58,14 @@ export default class EntryAbility extends UIAbility {
         return;
       }
       hilog.info(DOMAIN, TAG, 'Succeeded in loading content.');
+      // 键盘避让改 RESIZE（默认 OFFSET 只平移页面保证焦点可见，焦点在页面上部时底部栈被键盘盖住）：
+      // RESIZE 弹键盘收缩页面高度 → 页面底部栈（Create Issue 属性芯片/Markdown 工具条）贴键盘上缘，Spec 043。
+      // 仅作用于页面布局；bindSheet 等弹层仍走各自 keyboardAvoidMode，不受影响。须在内容加载后设（UIContext 就绪）
+      try {
+        windowStage.getMainWindowSync().getUIContext().setKeyboardAvoidMode(KeyboardAvoidMode.RESIZE);
+      } catch (e) {
+        hilog.error(DOMAIN, TAG, 'setKeyboardAvoidMode failed: %{public}s', JSON.stringify(e));
+      }
     });
   }
 
