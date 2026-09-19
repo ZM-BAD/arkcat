@@ -3,7 +3,7 @@
 > BFS Level: 3
 > 关联截图: 官方 App 个人主页（share/gear 顶栏 + 状态行 + 元信息 + Pinned 横滑 + 三导航入口）
 > 上游 Spec: 013（Home 头像进入）
-> 状态: implemented（2026-08-31，官方布局对齐验收通过）
+> 状态: implemented（2026-08-31 官方布局对齐验收通过；2026-09-20 同步回写 Follow 改版口径：铺满宽双态钮 + ⋮ 菜单双入口 + followers 即时 ±1 + 滚动两行标题）
 
 ---
 
@@ -11,8 +11,8 @@
 
 用户个人主页。对照官方 App 布局：
 
-- **顶栏**：← 返回 + 分享 + 第三个操作（**本人主页 = ⚙ 设置**；**他人主页 = ⋮ 关注菜单**）
-- **Header 卡**：头像/名字/@login + 状态行（Focussing·编辑）+ bio + 元信息（位置/邮箱/链接/关注数）
+- **顶栏**：← 返回 + 分享 + 第三个操作（**本人主页 = ⚙ 设置**；**他人主页 = ⋮ 关注菜单**，与 Header 内铺满宽 Follow 钮双入口并存）
+- **Header 卡**：头像/名字/@login + 状态行（Focussing·编辑）+ bio + 元信息（位置/邮箱/链接/关注数）+ Follow 钮（仅他人主页）
 - **Pinned 区**：横滑卡片（单行）
 - **计数入口**：Repositories / Organizations / Starred 三行导航入口（含计数），点击进入独立列表页（无展开视图）
 
@@ -20,11 +20,12 @@
 
 ## 二、整体 UI 结构
 
-1. 顶部 App Bar：← 返回 + 🔗 分享 + 第三个操作——**本人主页为 ⚙ 设置**、**他人主页为 ⋮ 关注/取关菜单**（无用户名标题，身份信息在 Header 卡内）
-2. Header 卡：头像 + 名字（🖼 周铭）+ @ZM-BAD + 状态行 + bio + 元信息行（← 状态行+编辑）
+1. 顶部 App Bar：← 返回 + 🔗 分享 + 第三个操作——**本人主页为 ⚙ 设置**、**他人主页为 ⋮ 关注/取关菜单**；页面滚动后顶栏出现两行标题（上=灰小字 login、下=粗体 name，name 空回退 login），静态时身份信息在 Header 卡内
+2. Header 卡：头像 + 名字（🖼 周铭）+ @ZM-BAD + 状态行 + bio + 元信息行（← 状态行+编辑）+ Follow 钮（仅他人主页）
    - 状态行：⚡ Focusing + ✏ 编辑笔
    - bio：Backend developer...
-   - 元信息：📍 Hangzhou、✉ `prozm.bad@gmail.com`、🔗 `https://zmbad.me`、🔗 @zm_bad、👥 33 followers · 61 following
+   - 元信息：📍 Hangzhou、✉ `prozm.bad@gmail.com`、🔗 `https://zmbad.me`、𝕏 @zm_bad、👥 33 followers · 61 following
+   - Follow 钮：宽度铺满卡内、高 36 圆角描边——未关注=白底 + oct_plus_16 + FOLLOW；已关注=灰底 + 绿 check + FOLLOWING
 3. Pinned 区：📌 Pinned 标题 + 单行横滑仓库卡（→ 横滑查看更多）
 4. 导航行：Repositories 8 / Organizations 0 / Starred 93（点击进入独立列表页）
 
@@ -32,20 +33,23 @@
 
 ## 三、元素清单
 
+可行性：13/13 全部可行
+
 | # | 位置 | 元素 | 功能 | 可行性 | 接口 | 备注 |
 | --- | ------ | ------ | ------ | -------- | ------ | ------ |
 | 1 | 顶栏左 | ← 返回 | 回退 | ✅ 纯 UI | — | — |
 | 2 | 顶栏右 | 🔗 分享 | 分享用户主页 | ✅ | — | 拉起系统分享面板分享 `https://github.com/{login}`（Spec 061） |
 | 3 | 顶栏右 | ⚙ 设置 | 进入 Settings 页 | ✅ | — | 仅**本人**主页显示（新路由 settings） |
-| 4 | Header | 头像/名字/@login | 纯展示 | ✅ | `user.avatarUrl/name/login` | — |
-| 5 | Header | 状态行（emoji+message+编辑笔） | 观众可见状态 | ✅ | `user.status { emoji message }` | 编辑笔仅视图 |
-| 6 | Header | bio | 纯展示 | ✅ | `user.bio` | — |
-| 7 | Header | 元信息行：位置/邮箱/链接/X 账号 | 纯展示 | ✅ | `user.location/email/websiteUrl/twitterUsername` | email 空值隐藏 |
-| 8 | Header | followers/following 计数 | 纯展示 | ✅ | `user.followers/following.totalCount` | — |
-| 9 | Pinned 区 | 横滑仓库卡（单行） | 打开仓库 | ✅ | `user.pinnedItems` | Scroll+Row 横向滚动 |
-| 10 | 计数入口 | Repositories/Organizations/Starred + 计数 | 进入对应列表页 | ✅ | `repositories.totalCount` / `starredRepositories.totalCount` / 独立 OrgCount 查询 | 导航 repositoriesList / orgList / starred |
-| 11 | 正文区 | Pinned 区 + 三导航行 | 内容区 | ✅ | 现有查询 | 无展开视图（原 Tab/展开式已废弃） |
-| 12 | 顶栏右 | ⋮ 关注菜单 | Follow/Unfollow | ✅ | `user.viewerIsFollowing` + mutation | 仅**他人**主页显示；竖三点走全库惯例（`oct_kebab_horizontal_16` + rotate 90），头部用 `link_blue` |
+| 4 | 顶栏中 | 两行标题（滚动出现） | 身份常显 | ✅ 纯 UI | — | 上=灰小字 login（caption）、下=粗体 name（title 20）；name 空回退 login；滚动出顶部才渲染 |
+| 5 | Header | 头像/名字/@login | 纯展示 | ✅ | `user.avatarUrl/name/login` | — |
+| 6 | Header | 状态行（emoji+message+编辑笔） | 观众可见状态 | ✅ | `user.status { emoji message }` | 编辑笔仅视图 |
+| 7 | Header | bio | 纯展示 | ✅ | `user.bio` | — |
+| 8 | Header | 元信息行：位置/邮箱/链接/X 账号 | 展示+外链 | ✅ | `user.location/email/websiteUrl/twitterUsername` | 邮箱空值隐藏；链接行 https、邮箱行 mailto 可点；X 行=x_logo_16 品牌图标（Octicon 无品牌 logo，16 容器内 14 图标） |
+| 9 | Header | followers/following 计数 | 展示+联动 | ✅ | `user.followers/following.totalCount` | 关注/取关成功后 followers 即时 ±1 |
+| 10 | Pinned 区 | 横滑仓库卡（单行） | 打开仓库 | ✅ | `user.pinnedItems` | Scroll+Row 横向滚动 |
+| 11 | 计数入口 | Repositories/Organizations/Starred + 计数 | 进入对应列表页 | ✅ | `repositories.totalCount` / `starredRepositories.totalCount` / 独立 OrgCount 查询 | 导航 repositoriesList / orgList / starred |
+| 12 | 顶栏右 | ⋮ 关注菜单（双入口之一） | Follow/Unfollow | ✅ | `user.viewerIsFollowing` + mutation | 仅**他人**主页；菜单项随关注态重建（bindMenu 数组不随状态刷新，须显式重建）；竖三点=oct_kebab_horizontal_16 + rotate 90，头部用 link_blue |
+| 13 | Header | 铺满宽 Follow 钮（双入口之二） | Follow/Unfollow | ✅ | `user.viewerIsFollowing` + mutation | 仅**他人**主页；未关注=白底+oct_plus_16+FOLLOW，已关注=灰底（chip_bg）+绿 check（success_text）+FOLLOWING；toggleFollow 成功静默（无 toast）UI 即时刷新，失败 toast 错误文案 |
 
 ---
 
@@ -83,6 +87,8 @@ query UserProfile($login: String!) {
 ## 六、TDD 验收标准
 
 - [x] 顶栏 share 图标渲染（点击拉起系统分享面板分享本主页，Spec 061）；本人主页 ⚙ 进入 Settings 页、他人主页显示蓝色 ⋮ 关注菜单（截图验证）
+- [x] Follow 双入口（顶栏 ⋮ 菜单 + 头部铺满宽钮）两态渲染与切换正确：成功静默、followers 即时 ±1；失败 toast（2026-09-20 用户走查确认）
+- [x] 页面滚动后顶栏出现两行标题（灰字 login + 粗体 name）
 - [x] 状态行、X 元信息行渲染，缺失字段隐藏（邮箱空值隐藏）
 - [x] Pinned 单行横滑卡片
 - [x] Repositories/Organizations/Starred 三计数入口渲染且计数正确（8/0/93 实测）
@@ -94,4 +100,7 @@ query UserProfile($login: String!) {
 ## 七、备注
 
 - 状态笔：交互为点击提示（后续 Spec），保持功能按钮位置对齐官方；顶栏分享已接入系统分享面板（Spec 061）
-- 2026-08-31：官方布局对齐完成，截图验收通过
+- Follow 双入口并存：顶栏 ⋮ 菜单与 Header 内铺满宽两态钮指向同一 toggleFollow；成功路径静默（无 toast），按钮态与 followers 计数即时联动刷新，失败 toast `profile_action_failed`
+- 顶栏两行标题仅滚动后出现（滚动监听 y>0.001），静态时身份信息全部在 Header 卡内，与官方一致
+- X 账号行走品牌图标 `x_logo_16`（Octicon 无品牌 logo；16×16 容器内 14 图标，替换原 𝕏 文本字符——字形偏小不齐）
+- 官方布局对齐完成（2026-08-31 截图验收）；Follow 改版口径 2026-09-20 同步回写本 spec

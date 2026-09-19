@@ -3,7 +3,7 @@
 > BFS Level: 1
 > 关联截图: 官方 App 2026-09-20 截图 5 张（General 两步流程 + Choose a template×2 + Choose a license）
 > 上游 Spec: 013（Home，「+」菜单入口）
-> 状态: reviewing（2026-09-20 实现完成并部署模拟器待验收；走查通过后回写 implemented）
+> 状态: implemented（2026-09-20 状态回写：分支已合并进 develop=6429d18，CI 绿；用户走查确认功能正确（2026-09-20），抓取条自绘与字号对齐两轮修正已折入合并笔）
 
 ---
 
@@ -122,15 +122,15 @@ REST（经 GitHttpClient.restPost/restGet，页面禁裸 http）：
 
 - [x] bash scripts/check-spec.sh 通过
 - [x] 宿主单测不回归（bash scripts/ut/run-local-tests.sh）
-- [ ] buildCreateRepoBody：可选字段为空时省略、private/auto_init 正确；shouldAutoInit 四分支（仅 README / 仅 gitignore / 仅 license / 全空）
-- [ ] mapRestLicenses：13 集过滤、API 序保持、NOASSERTION 排除、name/spdx 映射
-- [ ] mapGitignoreTemplates：字符串数组映射、非字符串剔除
-- [ ] mapTemplateRepos：isTemplate 过滤、id/name/owner 提取
-- [ ] filterPickerItems：大小写不敏感、trim、空串返回全量
-- [ ] 模拟器：Home「+」→ New repository，主弹层自底部弹出；两步切换（NEXT/←）与底部圆点激活态正确
-- [ ] 模拟器：三个子弹层自底部弹出且盖在主弹层上（模板空态「Nothing to see here」/ gitignore 列表 / license 列表），搜索过滤与 SAVE 选中回显、✕ 丢弃均正确
-- [ ] 模拟器：真实创建仓库成功 → 弹层关闭并跳转新仓库详情页；重名 422 → 专属 toast 且已填内容保留
-- [ ] base/zh_CN 新增 key 对齐；硬编码颜色/字号门禁通过
+- [x] buildCreateRepoBody：可选字段为空时省略、private/auto_init 正确；shouldAutoInit 四分支（仅 README / 仅 gitignore / 仅 license / 全空）
+- [x] mapRestLicenses：13 集过滤、API 序保持、NOASSERTION 排除、name/spdx 映射
+- [x] mapGitignoreTemplates：字符串数组映射、非字符串剔除
+- [x] mapTemplateRepos：isTemplate 过滤、id/name/owner 提取
+- [x] filterPickerItems：大小写不敏感、trim、空串返回全量
+- [x] 模拟器：Home「+」→ New repository，主弹层自底部弹出；两步切换（NEXT/←）与底部圆点激活态正确
+- [x] 模拟器：三个子弹层自底部弹出且盖在主弹层上（模板空态「Nothing to see here」/ gitignore 列表 / license 列表），搜索过滤与 SAVE 选中回显、✕ 丢弃均正确
+- [x] 模拟器：真实创建仓库成功 → 弹层关闭并跳转新仓库详情页；重名 422 → 专属 toast 且已填内容保留
+- [x] base/zh_CN 新增 key 对齐；硬编码颜色/字号门禁通过
 
 ---
 
