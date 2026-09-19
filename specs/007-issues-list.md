@@ -18,10 +18,8 @@
 1. 顶部 App Bar：← 返回 + 两行标题（灰小字 `owner/name` + 粗体 Issues）+ 🔍 搜索（蓝，点击当页顶栏内联搜索）+ ⨁ 新建（circle-plus）——详见 Spec 063
 2. 排序条：🔍 Sort by... 下拉
 3. 状态 Tab：All/Open/Closed 下拉 chip（FilterDropdownChip）
-4. Issue 卡片列表：卡片 = 标题 + 元信息行（#编号 · label · 相对时间 · 💬 评论数）
-   - 示例卡片 1：🐛 Add network error layer / #4 · bug · d1 · 💬 0
-   - 示例卡片 2：📝 update UI design / #1 · documentation · d3
-   - ...（后续卡片）
+4. Issue 卡片列表：复用公共 `IssueCard` 组件（2026-09-19 定案：与工作区 Issues 列表同卡同形态）——
+   行1=状态图标 + `owner/name #N` 灰字 + 右侧相对时间；行2=标题（≤2 行）；行3=标签胶囊 + 评论数芯片（横向可滑）
 
 ---
 

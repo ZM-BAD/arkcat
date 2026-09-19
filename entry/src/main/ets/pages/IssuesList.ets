@@ -10,7 +10,7 @@ import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
 import { FilterDropdownChip, FilterDropdownOption, FilterSheetChip } from '../components/FilterDropdownChip';
 import { WorkFilterSortSheet } from '../components/WorkFilterSortSheet';
-import { LabelPill } from '../components/LabelPill';
+import { IssueCard } from '../components/IssueCard';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { IssueSummary, IssuesPage } from '../models/IssuesModels';
 import { WorkLabel } from '../models/WorkModels';
@@ -22,7 +22,6 @@ import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 import { NONE_FILTER_KEY } from '../utils/FilterLoading';
 import { FilterOptionSheet } from '../components/FilterOptionSheet';
-import { CountChip } from '../components/CountChip';
 
 @ComponentV2
 export struct IssuesListView {
@@ -340,71 +339,6 @@ export struct IssuesListView {
       c++;
     }
     return c;
-  }
-
-  private issueIcon(issue: IssueSummary): Resource {
-    if (issue.state === 'OPEN') {
-      return $r('app.media.oct_issue_opened_16');
-    }
-    return $r('app.media.oct_issue_closed_16');
-  }
-
-  private issueColor(issue: IssueSummary): ResourceColor {
-    return issue.state === 'OPEN' ? $r('app.color.success_text') : $r('app.color.shortcut_purple_fg');
-  }
-
-  @Builder
-  issueCard(issue: IssueSummary) {
-    Column({ space: 6 }) {
-      Row() {
-        OctIcon({ res: this.issueIcon(issue), iconSize: 22, iconColor: this.issueColor(issue) })
-        Text(issue.title)
-          .fontSize($r('app.float.body_font_size'))
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.text_primary'))
-          .margin({ left: 12 })
-          .maxLines(3)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .layoutWeight(1)
-        Text(`#${issue.number}`)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .margin({ left: 8 })
-      }
-      .width('100%')
-
-      // 标签数量不定：芯片组包横向 Scroll 防溢出卡片，时间锚定右侧不随滚动
-      Row({ space: 8 }) {
-        Scroll() {
-          Row({ space: 8 }) {
-            ForEach(issue.labels, (label: WorkLabel) => {
-              LabelPill({ labelName: label.name, colorHex: label.color })
-            }, (label: WorkLabel) => label.name)
-            if (issue.commentCount > 0) {
-              CountChip({ icon: $r('app.media.oct_comment_16'), text: `${issue.commentCount}` })
-            }
-            if (issue.linkedPrCount > 0) {
-              CountChip({ icon: $r('app.media.oct_git_pull_request_16'), text: `${issue.linkedPrCount}` })
-            }
-          }
-          .constraintSize({ minWidth: '100%' })
-        }
-        .scrollBar(BarState.Off)
-        .layoutWeight(1)
-        Text(this.timeText(timeParts(issue.createdAt, Date.now())))
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-      }
-      .width('100%')
-    }
-    .padding($r('app.float.card_padding'))
-    .borderRadius($r('app.float.card_radius'))
-    .backgroundColor($r('app.color.card_background'))
-    .width('100%')
-    .margin({ bottom: 8 })
-    .onClick(() => {
-      this.pathStack.pushPathByName('issueDetail', `${this.owner}/${this.name}/${issue.number}`);
-    })
   }
 
   /** 当前列表面板的标题（官方措辞：Filter by label / Filter by author / Filter assignee / Filter by milestone） */
@@ -728,7 +662,19 @@ export struct IssuesListView {
 
           if (this.shown.length > 0) {
             ForEach(this.shown, (issue: IssueSummary) => {
-              this.issueCard(issue)
+              // 卡片复用工作区 IssueCard（用户 2026-09-19 定案：与 Home Issues 列表同卡同形态）
+              IssueCard({
+                iconKey: issue.state === 'OPEN' ? 'open' : 'closed',
+                repoFullName: `${this.owner}/${this.name}`,
+                number: issue.number,
+                title: issue.title,
+                labels: issue.labels,
+                commentCount: issue.commentCount,
+                timeText: this.timeText(timeParts(issue.createdAt, Date.now())),
+                onTap: (): void => {
+                  this.pathStack.pushPathByName('issueDetail', `${this.owner}/${this.name}/${issue.number}`);
+                }
+              })
             }, (issue: IssueSummary) => issue.id)
             if (this.hasNextPage) {
               ListLoadingFooter({ show: this.loadingMore })

@@ -10,8 +10,7 @@ import { HomeService } from '../services/HomeService';
 import { friendlyError } from '../services/GitHttpClient';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
-import { AppBar, AppBarAction } from '../components/AppBar';
-import { CreateEntrySheet } from '../components/CreateEntrySheet';
+import { AppBar, AppBarAction, AppBarMenuItem } from '../components/AppBar';
 import { WorkSection, WorkConfigStore, visibleWorkSections } from '../utils/WorkConfig';
 
 /** 标题栏底部渐变阴影（滚动时显示、回顶部消失） */
@@ -89,30 +88,26 @@ export struct HomeView {
   /** 标题栏阴影：滚动中显示、回顶部消失 */
   @Local headerShadow: boolean = false;
   @Local isRefreshing: boolean = false;
-  /** 「+」新建入口弹层（Spec 043：New issue / New pull request 两行） */
-  @Local createSheetOpen: boolean = false;
 
-  /** 「+」→ 新建弹层（Spec 043 元素1：Home 入口无仓库上下文，表单内先选仓库） */
-  private openCreateSheet(): void {
-    this.createSheetOpen = true;
-  }
-
-  private createIssueEntry(): void {
-    this.createSheetOpen = false;
-    this.pathStack.pushPathByName('issueForm', '||new|0');
-  }
-
-  private createPrEntry(): void {
-    this.createSheetOpen = false;
-    this.pathStack.pushPathByName('prForm', '||new|0');
-  }
-
-  @Builder
-  createSheet() {
-    CreateEntrySheet({
-      onIssue: (): void => this.createIssueEntry(),
-      onPr: (): void => this.createPrEntry()
-    })
+  /**
+   * 「+」弹出菜单（用户 2026-09-19 定案：顶栏弹出菜单而非底部弹层；
+   * 官方口径两项：Create Issue / New Repository——Home 无 PR 项，建仓端侧未接入走占位 toast）。
+   */
+  private createMenuItems(): AppBarMenuItem[] {
+    return [
+      {
+        icon: $r('app.media.oct_issue_opened_16'),
+        label: $r('app.string.create_new_issue'),
+        onAction: (): void => {
+          this.pathStack.pushPathByName('issueForm', '||new|0');
+        }
+      },
+      {
+        icon: $r('app.media.oct_repo_16'),
+        label: $r('app.string.create_new_repo'),
+        onAction: (): void => this.comingSoon()
+      }
+    ];
   }
 
   @Builder
@@ -130,8 +125,7 @@ export struct HomeView {
             this.refresh();
           }, { a11y: $r('app.string.a11y_refresh') }),
           new AppBarAction($r('app.media.oct_plus_circle_24'), (): void => {
-            this.openCreateSheet();
-          }, { a11y: $r('app.string.a11y_new') })
+          }, { a11y: $r('app.string.a11y_new'), menuItems: this.createMenuItems() })
         ]
       })
       // 底部渐变阴影条：滚动中显示、回顶部消失（if 条件渲染，不依赖 shadow 属性刷新）
@@ -363,12 +357,5 @@ export struct HomeView {
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
-    .bindSheet($$this.createSheetOpen, this.createSheet(), {
-      height: 264,
-      detents: [264, SheetSize.LARGE],
-      showClose: false,
-      dragBar: true,
-      backgroundColor: $r('app.color.card_background')
-    })
   }
 }

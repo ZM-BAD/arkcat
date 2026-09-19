@@ -2582,11 +2582,15 @@
     },
     {
       "name": "create_new_issue",
-      "value": "New issue"
+      "value": "Create Issue"
+    },
+    {
+      "name": "create_new_repo",
+      "value": "New repository"
     },
     {
       "name": "create_new_pr",
-      "value": "New pull request"
+      "value": "New Pull Request"
     },
     {
       "name": "form_cancel",

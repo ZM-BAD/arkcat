@@ -2582,7 +2582,11 @@
     },
     {
       "name": "create_new_issue",
-      "value": "新建 Issue"
+      "value": "创建 Issue"
+    },
+    {
+      "name": "create_new_repo",
+      "value": "新建仓库"
     },
     {
       "name": "create_new_pr",
