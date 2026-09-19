@@ -769,7 +769,11 @@ export struct RepoDetailView {
         Text($r('app.string.repo_change'))
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.link_blue'))
-          .onClick(() => this.comingSoon())
+          .onClick((): void => {
+            // Spec 071：打开 Choose Branch（repo 角色，右上 CONTRIBUTE 复用 Compare changes）
+            this.pathStack.pushPathByName('branchPicker',
+              `repo|${this.owner}|${this.name}|${this.detail?.defaultBranchRefName ?? 'main'}`);
+          })
       }
       .width('100%')
       .padding({ left: 16, right: 16, top: 10, bottom: 10 })

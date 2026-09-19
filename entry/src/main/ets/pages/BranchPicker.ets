@@ -72,17 +72,25 @@ export struct BranchPickerView {
       });
   }
 
-  /** 选中回传 + 收页（prCompare 在 onShown 里消费） */
+  /** 选中回传 + 收页（prCompare 在 onShown 里消费）；repo 角色（Spec 071）行点击不落选择 */
   private pick(branch: string): void {
+    if (this.pRole === 'repo') {
+      return;
+    }
     BranchPickResult.role = this.pRole;
     BranchPickResult.picked = branch;
     this.pathStack.pop();
   }
 
   private titleRes(): Resource {
-    return this.pRole === 'base'
-      ? $r('app.string.picker_base_title')
-      : $r('app.string.picker_head_title');
+    if (this.pRole === 'base') {
+      return $r('app.string.picker_base_title');
+    }
+    if (this.pRole === 'repo') {
+      // repo 角色来自仓库详情分支行（Spec 071）：标题 Choose Branch + 右上 CONTRIBUTE
+      return $r('app.string.picker_repo_title');
+    }
+    return $r('app.string.picker_head_title');
   }
 
   /** 分支行：浅蓝 mono 芯片 + Default 描边徽标（默认分支）+ 蓝底白勾（当前选中）；
@@ -148,6 +156,18 @@ export struct BranchPickerView {
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .layoutWeight(1)
           .margin({ left: 4 })
+        if (this.pRole === 'repo') {
+          // Spec 071：CONTRIBUTE 复用新建 PR 动线（与 RepoDetail 顶栏「New pull request」同参）
+          Text($r('app.string.picker_contribute'))
+            .fontSize($r('app.float.body_font_size'))
+            .fontWeight(600)
+            .fontColor($r('app.color.link_blue'))
+            .textCase(TextCase.UpperCase)
+            .padding({ left: 8, right: 12, top: 10, bottom: 10 })
+            .onClick((): void => {
+              this.pathStack.pushPathByName('prCompare', `${this.pOwner}|${this.pName}`);
+            })
+        }
       }
       .width('100%')
       .height(56)
