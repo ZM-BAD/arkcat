@@ -331,33 +331,38 @@ export struct PrCompareView {
             .color($r('app.color.divider'))
 
           if (this.head === '') {
-            // 未选 compare 的空态卡（绿圈 git-pull-request；点击同样进选择器）
-            Column({ space: 12 }) {
-              Stack() {
-                Circle()
-                  .width(44)
-                  .height(44)
-                  .fill($r('app.color.success_subtle_bg'))
-                OctIcon({
-                  res: $r('app.media.oct_git_pull_request_16'), iconSize: 20,
-                  iconColor: $r('app.color.success_text')
-                })
+            // 未选 compare 的空态卡（绿圈 git-pull-request；点击同样进选择器）。
+            // ⚠️ 卡不可 width('100%') 叠 margin(16)：总宽超父容器 32vp 右缘溢出屏外（坑）——
+            // 用外层 padding(16) 内缩，卡自身 width('100%') 取内缩后宽
+            Column() {
+              Column({ space: 12 }) {
+                Stack() {
+                  Circle()
+                    .width(44)
+                    .height(44)
+                    .fill($r('app.color.success_subtle_bg'))
+                  OctIcon({
+                    res: $r('app.media.oct_git_pull_request_16'), iconSize: 20,
+                    iconColor: $r('app.color.success_text')
+                  })
+                }
+                .width(44)
+                .height(44)
+                Text($r('app.string.compare_empty_hint'))
+                  .fontSize($r('app.float.sub_text_font_size'))
+                  .fontWeight(600)
+                  .fontColor($r('app.color.text_primary'))
+                  .textAlign(TextAlign.Center)
+                  .maxLines(2)
               }
-              .width(44)
-              .height(44)
-              Text($r('app.string.compare_empty_hint'))
-                .fontSize($r('app.float.sub_text_font_size'))
-                .fontWeight(600)
-                .fontColor($r('app.color.text_primary'))
-                .textAlign(TextAlign.Center)
-                .maxLines(2)
+              .width('100%')
+              .alignItems(HorizontalAlign.Center)
+              .backgroundColor($r('app.color.bg_page'))
+              .borderRadius($r('app.float.card_radius'))
+              .padding({ left: 16, right: 16, top: 24, bottom: 24 })
             }
             .width('100%')
-            .alignItems(HorizontalAlign.Center)
-            .backgroundColor($r('app.color.bg_page'))
-            .borderRadius($r('app.float.card_radius'))
-            .padding({ left: 16, right: 16, top: 24, bottom: 24 })
-            .margin(16)
+            .padding(16)
             .onClick((): void => this.openPicker('head'))
           } else {
             // Changes 汇总区块
