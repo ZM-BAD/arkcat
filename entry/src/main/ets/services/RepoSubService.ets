@@ -246,8 +246,12 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!, $after: 
         contexts(first: 20) {
           totalCount
           nodes {
-            ... on CheckRun { name status conclusion }
-            ... on StatusContext { context state }
+            # Spec 048 富行：CheckRun 带时长/App 图标/官方链接；StatusContext 带状态词
+            ... on CheckRun {
+              databaseId name status conclusion startedAt completedAt detailsUrl title
+              checkSuite { app { name logoUrl } }
+            }
+            ... on StatusContext { context state targetUrl }
           }
         }
       }

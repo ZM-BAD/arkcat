@@ -15,7 +15,7 @@ import { ReactionBar } from '../components/ReactionBar';
 import { TimelineRow } from '../components/TimelineRow';
 import { ReviewThreadsCard } from '../components/ReviewThreadsCard';
 import { RepoComment, PrDetailPage, PrReview, TimelineNode, reviewStateKey, MetaLabel, MetaUser,
-  TriageUser, TriageLabel, TriageMilestone, TriageLinkedItem, TriageProject, EditorRow,
+  TriageUser, TriageLabel, TriageMilestone, TriageLinkedItem, TriageProject, EditorRow, StatusCheckItem,
   filterTriageByKeyword, diffSelection, singlePickId, resolveMergeMethod, actorDisplayLogin } from '../models/RepoSubModels';
 import { RepoSubService } from '../services/RepoSubService';
 import { friendlyError } from '../services/GitHttpClient';
@@ -1853,7 +1853,26 @@ export struct PrDetailView {
               detail: this.detail,
               merging: this.mergeSending,
               onMergeOpen: (): void => this.openMergeOptions(),
-              onMergeConfirm: (): void => this.confirmMergeTap()
+              onMergeConfirm: (): void => this.confirmMergeTap(),
+              // Spec 048：check run 行 → 详情页（权限透传做重跑门）；View all → Checks 全量页
+              onOpenCheck: (item: StatusCheckItem): void => {
+                // 闭包内可空 @Local 收窄丢失（坑 44）：先落局部常量再门
+                const d = this.detail;
+                if (d === null) {
+                  return;
+                }
+                this.pathStack.pushPathByName('checkRunDetail',
+                  `${this.owner}|${this.name}|${item.checkRunId}|${d.repoViewerPermission}` +
+                  `|${item.name}|${item.appLogo}|${item.detailsUrl}`);
+              },
+              onViewAllChecks: (): void => {
+                const d = this.detail;
+                if (d === null) {
+                  return;
+                }
+                this.pathStack.pushPathByName('prChecks',
+                  `${this.owner}/${this.name}/${this.number}|${d.repoViewerPermission}`);
+              }
             })
 
             // Conversation = 官方时间轴：左侧竖直连线 + 事件行 + 评论/审阅整卡（时间序）

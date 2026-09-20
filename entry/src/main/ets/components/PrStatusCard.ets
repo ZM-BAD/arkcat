@@ -6,6 +6,7 @@
  */
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from './OctIcon';
+import { CheckRunRow } from './CheckRunRow';
 import { PrDetailPage, StatusCheckItem, canMergePr, mergeStateReasonKey } from '../models/RepoSubModels';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
@@ -23,6 +24,10 @@ export struct PrStatusCard {
   @Event onMergeOpen: () => void = (): void => { };
   /** 主段 MERGE → 按当前方式直接合并（页面先弹官方确认对话框） */
   @Event onMergeConfirm: () => void = (): void => { };
+  /** Spec 048：check run 富行点击 → 页面进 Check run 详情（StatusContext 不可点，组件内已门） */
+  @Event onOpenCheck: (item: StatusCheckItem) => void = (_item: StatusCheckItem): void => { };
+  /** Spec 048：View all → 页面进 Checks 全量页 */
+  @Event onViewAllChecks: () => void = (): void => { };
 
   private stringOf(res: Resource): string {
     return resText(this.getUIContext(), res);
@@ -30,17 +35,6 @@ export struct PrStatusCard {
 
   private timeText(parts: TimeParts | null): string {
     return parts !== null ? githubShortTime(parts) : '';
-  }
-
-  /** 展开态每个 check 行的图标：SUCCESS 绿勾 / FAILURE 红叉 / 其余黄点 */
-  private checkItemIcon(state: string): Resource {
-    if (state === 'SUCCESS') {
-      return $r('app.media.oct_check_16');
-    }
-    if (state === 'FAILURE') {
-      return $r('app.media.oct_x_16');
-    }
-    return $r('app.media.oct_dot_fill_16');
   }
 
   private checkColor(state: string): ResourceColor {
@@ -58,6 +52,18 @@ export struct PrStatusCard {
     const conflicting = this.detail.mergeable === 'CONFLICTING'
       || mergeStateReasonKey(this.detail.mergeStateStatus) === 'conflicting';
     return conflicting ? $r('app.color.danger_text') : $r('app.color.text_secondary');
+  }
+
+  /** View all 次行计数文案（官方「19 successful checks」口径；按 rollup 汇总态选词，Spec 048） */
+  private checksTotalText(): string {
+    const total = this.detail.checksTotal;
+    if (this.detail.checksState === 'SUCCESS') {
+      return resText(this.getUIContext(), $r('app.string.checks_count_success', total));
+    }
+    if (this.detail.checksState === 'FAILURE') {
+      return resText(this.getUIContext(), $r('app.string.checks_count_failed', total));
+    }
+    return resText(this.getUIContext(), $r('app.string.checks_count_progress', total));
   }
 
   /** 不可合并原因文案（Spec 042 元素9/10：CONFLICTING 优先，其次 mergeStateStatus 映射，未知兜底） */
@@ -168,19 +174,34 @@ export struct PrStatusCard {
         this.checksOpen = !this.checksOpen;
       })
       if (this.checksOpen) {
-        ForEach(this.detail.checks, (c: StatusCheckItem) => {
-          Row({ space: 8 }) {
-            OctIcon({ res: this.checkItemIcon(c.state), iconSize: 12, iconColor: this.checkColor(c.state) })
-            Text(c.name)
-              .fontSize($r('app.float.caption_font_size'))
-              .fontColor($r('app.color.text_primary'))
-              .maxLines(1)
-              .textOverflow({ overflow: TextOverflow.Ellipsis })
-              .layoutWeight(1)
-          }
-          .width('100%')
-          .padding({ left: 22 })
+        // 官方预览前 5 条富行（Spec 048），全量经 View all 进 Checks 页
+        ForEach(this.detail.checks.slice(0, 5), (c: StatusCheckItem) => {
+          CheckRunRow({
+            item: c,
+            onOpen: (item: StatusCheckItem): void => {
+              this.onOpenCheck(item);
+            }
+          })
         }, (c: StatusCheckItem) => c.key)
+        if (this.detail.checksTotal > 0) {
+          // View all 收口行（官方）：主文案 + 计数次行，与行图标列左对齐
+          Column({ space: 1 }) {
+            Text($r('app.string.checks_view_all'))
+              .fontSize($r('app.float.body_font_size'))
+              .fontColor($r('app.color.text_primary'))
+              .width('100%')
+            Text(this.checksTotalText())
+              .fontSize($r('app.float.caption_font_size'))
+              .fontColor($r('app.color.text_secondary'))
+              .width('100%')
+          }
+          .alignItems(HorizontalAlign.Start)
+          .width('100%')
+          .padding({ top: 10, bottom: 10 })
+          .onClick((): void => {
+            this.onViewAllChecks();
+          })
+        }
       }
       // Merge 区块（Spec 042 元素8/9/10）：已合并不显示；可用=Ready to merge 行+MERGE 分段按钮
       // （Android 官方形态：主段 MERGE 进确认 sheet、右段 ▾ 选方法）；阻塞=原因（冲突红字）+禁用态

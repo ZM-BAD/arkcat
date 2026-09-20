@@ -190,12 +190,22 @@ export interface IssueDetailPage {
   endCursor: string;
 }
 
-/** Checks 列表行（statusCheckRollup.contexts：CheckRun/StatusContext 归一化） */
+/** Checks 列表行（statusCheckRollup.contexts：CheckRun/StatusContext 归一化；Spec 048 富行） */
 export interface StatusCheckItem {
   /** ForEach key（同名 check 可来自不同 suite/app，name 不足以唯一——映射时按序号定型） */
   key: string;
   name: string;
   state: string;
+  /** check run 数据库 id（重跑/详情路由用）；0=StatusContext（无 job 数据，不可进详情页） */
+  checkRunId: number;
+  /** 官方详情页链接（CheckRun detailsUrl / StatusContext targetUrl；⋮ 浏览器兜底） */
+  detailsUrl: string;
+  /** check run 输出标题（如 Renovate 的描述文案；非空时副标题优先于结论文案） */
+  title: string;
+  startedAt: string;
+  completedAt: string;
+  /** 产出方 App 图标（GitHub Actions/Renovate 等；空串=无图标位） */
+  appLogo: string;
 }
 
 /** PR 审阅卡行（Spec 042）：reviews(first) nodes 归一化 */
@@ -465,6 +475,8 @@ export interface PrDetailPage {
   timelineCursor: string;
   checksState: string;
   checks: StatusCheckItem[];
+  /** contexts.totalCount（展开态 View all 次行计数； Spec 048） */
+  checksTotal: number;
   /** 元数据概览面板（info 钮 → 图1） */
   labelItems: MetaLabel[];
   assigneeItems: MetaUser[];
@@ -1556,6 +1568,7 @@ export function mapPrDetail(data: JsonMap): PrDetailPage {
     reviewsTotal: reviews !== null ? Json.num(reviews, 'totalCount') : 0,
     checksState: checks !== null ? Json.str(checks, 'state') : '',
     checks: mapStatusChecks(checks),
+    checksTotal: mapChecksTotal(checks),
     labelItems: labelItems,
     assigneeItems: assigneeItems,
     milestoneItem: milestoneItem,
@@ -1573,7 +1586,19 @@ export function mapPrDetail(data: JsonMap): PrDetailPage {
   };
 }
 
-/** statusCheckRollup.contexts → 归一化行（CheckRun 用 conclusion，StatusContext 用 state） */
+/** contexts.totalCount（View all 次行计数；连接被 first:20 截断时 totalCount 仍是全量） */
+function mapChecksTotal(checks: JsonMap | null): number {
+  if (checks === null) {
+    return 0;
+  }
+  const conn = Json.obj(checks, 'contexts');
+  return conn !== null ? Json.num(conn, 'totalCount') : 0;
+}
+
+/**
+ * statusCheckRollup.contexts → 归一化行（Spec 048 富行）。
+ * CheckRun 用 conclusion（缺省回落 status），StatusContext 用 state；state 值两族共用分档/文案映射。
+ */
 function mapStatusChecks(checks: JsonMap | null): StatusCheckItem[] {
   const items: StatusCheckItem[] = [];
   if (checks === null) {
@@ -1585,11 +1610,25 @@ function mapStatusChecks(checks: JsonMap | null): StatusCheckItem[] {
   }
   for (const nodeItem of Json.arr(conn, 'nodes')) {
     const node = nodeItem as JsonMap;
-    const name = Json.str(node, 'name') !== '' ? Json.str(node, 'name') : Json.str(node, 'context');
+    const runId = Json.num(node, 'databaseId');
     const conclusion = Json.str(node, 'conclusion');
     const state = conclusion !== '' ? conclusion : Json.str(node, 'state');
+    const name = Json.str(node, 'name') !== '' ? Json.str(node, 'name') : Json.str(node, 'context');
+    const suite = Json.obj(node, 'checkSuite');
+    const app = suite !== null ? Json.obj(suite, 'app') : null;
     if (name !== '') {
-      items.push({ key: `${name}#${items.length}`, name: name, state: state });
+      items.push({
+        key: `${name}#${items.length}`,
+        name: name,
+        state: state,
+        checkRunId: runId,
+        // CheckRun detailsUrl / StatusContext targetUrl：均为官方页链接，键不同值同用
+        detailsUrl: Json.str(node, 'detailsUrl') !== '' ? Json.str(node, 'detailsUrl') : Json.str(node, 'targetUrl'),
+        title: Json.str(node, 'title'),
+        startedAt: Json.str(node, 'startedAt'),
+        completedAt: Json.str(node, 'completedAt'),
+        appLogo: app !== null ? Json.str(app, 'logoUrl') : ''
+      });
     }
   }
   return items;
