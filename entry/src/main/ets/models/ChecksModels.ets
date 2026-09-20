@@ -5,6 +5,9 @@
  */
 import { Json, JsonMap } from '../utils/Json';
 
+/** 可重跑的仓库权限档（与合并权限门同口径；READ/NONE 隐藏 RE-RUN；Check run 详情页与 run 汇总页共用） */
+export const RERUN_PERMS: string[] = ['ADMIN', 'MAINTAIN', 'WRITE'];
+
 /** 单个 job 步骤（REST /actions/jobs/{id} 的 steps[]；时间为 ISO 原文，展示层转时长） */
 export interface JobStep {
   number: number;
@@ -135,27 +138,33 @@ export function conclusionKey(state: string): string {
   }
 }
 
+/** REST 步骤节点 → JobStep（status/conclusion 归一为大写 GraphQL 口径） */
+function mapRestStep(node: JsonMap): JobStep {
+  return {
+    number: Json.num(node, 'number'),
+    name: Json.str(node, 'name'),
+    status: Json.str(node, 'status').toUpperCase(),
+    conclusion: Json.str(node, 'conclusion').toUpperCase(),
+    startedAt: Json.str(node, 'started_at'),
+    completedAt: Json.str(node, 'completed_at')
+  };
+}
+
 /** REST /repos/{o}/{r}/actions/jobs/{id} 响应 → JobDetail（steps 按 number 升序；缺失容错为空） */
 export function mapRestJob(raw: JsonMap): JobDetail {
   const steps: JobStep[] = [];
   for (const nodeItem of Json.arr(raw, 'steps')) {
-    const node = nodeItem as JsonMap;
-    steps.push({
-      number: Json.num(node, 'number'),
-      name: Json.str(node, 'name'),
-      status: Json.str(node, 'status'),
-      conclusion: Json.str(node, 'conclusion'),
-      startedAt: Json.str(node, 'started_at'),
-      completedAt: Json.str(node, 'completed_at')
-    });
+    steps.push(mapRestStep(nodeItem as JsonMap));
   }
   steps.sort((a: JobStep, b: JobStep) => a.number - b.number);
   return {
     id: Json.num(raw, 'id'),
     runId: Json.num(raw, 'run_id'),
     name: Json.str(raw, 'name'),
-    status: Json.str(raw, 'status'),
-    conclusion: Json.str(raw, 'conclusion'),
+    // REST 值为小写（completed/success/in_progress），统一归一大写——conclusionKey/分档/图标
+    // 全链路按 GraphQL 大写口径判定，不归一则成功 job 会错显「In progress」、步骤错显灰点
+    status: Json.str(raw, 'status').toUpperCase(),
+    conclusion: Json.str(raw, 'conclusion').toUpperCase(),
     startedAt: Json.str(raw, 'started_at'),
     completedAt: Json.str(raw, 'completed_at'),
     htmlUrl: Json.str(raw, 'html_url'),

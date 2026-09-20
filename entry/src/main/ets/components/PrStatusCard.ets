@@ -8,6 +8,7 @@ import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from './OctIcon';
 import { CheckRunRow } from './CheckRunRow';
 import { PrDetailPage, StatusCheckItem, canMergePr, mergeStateReasonKey } from '../models/RepoSubModels';
+import { conclusionKey } from '../models/ChecksModels';
 import { githubShortTime, timeParts, TimeParts } from '../utils/Format';
 import { resText } from '../utils/I18n';
 
@@ -47,6 +48,29 @@ export struct PrStatusCard {
     return $r('app.color.warning_text');
   }
 
+  /** 成功占比%（红绿占比环用；按已取回的 checks 统计，contexts 上限 20 内近似） */
+  private successPercent(): number {
+    let success = 0;
+    for (const c of this.detail.checks) {
+      if (conclusionKey(c.state) === 'success') {
+        success += 1;
+      }
+    }
+    const total = this.detail.checks.length;
+    return total > 0 ? Math.round((success / total) * 100) : 0;
+  }
+
+  /** Checks 摘要行文案：官方混合失败词式「Some checks were not successful」 */
+  private rollupText(): string {
+    if (this.detail.checksState === 'SUCCESS') {
+      return this.stringOf($r('app.string.pr_all_checks_passed'));
+    }
+    if (this.detail.checksState === 'FAILURE') {
+      return this.stringOf($r('app.string.checks_rollup_failed'));
+    }
+    return this.stringOf($r('app.string.work_pr_checks_pending'));
+  }
+
   /** 冲突类原因（CONFLICTING/DIRTY）用红色提示，其余次级灰（Spec 042 元素9） */
   private mergeReasonColor(): ResourceColor {
     const conflicting = this.detail.mergeable === 'CONFLICTING'
@@ -54,16 +78,25 @@ export struct PrStatusCard {
     return conflicting ? $r('app.color.danger_text') : $r('app.color.text_secondary');
   }
 
-  /** View all 次行计数文案（官方「19 successful checks」口径；按 rollup 汇总态选词，Spec 048） */
+  /** View all 次行计数文案：全成功「N successful checks」；混合失败按实际成败计数
+   *  （官方 web 同款「X failing and Y successful checks」，2026-09-20 走查定案——总数配失败词会虚报） */
   private checksTotalText(): string {
-    const total = this.detail.checksTotal;
     if (this.detail.checksState === 'SUCCESS') {
-      return resText(this.getUIContext(), $r('app.string.checks_count_success', total));
+      return resText(this.getUIContext(), $r('app.string.checks_count_success'), `${this.detail.checksTotal}`);
     }
     if (this.detail.checksState === 'FAILURE') {
-      return resText(this.getUIContext(), $r('app.string.checks_count_failed', total));
+      let failed = 0;
+      let success = 0;
+      for (const c of this.detail.checks) {
+        if (conclusionKey(c.state) === 'success') {
+          success += 1;
+        } else if (conclusionKey(c.state) === 'failed') {
+          failed += 1;
+        }
+      }
+      return resText(this.getUIContext(), $r('app.string.checks_total_mixed'), `${failed}`, `${success}`);
     }
-    return resText(this.getUIContext(), $r('app.string.checks_count_progress', total));
+    return resText(this.getUIContext(), $r('app.string.checks_count_progress'), `${this.detail.checksTotal}`);
   }
 
   /** 不可合并原因文案（Spec 042 元素9/10：CONFLICTING 优先，其次 mergeStateStatus 映射，未知兜底） */
@@ -150,15 +183,31 @@ export struct PrStatusCard {
         .width('100%')
         .padding({ left: 22 })
       }
-      // Checks 摘要行：状态色圆圈 + 文案 + chevron；点击展开全部 checks
+      // Checks 摘要行：状态圆图标 + 文案 + chevron；点击展开全部 checks。
+      // 混合失败=红绿占比环（红底全环，绿色成功弧自 12 点钟顺时针，占比=成功/总数）；
+      // 全绿/进行中仍用单色圆图标。
       Row({ space: 8 }) {
-        OctIcon({
-          res: $r('app.media.oct_circle_16'),
-          iconSize: 14,
-          iconColor: this.checkColor(this.detail.checksState)
-        })
-        Text(this.detail.checksState === 'SUCCESS' ? this.stringOf($r('app.string.pr_all_checks_passed'))
-          : this.stringOf($r('app.string.work_pr_checks_failed')))
+        if (this.detail.checksState === 'FAILURE') {
+          // 官方红绿占比环：绿=成功占比、红=其余（绿色段自 12 点钟顺时针，DataPanel 圆形面板同序）
+          DataPanel({
+            values: [this.successPercent(), 100 - this.successPercent()],
+            max: 100,
+            type: DataPanelType.Circle
+          })
+            .valueColors([$r('app.color.success_text'), $r('app.color.danger_text')])
+            .trackBackgroundColor($r('app.color.danger_text'))
+            .strokeWidth(2)
+            .closeEffect(true)
+            .width(14)
+            .height(14)
+        } else {
+          OctIcon({
+            res: $r('app.media.oct_circle_16'),
+            iconSize: 14,
+            iconColor: this.checkColor(this.detail.checksState)
+          })
+        }
+        Text(this.rollupText())
           .fontSize($r('app.float.caption_font_size'))
           .fontColor($r('app.color.text_primary'))
         Blank()

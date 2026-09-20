@@ -3113,8 +3113,80 @@
       "value": "重跑已触发"
     },
     {
-      "name": "checks_open_github",
-      "value": "在 GitHub 中打开"
+      "name": "checks_menu_refresh",
+      "value": "刷新"
+    },
+    {
+      "name": "checks_tab_overview",
+      "value": "概览"
+    },
+    {
+      "name": "checks_tab_details",
+      "value": "详情"
+    },
+    {
+      "name": "checks_details_summary",
+      "value": "Summary"
+    },
+    {
+      "name": "run_event_commit",
+      "value": "commit"
+    },
+    {
+      "name": "run_event_pull_request",
+      "value": "PR"
+    },
+    {
+      "name": "run_stats_status",
+      "value": "状态"
+    },
+    {
+      "name": "run_stats_duration",
+      "value": "耗时"
+    },
+    {
+      "name": "run_stats_billable",
+      "value": "计费时长"
+    },
+    {
+      "name": "run_stats_artifacts",
+      "value": "产物"
+    },
+    {
+      "name": "checks_jobs_title",
+      "value": "Jobs"
+    },
+    {
+      "name": "checks_jobs_passed",
+      "value": "%s 个成功"
+    },
+    {
+      "name": "checks_jobs_failed",
+      "value": "%s 个失败"
+    },
+    {
+      "name": "checks_jobs_running",
+      "value": "%s 个进行中"
+    },
+    {
+      "name": "checks_rerun_all_jobs",
+      "value": "全部重跑"
+    },
+    {
+      "name": "checks_run_via",
+      "value": "由 %s 触发"
+    },
+    {
+      "name": "checks_run_by",
+      "value": "，触发者 "
+    },
+    {
+      "name": "checks_rollup_failed",
+      "value": "部分检查未成功"
+    },
+    {
+      "name": "checks_total_mixed",
+      "value": "%s 个失败和 %s 个成功的检查"
     }
   ]
 }

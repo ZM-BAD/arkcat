@@ -3113,8 +3113,80 @@
       "value": "Re-run started"
     },
     {
-      "name": "checks_open_github",
-      "value": "Open in GitHub"
+      "name": "checks_menu_refresh",
+      "value": "Refresh"
+    },
+    {
+      "name": "checks_tab_overview",
+      "value": "Overview"
+    },
+    {
+      "name": "checks_tab_details",
+      "value": "Details"
+    },
+    {
+      "name": "checks_details_summary",
+      "value": "Summary"
+    },
+    {
+      "name": "run_event_commit",
+      "value": "commit"
+    },
+    {
+      "name": "run_event_pull_request",
+      "value": "pull request"
+    },
+    {
+      "name": "run_stats_status",
+      "value": "Status"
+    },
+    {
+      "name": "run_stats_duration",
+      "value": "Duration"
+    },
+    {
+      "name": "run_stats_billable",
+      "value": "Billable time"
+    },
+    {
+      "name": "run_stats_artifacts",
+      "value": "Artifacts"
+    },
+    {
+      "name": "checks_jobs_title",
+      "value": "Jobs"
+    },
+    {
+      "name": "checks_jobs_passed",
+      "value": "%s passed"
+    },
+    {
+      "name": "checks_jobs_failed",
+      "value": "%s failed"
+    },
+    {
+      "name": "checks_jobs_running",
+      "value": "%s in progress"
+    },
+    {
+      "name": "checks_rerun_all_jobs",
+      "value": "RE-RUN ALL JOBS"
+    },
+    {
+      "name": "checks_run_via",
+      "value": "Triggered via %s"
+    },
+    {
+      "name": "checks_run_by",
+      "value": " by "
+    },
+    {
+      "name": "checks_rollup_failed",
+      "value": "Some checks were not successful"
+    },
+    {
+      "name": "checks_total_mixed",
+      "value": "%s failing and %s successful checks"
     }
   ]
 }

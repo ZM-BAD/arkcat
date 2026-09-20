@@ -20,6 +20,8 @@ export struct CheckRunRow {
   @Param subMaxLines: number = 2;
   /** 行内容水平内距：卡内 0（卡 padding 兜底）；Checks 页白块整行时 16 */
   @Param inset: number = 0;
+  /** App 图标列：Overview/Status 卡有；Details 组内行官方不带图标（组头已带），关闭后不占位 */
+  @Param showLogo: boolean = true;
 
   private stateIcon(): Resource {
     if (this.item.state === 'SUCCESS') {
@@ -50,12 +52,12 @@ export struct CheckRunRow {
     const dur = durationText(this.item.startedAt, this.item.completedAt);
     if (key === 'success') {
       return dur !== ''
-        ? resText(this.getUIContext(), $r('app.string.checks_sub_success', dur))
+        ? resText(this.getUIContext(), $r('app.string.checks_sub_success'), dur)
         : resText(this.getUIContext(), $r('app.string.checks_word_success'));
     }
     if (key === 'failed') {
       return dur !== ''
-        ? resText(this.getUIContext(), $r('app.string.checks_sub_failed', dur))
+        ? resText(this.getUIContext(), $r('app.string.checks_sub_failed'), dur)
         : resText(this.getUIContext(), $r('app.string.checks_word_failed'));
     }
     if (key === 'cancelled') {
@@ -73,15 +75,17 @@ export struct CheckRunRow {
   build() {
     Row({ space: 10 }) {
       OctIcon({ res: this.stateIcon(), iconSize: 14, iconColor: this.stateColor() })
-      if (this.item.appLogo !== '') {
-        Image(this.item.appLogo)
-          .width(28)
-          .height(28)
-          .borderRadius(6)
-          .backgroundColor($r('app.color.heat_empty'))
-      } else {
-        // StatusContext 无 App 图标：占位同宽，保持名称列对齐
-        Row().width(28).height(28)
+      if (this.showLogo) {
+        if (this.item.appLogo !== '') {
+          Image(this.item.appLogo)
+            .width(28)
+            .height(28)
+            .borderRadius(6)
+            .backgroundColor($r('app.color.heat_empty'))
+        } else {
+          // StatusContext 无 App 图标：占位同宽，保持名称列对齐
+          Row().width(28).height(28)
+        }
       }
       Column({ space: 2 }) {
         Text(this.item.name)

@@ -1,22 +1,20 @@
 /**
  * Spec 048 Check run 详情页（官方 job 视图）：
- * 顶栏 job 名 + 结论文案；步骤列表（等宽字体 + 时长）；底部 RE-RUN 黑浮钮 → 重跑弹层
+ * 顶栏全称（「workflow 名 / job 名 (event)」列表行同款）+ 结论文案；⋮ 菜单 Refresh / Open in GitHub；
+ * 步骤列表（等宽字体 + 时长）；底部 RE-RUN 黑浮钮 → 重跑弹层
  * （Enable Debug logging 开关 / RE-RUN THIS JOB / View workflow summary）。
  * 非 Actions 产出的 check run（REST 404）降级：无步骤空态 + 隐藏 RE-RUN，浏览器兜底。
  */
 import { promptAction } from '@kit.ArkUI';
-import { AppBar, AppBarAction, AppBarMenuItem } from '../components/AppBar';
+import { AppBar, AppBarAction } from '../components/AppBar';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
-import { JobDetail, JobStep, RunInfo, conclusionKey, durationText } from '../models/ChecksModels';
+import { JobDetail, JobStep, RunInfo, RERUN_PERMS, conclusionKey, durationText } from '../models/ChecksModels';
 import { fetchJob, fetchRunInfo, rerunJob, rerunRun } from '../services/ChecksService';
 import { ApiError, friendlyError } from '../services/GitHttpClient';
 import { shareLink } from '../utils/Share';
 import { resText } from '../utils/I18n';
-
-/** 可重跑的仓库权限档（与合并权限门同口径；READ/NONE 隐藏 RE-RUN） */
-const RERUN_PERMS: string[] = ['ADMIN', 'MAINTAIN', 'WRITE'];
 
 @ComponentV2
 export struct CheckRunDetailView {
@@ -83,6 +81,15 @@ export struct CheckRunDetailView {
     return RERUN_PERMS.includes(this.perm) && this.job !== null;
   }
 
+  /** 顶栏/分享标题：列表行带来的全称（「workflow 名 / job 名 (event)」）优先；
+   *  REST job.name 是裸 job 名（pylint），不能回填顶栏（官方顶栏即全称） */
+  private displayTitle(): string {
+    if (this.jobName !== '') {
+      return this.jobName;
+    }
+    return this.job !== null ? this.job.name : '';
+  }
+
   /** 顶栏副标题：结论文案（带时长），与列表行同口径 */
   private subtitle(): string {
     const j = this.job;
@@ -93,10 +100,10 @@ export struct CheckRunDetailView {
     const key = conclusionKey(state);
     const dur = durationText(j.startedAt, j.completedAt);
     if (key === 'success' && dur !== '') {
-      return resText(this.getUIContext(), $r('app.string.checks_sub_success', dur));
+      return resText(this.getUIContext(), $r('app.string.checks_sub_success'), dur);
     }
     if (key === 'failed' && dur !== '') {
-      return resText(this.getUIContext(), $r('app.string.checks_sub_failed', dur));
+      return resText(this.getUIContext(), $r('app.string.checks_sub_failed'), dur);
     }
     if (key === 'success') {
       return resText(this.getUIContext(), $r('app.string.checks_word_success'));
@@ -116,13 +123,13 @@ export struct CheckRunDetailView {
     return resText(this.getUIContext(), $r('app.string.checks_word_progress'));
   }
 
-  /** 步骤图标：成功绿实心圆勾 / 失败红圆叉 / 其余黄点（官方步骤列表口径） */
+  /** 步骤图标：绿实心圆勾 / 红底白叉圆 / 其余灰点（官方步骤列表口径） */
   private stepIcon(stepState: string): Resource {
     if (stepState === 'SUCCESS') {
       return $r('app.media.oct_check_circle_fill_16');
     }
     if (stepState === 'FAILURE' || stepState === 'TIMED_OUT' || stepState === 'STARTUP_FAILURE') {
-      return $r('app.media.oct_x_circle_16');
+      return $r('app.media.oct_x_circle_fill_16');
     }
     return $r('app.media.oct_dot_fill_16');
   }
@@ -145,17 +152,14 @@ export struct CheckRunDetailView {
     return this.detailsUrl;
   }
 
-  /** ⋮ 菜单：应用内浏览器看官方页（日志全文官方只给 web） */
-  private menuItems(): AppBarMenuItem[] {
+  /** ⋮ 菜单：Refresh 纯文字项（官方无图标、无 Open in GitHub），点击静默重拉 job 状态。
+   *  原生 bindMenu 弹层（MenuElement[]，FileTree/CodeViewer 同款通道）：宽度随内容自适应 */
+  private menuItems(): MenuElement[] {
     return [
       {
-        icon: $r('app.media.oct_link_16'),
-        label: $r('app.string.checks_open_github'),
-        onAction: (): void => {
-          const url = this.pageUrl();
-          if (url !== '') {
-            this.pathStack?.pushPathByName('inAppBrowser', `${this.jobName}|${url}`);
-          }
+        value: resText(this.getUIContext(), $r('app.string.checks_menu_refresh')),
+        action: (): void => {
+          this.reload(true);
         }
       }
     ];
@@ -356,7 +360,7 @@ export struct CheckRunDetailView {
       Column() {
         AppBar({
           showBack: true,
-          title: this.job !== null ? this.job.name : this.jobName,
+          title: this.displayTitle(),
           subtitle: this.subtitle(),
           onBack: (): void => {
             this.pathStack?.pop();
@@ -365,13 +369,13 @@ export struct CheckRunDetailView {
             new AppBarAction($r('app.media.oct_share_android_16'), (): void => {
               const url = this.pageUrl();
               if (url !== '') {
-                shareLink(this.getUIContext(), url, this.job !== null ? this.job.name : this.jobName);
+                shareLink(this.getUIContext(), url, this.displayTitle());
               }
             }, { a11y: $r('app.string.a11y_share') }),
             new AppBarAction($r('app.media.oct_kebab_horizontal_16'), (): void => {
             }, {
               rotate90: true, a11y: $r('app.string.a11y_more'),
-              menuItems: this.menuItems()
+              menu: this.menuItems()
             })
           ]
         })

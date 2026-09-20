@@ -194,6 +194,7 @@ export interface IssueDetailPage {
 export interface StatusCheckItem {
   /** ForEach key（同名 check 可来自不同 suite/app，name 不足以唯一——映射时按序号定型） */
   key: string;
+  /** 行展示名：Actions 行=「workflow 名 / job 名 (event)」全称；外部 App/经典 status=原 name/context */
   name: string;
   state: string;
   /** check run 数据库 id（重跑/详情路由用）；0=StatusContext（无 job 数据，不可进详情页） */
@@ -1596,8 +1597,30 @@ function mapChecksTotal(checks: JsonMap | null): number {
 }
 
 /**
+ * Actions 行展示名（官方口径「Backend / pylint (push)」）：suite.workflowRun 取 workflow 名与 event
+ * 拼全称；外部 App（Codecov 等）无 workflowRun（null）→ 原样返回 job 名。event 值即官方括号词（push/pull_request）。
+ */
+export function checkDisplayName(runName: string, suite: JsonMap | null): string {
+  if (suite === null) {
+    return runName;
+  }
+  const wr = Json.obj(suite, 'workflowRun');
+  if (wr === null) {
+    return runName;
+  }
+  const wf = Json.obj(wr, 'workflow');
+  const wfName = wf !== null ? Json.str(wf, 'name') : '';
+  if (wfName === '') {
+    return runName;
+  }
+  const event = Json.str(wr, 'event');
+  return event !== '' ? `${wfName} / ${runName} (${event})` : `${wfName} / ${runName}`;
+}
+
+/**
  * statusCheckRollup.contexts → 归一化行（Spec 048 富行）。
  * CheckRun 用 conclusion（缺省回落 status），StatusContext 用 state；state 值两族共用分档/文案映射。
+ * CheckRun 行名走 checkDisplayName 全称（workflow 名 / job 名 (event)）。
  */
 function mapStatusChecks(checks: JsonMap | null): StatusCheckItem[] {
   const items: StatusCheckItem[] = [];
@@ -1613,13 +1636,13 @@ function mapStatusChecks(checks: JsonMap | null): StatusCheckItem[] {
     const runId = Json.num(node, 'databaseId');
     const conclusion = Json.str(node, 'conclusion');
     const state = conclusion !== '' ? conclusion : Json.str(node, 'state');
-    const name = Json.str(node, 'name') !== '' ? Json.str(node, 'name') : Json.str(node, 'context');
+    const rawName = Json.str(node, 'name') !== '' ? Json.str(node, 'name') : Json.str(node, 'context');
     const suite = Json.obj(node, 'checkSuite');
     const app = suite !== null ? Json.obj(suite, 'app') : null;
-    if (name !== '') {
+    if (rawName !== '') {
       items.push({
-        key: `${name}#${items.length}`,
-        name: name,
+        key: `${rawName}#${items.length}`,
+        name: checkDisplayName(rawName, suite),
         state: state,
         checkRunId: runId,
         // CheckRun detailsUrl / StatusContext targetUrl：均为官方页链接，键不同值同用
