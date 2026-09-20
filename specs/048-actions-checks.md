@@ -3,7 +3,7 @@
 > BFS Level: 3
 > 关联截图: 官方 PR 详情 Status 卡展开态、Checks 全量页（Overview）、Check run 详情（步骤列表 + RE-RUN）、RE-RUN 弹层；对应官方 1.249 状态检查改版 / 1.269-1.270 一键重跑
 > 上游 Spec: 031（PrDetail Status 卡）
-> 状态: approved（2026-09-20 对照官方截图定稿，用户放行开发）
+> 状态: implemented（2026-09-20 状态回写：分支 feature/spec-048-actions-checks 已推送，用户走查确认功能正确；走查定案已折入 §二/§五）
 
 ---
 
@@ -161,17 +161,17 @@ POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun    body: {"enable_debug_l
 
 ## 六、TDD 验收标准
 
-- [ ] 测试 1：时长纯函数——startedAt/completedAt → `11s` / `2m 30s` / `1h 05m`；无 completedAt → 空串（进行中）
-- [ ] 测试 2：结论分组纯函数——SUCCESS/FAILURE/TIMED_OUT/CANCELLED/QUEUED/IN_PROGRESS 等归入 成功/失败/进行中 三档；组序=失败→进行中→成功；空列表返回空组
-- [ ] 测试 3：mapRestJob——REST job JSON → 步骤模型（steps 按 number 升序、run_id/html_url 提取、steps 缺失容错）
-- [ ] 测试 4：rollup contexts 归一化——CheckRun（databaseId/时长/App 图标）与 StatusContext（状态词/不可点）双分支，ForEach key 稳定
-- [ ] 测试 5：走查——Status 卡展开 5 条富行 + View all 次行计数；行点击直达详情
-- [ ] 测试 6：走查——Checks 页分组区块头计数正确，行形态与 Status 卡一致；返回可用
-- [ ] 测试 7：走查——详情页步骤等宽字体 + 时长；RE-RUN 弹层三区齐备；RE-RUN THIS JOB 成功 toast 并返回刷新
-- [ ] 测试 8：走查——READ 权限账号不渲染 RE-RUN；非 Actions check run 空态不崩溃
-- [ ] 测试 9：check-spec 通过
-- [ ] 测试 10：走查——Details 页签按 workflow run 分组（组头 App 图标/workflow 名/SUMMARY，组内裸 job 名）；SUMMARY → run 汇总页
-- [ ] 测试 11：走查——run 汇总页面包屑/提交标题/#run_number/触发卡/四格统计/Jobs 计数齐备；Jobs 行直达 Check run 详情；RE-RUN ALL JOBS 成功 toast 并重拉
+- [x] 测试 1：时长纯函数——startedAt/completedAt → `11s` / `2m 30s` / `1h 05m`；无 completedAt → 空串（进行中）
+- [x] 测试 2：结论分组纯函数——SUCCESS/FAILURE/TIMED_OUT/CANCELLED/QUEUED/IN_PROGRESS 等归入 成功/失败/进行中 三档；组序=失败→进行中→成功；空列表返回空组
+- [x] 测试 3：mapRestJob——REST job JSON → 步骤模型（steps 按 number 升序、run_id/html_url 提取、steps 缺失容错）
+- [x] 测试 4：rollup contexts 归一化——CheckRun（databaseId/时长/App 图标）与 StatusContext（状态词/不可点）双分支，ForEach key 稳定
+- [x] 测试 5：走查——Status 卡展开 5 条富行 + View all 次行计数；行点击直达详情
+- [x] 测试 6：走查——Checks 页分组区块头计数正确，行形态与 Status 卡一致；返回可用
+- [x] 测试 7：走查——详情页步骤等宽字体 + 时长；RE-RUN 弹层三区齐备；RE-RUN THIS JOB 成功 toast 并返回刷新
+- [x] 测试 8：走查——READ 权限账号不渲染 RE-RUN；非 Actions check run 空态不崩溃
+- [x] 测试 9：check-spec 通过
+- [x] 测试 10：走查——Details 页签按 workflow run 分组（组头 App 图标/workflow 名/SUMMARY，组内裸 job 名）；SUMMARY → run 汇总页
+- [x] 测试 11：走查——run 汇总页面包屑/提交标题/#run_number/触发卡/四格统计/Jobs 计数齐备；Jobs 行直达 Check run 详情；RE-RUN ALL JOBS 成功 toast 并重拉
 
 ---
 
