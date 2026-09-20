@@ -98,7 +98,9 @@ export async function restPost(path: string, token: string, body: string, accept
     'method': http.RequestMethod.POST,
     'url': `${GITHUB_API}${path}`,
     'headers': headers,
-    'body': body
+    // 空 body 不下发 extraData：NetworkKit 对空串 extraData 的 POST 会传输层抛错（走 ApiError(0)
+    // 被误报「网络不可用」，rerun 等无 body POST 踩中）；不下发即 Content-Length: 0 的标准空 POST
+    'body': body !== '' ? body : undefined
   });
   return toRawResponse(resp);
 }

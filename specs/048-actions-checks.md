@@ -37,12 +37,10 @@
    - 四格统计卡（描边圆角卡，竖线分格）：Status（结论词）/ Duration（run_started_at→updated_at）/ Billable time（恒 –，计费数据移动端不可得）/ Artifacts（计数，无则 –）
    - Jobs 区：灰带过渡 + 「Jobs」标题 + 计数副标题（`N passed` 等，按 conclusion 计数拼句）+ job 行（状态圆图标 · job 名 · 结论时长），行点击 → Check run 详情页（全称=「workflow 名 / job 名 (event)」现拼）
    - 底部吸底区：RE-RUN ▾ 黑浮钮（同详情页权限门）→ 重跑弹层（run 级：Enable Debug logging + RE-RUN ALL JOBS）
-5. RE-RUN 弹层（详情页内单 bindSheet，固定高度 + dragBar）：
-   - 头部：workflow run 头像 + 两行（`workflow 名 #run_number` 灰 / job 名黑粗）
-   - 分隔线
-   - 「Enable Debug logging」行 + 右侧开关（默认关）
-   - 全宽浅蓝底蓝字按钮「RE-RUN THIS JOB」
-   - 「View workflow summary」行：黑主标题 + 灰副标题「Re-run all jobs, and view workflow details」
+5. RE-RUN 弹层（详情页内单 bindSheet，固定高度；官方截图 2026-09-20：灰底上叠分组白块，白块间 8vp 灰带，抓取条自绘 36×5 Spec 070 口径）：
+   - 白块1 头部：workflow run 头像（40 圆角 8）+ 两行（`workflow 名 #run_number` 灰 / job 名黑粗）
+   - 白块2：「Enable Debug logging」行 + 右侧开关（默认关）+ 全宽浅蓝底蓝字按钮「RE-RUN THIS JOB」（左右 16 内距）
+   - 白块3：「View workflow summary」行：黑主标题 + 灰副标题「Re-run all jobs, and view workflow details」；run 汇总页弹层同形态（无头部，按钮为 RE-RUN ALL JOBS）
 
 ---
 

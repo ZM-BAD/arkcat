@@ -515,13 +515,12 @@ export struct RunSummaryView {
           this.debugLogging = false;
           this.sheetOpen = true;
         })
-        .bindSheet($$this.sheetOpen, (): void => {
-          this.runSheet()
-        }, {
+        .bindSheet($$this.sheetOpen, this.runSheet(), {
           height: 280,
           showClose: false,
-          dragBar: true,
-          backgroundColor: $r('app.color.card_background'),
+          // 抓取条自绘（同 Check run 详情页弹层口径）
+          dragBar: false,
+          backgroundColor: $r('app.color.bg_page'),
           onDisappear: (): void => {
             this.sheetOpen = false;
           }
@@ -532,44 +531,65 @@ export struct RunSummaryView {
     .height('100%')
   }
 
-  /** 重跑弹层（run 级）：Enable Debug logging + RE-RUN ALL JOBS */
+  /** 重跑弹层（run 级）：同 Check run 详情页分组形态（自绘抓取条 + 白块灰带），debug 开关 + RE-RUN ALL JOBS */
   @Builder
   runSheet() {
     Column() {
-      Row({ space: 8 }) {
-        Text($r('app.string.checks_debug_logging'))
-          .fontSize($r('app.float.body_font_size'))
-          .fontColor($r('app.color.text_primary'))
-          .layoutWeight(1)
-        Toggle({ type: ToggleType.Switch, isOn: this.debugLogging })
-          .onChange((isOn: boolean): void => {
-            this.debugLogging = isOn;
-          })
-      }
-      .width('100%')
-      .padding({ left: 16, right: 16, top: 6, bottom: 6 })
-
+      // 白块1：自绘抓取条（Spec 070 同口径 36×5）
       Row() {
-        Text($r('app.string.checks_rerun_all_jobs'))
-          .fontSize($r('app.float.body_font_size'))
-          .fontColor($r('app.color.link_blue'))
-          .textCase(TextCase.UpperCase)
-          .fontWeight(FontWeight.Medium)
+        Row()
+          .width(36)
+          .height(5)
+          .borderRadius(2.5)
+          .backgroundColor($r('app.color.text_tertiary'))
       }
       .width('100%')
-      .height(44)
       .justifyContent(FlexAlign.Center)
-      .borderRadius(6)
-      .backgroundColor($r('app.color.shortcut_blue_bg'))
-      .margin({ left: 16, right: 16, top: 8 })
-      .opacity(this.rerunSending ? 0.5 : 1)
-      .onClick((): void => {
-        this.rerunAllJobs();
-      })
+      .padding({ top: 10, bottom: 8 })
+      .backgroundColor($r('app.color.card_background'))
+
+      Row().height(8).width('100%')
+
+      // 白块2：Enable Debug logging + RE-RUN ALL JOBS
+      Column() {
+        Row({ space: 8 }) {
+          Text($r('app.string.checks_debug_logging'))
+            .fontSize($r('app.float.body_font_size'))
+            .fontColor($r('app.color.text_primary'))
+            .layoutWeight(1)
+          Toggle({ type: ToggleType.Switch, isOn: this.debugLogging })
+            .onChange((isOn: boolean): void => {
+              this.debugLogging = isOn;
+            })
+        }
+        .width('100%')
+        .padding({ left: 16, right: 16, top: 6, bottom: 6 })
+
+        Row() {
+          Text($r('app.string.checks_rerun_all_jobs'))
+            .fontSize($r('app.float.body_font_size'))
+            .fontColor($r('app.color.link_blue'))
+            .textCase(TextCase.UpperCase)
+            .fontWeight(FontWeight.Medium)
+        }
+        .width('100%')
+        .height(44)
+        .justifyContent(FlexAlign.Center)
+        .borderRadius(8)
+        .backgroundColor($r('app.color.shortcut_blue_bg'))
+        .margin({ left: 16, right: 16, top: 4, bottom: 12 })
+        .opacity(this.rerunSending ? 0.5 : 1)
+        .onClick((): void => {
+          this.rerunAllJobs();
+        })
+      }
+      .width('100%')
+      .backgroundColor($r('app.color.card_background'))
 
       Blank()
     }
     .width('100%')
     .height('100%')
+    .backgroundColor($r('app.color.bg_page'))
   }
 }

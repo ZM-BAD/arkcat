@@ -259,78 +259,101 @@ export struct CheckRunDetailView {
     }
   }
 
-  /** 重跑弹层（官方：抓取条 + workflow/job 头部 + debug 开关 + 两级重跑入口） */
+  /** 重跑弹层（官方截图 2026-09-20）：灰底上叠分组白块——抓取条+头部 / debug+按钮 / summary，
+   *  白块间 8vp 灰带（bg_page）；抓取条自绘（Spec 070 同口径 36×5） */
   @Builder
   rerunSheet() {
     Column() {
-      Row({ space: 12 }) {
-        if (this.appLogo !== '') {
-          Image(this.appLogo)
-            .width(28)
-            .height(28)
-            .borderRadius(6)
-            .backgroundColor($r('app.color.heat_empty'))
+      // 白块1：自绘抓取条 + 头部（App 图标 + workflow 名 #run_number 灰 / job 名粗）
+      Column() {
+        Row() {
+          Row()
+            .width(36)
+            .height(5)
+            .borderRadius(2.5)
+            .backgroundColor($r('app.color.text_tertiary'))
         }
-        Column({ space: 1 }) {
-          if (this.run !== null) {
-            Text(`${this.run.name} #${this.run.runNumber}`)
-              .fontSize($r('app.float.caption_font_size'))
-              .fontColor($r('app.color.text_secondary'))
+        .width('100%')
+        .justifyContent(FlexAlign.Center)
+        .padding({ top: 10, bottom: 8 })
+
+        Row({ space: 12 }) {
+          if (this.appLogo !== '') {
+            Image(this.appLogo)
+              .width(40)
+              .height(40)
+              .borderRadius(8)
+              .backgroundColor($r('app.color.heat_empty'))
+          }
+          Column({ space: 1 }) {
+            if (this.run !== null) {
+              Text(`${this.run.name} #${this.run.runNumber}`)
+                .fontSize($r('app.float.body_font_size'))
+                .fontColor($r('app.color.text_secondary'))
+                .maxLines(1)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
+                .width('100%')
+            }
+            Text(this.job !== null ? this.job.name : this.jobName)
+              .fontSize($r('app.float.sub_text_font_size'))
+              .fontWeight(600)
+              .fontColor($r('app.color.text_primary'))
               .maxLines(1)
               .textOverflow({ overflow: TextOverflow.Ellipsis })
               .width('100%')
           }
-          Text(this.job !== null ? this.job.name : this.jobName)
-            .fontSize($r('app.float.body_font_size'))
-            .fontWeight(FontWeight.Medium)
-            .fontColor($r('app.color.text_primary'))
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .width('100%')
-        }
-        .alignItems(HorizontalAlign.Start)
-        .layoutWeight(1)
-      }
-      .width('100%')
-      .alignItems(VerticalAlign.Center)
-      .padding({ left: 16, right: 16, top: 8, bottom: 12 })
-
-      Divider().color($r('app.color.divider'))
-
-      // Enable Debug logging（run 级重跑传参；单 job 重跑忽略，spec 048 §五）
-      Row({ space: 8 }) {
-        Text($r('app.string.checks_debug_logging'))
-          .fontSize($r('app.float.body_font_size'))
-          .fontColor($r('app.color.text_primary'))
+          .alignItems(HorizontalAlign.Start)
           .layoutWeight(1)
-        Toggle({ type: ToggleType.Switch, isOn: this.debugLogging })
-          .onChange((isOn: boolean): void => {
-            this.debugLogging = isOn;
-          })
+        }
+        .width('100%')
+        .alignItems(VerticalAlign.Center)
+        .padding({ left: 16, right: 16, bottom: 12 })
       }
       .width('100%')
-      .padding({ left: 16, right: 16, top: 6, bottom: 6 })
+      .backgroundColor($r('app.color.card_background'))
 
-      // RE-RUN THIS JOB：浅蓝底蓝字全宽（官方 accent subtle 形态）
-      Row() {
-        Text($r('app.string.checks_rerun_this_job'))
-          .fontSize($r('app.float.body_font_size'))
-          .fontColor($r('app.color.link_blue'))
-          .textCase(TextCase.UpperCase)
-          .fontWeight(FontWeight.Medium)
+      Row().height(8).width('100%')
+
+      // 白块2：Enable Debug logging + RE-RUN THIS JOB
+      Column() {
+        Row({ space: 8 }) {
+          Text($r('app.string.checks_debug_logging'))
+            .fontSize($r('app.float.body_font_size'))
+            .fontColor($r('app.color.text_primary'))
+            .layoutWeight(1)
+          Toggle({ type: ToggleType.Switch, isOn: this.debugLogging })
+            .onChange((isOn: boolean): void => {
+              this.debugLogging = isOn;
+            })
+        }
+        .width('100%')
+        .padding({ left: 16, right: 16, top: 6, bottom: 6 })
+
+        // RE-RUN THIS JOB：浅蓝底蓝字全宽（官方 accent subtle 形态）
+        Row() {
+          Text($r('app.string.checks_rerun_this_job'))
+            .fontSize($r('app.float.body_font_size'))
+            .fontColor($r('app.color.link_blue'))
+            .textCase(TextCase.UpperCase)
+            .fontWeight(FontWeight.Medium)
+        }
+        .width('100%')
+        .height(44)
+        .justifyContent(FlexAlign.Center)
+        .borderRadius(8)
+        .backgroundColor($r('app.color.shortcut_blue_bg'))
+        .margin({ left: 16, right: 16, top: 4, bottom: 12 })
+        .opacity(this.rerunSending ? 0.5 : 1)
+        .onClick((): void => {
+          this.rerunThisJob();
+        })
       }
       .width('100%')
-      .height(44)
-      .justifyContent(FlexAlign.Center)
-      .borderRadius(6)
-      .backgroundColor($r('app.color.shortcut_blue_bg'))
-      .margin({ left: 16, right: 16, top: 8 })
-      .opacity(this.rerunSending ? 0.5 : 1)
-      .onClick((): void => {
-        this.rerunThisJob();
-      })
+      .backgroundColor($r('app.color.card_background'))
 
-      // View workflow summary（官方副标题字面：重跑全部 + 看工作流详情）
+      Row().height(8).width('100%')
+
+      // 白块3：View workflow summary（官方副标题字面：重跑全部 + 看工作流详情）
       Column({ space: 2 }) {
         Text($r('app.string.checks_workflow_summary'))
           .fontSize($r('app.float.sub_text_font_size'))
@@ -343,16 +366,18 @@ export struct CheckRunDetailView {
       }
       .alignItems(HorizontalAlign.Start)
       .width('100%')
-      .padding({ left: 16, right: 16, top: 16, bottom: 16 })
-      .margin({ top: 8 })
+      .padding({ left: 16, right: 16, top: 14, bottom: 14 })
+      .backgroundColor($r('app.color.card_background'))
       .onClick((): void => {
         this.rerunAllJobs();
       })
 
+      // 底部灰底填充（官方弹层 summary 块下留灰）
       Blank()
     }
     .width('100%')
     .height('100%')
+    .backgroundColor($r('app.color.bg_page'))
   }
 
   build() {
@@ -432,13 +457,12 @@ export struct CheckRunDetailView {
         .onClick((): void => {
           this.openRerunSheet();
         })
-        .bindSheet($$this.sheetOpen, (): void => {
-          this.rerunSheet()
-        }, {
+        .bindSheet($$this.sheetOpen, this.rerunSheet(), {
           height: 400,
           showClose: false,
-          dragBar: true,
-          backgroundColor: $r('app.color.card_background'),
+          // 抓取条在白块1内自绘（官方灰底分组形态，Spec 070 同口径自绘）
+          dragBar: false,
+          backgroundColor: $r('app.color.bg_page'),
           onDisappear: (): void => {
             this.sheetOpen = false;
           }
