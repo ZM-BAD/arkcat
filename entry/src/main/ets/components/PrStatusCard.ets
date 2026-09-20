@@ -174,7 +174,7 @@ export struct PrStatusCard {
         this.checksOpen = !this.checksOpen;
       })
       if (this.checksOpen) {
-        // 官方预览前 5 条富行（Spec 048），全量经 View all 进 Checks 页
+        // 官方预览前 5 条富行（Spec 048），行间靠留白（无分隔线）；全量经 View all 进 Checks 页
         ForEach(this.detail.checks.slice(0, 5), (c: StatusCheckItem) => {
           CheckRunRow({
             item: c,
@@ -184,20 +184,23 @@ export struct PrStatusCard {
           })
         }, (c: StatusCheckItem) => c.key)
         if (this.detail.checksTotal > 0) {
-          // View all 收口行（官方）：主文案 + 计数次行，与行图标列左对齐
-          Column({ space: 1 }) {
+          // View all 收口（官方）：分隔线与文案都缩进到 App 图标列（状态图标 14 + 间距 10）
+          Divider()
+            .color($r('app.color.divider'))
+            .margin({ left: 24 })
+          Column({ space: 2 }) {
             Text($r('app.string.checks_view_all'))
-              .fontSize($r('app.float.body_font_size'))
+              .fontSize($r('app.float.sub_text_font_size'))
               .fontColor($r('app.color.text_primary'))
               .width('100%')
             Text(this.checksTotalText())
-              .fontSize($r('app.float.caption_font_size'))
+              .fontSize($r('app.float.body_font_size'))
               .fontColor($r('app.color.text_secondary'))
               .width('100%')
           }
           .alignItems(HorizontalAlign.Start)
           .width('100%')
-          .padding({ top: 10, bottom: 10 })
+          .padding({ left: 24, top: 12, bottom: 4 })
           .onClick((): void => {
             this.onViewAllChecks();
           })

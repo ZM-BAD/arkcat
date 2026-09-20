@@ -80,7 +80,7 @@ export struct PrChecksView {
   @Builder
   checkGroupSection(group: CheckGroup) {
     Column() {
-      // 灰底分组区块头（官方「19 successful checks」整条灰带）
+      // 灰底分组区块头（官方「19 successful checks」，与页面底同色的整条灰带）
       Row() {
         Text(this.groupText(group))
           .fontSize($r('app.float.sub_text_font_size'))
@@ -88,20 +88,24 @@ export struct PrChecksView {
           .fontColor($r('app.color.text_primary'))
       }
       .width('100%')
-      .padding({ left: 16, right: 16, top: 10, bottom: 10 })
-      .backgroundColor($r('app.color.bg_page'))
+      .padding({ left: 16, right: 16, top: 12, bottom: 12 })
 
       ForEach(this.items, (item: StatusCheckItem) => {
         if (checkGroupKey(item.state) === group.key) {
+          // 官方 Checks 页形态：白色整行块 + 行间灰色间隔带（无细分隔线），副标题单行省略
           Column() {
             CheckRunRow({
               item: item,
+              subMaxLines: 1,
+              inset: 16,
               onOpen: (opened: StatusCheckItem): void => {
                 this.openDetail(opened);
               }
             })
-            Divider().color($r('app.color.divider')).margin({ left: 16 })
           }
+          .width('100%')
+          .backgroundColor($r('app.color.card_background'))
+          .margin({ bottom: 12 })
         }
       }, (item: StatusCheckItem) => `${group.key}-${item.key}`)
     }
@@ -158,6 +162,6 @@ export struct PrChecksView {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.card_background'))
+    .backgroundColor($r('app.color.bg_page'))
   }
 }
