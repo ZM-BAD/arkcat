@@ -58,7 +58,7 @@
 | 045 | [notifications-subscriptions.md](045-notifications-subscriptions.md) | 通知与订阅增强（Inbox 高级 + 仓库 Watch） | Level 3 | draft |
 | 046 | [search-full.md](046-search-full.md) | 搜索全类型与最近搜索（Search 六类详情） | Level 3 | implemented |
 | 047 | [releases-detail-download.md](047-releases-detail-download.md) | Release 详情与资产下载 | Level 3 | implemented |
-| 048 | [actions-checks.md](048-actions-checks.md) | Actions/Checks 状态检查（Check runs 详情 + 一键重跑） | Level 3 | draft |
+| 048 | [actions-checks.md](048-actions-checks.md) | Actions/Checks 状态检查（Check runs 列表/详情/重跑） | Level 3 | approved |
 | 049 | [multi-account-security.md](049-multi-account-security.md) | 多账号与安全（049a 账号管理器已实现；App Lock 拆出至 066） | Level 3 | implemented |
 | 050 | [home-favorites-shortcuts.md](050-home-favorites-shortcuts.md) | Home 个性化（Favorites 收藏 + Shortcuts 快捷入口） | Level 3 | draft |
 | 051 | [accessibility-multidevice.md](051-accessibility-multidevice.md) | 无障碍与多设备适配（横向规范） | Level 4 | draft |

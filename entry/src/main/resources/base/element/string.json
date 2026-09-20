@@ -3027,6 +3027,166 @@
     {
       "name": "repo_create_error_invalid_name",
       "value": "Repository name already exists or is invalid"
+    },
+    {
+      "name": "checks_appbar",
+      "value": "Checks"
+    },
+    {
+      "name": "checks_view_all",
+      "value": "View all"
+    },
+    {
+      "name": "checks_count_success",
+      "value": "%1$s successful checks"
+    },
+    {
+      "name": "checks_count_failed",
+      "value": "%1$s failed checks"
+    },
+    {
+      "name": "checks_count_progress",
+      "value": "%1$s in progress"
+    },
+    {
+      "name": "checks_sub_success",
+      "value": "Successful in %1$s"
+    },
+    {
+      "name": "checks_sub_failed",
+      "value": "Failed in %1$s"
+    },
+    {
+      "name": "checks_word_success",
+      "value": "Successful"
+    },
+    {
+      "name": "checks_word_failed",
+      "value": "Failed"
+    },
+    {
+      "name": "checks_word_cancelled",
+      "value": "Cancelled"
+    },
+    {
+      "name": "checks_word_waiting",
+      "value": "Queued"
+    },
+    {
+      "name": "checks_word_progress",
+      "value": "In progress"
+    },
+    {
+      "name": "checks_word_action",
+      "value": "Action required"
+    },
+    {
+      "name": "checks_empty",
+      "value": "No checks"
+    },
+    {
+      "name": "checks_steps_empty",
+      "value": "No steps data"
+    },
+    {
+      "name": "checks_rerun",
+      "value": "Re-run"
+    },
+    {
+      "name": "checks_rerun_this_job",
+      "value": "Re-run this job"
+    },
+    {
+      "name": "checks_debug_logging",
+      "value": "Enable Debug logging"
+    },
+    {
+      "name": "checks_workflow_summary",
+      "value": "View workflow summary"
+    },
+    {
+      "name": "checks_workflow_summary_sub",
+      "value": "Re-run all jobs, and view workflow details"
+    },
+    {
+      "name": "checks_rerun_started",
+      "value": "Re-run started"
+    },
+    {
+      "name": "checks_menu_refresh",
+      "value": "Refresh"
+    },
+    {
+      "name": "checks_tab_overview",
+      "value": "Overview"
+    },
+    {
+      "name": "checks_tab_details",
+      "value": "Details"
+    },
+    {
+      "name": "checks_details_summary",
+      "value": "Summary"
+    },
+    {
+      "name": "run_event_commit",
+      "value": "commit"
+    },
+    {
+      "name": "run_event_pull_request",
+      "value": "pull request"
+    },
+    {
+      "name": "run_stats_status",
+      "value": "Status"
+    },
+    {
+      "name": "run_stats_duration",
+      "value": "Duration"
+    },
+    {
+      "name": "run_stats_billable",
+      "value": "Billable time"
+    },
+    {
+      "name": "run_stats_artifacts",
+      "value": "Artifacts"
+    },
+    {
+      "name": "checks_jobs_title",
+      "value": "Jobs"
+    },
+    {
+      "name": "checks_jobs_passed",
+      "value": "%s passed"
+    },
+    {
+      "name": "checks_jobs_failed",
+      "value": "%s failed"
+    },
+    {
+      "name": "checks_jobs_running",
+      "value": "%s in progress"
+    },
+    {
+      "name": "checks_rerun_all_jobs",
+      "value": "RE-RUN ALL JOBS"
+    },
+    {
+      "name": "checks_run_via",
+      "value": "Triggered via %s"
+    },
+    {
+      "name": "checks_run_by",
+      "value": " by "
+    },
+    {
+      "name": "checks_rollup_failed",
+      "value": "Some checks were not successful"
+    },
+    {
+      "name": "checks_total_mixed",
+      "value": "%s failing and %s successful checks"
     }
   ]
 }

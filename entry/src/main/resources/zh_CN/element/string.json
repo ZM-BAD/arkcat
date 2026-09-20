@@ -3027,6 +3027,166 @@
     {
       "name": "repo_create_error_invalid_name",
       "value": "仓库名称已存在或无效"
+    },
+    {
+      "name": "checks_appbar",
+      "value": "检查"
+    },
+    {
+      "name": "checks_view_all",
+      "value": "查看全部"
+    },
+    {
+      "name": "checks_count_success",
+      "value": "%1$s 项检查通过"
+    },
+    {
+      "name": "checks_count_failed",
+      "value": "%1$s 项检查失败"
+    },
+    {
+      "name": "checks_count_progress",
+      "value": "%1$s 项进行中"
+    },
+    {
+      "name": "checks_sub_success",
+      "value": "成功 · %1$s"
+    },
+    {
+      "name": "checks_sub_failed",
+      "value": "失败 · %1$s"
+    },
+    {
+      "name": "checks_word_success",
+      "value": "成功"
+    },
+    {
+      "name": "checks_word_failed",
+      "value": "失败"
+    },
+    {
+      "name": "checks_word_cancelled",
+      "value": "已取消"
+    },
+    {
+      "name": "checks_word_waiting",
+      "value": "排队中"
+    },
+    {
+      "name": "checks_word_progress",
+      "value": "进行中"
+    },
+    {
+      "name": "checks_word_action",
+      "value": "需要操作"
+    },
+    {
+      "name": "checks_empty",
+      "value": "暂无检查"
+    },
+    {
+      "name": "checks_steps_empty",
+      "value": "无步骤数据"
+    },
+    {
+      "name": "checks_rerun",
+      "value": "重跑"
+    },
+    {
+      "name": "checks_rerun_this_job",
+      "value": "重跑此 Job"
+    },
+    {
+      "name": "checks_debug_logging",
+      "value": "启用调试日志"
+    },
+    {
+      "name": "checks_workflow_summary",
+      "value": "查看工作流摘要"
+    },
+    {
+      "name": "checks_workflow_summary_sub",
+      "value": "重跑所有 Job，并查看工作流详情"
+    },
+    {
+      "name": "checks_rerun_started",
+      "value": "重跑已触发"
+    },
+    {
+      "name": "checks_menu_refresh",
+      "value": "刷新"
+    },
+    {
+      "name": "checks_tab_overview",
+      "value": "概览"
+    },
+    {
+      "name": "checks_tab_details",
+      "value": "详情"
+    },
+    {
+      "name": "checks_details_summary",
+      "value": "Summary"
+    },
+    {
+      "name": "run_event_commit",
+      "value": "commit"
+    },
+    {
+      "name": "run_event_pull_request",
+      "value": "PR"
+    },
+    {
+      "name": "run_stats_status",
+      "value": "状态"
+    },
+    {
+      "name": "run_stats_duration",
+      "value": "耗时"
+    },
+    {
+      "name": "run_stats_billable",
+      "value": "计费时长"
+    },
+    {
+      "name": "run_stats_artifacts",
+      "value": "产物"
+    },
+    {
+      "name": "checks_jobs_title",
+      "value": "Jobs"
+    },
+    {
+      "name": "checks_jobs_passed",
+      "value": "%s 个成功"
+    },
+    {
+      "name": "checks_jobs_failed",
+      "value": "%s 个失败"
+    },
+    {
+      "name": "checks_jobs_running",
+      "value": "%s 个进行中"
+    },
+    {
+      "name": "checks_rerun_all_jobs",
+      "value": "全部重跑"
+    },
+    {
+      "name": "checks_run_via",
+      "value": "由 %s 触发"
+    },
+    {
+      "name": "checks_run_by",
+      "value": "，触发者 "
+    },
+    {
+      "name": "checks_rollup_failed",
+      "value": "部分检查未成功"
+    },
+    {
+      "name": "checks_total_mixed",
+      "value": "%s 个失败和 %s 个成功的检查"
     }
   ]
 }

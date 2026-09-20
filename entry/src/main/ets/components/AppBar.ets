@@ -40,7 +40,8 @@ export interface AppBarActionCfg {
  * danger=整行红（Close/Report/Block 等危险项）。
  */
 export interface AppBarMenuItem {
-  icon: Resource;
+  /** 左侧图标；不给=纯文字项（如 Checks 详情 ⋮ 的 Refresh，官方无图标） */
+  icon?: Resource;
   label: ResourceStr;
   onAction: () => void;
   danger?: boolean;
@@ -98,7 +99,9 @@ export struct AppBar {
     Column() {
       ForEach(items, (item: AppBarMenuItem, index: number) => {
         Row({ space: 10 }) {
-          OctIcon({ res: item.icon, iconSize: 16, iconColor: this.menuItemColor(item) })
+          if (item.icon !== undefined) {
+            OctIcon({ res: item.icon, iconSize: 16, iconColor: this.menuItemColor(item) })
+          }
           Text(item.label)
             .fontSize($r('app.float.body_font_size'))
             .fontColor(this.menuItemColor(item))

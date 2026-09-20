@@ -44,6 +44,10 @@ import {
   PickerItem, NewRepoForm
 } from '../../entry/src/main/ets/models/RepoCreateModels';
 import { mapUserProfile } from '../../entry/src/main/ets/models/ProfileModels';
+import {
+  checkGroupKey, groupChecks, conclusionKey, durationText,
+  mapRestJob, mapRestRun
+} from '../../entry/src/main/ets/models/ChecksModels';
 import { mapPrFiles, mapFilesCursor, applyRestPatch, PrFileItem } from '../../entry/src/main/ets/models/PrDiffModels';
 import {
   buildNotificationsPath, pullRefFromUrl, buildPullStatesQuery, mapPullMerged,
@@ -2208,4 +2212,130 @@ test('Spec 072 mapUserProfile：popular 兜底映射与无可见仓库空态', (
   } });
   assert.equal(bare.pinned.length, 0);
   assert.equal(bare.popular.length, 0);
+});
+
+
+// —— Spec 048：Actions / Checks（models/ChecksModels） ——
+
+test('Spec 048 durationText：秒/分秒/时分与进行中空串（测试1）', () => {
+  assert.equal(durationText('2026-09-20T10:00:00Z', '2026-09-20T10:00:11Z'), '11s');
+  assert.equal(durationText('2026-09-20T10:00:00Z', '2026-09-20T10:02:30Z'), '2m 30s');
+  assert.equal(durationText('2026-09-20T10:00:00Z', '2026-09-20T11:05:00Z'), '1h 05m');
+  assert.equal(durationText('2026-09-20T10:00:00Z', '2026-09-20T11:05:09Z'), '1h 05m');
+  // 缺止时间（进行中）/非法/负差值 → 空串
+  assert.equal(durationText('2026-09-20T10:00:00Z', ''), '');
+  assert.equal(durationText('', '2026-09-20T10:00:11Z'), '');
+  assert.equal(durationText('bad', '2026-09-20T10:00:11Z'), '');
+  assert.equal(durationText('2026-09-20T10:00:11Z', '2026-09-20T10:00:00Z'), '');
+});
+
+test('Spec 048 checkGroupKey/groupChecks：三档归组与失败优先组序（测试2）', () => {
+  assert.equal(checkGroupKey('SUCCESS'), 'success');
+  assert.equal(checkGroupKey('FAILURE'), 'failed');
+  assert.equal(checkGroupKey('TIMED_OUT'), 'failed');
+  assert.equal(checkGroupKey('STARTUP_FAILURE'), 'failed');
+  // 终态灰类与非终态都归 progress 档（不算成败）
+  assert.equal(checkGroupKey('CANCELLED'), 'progress');
+  assert.equal(checkGroupKey('SKIPPED'), 'progress');
+  assert.equal(checkGroupKey('NEUTRAL'), 'progress');
+  assert.equal(checkGroupKey('IN_PROGRESS'), 'progress');
+  assert.equal(checkGroupKey('QUEUED'), 'progress');
+  assert.equal(checkGroupKey('PENDING'), 'progress');
+  assert.equal(checkGroupKey('UNKNOWN_WHATEVER'), 'progress');
+
+  assert.deepEqual(groupChecks([]), []);
+  const groups = groupChecks(['SUCCESS', 'FAILURE', 'SUCCESS', 'IN_PROGRESS', 'TIMED_OUT']);
+  assert.deepEqual(groups.map((g) => g.key), ['failed', 'progress', 'success']);
+  assert.deepEqual(groups.map((g) => g.count), [2, 1, 2]);
+  // 全成功单组（官方截图「19 successful checks」形态）
+  assert.deepEqual(groupChecks(['SUCCESS', 'SUCCESS']), [{ key: 'success', count: 2 }]);
+});
+
+test('Spec 048 conclusionKey：副标题词档映射与未知回落 progress', () => {
+  assert.equal(conclusionKey('SUCCESS'), 'success');
+  assert.equal(conclusionKey('FAILURE'), 'failed');
+  assert.equal(conclusionKey('CANCELLED'), 'cancelled');
+  assert.equal(conclusionKey('SKIPPED'), 'cancelled');
+  assert.equal(conclusionKey('QUEUED'), 'waiting');
+  assert.equal(conclusionKey('EXPECTED'), 'waiting');
+  assert.equal(conclusionKey('ACTION_REQUIRED'), 'action');
+  assert.equal(conclusionKey('IN_PROGRESS'), 'progress');
+  assert.equal(conclusionKey('SOMETHING_NEW'), 'progress');
+});
+
+test('Spec 048 mapRestJob/mapRestRun：步骤排序、run 关联与缺失容错（测试3）', () => {
+  const job = mapRestJob({
+    id: 987654321, run_id: 12345678, name: 'test', status: 'success', conclusion: 'success',
+    started_at: '2026-09-20T10:00:00Z', completed_at: '2026-09-20T10:00:47Z',
+    html_url: 'https://github.com/o/r/actions/runs/12345678/job/987654321',
+    steps: [
+      { number: 3, name: 'Set up Python', status: 'success', conclusion: 'success',
+        started_at: '2026-09-20T10:00:10Z', completed_at: '2026-09-20T10:00:14Z' },
+      { number: 1, name: 'Set up job', status: 'success', conclusion: 'success',
+        started_at: '2026-09-20T10:00:00Z', completed_at: '2026-09-20T10:00:02Z' },
+      { number: 2, name: 'Run actions/checkout@v7', status: 'success', conclusion: 'success',
+        started_at: '2026-09-20T10:00:02Z', completed_at: '2026-09-20T10:00:03Z' }
+    ]
+  });
+  assert.equal(job.runId, 12345678);
+  assert.equal(job.name, 'test');
+  assert.equal(job.htmlUrl, 'https://github.com/o/r/actions/runs/12345678/job/987654321');
+  assert.deepEqual(job.steps.map((s) => s.name),
+    ['Set up job', 'Run actions/checkout@v7', 'Set up Python']);
+
+  // steps 缺失（外部 App 场景）与字段缺失容错
+  const bare = mapRestJob({ id: 1, run_id: 2, name: 'x' });
+  assert.deepEqual(bare.steps, []);
+  assert.equal(bare.conclusion, '');
+
+  const run = mapRestRun({ name: 'Backend', run_number: 176 });
+  assert.equal(run.name, 'Backend');
+  assert.equal(run.runNumber, 176);
+});
+
+test('Spec 048 mapPrDetail 富行扩展：CheckRun/StatusContext 归一与 checksTotal（测试4）', () => {
+  const pr = mapPrDetail({ repository: {
+    viewerPermission: 'WRITE', owner: { avatarUrl: '' },
+    pullRequest: {
+      id: 'P1', number: 83, title: 'T', state: 'OPEN', merged: false, isDraft: false,
+      viewerCanUpdate: false, body: '', bodyHTML: '', createdAt: '', mergedAt: null,
+      additions: 0, deletions: 0, authorAssociation: 'NONE', reactionGroups: [],
+      author: null, headRefName: 'a', baseRefName: 'b', mergedBy: null, mergeCommit: null,
+      files: null, commits: null, mergeable: 'MERGEABLE', mergeStateStatus: 'CLEAN',
+      viewerMergeHeadlineText: '', viewerMergeBodyText: '',
+      reviews: null, reviewThreads: { totalCount: 0, nodes: [] },
+      statusCheckRollup: {
+        state: 'SUCCESS',
+        contexts: {
+          totalCount: 19,
+          nodes: [
+            { __typename: 'CheckRun', databaseId: 987654321, name: 'Backend / test', status: 'SUCCESS',
+              conclusion: 'SUCCESS', startedAt: '2026-09-20T10:00:00Z', completedAt: '2026-09-20T10:00:47Z',
+              detailsUrl: 'https://github.com/o/r/actions/runs/1/job/2', title: '',
+              checkSuite: { app: { name: 'GitHub Actions', logoUrl: 'https://example.com/gh.png' } } },
+            { __typename: 'CheckRun', databaseId: 555, name: 'renovate/stability-days', status: 'SUCCESS',
+              conclusion: 'SUCCESS', startedAt: '2026-09-20T09:00:00Z', completedAt: '2026-09-20T09:00:20Z',
+              detailsUrl: 'https://github.com/o/r/commit/1/checks/555',
+              title: 'Updates have met minimum release age requirement',
+              checkSuite: { app: { name: 'Renovate', logoUrl: 'https://example.com/renovate.png' } } },
+            { __typename: 'StatusContext', context: 'ci/travis', state: 'SUCCESS', targetUrl: 'https://travis-ci.org/1' }
+          ]
+        }
+      },
+      labels: { nodes: [] }, assignees: { nodes: [] }, milestone: null,
+      timelineItems: { totalCount: 0, pageInfo: { hasNextPage: false, endCursor: '' }, nodes: [] }
+    }
+  } });
+  assert.equal(pr.checksTotal, 19);
+  assert.equal(pr.checks.length, 3);
+  // CheckRun：databaseId/时长/App 图标齐备
+  assert.equal(pr.checks[0].checkRunId, 987654321);
+  assert.equal(pr.checks[0].appLogo, 'https://example.com/gh.png');
+  assert.equal(pr.checks[0].startedAt, '2026-09-20T10:00:00Z');
+  // title 非空行（Renovate 描述优先于结论文案）
+  assert.equal(pr.checks[1].title, 'Updates have met minimum release age requirement');
+  // StatusContext：checkRunId=0（不可进详情）、detailsUrl 回落 targetUrl
+  assert.equal(pr.checks[2].checkRunId, 0);
+  assert.equal(pr.checks[2].detailsUrl, 'https://travis-ci.org/1');
+  assert.equal(pr.checks[2].appLogo, '');
 });

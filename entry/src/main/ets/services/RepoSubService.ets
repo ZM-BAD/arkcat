@@ -246,8 +246,16 @@ query PullRequestDetail($owner: String!, $name: String!, $number: Int!, $after: 
         contexts(first: 20) {
           totalCount
           nodes {
-            ... on CheckRun { name status conclusion }
-            ... on StatusContext { context state }
+            # Spec 048 富行：CheckRun 带时长/App 图标/官方链接；StatusContext 带状态词
+            # workflowRun：行名全称「workflow 名 / job 名 (event)」素材（官方 Checks 行口径）
+            ... on CheckRun {
+              databaseId name status conclusion startedAt completedAt detailsUrl title
+              checkSuite {
+                app { name logoUrl }
+                workflowRun { event workflow { name } }
+              }
+            }
+            ... on StatusContext { context state targetUrl }
           }
         }
       }

@@ -38,6 +38,9 @@ import { ReactionUsersView } from './ReactionUsers';
 import { IssueDetailView } from './IssueDetail';
 import { PrDetailView } from './PrDetail';
 import { PrFilesView } from './PrFiles';
+import { PrChecksView } from './PrChecks';
+import { CheckRunDetailView } from './CheckRunDetail';
+import { RunSummaryView } from './RunSummary';
 import { CommitDetailView } from './CommitDetail';import { NotificationSettingsView } from './NotificationSettings';
 import { CodeOptionsView } from './CodeOptions';
 import { OpenSourceLibrariesView } from './OpenSourceLibraries';
@@ -181,6 +184,22 @@ struct Index {
   @State workIssuesTick: number = 0;
   /** Commit 详情路由参数（owner/name/oid 第三段） */
   @State commitOid: string = '';
+  /** Spec 048：Checks 页返回刷新泵与首显守卫（详情页重跑后 pop 回静默重拉） */
+  @State prChecksTick: number = 0;
+  @State prChecksShownOnce: boolean = false;
+  /** Spec 048：Check run 详情路由参数（owner|name|checkRunId|perm|jobName|appLogo|detailsUrl 拆段） */
+  @State checkRunId: number = 0;
+  @State checkPerm: string = '';
+  @State checkJobName: string = '';
+  @State checkAppLogo: string = '';
+  @State checkDetailsUrl: string = '';
+  /** Spec 048：Check run 详情返回刷新泵（应用内浏览器关回来自增 → 静默重拉 job） */
+  @State checkRunTick: number = 0;
+  /** Spec 048：run 汇总页路由参数与返回刷新泵（job 详情重跑后 pop 回静默重拉） */
+  @State runSummaryId: number = 0;
+  @State runSummaryTick: number = 0;
+  @State runSummaryShownOnce: boolean = false;
+  @State checkRunShownOnce: boolean = false;
   /** Spec 056：Explore Trending/Awesome 列表页 kind 参数 */
   @State exploreListKind: string = 'trending';
   private tabController: TabsController = new TabsController();
@@ -1278,6 +1297,113 @@ struct Index {
     .hideTitleBar(true)
   }
 
+  /** Spec 048：Checks 全量页（路由参数：owner/name/number|perm，perm=重跑权限门透传详情页） */
+  @Builder
+  prChecksDestination() {
+    NavDestination() {
+      PrChecksView({
+        owner: this.repoOwner,
+        name: this.repoName,
+        number: this.detailNumber,
+        token: this.token,
+        perm: this.checkPerm,
+        pathStack: this.pathStack,
+        refreshTick: this.prChecksTick
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      // 参数格式 owner/name/number|perm：parseRouteParam 按 '/' 分段后再拆 perm
+      const full = context.pathInfo.param as string;
+      const parts: string[] = full.split('/');
+      if (parts.length >= 2) {
+        this.repoOwner = parts[0];
+        this.repoName = parts[1];
+      }
+      const tail: string[] = parts.length >= 3 ? parts[2].split('|') : [];
+      this.detailNumber = tail.length > 0 && tail[0] !== '' ? Number(tail[0]) : 0;
+      this.checkPerm = tail.length > 1 ? tail[1] : '';
+      this.prChecksShownOnce = false;
+    })
+    .onShown(() => {
+      if (this.prChecksShownOnce) {
+        this.prChecksTick += 1;
+      }
+      this.prChecksShownOnce = true;
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 048：run 汇总页（路由参数 owner/name/runId|perm|appLogo；appLogo 为 URL 含 '/'，尾段须先拼回再拆 '|'） */
+  @Builder
+  runSummaryDestination() {
+    NavDestination() {
+      RunSummaryView({
+        owner: this.repoOwner,
+        name: this.repoName,
+        runId: this.runSummaryId,
+        perm: this.checkPerm,
+        appLogo: this.checkAppLogo,
+        token: this.token,
+        pathStack: this.pathStack,
+        refreshTick: this.runSummaryTick
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      const parts = (context.pathInfo.param as string).split('/');
+      this.repoOwner = parts.length > 0 ? parts[0] : '';
+      this.repoName = parts.length > 1 ? parts[1] : '';
+      const tail: string[] = parts.length >= 3 ? parts.slice(2).join('/').split('|') : [];
+      this.runSummaryId = tail.length > 0 && tail[0] !== '' ? Number(tail[0]) : 0;
+      this.checkPerm = tail.length > 1 ? tail[1] : '';
+      this.checkAppLogo = tail.length > 2 ? tail[2] : '';
+      this.runSummaryShownOnce = false;
+    })
+    .onShown(() => {
+      if (this.runSummaryShownOnce) {
+        this.runSummaryTick += 1;
+      }
+      this.runSummaryShownOnce = true;
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 048：Check run 详情页（路由参数：owner|name|checkRunId|perm|jobName|appLogo|detailsUrl） */
+  @Builder
+  checkRunDetailDestination() {
+    NavDestination() {
+      CheckRunDetailView({
+        owner: this.repoOwner,
+        name: this.repoName,
+        checkRunId: this.checkRunId,
+        perm: this.checkPerm,
+        jobName: this.checkJobName,
+        appLogo: this.checkAppLogo,
+        detailsUrl: this.checkDetailsUrl,
+        token: this.token,
+        pathStack: this.pathStack,
+        refreshTick: this.checkRunTick
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      const parts = (context.pathInfo.param as string).split('|');
+      this.repoOwner = parts.length > 0 ? parts[0] : '';
+      this.repoName = parts.length > 1 ? parts[1] : '';
+      this.checkRunId = parts.length > 2 ? Number(parts[2]) : 0;
+      this.checkPerm = parts.length > 3 ? parts[3] : '';
+      this.checkJobName = parts.length > 4 ? parts[4] : '';
+      this.checkAppLogo = parts.length > 5 ? parts[5] : '';
+      this.checkDetailsUrl = parts.length > 6 ? parts[6] : '';
+      this.checkRunShownOnce = false;
+    })
+    .onShown(() => {
+      if (this.checkRunShownOnce) {
+        this.checkRunTick += 1;
+      }
+      this.checkRunShownOnce = true;
+    })
+    .hideTitleBar(true)
+  }
+
   /** Commit 详情页（路由参数：owner/name/oid） */
   @Builder
   commitDetailDestination() {
@@ -1456,6 +1582,12 @@ struct Index {
       this.achievementDetailDestination()
     } else if (name === 'prFiles') {
       this.prFilesDestination()
+    } else if (name === 'prChecks') {
+      this.prChecksDestination()
+    } else if (name === 'checkRunDetail') {
+      this.checkRunDetailDestination()
+    } else if (name === 'runSummary') {
+      this.runSummaryDestination()
     } else if (name === 'commitDetail') {
       this.commitDetailDestination()
     } else if (name === 'exploreRepoList') {
