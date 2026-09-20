@@ -15,7 +15,8 @@ query PrChecks($owner: String!, $name: String!, $number: Int!) {
       commits(last: 1) {
         nodes {
           commit {
-            status { contexts(first: 20) { totalCount nodes { context state targetUrl } } }
+            # status.contexts 是普通列表（非 connection：无 first/totalCount/nodes 包裹）
+            status { contexts { context state targetUrl } }
             checkSuites(first: 30) {
               nodes {
                 app { name logoUrl }
@@ -90,10 +91,9 @@ export async function fetchPrChecks(token: string, owner: string, name: string,
       items.push(mapCheckRow(`${runName}#${items.length}`, runName, state, node, appLogo));
     }
   }
-  // 经典 commit status contexts：无 databaseId（checkRunId=0 → 行不可进详情页）
+  // 经典 commit status contexts：普通列表（非 connection）；无 databaseId（checkRunId=0 → 行不可进详情页）
   const status = Json.obj(commitObj, 'status');
-  const ctxConn = status !== null ? Json.obj(status, 'contexts') : null;
-  for (const ctxItem of Json.arr(ctxConn ?? ({} as JsonMap), 'nodes')) {
+  for (const ctxItem of Json.arr(status ?? ({} as JsonMap), 'contexts')) {
     const node = ctxItem as JsonMap;
     const ctxName = Json.str(node, 'context');
     if (ctxName === '') {

@@ -44,7 +44,7 @@
 | --- | ------ | ------ | ------ | -------- | ------------------- | ------ |
 | 1 | Status 卡展开 | check run 富行 × 前 5 条 | 名称/结论/时长/App 图标副标题；行点击 → 详情 | ✅ | rollup contexts 扩展取 CheckRun databaseId/startedAt/completedAt/title + checkSuite.app | StatusContext 行副标题=状态词，不可点 |
 | 2 | Status 卡展开 | View all 收口行 | 次行计数（contexts.totalCount + 汇总态选词）→ Checks 页 | ✅ | statusCheckRollup.state + contexts.totalCount | 主查询一次带出，无额外请求 |
-| 3 | Checks 页 | Overview 分组列表 | 按结论三档分组（失败/进行中/成功），区块头计数 | ✅ | commits(last:1).commit.checkSuites(30)→checkRuns(50) + status.contexts(20) | 进页一次查询 |
+| 3 | Checks 页 | Overview 分组列表 | 按结论三档分组（失败/进行中/成功），区块头计数 | ✅ | commits(last:1).commit.checkSuites(30)→checkRuns(50) + status.contexts（普通列表） | 进页一次查询 |
 | 4 | Checks 页 | Details Tab | 官方素材未覆盖内容 | ⚠️ | 无 | 本期不渲染该 Tab，仅 Overview（见五） |
 | 5 | Check run 详情 | 步骤列表 | step 序/名/结论/时长，等宽字体 | ✅ | REST GET /repos/{o}/{r}/actions/jobs/{check_run_id}（Actions 产出的 check run id = job id） | steps 按 number 排序 |
 | 6 | Check run 详情 | RE-RUN 黑浮钮 | 打开重跑弹层；权限门（ADMIN/MAINTAIN/WRITE 才显示） | ✅ | 权限经路由参数传入（来源 031 主查询 viewerPermission） | 403 兜底见五 |
@@ -89,7 +89,8 @@ query PrChecks($owner: String!, $name: String!, $number: Int!) {
       commits(last: 1) {
         nodes {
           commit {
-            status { contexts(first: 20) { totalCount nodes { context state targetUrl createdAt } } }
+            # status.contexts 是普通列表（非 connection：无 first/totalCount/nodes 包裹）
+            status { contexts { context state targetUrl } }
             checkSuites(first: 30) {
               totalCount
               nodes {
