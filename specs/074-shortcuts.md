@@ -3,7 +3,7 @@
 > BFS Level: 3
 > 关联截图: 官方 App 2026-09-21 截图 2 张——Shortcuts 管理页（Saved 空态 + Suggested）+ Create Shortcut 编辑页
 > 上游 Spec: 013（Home 布局与 Shortcuts 空态引导）、016（快照编辑范式）、017/018（Work 筛选词汇表与 WorkFilterBar）、043（Picker 数据源）、050（Favorites 同构骨架：端侧存储 + 版本泵）
-> 状态: implemented（2026-09-21 状态回写：当批实现+真机走查验收通过，Scope 菜单/选仓库页走查修正已折入；分支 feature/spec-050-home-favorites-shortcuts 待合并）
+> 状态: implemented（2026-09-21 状态回写：当批实现+真机走查验收通过，Scope 菜单/选仓库页走查修正已折入；随 PR #57 squash 合并 develop=888926d）
 
 ---
 
