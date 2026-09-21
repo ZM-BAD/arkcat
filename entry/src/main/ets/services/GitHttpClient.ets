@@ -105,10 +105,41 @@ export async function restPost(path: string, token: string, body: string, accept
   return toRawResponse(resp);
 }
 
-/** REST PATCH（标记通知已读等） */
-export async function restPatch(path: string, token: string): Promise<RawResponse> {
+/** REST PATCH（通知线程已读/未读等；body 非空时按 JSON 下发） */
+export async function restPatch(path: string, token: string, body: string = ''): Promise<RawResponse> {
+  const headers = baseHeaders(token);
+  if (body !== '') {
+    headers['Content-Type'] = 'application/json';
+  }
   const resp = await HttpClient.request({
     'method': http.RequestMethod.PATCH,
+    'url': `${GITHUB_API}${path}`,
+    'headers': headers,
+    // 空 body 不下发 extraData（NetworkKit 空串 extraData 传输层抛错，同 restPost 注记）
+    'body': body !== '' ? body : undefined
+  });
+  return toRawResponse(resp);
+}
+
+/** REST PUT（全部通知标已读等写操作；body 非空时按 JSON 下发） */
+export async function restPut(path: string, token: string, body: string = ''): Promise<RawResponse> {
+  const headers = baseHeaders(token);
+  if (body !== '') {
+    headers['Content-Type'] = 'application/json';
+  }
+  const resp = await HttpClient.request({
+    'method': http.RequestMethod.PUT,
+    'url': `${GITHUB_API}${path}`,
+    'headers': headers,
+    'body': body !== '' ? body : undefined
+  });
+  return toRawResponse(resp);
+}
+
+/** REST DELETE（线程标记 Done / 退订线程等） */
+export async function restDelete(path: string, token: string): Promise<RawResponse> {
+  const resp = await HttpClient.request({
+    'method': http.RequestMethod.DELETE,
     'url': `${GITHUB_API}${path}`,
     'headers': baseHeaders(token)
   });

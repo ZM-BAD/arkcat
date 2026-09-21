@@ -141,16 +141,108 @@
       "value": "刷新"
     },
     {
-      "name": "inbox_marked_read",
-      "value": "已标记为已读"
+      "name": "inbox_n_selected",
+      "value": "已选 %1$s 项"
     },
     {
-      "name": "inbox_mark_failed",
-      "value": "标记失败：%1$s"
+      "name": "inbox_select_all",
+      "value": "全选"
     },
     {
-      "name": "inbox_detail_coming",
-      "value": "详情页将在后续 Spec 实现"
+      "name": "inbox_deselect_all",
+      "value": "取消全选"
+    },
+    {
+      "name": "inbox_batch_failed",
+      "value": "%1$s 项操作失败"
+    },
+    {
+      "name": "inbox_unsubscribed",
+      "value": "已退订，不再通知"
+    },
+    {
+      "name": "inbox_no_detail",
+      "value": "无法打开该通知"
+    },
+    {
+      "name": "inbox_snackbar_done",
+      "value": "已标记完成"
+    },
+    {
+      "name": "inbox_snackbar_undo",
+      "value": "撤销"
+    },
+    {
+      "name": "inbox_resubscribed",
+      "value": "已恢复订阅"
+    },
+    {
+      "name": "inbox_all_read",
+      "value": "选中项均为已读"
+    },
+    {
+      "name": "repo_watch_sheet_title",
+      "value": "通知"
+    },
+    {
+      "name": "repo_watch_participating",
+      "value": "参与和 @提及"
+    },
+    {
+      "name": "repo_watch_participating_desc",
+      "value": "仅当参与或 @提及你时，才接收此仓库的通知。"
+    },
+    {
+      "name": "repo_watch_all",
+      "value": "全部活动"
+    },
+    {
+      "name": "repo_watch_all_desc",
+      "value": "接收此仓库的所有通知。"
+    },
+    {
+      "name": "repo_watch_ignore",
+      "value": "忽略"
+    },
+    {
+      "name": "repo_watch_ignore_desc",
+      "value": "永不接收通知。"
+    },
+    {
+      "name": "repo_watch_custom",
+      "value": "自定义"
+    },
+    {
+      "name": "repo_watch_custom_desc",
+      "value": "在「参与和 @提及」之外，额外选择你想接收通知的事件。"
+    },
+    {
+      "name": "repo_watch_custom_issues",
+      "value": "议题"
+    },
+    {
+      "name": "repo_watch_custom_pulls",
+      "value": "拉取请求"
+    },
+    {
+      "name": "repo_watch_custom_releases",
+      "value": "版本发布"
+    },
+    {
+      "name": "repo_watch_custom_security",
+      "value": "安全警报"
+    },
+    {
+      "name": "repo_watch_custom_readonly",
+      "value": "自定义事件仅支持在 GitHub 网页端设置"
+    },
+    {
+      "name": "repo_watch_protected",
+      "value": "订阅由组织管理，无法更改"
+    },
+    {
+      "name": "repo_watch_updated",
+      "value": "订阅已更新"
     },
     {
       "name": "notif_type_issue",

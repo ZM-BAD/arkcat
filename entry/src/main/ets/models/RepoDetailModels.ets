@@ -47,6 +47,8 @@ export interface RepoDetail {
   discussionCount: number;
   releaseCount: number;
   defaultBranchRefName: string;
+  /** 当前账号订阅态（Spec 045 Bell 四态：NONE/SUBSCRIBED/IGNORED/PROTECTED） */
+  viewerSubscription: string;
 }
 
 /** GraphQL Repository 响应 → RepoDetail */
@@ -141,7 +143,8 @@ export function mapRepoDetail(data: JsonMap): RepoDetail {
     hasDiscussions: Json.bool(repo, 'hasDiscussionsEnabled'),
     discussionCount: discussions !== null ? Json.num(discussions, 'totalCount') : 0,
     releaseCount: releaseCount,
-    defaultBranchRefName: branch ? Json.str(branch, 'name') : 'main'
+    defaultBranchRefName: branch ? Json.str(branch, 'name') : 'main',
+    viewerSubscription: Json.str(repo, 'viewerSubscription')
   };
 }
 

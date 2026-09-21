@@ -3,7 +3,7 @@
  * PullRequest 通知的 merged 状态 REST 不返回：从 subject.url 解析仓库+编号后，
  * 用单次 GraphQL 别名查询批量探测（merged 显示紫色 merge 图标，见 Inbox 卡片）。
  */
-import { restGet, restPatch, graphql } from './GitHttpClient';
+import { restGet, restPatch, restPut, restDelete, graphql } from './GitHttpClient';
 import { aliasField, aliasQueryDocument, withFallback } from 'graphql';
 import { mapNotifications, withPrMerged, NotificationItem } from '../models/GitHubModels';
 import { Json, JsonMap } from '../utils/Json';
@@ -111,9 +111,46 @@ export class NotificationsService {
     return result;
   }
 
-  /** 标记单个线程已读（PATCH，幂等） */
-  static async markThreadRead(token: string, threadId: string): Promise<void> {
-    await restPatch(`/notifications/threads/${threadId}`, token);
+  /**
+   * 标记单个线程已读/未读（PATCH，幂等；Spec 045 多选 ● 钮）。
+   * unread=false 标已读（官方默认语义，兼容 002 单条已读）；unread=true 标回未读。
+   */
+  static async markThreadRead(token: string, threadId: string, unread: boolean = false): Promise<void> {
+    await restPatch(`/notifications/threads/${threadId}`, token, `{"unread": ${unread}}`);
+  }
+
+  /** 标记单个线程 Done（DELETE；Done 通知不再出现在默认 Inbox，Spec 045 ✓/左滑） */
+  static async markThreadDone(token: string, threadId: string): Promise<void> {
+    await restDelete(`/notifications/threads/${threadId}`, token);
+  }
+
+  /** 退订单个线程（DELETE subscription；仅停止后续通知，不影响已有列表，Spec 045 右滑） */
+  static async unsubscribeThread(token: string, threadId: string): Promise<void> {
+    await restDelete(`/notifications/threads/${threadId}/subscription`, token);
+  }
+
+  /**
+   * 恢复线程订阅（UNDO 右滑退订；2026-09-22 gh 实测 PUT ignored=false → GET subscribed:true）。
+   * 反向（退订）走 DELETE subscription——PUT ignored=true 实测无效，两端点不对称。
+   */
+  static async resubscribeThread(token: string, threadId: string): Promise<void> {
+    await restPut(`/notifications/threads/${threadId}/subscription`, token, '{"ignored": false}');
+  }
+
+  /** 全部通知标已读（PUT；多选全选 + ● 的单发优化路径，Spec 045） */
+  static async markAllRead(token: string): Promise<void> {
+    await restPut('/notifications', token);
+  }
+
+  /** release 数字 id → tagName（Spec 045 tap 跳 ReleaseDetail；release 不存在/网络失败返回空串） */
+  static async fetchReleaseTag(token: string, owner: string, name: string, releaseId: number): Promise<string> {
+    try {
+      const resp = await restGet(`/repos/${owner}/${name}/releases/${releaseId}`, token);
+      const item = JSON.parse(resp.body) as JsonMap;
+      return Json.str(item, 'tag_name');
+    } catch (e) {
+      return '';
+    }
   }
 }
 

@@ -141,16 +141,108 @@
       "value": "Refresh"
     },
     {
-      "name": "inbox_marked_read",
-      "value": "Marked as read"
+      "name": "inbox_n_selected",
+      "value": "%1$s selected"
     },
     {
-      "name": "inbox_mark_failed",
-      "value": "Mark failed: %1$s"
+      "name": "inbox_select_all",
+      "value": "Select all"
     },
     {
-      "name": "inbox_detail_coming",
-      "value": "Detail page will be available in a future spec"
+      "name": "inbox_deselect_all",
+      "value": "Deselect all"
+    },
+    {
+      "name": "inbox_batch_failed",
+      "value": "%1$s failed"
+    },
+    {
+      "name": "inbox_unsubscribed",
+      "value": "Unsubscribed"
+    },
+    {
+      "name": "inbox_no_detail",
+      "value": "Can't open this notification"
+    },
+    {
+      "name": "inbox_snackbar_done",
+      "value": "Mark as done"
+    },
+    {
+      "name": "inbox_snackbar_undo",
+      "value": "UNDO"
+    },
+    {
+      "name": "inbox_resubscribed",
+      "value": "Subscription restored"
+    },
+    {
+      "name": "inbox_all_read",
+      "value": "Already all read"
+    },
+    {
+      "name": "repo_watch_sheet_title",
+      "value": "Notifications"
+    },
+    {
+      "name": "repo_watch_participating",
+      "value": "Participating and @mentions"
+    },
+    {
+      "name": "repo_watch_participating_desc",
+      "value": "Only receive notifications from this repository when participating or @mentioned."
+    },
+    {
+      "name": "repo_watch_all",
+      "value": "All Activity"
+    },
+    {
+      "name": "repo_watch_all_desc",
+      "value": "Get notified of all notifications on this repository."
+    },
+    {
+      "name": "repo_watch_ignore",
+      "value": "Ignore"
+    },
+    {
+      "name": "repo_watch_ignore_desc",
+      "value": "Never be notified."
+    },
+    {
+      "name": "repo_watch_custom",
+      "value": "Custom"
+    },
+    {
+      "name": "repo_watch_custom_desc",
+      "value": "Select events you want to be notified of in addition to participating and @mentions."
+    },
+    {
+      "name": "repo_watch_custom_issues",
+      "value": "Issues"
+    },
+    {
+      "name": "repo_watch_custom_pulls",
+      "value": "Pull Requests"
+    },
+    {
+      "name": "repo_watch_custom_releases",
+      "value": "Releases"
+    },
+    {
+      "name": "repo_watch_custom_security",
+      "value": "Security Alerts"
+    },
+    {
+      "name": "repo_watch_custom_readonly",
+      "value": "Custom events can only be set on the GitHub website"
+    },
+    {
+      "name": "repo_watch_protected",
+      "value": "Subscription is managed by your organization"
+    },
+    {
+      "name": "repo_watch_updated",
+      "value": "Subscription updated"
     },
     {
       "name": "notif_type_issue",
