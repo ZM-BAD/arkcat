@@ -14,6 +14,7 @@ import { WorkUserList } from '../models/WorkModels';
 import { StarredListSheet, STARRED_SUGGESTIONS } from '../components/StarredListSheet';
 import { RepoNotificationsSheet } from '../components/RepoNotificationsSheet';
 import { RepoForkSheet } from '../components/RepoForkSheet';
+import { RepoCountRow } from '../components/RepoCountRow';
 import { MarkdownService, MarkdownFetchResult } from '../services/MarkdownService';
 import { StateView } from '../components/StateView';
 import { friendlyError } from '../services/GitHttpClient';
@@ -720,34 +721,6 @@ export struct RepoDetailView {
     .padding({ left: 16, right: 16, top: 8 })
   }
 
-  /** 计数入口：彩块图标 + 标签 + 计数 */
-  @Builder
-  countRow(iconRes: Resource, color: ResourceColor, labelRes: Resource, count: number, onClick: () => void) {
-    Row({ space: 12 }) {
-      Stack() {
-        OctIcon({ res: iconRes, iconSize: 16, iconColor: Color.White })
-      }
-      .width(32)
-      .height(32)
-      .backgroundColor(color)
-      .borderRadius(6)
-      Text(labelRes)
-        .fontSize($r('app.float.body_font_size'))
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.text_primary'))
-        .layoutWeight(1)
-      if (count >= 0) {
-        Text(`${count}`)
-          .fontSize($r('app.float.body_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-      }
-    }
-    .width('100%')
-    .height(48)
-    .padding({ left: 16, right: 16 })
-    .onClick(onClick)
-  }
-
   /** More 折叠区：分支/Code/Commits/README·EDIT */
   @Builder
   moreSection() {
@@ -994,19 +967,39 @@ export struct RepoDetailView {
               this.actionBar()
 
               Column() {
-                this.countRow($r('app.media.oct_issue_opened_16'), $r('app.color.success_text'), $r('app.string.repo_issues_link'), this.detail.issueCount, () => this.openIssues())
+                RepoCountRow({
+                  iconRes: $r('app.media.oct_issue_opened_16'), tintColor: $r('app.color.success_text'),
+                  labelRes: $r('app.string.repo_issues_link'), count: this.detail.issueCount,
+                  onTap: (): void => this.openIssues()
+                })
                 Divider().color($r('app.color.divider')).margin({ left: 72 })
-                this.countRow($r('app.media.oct_git_pull_request_16'), $r('app.color.link_blue'), $r('app.string.repo_pr_link'), this.detail.prCount, () => this.openPrs())
+                RepoCountRow({
+                  iconRes: $r('app.media.oct_git_pull_request_16'), tintColor: $r('app.color.link_blue'),
+                  labelRes: $r('app.string.repo_pr_link'), count: this.detail.prCount,
+                  onTap: (): void => this.openPrs()
+                })
                 Divider().color($r('app.color.divider')).margin({ left: 72 })
                 if (this.detail.hasDiscussions) {
                   // 仓库开启 Discussions 才显示（icon 与 Home 页 Discussions 同款，官方顺序在 PRs 与 Actions 之间）
-                  this.countRow($r('app.media.oct_comment_discussion_16'), $r('app.color.shortcut_purple_fg'), $r('app.string.repo_discussions'), this.detail.discussionCount, () => this.openDiscussions())
+                  RepoCountRow({
+                    iconRes: $r('app.media.oct_comment_discussion_16'), tintColor: $r('app.color.shortcut_purple_fg'),
+                    labelRes: $r('app.string.repo_discussions'), count: this.detail.discussionCount,
+                    onTap: (): void => this.openDiscussions()
+                  })
                   Divider().color($r('app.color.divider')).margin({ left: 72 })
                 }
-                // Actions 无对应 API：行内不显示数字（countRow 负数哨兵=无计数）
-                this.countRow($r('app.media.oct_play_16'), $r('app.color.star_gold'), $r('app.string.repo_actions'), -1, () => this.comingSoon())
+                // Actions 无对应 API：行内不显示数字（count 传负数哨兵=无计数）
+                RepoCountRow({
+                  iconRes: $r('app.media.oct_play_16'), tintColor: $r('app.color.star_gold'),
+                  labelRes: $r('app.string.repo_actions'), count: -1,
+                  onTap: (): void => this.comingSoon()
+                })
                 Divider().color($r('app.color.divider')).margin({ left: 72 })
-                this.countRow($r('app.media.oct_tag_16'), $r('app.color.work_dark_bg'), $r('app.string.repo_releases'), this.detail.releaseCount, () => this.openReleases())
+                RepoCountRow({
+                  iconRes: $r('app.media.oct_tag_16'), tintColor: $r('app.color.work_dark_bg'),
+                  labelRes: $r('app.string.repo_releases'), count: this.detail.releaseCount,
+                  onTap: (): void => this.openReleases()
+                })
               }
               .width('100%')
               .backgroundColor($r('app.color.card_background'))
