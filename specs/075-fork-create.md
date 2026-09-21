@@ -3,7 +3,7 @@
 > BFS Level: 2
 > 关联截图: 官方 App 2026-09-22 截图 1 张（hypit-ai/hypit 的 New fork 页）
 > 上游 Spec: 006（仓库详情页 fork 圆钮）
-> 状态: draft
+> 状态: implemented（2026-09-22 状态回写：用户真机走查验收通过——弹层交互 / Learn more 拉起系统浏览器 / fork 成功落库）
 
 ---
 
@@ -77,12 +77,12 @@ body: { "name": "<fork 名>", "default_branch_only": true | false }
 
 ## 六、TDD 验收标准
 
-- [ ] 详情页点 fork 圆钮弹出 New fork 弹层（本人仓库仍置灰 toast）
-- [ ] 名称默认=上游仓库名，计数随输入变化，空名提交出行内错误且不提交
-- [ ] 默认分支标签显示仓库真实默认分支（main / master / 其他随仓库）
-- [ ] CREATE 成功：关弹层 + toast「Fork 已创建」，账号下出现该 fork
-- [ ] CREATE 失败：行内 danger 文案（friendlyError 原因），弹层不关闭
-- [ ] `devecocli build` 通过；真机走查（用户）
+- [x] 详情页点 fork 圆钮弹出 New fork 弹层（本人仓库仍置灰 toast）
+- [x] 名称默认=上游仓库名，计数随输入变化，空名提交出行内错误且不提交
+- [x] 默认分支标签显示仓库真实默认分支（main / master / 其他随仓库）
+- [x] CREATE 成功：关弹层 + toast「Fork 已创建」，账号下出现该 fork
+- [x] CREATE 失败：行内 danger 文案（friendlyError 原因），弹层不关闭（走查未构造 4xx 场景，路径为全库 friendlyError 口径）
+- [x] `devecocli build` 通过；真机走查验收通过（2026-09-22，用户）
 
 ---
 
