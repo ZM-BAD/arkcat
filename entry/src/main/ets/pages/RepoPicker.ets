@@ -2,6 +2,9 @@
  * Choose a repository 选仓库页（Spec 043，官方截图驱动 2026-09-19）：
  * Home「+」→ Create Issue 的第一跳——整页仓库候选（owner 头像 + login 灰字 + 仓库名两行行），
  * 右上 🔍 进入顶栏内联搜索（客户端过滤 owner/name）。选中仓库 → 压栈 Create Issue 表单。
+ * Spec 074 复用：Create Shortcut → Scope → Choose Repository 动线（pRole='shortcut'，独立路由名
+ * shortcutRepoPicker——官方该页带底部 Tab，不进 TAB_BAR_HIDDEN_ROUTES），选中经 RepoPickResult
+ * 槽回传（BranchPickResult 同款，ShortcutCreate 页 onShown tick 消费）。
  */
 import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
@@ -12,10 +15,17 @@ import { friendlyError } from '../services/GitHttpClient';
 import { PickerRepo, pickerRepoFullName } from '../models/RepoSubModels';
 import { resText } from '../utils/I18n';
 
+/** 选仓库结果回传槽：shortcut 角色写入 picked 后 pop，ShortcutCreate 页读取（读毕清空） */
+export class RepoPickResult {
+  static picked: string = '';
+}
+
 @ComponentV2
 export struct RepoPickerView {
   @Param token: string = '';
   @Param pathStack: NavPathStack = new NavPathStack();
+  /** 页面角色：'' = Create Issue（默认，Spec 043）；'shortcut' = Create Shortcut 选仓库（Spec 074） */
+  @Param pRole: string = '';
   @Local repos: PickerRepo[] = [];
   @Local loading: boolean = true;
   @Local errorMsg: string = '';
@@ -82,14 +92,20 @@ export struct RepoPickerView {
   }
 
   /**
-   * 选中仓库：模板判定（官方动线，Spec 043——经典模板/issue forms/联系链接任一存在
-   * 即入 Choose Template 页）；全无/查询失败直接进 Create Issue 表单
+   * 选中仓库：shortcut 角色直接回传收页（无模板判定）；issue 角色走官方模板动线（Spec 043——
+   * 经典模板/issue forms/联系链接任一存在即入 Choose Template 页）；全无/查询失败直接进 Create Issue 表单
    */
   private openRepo(repo: PickerRepo): void {
     if (this.tapping !== '') {
       return;
     }
-    this.tapping = pickerRepoFullName(repo);
+    const full = pickerRepoFullName(repo);
+    if (this.pRole === 'shortcut') {
+      RepoPickResult.picked = full;
+      this.pathStack.pop();
+      return;
+    }
+    this.tapping = full;
     RepoSubService.hasTemplateChooser(this.token, repo.ownerLogin, repo.name)
       .then((has: boolean) => {
         this.tapping = '';
@@ -156,7 +172,9 @@ export struct RepoPickerView {
           }
         } else {
           Column({ space: 2 }) {
-            Text($r('app.string.create_new_issue'))
+            // 角色小字行：issue=Create Issue（043）/ shortcut=Create Shortcut（074，官方截图）
+            Text(this.pRole === 'shortcut'
+              ? $r('app.string.shortcut_create_title') : $r('app.string.create_new_issue'))
               .fontSize($r('app.float.caption_font_size'))
               .fontColor($r('app.color.text_secondary'))
             Text($r('app.string.repo_picker_title'))

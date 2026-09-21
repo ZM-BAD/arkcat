@@ -341,6 +341,66 @@
       "value": "GET STARTED"
     },
     {
+      "name": "shortcut_create_title",
+      "value": "Create Shortcut"
+    },
+    {
+      "name": "shortcuts_saved",
+      "value": "Saved Shortcuts"
+    },
+    {
+      "name": "shortcuts_no_saved",
+      "value": "No saved Shortcuts"
+    },
+    {
+      "name": "shortcuts_create_shortcut",
+      "value": "CREATE SHORTCUT"
+    },
+    {
+      "name": "shortcuts_suggested",
+      "value": "Suggested Shortcuts"
+    },
+    {
+      "name": "shortcuts_scope",
+      "value": "Scope"
+    },
+    {
+      "name": "shortcuts_type",
+      "value": "Type"
+    },
+    {
+      "name": "shortcuts_all_repositories",
+      "value": "ALL REPOSITORIES"
+    },
+    {
+      "name": "shortcuts_scope_menu_all",
+      "value": "All Repositories"
+    },
+    {
+      "name": "shortcuts_scope_menu_choose",
+      "value": "Choose Repository"
+    },
+    {
+      "name": "shortcut_sugg_mentioned",
+      "value": "Mentioned"
+    },
+    {
+      "name": "shortcut_sugg_assigned",
+      "value": "Assigned"
+    },
+    {
+      "name": "shortcut_sugg_review_requested",
+      "value": "Review requested"
+    },
+    {
+      "name": "shortcut_sugg_repo_summary",
+      "value": "Open, Created-desc"
+    },
+    {
+      "name": "shortcut_discussions_unsupported",
+      "value": "Discussions search is not available yet (no public API)"
+    },
+    {
       "name": "home_feature_coming",
       "value": "This feature will be available in a future spec"
     },

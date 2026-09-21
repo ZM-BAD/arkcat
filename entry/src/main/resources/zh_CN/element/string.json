@@ -341,6 +341,66 @@
       "value": "开始使用"
     },
     {
+      "name": "shortcut_create_title",
+      "value": "创建快捷方式"
+    },
+    {
+      "name": "shortcuts_saved",
+      "value": "已保存的快捷方式"
+    },
+    {
+      "name": "shortcuts_no_saved",
+      "value": "暂无已保存的快捷方式"
+    },
+    {
+      "name": "shortcuts_create_shortcut",
+      "value": "创建快捷方式"
+    },
+    {
+      "name": "shortcuts_suggested",
+      "value": "推荐的快捷方式"
+    },
+    {
+      "name": "shortcuts_scope",
+      "value": "范围"
+    },
+    {
+      "name": "shortcuts_type",
+      "value": "类型"
+    },
+    {
+      "name": "shortcuts_all_repositories",
+      "value": "全部仓库"
+    },
+    {
+      "name": "shortcuts_scope_menu_all",
+      "value": "全部仓库"
+    },
+    {
+      "name": "shortcuts_scope_menu_choose",
+      "value": "选择仓库"
+    },
+    {
+      "name": "shortcut_sugg_mentioned",
+      "value": "已提及"
+    },
+    {
+      "name": "shortcut_sugg_assigned",
+      "value": "已分配"
+    },
+    {
+      "name": "shortcut_sugg_review_requested",
+      "value": "已请求审核"
+    },
+    {
+      "name": "shortcut_sugg_repo_summary",
+      "value": "开启，创建时间降序"
+    },
+    {
+      "name": "shortcut_discussions_unsupported",
+      "value": "暂不支持搜索 Discussions（无公开 API）"
+    },
+    {
       "name": "home_feature_coming",
       "value": "该功能将在后续 Spec 提供"
     },

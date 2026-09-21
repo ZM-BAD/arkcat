@@ -60,7 +60,7 @@
 | 047 | [releases-detail-download.md](047-releases-detail-download.md) | Release 详情与资产下载 | Level 3 | implemented |
 | 048 | [actions-checks.md](048-actions-checks.md) | Actions/Checks 状态检查（Check runs 列表/详情/重跑） | Level 3 | approved |
 | 049 | [multi-account-security.md](049-multi-account-security.md) | 多账号与安全（049a 账号管理器已实现；App Lock 拆出至 066） | Level 3 | implemented |
-| 050 | [home-favorites-shortcuts.md](050-home-favorites-shortcuts.md) | Home 个性化（Favorites 收藏 + Shortcuts 快捷入口） | Level 3 | draft |
+| 050 | [home-favorites-shortcuts.md](050-home-favorites-shortcuts.md) | Home 个性化（Favorites 收藏；Shortcuts 拆分至 074） | Level 3 | implemented |
 | 051 | [accessibility-multidevice.md](051-accessibility-multidevice.md) | 无障碍与多设备适配（横向规范） | Level 4 | draft |
 | 052 | [achievement-detail.md](052-achievement-detail.md) | 成就详情页（徽章大图/事件/分享） | Level 3 | implemented |
 | 053 | [repo-stargazers-forks.md](053-repo-stargazers-forks.md) | 仓库 Stargazers / Forks 列表 | Level 3 | implemented |
@@ -80,6 +80,11 @@
 | 067 | [appbar-unification.md](067-appbar-unification.md) | 统一 App Bar 组件（行高 48/内边距 16/中心距 44/图标 20） | Level 2 | implemented |
 | 068 | [filter-interaction.md](068-filter-interaction.md) | 筛选交互统一约定（dirty 徽标/RESET ALL FILTERS/面板规范，全库跨页） | Level — | implemented |
 | 069 | [settings-about.md](069-settings-about.md) | Settings About 行与关于页（备案号/Star 引导仓库行，静态零网络） | Level 2 | implemented |
+| 070 | [create-repository.md](070-create-repository.md) | New Repository 两步弹层（General/Options） | Level 3 | implemented |
+| 071 | [branch-picker-contribute.md](071-branch-picker-contribute.md) | 分支行 Choose Branch + CONTRIBUTE 复用 prCompare | Level 3 | implemented |
+| 072 | [profile-popular-fallback.md](072-profile-popular-fallback.md) | 主页 Popular 兜底区（无 Pin 时 star 降序前 6） | Level 3 | implemented |
+| 073 | [profile-nav-sponsoring-projects.md](073-profile-nav-sponsoring-projects.md) | 主页导航行 Sponsoring/Projects 增补 | Level 3 | implemented |
+| 074 | [shortcuts.md](074-shortcuts.md) | Home Shortcuts 快捷方式（已保存搜索：管理页 + 创建页 + 端侧存储） | Level 3 | approved |
 
 ## 覆盖率
 

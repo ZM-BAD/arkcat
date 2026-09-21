@@ -38,6 +38,10 @@ import {
   addFavorite, removeFavorite, moveFavorite, filterCandidates, isSearchable, FavoriteRepo
 } from '../../entry/src/main/ets/utils/Favorites';
 import {
+  shortcutsKey, sameShortcutQuery, shortcutsToStorage, shortcutsFromStorage,
+  addShortcut, removeShortcut, moveShortcut, buildShortcutQuery, ShortcutItem
+} from '../../entry/src/main/ets/utils/Shortcuts';
+import {
   issueTitleError, canSubmitIssue, validatePrHeads, defaultBaseBranch,
   parseFormRoute, filterBranches, orderBranches, ISSUE_TITLE_MAX
 } from '../../entry/src/main/ets/utils/IssueFormRules';
@@ -2419,4 +2423,107 @@ test('Spec 050 filterCandidates 剔除已收藏 + isSearchable', () => {
 
   assert.equal(isSearchable('  '), false);
   assert.equal(isSearchable(' arkcat '), true);
+});
+
+// —— Spec 074：Home Shortcuts 快捷方式（utils/Shortcuts） ——
+
+const sc = (id: string, kind: string, query: string): ShortcutItem =>
+  ({ id, name: `n-${id}`, head: '', kind, query, iconKey: 'zap', colorKey: 'gray', createdAt: 1 });
+
+test('Spec 074 shortcutsKey：按账号分区', () => {
+  assert.notEqual(shortcutsKey('alice'), shortcutsKey('bob'));
+  assert.equal(shortcutsKey('alice'), 'shortcuts_v1_alice');
+});
+
+test('Spec 074 shortcuts 序列化往返与坏数据兜底', () => {
+  const list: ShortcutItem[] = [
+    sc('1', 'issues', 'is:open mentions:@me sort:created-desc'),
+    sc('2', 'prs', 'is:open review-requested:@me sort:created-desc')
+  ];
+  list[0].head = 'Issues';
+  const back = shortcutsFromStorage(shortcutsToStorage(list));
+  assert.equal(back.length, 2);
+  assert.equal(back[0].kind, 'issues');
+  assert.equal(back[0].head, 'Issues');
+  assert.equal(back[1].iconKey, 'zap');
+  // head 缺失按空串兜底（渲染端再按 kind 回退类型标签）
+  assert.equal(shortcutsFromStorage(JSON.stringify([
+    { id: 'a', name: 'ok', kind: 'issues', query: 'q', iconKey: 'zap', colorKey: 'gray', createdAt: 1 }
+  ]))[0].head, '');
+
+  // 坏数据：非 JSON / 非数组回退空数组；缺字段与重复（kind+query 归一）条目剔除，保持顺序
+  assert.deepEqual(shortcutsFromStorage('not json'), []);
+  assert.deepEqual(shortcutsFromStorage('{"a":1}'), []);
+  const dirty = shortcutsFromStorage(JSON.stringify([
+    { id: 'a', name: '', kind: 'issues', query: 'x', iconKey: '', colorKey: '', createdAt: 0 },
+    { id: 'b', name: 'ok', kind: 'issues', query: 'is:open author:@me', iconKey: 'zap', colorKey: 'gray', createdAt: 1 },
+    { id: 'c', name: 'dup', kind: 'ISSUES', query: ' IS:OPEN author:@me ', iconKey: 'zap', colorKey: 'gray', createdAt: 2 },
+    { id: 'd', name: 'ok2', kind: 'prs', query: 'is:open', iconKey: 'zap', colorKey: 'gray', createdAt: 3 }
+  ]));
+  assert.equal(dirty.length, 2);
+  assert.equal(dirty[0].name, 'ok');
+  assert.equal(dirty[1].name, 'ok2');
+});
+
+test('Spec 074 addShortcut 幂等去重、removeShortcut/moveShortcut 定位', () => {
+  let list: ShortcutItem[] = [];
+  list = addShortcut(list, sc('1', 'issues', 'is:open author:@me'));
+  list = addShortcut(list, sc('2', 'prs', 'is:open'));
+  // 同 kind+query（大小写/首尾空白归一）不重复入列；新项追加末尾
+  list = addShortcut(list, sc('3', 'ISSUES', ' IS:OPEN  author:@me '));
+  assert.equal(list.length, 2);
+  assert.equal(list[1].kind, 'prs');
+  // 同 query 不同 kind 不算重复
+  list = addShortcut(list, sc('4', 'issues', 'is:open'));
+  assert.equal(list.length, 3);
+  assert.equal(list[2].id, '4');
+
+  list = removeShortcut(list, '1');
+  assert.equal(list.length, 2);
+  assert.equal(list[0].id, '2');
+  assert.equal(removeShortcut(list, 'nope').length, 2);
+
+  const moved = moveShortcut(list, 1, 0);
+  assert.deepEqual(moved.map((s: ShortcutItem): string => s.id), ['4', '2']);
+  // 越界/原位：原序副本
+  assert.deepEqual(moveShortcut(list, 0, 2).map((s: ShortcutItem): string => s.id), ['2', '4']);
+  assert.deepEqual(moveShortcut(list, 1, 1).map((s: ShortcutItem): string => s.id), ['2', '4']);
+});
+
+test('Spec 074 buildShortcutQuery 组合与类型限定词不落', () => {
+  // issues 默认态：Open / Created by me / newest
+  assert.equal(
+    buildShortcutQuery('issues', 'open', 'created', 'all', 'newest', [], []),
+    'is:open author:@me sort:created-desc'
+  );
+  // prs 全量：merged 状态 + review_requested + private + orgs/repos 多值 + reactions 排序
+  assert.equal(
+    buildShortcutQuery('prs', 'merged', 'review_requested', 'private', 'reactions:+1', ['ZM-BAD'], ['ZM-BAD/arkcat', 'a/b']),
+    'is:merged review-requested:@me is:private org:ZM-BAD repo:ZM-BAD/arkcat repo:a/b sort:reactions-+1-desc'
+  );
+  // queued 状态兜底拼装正确
+  assert.equal(
+    buildShortcutQuery('prs', 'queued', 'assigned', 'public', 'oldest', [], []),
+    'is:queued assignee:@me is:public sort:created-asc'
+  );
+  // 未知状态不落限定词；未知排序键兜底 created-desc
+  assert.equal(
+    buildShortcutQuery('issues', 'all', 'created', 'all', 'unknown_key', [], []),
+    'author:@me sort:created-desc'
+  );
+  // discussions 不落状态限定词（is:open 非 discussion 合法状态）
+  assert.equal(
+    buildShortcutQuery('discussions', 'open', 'created', 'all', 'newest', [], []),
+    'author:@me sort:created-desc'
+  );
+  // 结果不含类型限定词（kind 单独存储，由打开通道追加）
+  const q = buildShortcutQuery('issues', 'open', 'mentioned', 'all', 'newest', [], []);
+  assert.ok(!q.includes('is:issue'));
+  assert.ok(!q.includes('is:pr'));
+});
+
+test('Spec 074 sameShortcutQuery 归一判定（建议隐藏与去重共用）', () => {
+  assert.equal(sameShortcutQuery('issues', ' is:open author:@me '), sameShortcutQuery('ISSUES', 'is:open author:@me'));
+  assert.notEqual(sameShortcutQuery('issues', 'is:open'), sameShortcutQuery('prs', 'is:open'));
+  assert.notEqual(sameShortcutQuery('issues', 'is:open author:@me'), sameShortcutQuery('issues', 'is:closed author:@me'));
 });

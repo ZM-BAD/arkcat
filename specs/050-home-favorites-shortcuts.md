@@ -1,15 +1,15 @@
-# Spec 050: Home 个性化（Favorites 收藏；Shortcuts 后续批次）
+# Spec 050: Home 个性化（Favorites 收藏）
 
 > BFS Level: 3
 > 关联截图: 官方 App 2026-09-20 截图 5 张——Home Favorites 有值态/空态 + Favorites 编辑页三态（默认拖拽 / ⋮ 菜单展开 / 重排按钮模式）
 > 上游 Spec: 013（Home 官方布局）、016（Edit My Work 交互范式）、043（Picker 数据源）
-> 状态: approved（2026-09-20 用户官方截图驱动重写定案，当批实现，完成后回写 implemented）
+> 状态: implemented（2026-09-20 实现；Shortcuts 拆分至 Spec 074，2026-09-21 回写）
 
 ---
 
 ## 一、页面/功能概述
 
-Home 页 Favorites 区块从 013 的静态空态占位接通为真功能：有收藏时区块按用户定义顺序列出收藏仓库行，区块头右侧 ⋯ 进入 Favorites 编辑页；编辑页负责增删、排序（拖拽 / 重排按钮两模式）与添加（Top Repositories 候选 + 全 GitHub 搜索）。收藏为端侧按账号隔离持久化——官方为服务端同步，但公开 API 无 favorites 能力（见四）。Shortcuts 区块本批不做，保持现状。
+Home 页 Favorites 区块从 013 的静态空态占位接通为真功能：有收藏时区块按用户定义顺序列出收藏仓库行，区块头右侧 ⋯ 进入 Favorites 编辑页；编辑页负责增删、排序（拖拽 / 重排按钮两模式）与添加（Top Repositories 候选 + 全 GitHub 搜索）。收藏为端侧按账号隔离持久化——官方为服务端同步，但公开 API 无 favorites 能力（见四）。Shortcuts 区块拆分至 Spec 074。
 
 ---
 
@@ -113,7 +113,7 @@ interface FavoriteRepo { ownerLogin: string; name: string; ownerAvatar: string; 
 
 ## 七、备注
 
-- Shortcuts 区块本批不动，保持 013 静态引导（用户 2026-09-20 定案），后续按官方截图另立 spec。
+- Shortcuts 区块拆分至 Spec 074（2026-09-21 官方截图驱动另立，本 Spec 不再覆盖）。
 - 编辑页交互范式整体复用 Spec 016 EditMyWork：⋮ 菜单标签随模式取反（bindMenu 数组不随状态刷新，需显式重建）、List onMove 拖拽、▲▼ 逐格移动、快照编辑。菜单与保存文案复用既有 edit_work_save / edit_work_show_reorder / edit_work_hide_reorder 键（官方菜单项即「Show reorder actions」，再次点开为「Hide reorder actions」）。
 - SAVE 成功落盘后 pop 回 Home 且立即反映——走 Index.ets 参数泵（同 016 workVersion 模式）刷新 Home。
 - 官方两态入口：有值态区块头 ⋯、空态 ADD FAVORITES 钮，均进同一编辑页。

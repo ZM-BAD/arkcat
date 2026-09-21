@@ -6,7 +6,6 @@
  * 空列表显示官方「Nothing to see here」（无组织/仓库或搜索无匹配时）。
  */
 import { RequestSequencer } from 'graphql';
-import { promptAction } from '@kit.ArkUI';
 import { OctIcon } from '../components/OctIcon';
 import { WorkOrgItem, WorkTopRepoItem, WorkTopReposPage } from '../models/WorkModels';
 import { WorkService } from '../services/WorkService';
@@ -23,6 +22,12 @@ import { resText } from '../utils/I18n';
 export interface WorkFilterOption {
   key: string;
   label: string;
+}
+
+/** 漏斗菜单项（bindMenu 数组不随状态刷新的字段结构，同 EditMyWork ReorderMenuEntry 范式） */
+interface FunnelMenuEntry {
+  value: ResourceStr;
+  action: () => void;
 }
 
 /** 筛选快照（页面据此拼服务端查询） */
@@ -46,6 +51,17 @@ export function isWorkFilterDirty(s: WorkFilterState): boolean {
     || s.sortKey !== 'newest' || s.orgs.length > 0 || s.repos.length > 0;
 }
 
+/** Create Shortcut 预填载荷（Spec 074）：当前筛选 + 类型，作为 shortcutCreate 路由的 JSON 参数 */
+export interface ShortcutCreatePrefill {
+  kind: string;
+  state: string;
+  scope: string;
+  visibility: string;
+  sortKey: string;
+  orgs: string[];
+  repos: string[];
+}
+
 @ComponentV2
 export struct WorkFilterBar {
   @Param token: string = '';
@@ -53,7 +69,17 @@ export struct WorkFilterBar {
   @Param scopeOptions: WorkFilterOption[] = [];
   /** 外部复位信号（空态 RESET ALL FILTERS）：筛选状态在本组件内，页面只能靠递增本值驱动复位 */
   @Param resetTick: number = 0;
+  /** 初始筛选快照（Spec 074 创建页预填）：仅 aboutToAppear 应用一次 */
+  @Param initialState: WorkFilterState | null = null;
+  /** 隐藏漏斗徽标（Spec 074 创建页：筛选条本身已是表单，无创建/清空菜单） */
+  @Param showFunnel: boolean = true;
   @Event onQueryChange: (s: WorkFilterState) => void = (s: WorkFilterState): void => { };
+  /** 漏斗菜单「Create Shortcut」（Spec 074）：本组件持有筛选快照，kind 由页面注入，载荷 JSON 上抛 */
+  @Event onCreateShortcut: (prefill: string) => void = (prefill: string): void => { };
+  /** 预填载荷中的类型标识（Work Issues 页 'issues' / Work PRs 页 'prs'） */
+  @Param shortcutKind: string = 'issues';
+  /** 漏斗菜单是否含「Create Shortcut」项（创建页自身 funnel=false 隐藏该项，只留 Clear all filters，Spec 074） */
+  @Param showCreateShortcutItem: boolean = true;
 
   @Local state: string = 'open';
   @Local scope: string = 'created';
@@ -85,6 +111,19 @@ export struct WorkFilterBar {
     return resText(this.getUIContext(), res);
   }
 
+  aboutToAppear(): void {
+    // 创建页预填（Spec 074）：仅首帧应用一次，此后仍走组件内状态 + emitChange
+    const init = this.initialState;
+    if (init !== null) {
+      this.state = init.state;
+      this.scope = init.scope;
+      this.visibilityFilter = init.visibility;
+      this.sortKey = init.sortKey;
+      this.selectedOrgs = init.orgs.slice();
+      this.selectedRepos = init.repos.slice();
+    }
+  }
+
   /** 空态 RESET ALL FILTERS → 与漏斗菜单 Clear all filters 走同一函数 */
   @Monitor('resetTick')
   onResetTick(): void {
@@ -111,6 +150,20 @@ export struct WorkFilterBar {
     this.selectedOrgs = [];
     this.selectedRepos = [];
     this.emitChange();
+  }
+
+  /** 漏斗菜单「Create Shortcut」：以当前筛选快照拼预填 JSON 上抛（页面负责跳转） */
+  private emitCreateShortcut(): void {
+    const payload: ShortcutCreatePrefill = {
+      kind: this.shortcutKind,
+      state: this.state,
+      scope: this.scope,
+      visibility: this.visibilityFilter,
+      sortKey: this.sortKey,
+      orgs: this.selectedOrgs,
+      repos: this.selectedRepos
+    };
+    this.onCreateShortcut(JSON.stringify(payload));
   }
 
   /** 激活的筛选组数（漏斗徽标，按筛选组计） */
@@ -480,11 +533,28 @@ export struct WorkFilterBar {
     }
   }
 
+  /** 漏斗菜单项：Create Shortcut（可关）+ Clear all filters（创建页只保留后者，Spec 074） */
+  private funnelMenuItems(): FunnelMenuEntry[] {
+    const items: FunnelMenuEntry[] = [];
+    if (this.showCreateShortcutItem) {
+      items.push({
+        value: $r('app.string.work_filter_create_shortcut'),
+        action: (): void => this.emitCreateShortcut()
+      });
+    }
+    items.push({
+      value: $r('app.string.work_clear_all_filters'),
+      action: (): void => this.resetFilters()
+    });
+    return items;
+  }
+
   build() {
     Column() {
+      // 漏斗徽标 + chips 与页面左右边缘保持 16 边距（官方 Create Shortcut/Work 页口径，Spec 074）
       Row() {
-        // 漏斗徽标：激活筛选组数（固定在筛选条最左，不随 chip 横向滚动）
-        if (this.activeFilterCount() > 0) {
+        // 漏斗徽标：激活筛选组数（固定在筛选条最左，不随 chip 横向滚动；创建页经 showFunnel=false 隐藏）
+        if (this.activeFilterCount() > 0 && this.showFunnel) {
             Row({ space: 4 }) {
               OctIcon({
                 res: $r('app.media.oct_filter_16'),
@@ -508,18 +578,7 @@ export struct WorkFilterBar {
             .backgroundColor($r('app.color.chip_bg'))
             .border({ width: 1, color: $r('app.color.border') })
             .margin({ right: 8 })
-            .bindMenu([
-              {
-                value: $r('app.string.work_filter_create_shortcut'),
-                action: (): void => {
-                  promptAction.showToast({ message: $r('app.string.home_feature_coming') });
-                }
-              },
-              {
-                value: $r('app.string.work_clear_all_filters'),
-                action: (): void => this.resetFilters()
-              }
-            ])
+            .bindMenu(this.funnelMenuItems())
         }
 
         // chips 滚动区：仅这一段随手指横向滑动
@@ -585,6 +644,8 @@ export struct WorkFilterBar {
         .align(Alignment.Start)
       }
       .width('100%')
+      // chips 与屏幕左右端保持 16 边距（官方口径，Spec 074）
+      .padding({ left: 16, right: 16 })
       .margin({ bottom: 12 })
     }
     .width('100%')
