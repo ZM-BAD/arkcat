@@ -13,6 +13,8 @@ import { WorkService } from '../services/WorkService';
 import { WorkUserList } from '../models/WorkModels';
 import { StarredListSheet, STARRED_SUGGESTIONS } from '../components/StarredListSheet';
 import { RepoNotificationsSheet } from '../components/RepoNotificationsSheet';
+import { RepoForkSheet } from '../components/RepoForkSheet';
+import { RepoCountRow } from '../components/RepoCountRow';
 import { MarkdownService, MarkdownFetchResult } from '../services/MarkdownService';
 import { StateView } from '../components/StateView';
 import { friendlyError } from '../services/GitHttpClient';
@@ -206,6 +208,23 @@ export struct RepoDetailView {
     ];
   }
 
+  /**
+   * 弹层内容分派（单个 bindSheet 内切换内容，规避同组件多 bindSheet 失效）。
+   * !! bindSheet 内容槽必须直传本单层构建函数：曾写成嵌套三元 + 折行括号，ArkUI 认不出构建函数，
+   * 把内容当普通 UI 就地渲染到页面顶端（收藏列表串到顶栏上，2026-09-22 实机事故）。同款先例见
+   * PrDetail.sheetBuilder / Discussions.overlaySheet。
+   */
+  @Builder
+  repoSheet() {
+    if (this.sheetKind === 'watch') {
+      this.watchSheet()
+    } else if (this.sheetKind === 'fork') {
+      this.forkSheet()
+    } else {
+      this.listSheet()
+    }
+  }
+
   /** 列表成员 sheet（单个 bindSheet 引用，避免多 bindSheet 失效） */
   @Builder
   listSheet() {
@@ -230,6 +249,28 @@ export struct RepoDetailView {
       errorText: this.watchError,
       onPick: (state: string): void => this.setWatchSubscription(state),
       onClose: (): void => {
+        this.sheetKind = '';
+      }
+    })
+  }
+
+  /**
+   * New fork 弹层（Spec 075）：上游元数据取详情查询结果（描述/默认分支），零额外请求；
+   * 提交与失败文案都在弹层内，本页只负责开关与成功 toast。
+   */
+  @Builder
+  forkSheet() {
+    RepoForkSheet({
+      token: this.token,
+      owner: this.owner,
+      name: this.name,
+      description: this.detail !== null ? this.detail.description : '',
+      defaultBranch: this.detail !== null ? this.detail.defaultBranchRefName : 'main',
+      onCreated: (): void => {
+        this.sheetKind = '';
+        promptAction.showToast({ message: $r('app.string.repo_fork_created_toast') });
+      },
+      onDismiss: (): void => {
         this.sheetKind = '';
       }
     })
@@ -437,27 +478,17 @@ export struct RepoDetailView {
     return resText(this.getUIContext(), res);
   }
 
+  /** fork 圆钮：本人仓库置灰提示，其余打开 New fork 弹层（Spec 075，提交在弹层内） */
   private onFork(): void {
     // 本人仓库官方禁 fork：按钮置灰，点击仅提示
     if (this.isOwnRepo) {
       promptAction.showToast({ message: this.stringOf($r('app.string.repo_fork_own_toast')) });
       return;
     }
-    const detail = this.detail;
-    if (detail === null || detail.repoId === '' || this.busy) {
+    if (this.detail === null) {
       return;
     }
-    this.busy = true;
-    RepoService.createFork(this.token, detail.repoId)
-      .then(() => {
-        promptAction.showToast({ message: $r('app.string.repo_fork_created_toast') });
-      })
-      .catch((e: Error) => {
-        promptAction.showToast({ message: this.fmt($r('app.string.repo_fork_failed'), e.message) });
-      })
-      .finally(() => {
-        this.busy = false;
-      });
+    this.sheetKind = 'fork';
   }
 
   private openIssues(): void {
@@ -688,34 +719,6 @@ export struct RepoDetailView {
     }
     .width('100%')
     .padding({ left: 16, right: 16, top: 8 })
-  }
-
-  /** 计数入口：彩块图标 + 标签 + 计数 */
-  @Builder
-  countRow(iconRes: Resource, color: ResourceColor, labelRes: Resource, count: number, onClick: () => void) {
-    Row({ space: 12 }) {
-      Stack() {
-        OctIcon({ res: iconRes, iconSize: 16, iconColor: Color.White })
-      }
-      .width(32)
-      .height(32)
-      .backgroundColor(color)
-      .borderRadius(6)
-      Text(labelRes)
-        .fontSize($r('app.float.body_font_size'))
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.text_primary'))
-        .layoutWeight(1)
-      if (count >= 0) {
-        Text(`${count}`)
-          .fontSize($r('app.float.body_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-      }
-    }
-    .width('100%')
-    .height(48)
-    .padding({ left: 16, right: 16 })
-    .onClick(onClick)
   }
 
   /** More 折叠区：分支/Code/Commits/README·EDIT */
@@ -964,19 +967,39 @@ export struct RepoDetailView {
               this.actionBar()
 
               Column() {
-                this.countRow($r('app.media.oct_issue_opened_16'), $r('app.color.success_text'), $r('app.string.repo_issues_link'), this.detail.issueCount, () => this.openIssues())
+                RepoCountRow({
+                  iconRes: $r('app.media.oct_issue_opened_16'), tintColor: $r('app.color.success_text'),
+                  labelRes: $r('app.string.repo_issues_link'), count: this.detail.issueCount,
+                  onTap: (): void => this.openIssues()
+                })
                 Divider().color($r('app.color.divider')).margin({ left: 72 })
-                this.countRow($r('app.media.oct_git_pull_request_16'), $r('app.color.link_blue'), $r('app.string.repo_pr_link'), this.detail.prCount, () => this.openPrs())
+                RepoCountRow({
+                  iconRes: $r('app.media.oct_git_pull_request_16'), tintColor: $r('app.color.link_blue'),
+                  labelRes: $r('app.string.repo_pr_link'), count: this.detail.prCount,
+                  onTap: (): void => this.openPrs()
+                })
                 Divider().color($r('app.color.divider')).margin({ left: 72 })
                 if (this.detail.hasDiscussions) {
                   // 仓库开启 Discussions 才显示（icon 与 Home 页 Discussions 同款，官方顺序在 PRs 与 Actions 之间）
-                  this.countRow($r('app.media.oct_comment_discussion_16'), $r('app.color.shortcut_purple_fg'), $r('app.string.repo_discussions'), this.detail.discussionCount, () => this.openDiscussions())
+                  RepoCountRow({
+                    iconRes: $r('app.media.oct_comment_discussion_16'), tintColor: $r('app.color.shortcut_purple_fg'),
+                    labelRes: $r('app.string.repo_discussions'), count: this.detail.discussionCount,
+                    onTap: (): void => this.openDiscussions()
+                  })
                   Divider().color($r('app.color.divider')).margin({ left: 72 })
                 }
-                // Actions 无对应 API：行内不显示数字（countRow 负数哨兵=无计数）
-                this.countRow($r('app.media.oct_play_16'), $r('app.color.star_gold'), $r('app.string.repo_actions'), -1, () => this.comingSoon())
+                // Actions 无对应 API：行内不显示数字（count 传负数哨兵=无计数）
+                RepoCountRow({
+                  iconRes: $r('app.media.oct_play_16'), tintColor: $r('app.color.star_gold'),
+                  labelRes: $r('app.string.repo_actions'), count: -1,
+                  onTap: (): void => this.comingSoon()
+                })
                 Divider().color($r('app.color.divider')).margin({ left: 72 })
-                this.countRow($r('app.media.oct_tag_16'), $r('app.color.work_dark_bg'), $r('app.string.repo_releases'), this.detail.releaseCount, () => this.openReleases())
+                RepoCountRow({
+                  iconRes: $r('app.media.oct_tag_16'), tintColor: $r('app.color.work_dark_bg'),
+                  labelRes: $r('app.string.repo_releases'), count: this.detail.releaseCount,
+                  onTap: (): void => this.openReleases()
+                })
               }
               .width('100%')
               .backgroundColor($r('app.color.card_background'))
@@ -1016,11 +1039,11 @@ export struct RepoDetailView {
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
     // !! 双向绑定：拖拽/遮罩/回退关闭时框架回写 false，否则再点列表钮无法重新打开
-    .bindSheet(this.sheetKind !== '', this.sheetKind === 'watch' ? this.watchSheet() : this.listSheet(), {
-      // Notifications 面板为近全屏档（官方实机图同构；抓取条在内容里自绘，Spec 045）
-      height: this.sheetKind === 'watch' ? SheetSize.LARGE : 300,
-      detents: this.sheetKind === 'watch' ? [SheetSize.MEDIUM, SheetSize.LARGE] : [300, SheetSize.LARGE],
-      backgroundColor: this.sheetKind === 'watch' ? $r('app.color.card_background') : $r('app.color.bg_page'),
+    .bindSheet(this.sheetKind !== '', this.repoSheet(), {
+      // Notifications / New fork 面板为近全屏档（官方实机图同构；抓取条在内容里自绘，Spec 045/075）
+      height: this.sheetKind === 'list' ? 300 : SheetSize.LARGE,
+      detents: this.sheetKind === 'list' ? [300, SheetSize.LARGE] : [SheetSize.MEDIUM, SheetSize.LARGE],
+      backgroundColor: this.sheetKind === 'list' ? $r('app.color.bg_page') : $r('app.color.card_background'),
       // 关闭钮/标题均自绘；外点自动关闭
       showClose: false,
       dragBar: false,

@@ -85,6 +85,7 @@
 | 072 | [profile-popular-fallback.md](072-profile-popular-fallback.md) | 主页 Popular 兜底区（无 Pin 时 star 降序前 6） | Level 3 | implemented |
 | 073 | [profile-nav-sponsoring-projects.md](073-profile-nav-sponsoring-projects.md) | 主页导航行 Sponsoring/Projects 增补 | Level 3 | implemented |
 | 074 | [shortcuts.md](074-shortcuts.md) | Home Shortcuts 快捷方式（已保存搜索：管理页 + 创建页 + 端侧存储） | Level 3 | approved |
+| 075 | [fork-create.md](075-fork-create.md) | New fork 弹层（点 fork 先出页、CREATE 才写入；REST fork 通道） | Level 2 | implemented |
 
 ## 覆盖率
 

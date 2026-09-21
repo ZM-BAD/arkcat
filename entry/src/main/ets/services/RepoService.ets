@@ -1,13 +1,13 @@
 /**
- * 仓库详情服务（Spec 006）：详情查询 + Star/Fork mutation + Spec 053 社交列表（stargazers/forks）
+ * 仓库详情服务（Spec 006）：详情查询 + Star mutation / Fork REST 写入 + Spec 053 社交列表（stargazers/forks）
  * + Spec 054 社区列表（contributors/watchers）+ Spec 055 许可证。
  */
-import { graphql, restGet, ApiError } from './GitHttpClient';
+import { graphql, restGet, restPost, ApiError, RawResponse } from './GitHttpClient';
 import { aliasField, aliasQueryDocument, withFallback } from 'graphql';
 import { contributorCount } from './ExploreService';
 import { Json, JsonMap } from '../utils/Json';
 import { RepoDetail, mapRepoDetail, RepoStarState, mapRepoStarState } from '../models/RepoDetailModels';
-import { StargazerPage, ForkPage, PeoplePage, mapStargazerPage, mapForkPage, mapWatcherPage, mapContributorPage } from '../models/RepoSocialModels';
+import { StargazerPage, ForkPage, PeoplePage, mapStargazerPage, mapForkPage, mapWatcherPage, mapContributorPage, buildForkBody } from '../models/RepoSocialModels';
 import { LicenseInfo, mapLicenseInfo } from '../models/RepoLicenseModels';
 import { FRAG_PAGE_INFO, FRAG_VIEWER_LOGIN } from './GqlFragments';
 
@@ -85,11 +85,6 @@ query RepoStarState($owner: String!, $name: String!) {
   }
 }`;
 
-const CREATE_FORK_MUTATION = `
-mutation ForkRepo($repositoryId: ID!) {
-  createFork(input: { repositoryId: $repositoryId }) { repository { nameWithOwner } }
-}`;
-
 const STARGAZERS_QUERY = `
 query RepoStargazers($owner: String!, $name: String!, $first: Int = 50, $after: String) {
   repository(owner: $owner, name: $name) {
@@ -136,6 +131,14 @@ query RepoLicense($owner: String!, $name: String!) {
 /** REST 贡献者一页大小；响应长度达此值视为可能还有下一页 */
 const CONTRIBUTORS_PER_PAGE = 50;
 
+/** REST 非 2xx → ApiError（语义码直透，页面按 friendlyError 分支） */
+function ensureOk(resp: RawResponse): RawResponse {
+  if (resp.code < 200 || resp.code >= 300) {
+    throw new ApiError(resp.code, `GitHub REST HTTP ${resp.code}`);
+  }
+  return resp;
+}
+
 export class RepoService {
   /** 拉取仓库详情聚合 */
   static async fetchRepoDetail(token: string, owner: string, name: string): Promise<RepoDetail> {
@@ -159,10 +162,14 @@ export class RepoService {
     return !starred;
   }
 
-  /** Fork 仓库 */
-  static async createFork(token: string, repoId: string): Promise<void> {
-    const variables: Record<string, Object> = { 'repositoryId': repoId };
-    await graphql(CREATE_FORK_MUTATION, variables, token);
+  /**
+   * Fork 仓库（Spec 006 元素 6 / Spec 075）：GraphQL Mutation 类型无 fork 字段（introspection 实测 undefinedField），
+   * 写入走 REST `POST /repos/{owner}/{repo}/forks`——body 带 fork 名与「仅复制默认分支」开关，
+   * 202 Accepted 即成功，403/404/422 经 ApiError 上抛。
+   */
+  static async createFork(token: string, owner: string, name: string, forkName: string,
+    defaultBranchOnly: boolean): Promise<void> {
+    ensureOk(await restPost(`/repos/${owner}/${name}/forks`, token, buildForkBody(forkName, defaultBranchOnly)));
   }
 
   /**

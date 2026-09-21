@@ -317,6 +317,46 @@
       "value": "You can't fork your own repository."
     },
     {
+      "name": "repo_fork_new_title",
+      "value": "New fork"
+    },
+    {
+      "name": "repo_fork_scope_hint",
+      "value": "You are creating a fork in your personal account"
+    },
+    {
+      "name": "repo_fork_name_label",
+      "value": "Repository name (required)"
+    },
+    {
+      "name": "repo_fork_name_hint",
+      "value": "By default, forks are named the same as their upstream repository. You can customize the name to distinguish it further."
+    },
+    {
+      "name": "repo_fork_desc_label",
+      "value": "Repository description"
+    },
+    {
+      "name": "repo_fork_settings_label",
+      "value": "Additional settings"
+    },
+    {
+      "name": "repo_fork_branch_only_pre",
+      "value": "Copy the "
+    },
+    {
+      "name": "repo_fork_branch_only_post",
+      "value": " branch only"
+    },
+    {
+      "name": "repo_fork_contribute_fmt",
+      "value": "Contribute back to %1$s by adding your own branch."
+    },
+    {
+      "name": "repo_fork_learn_more",
+      "value": "Learn more"
+    },
+    {
       "name": "repo_unstar_title",
       "value": "Unstar %1$s"
     },
