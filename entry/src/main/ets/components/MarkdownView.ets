@@ -1,7 +1,9 @@
 /**
  * Markdown 渲染组件（Spec 040）：ArkWeb + 官方 HTML（bodyHTML / readme html / /markdown 渲染结果）。
- * 交互：站内链接 → 路由回调；外链 → 系统浏览器；代码块复制（native 桥）；超长折叠（>阈值 4000 字符）；
+ * 交互：站内链接 → 路由回调；外链 → 系统浏览器；代码块复制（native 桥）；超长折叠（>阈值 500 字符）；
  * 暗黑自适应（body class 双主题 CSS 变量）；html 为空展示 fallbackText 纯文本。
+ * 高度两种模式：卡片内文按实测内容高（折叠 240vp / 展开全高）；autoHeight（README 等整篇长文）
+ * 走 ArkWeb FIT_CONTENT 自适应，正文不再有自己的滚动条，整页只由外层页面滚动。
  */
 import { webview } from '@kit.ArkWeb';
 import { common } from '@kit.AbilityKit';
@@ -40,6 +42,12 @@ export struct MarkdownView {
   @Param foldThreshold: number = 500;
   /** 是否启用长文折叠（false=全量一次性加载，无「展开全部」按钮） */
   @Param collapse: boolean = true;
+  /**
+   * 高度随内容自适应（README 等整篇长文：整页铺开、无 Web 内滚，不开折叠）。
+   * 走 ArkWeb FIT_CONTENT + SYNC_RENDER——异步渲染下组件宽/高上限 7680 物理像素（约 2000+vp，
+   * 长 README 必超，超了会白屏或退回一屏内滚），故同步渲染是自适应长文的前置条件。
+   */
+  @Param autoHeight: boolean = false;
   /** 降级态是否显示重试（调用方数据拉取失败时置 true，配 onRetry 重新拉取） */
   @Param showRetry: boolean = false;
   /** 官方 HTML 相对路径前缀：img→raw、链接→blob（默认 github 根） */
@@ -58,6 +66,8 @@ export struct MarkdownView {
   private controller: webview.WebviewController = new webview.WebviewController();
   private bridge: MarkdownBridge = new MarkdownBridge();
   private attached: boolean = false;
+  /** 组件已销毁：延迟复测的定时器到点后不再碰控制器 */
+  private disposed: boolean = false;
   /** 系统深浅色监听（review F7：dark 此前仅 appear 时解析一次，栈内切主题后正文滞留） */
   private darkListener: mediaquery.MediaQueryListener | null = null;
   private readonly onDarkMediaChange = (): void => {
@@ -77,6 +87,7 @@ export struct MarkdownView {
   }
 
   aboutToDisappear(): void {
+    this.disposed = true;
     if (this.darkListener !== null) {
       this.darkListener.off('change', this.onDarkMediaChange);
       this.darkListener = null;
@@ -93,9 +104,10 @@ export struct MarkdownView {
     }
   }
 
-  /** 折叠状态：collapse=false 恒不折叠（全量加载）；否则按字符阈值判定 */
+  /** 折叠状态：collapse=false 或 autoHeight 恒不折叠（全量加载）；否则按字符阈值判定 */
   private resetCollapse(): void {
-    this.collapsed = this.collapse && MarkdownService.shouldCollapse(this.html.length, this.foldThreshold);
+    this.collapsed = this.collapse && !this.autoHeight
+      && MarkdownService.shouldCollapse(this.html.length, this.foldThreshold);
   }
 
   /** @Param html 更新（异步数据后到）→ 重载文档 */
@@ -139,32 +151,56 @@ export struct MarkdownView {
       });
     this.controller.runJavaScript(buildFixRelativeJs(this.imgBase, this.linkBase))
       .catch(() => { });
+    this.setOverflow();
+    this.measureNow();
+  }
+
+  /** 折叠禁 Web 内滚（防内滚把「Read more」卷走）；展开态放开，滚动权交外层页面 */
+  private setOverflow(): void {
     this.controller.runJavaScript(buildSetOverflowJs(this.collapsed))
       .catch(() => {
       });
+  }
+
+  /** 测量内容高度（图片晚于 onPageEnd 加载，展开后需复测，见 remeasure） */
+  private measureNow(): void {
     this.controller.runJavaScript(buildMeasureJs())
-      .then((v: string) => {
-        const px = Number(v);
-        if (Number.isNaN(px)) {
-          return;
-        }
-        // ArkWeb 的 scrollHeight 单位是 CSS px：文档视口宽=device-width（= 组件 vp 宽），
-        // 即 1 CSS px = 1 vp，直接当 vp 用。再折一次 px2vp 会按屏幕密度（模拟器 3.5x）缩小
-        // 容器高 → Web 只显示内容开头一小截，其余被裁（预览/评论卡实测）。
-        const vp = Math.max(px, 1);
-        this.contentHeight = vp;
-        // about:blank 首测 scrollHeight=0：无内容不做折叠决策，防误清折叠态（review F2）
-        if (px > 0 && vp <= COLLAPSE_HEIGHT) {
-          this.collapsed = false;
-        }
-        // 展开模式：高度=内容全高，交给外层页面 Scroll 滚动，Web 内不再出现滚动条
-        this.webHeight = this.collapsed ? COLLAPSE_HEIGHT : vp;
-        this.controller.runJavaScript(buildSetOverflowJs(this.collapsed))
-          .catch(() => {
-          });
-      })
+      .then((v: string) => this.applyHeight(Number(v)))
       .catch(() => {
       });
+  }
+
+  /** 实测高度落地：折叠决策 + 容器高度（autoHeight 下高度由引擎自适应，此处只维持兜底值） */
+  private applyHeight(px: number): void {
+    // about:blank 首测 scrollHeight=0：无内容不做折叠决策，防误清折叠态（review F2）
+    if (!Number.isFinite(px) || px <= 0) {
+      return;
+    }
+    // ArkWeb 的 scrollHeight 单位是 CSS px：文档视口宽=device-width（= 组件 vp 宽），
+    // 即 1 CSS px = 1 vp，直接当 vp 用。再折一次 px2vp 会按屏幕密度（模拟器 3.5x）缩小
+    // 容器高 → Web 只显示内容开头一小截，其余被裁（预览/评论卡实测）。
+    const vp = Math.max(px, 1);
+    this.contentHeight = vp;
+    // 实测矮于折叠线：内容并没有被遮住 → 消除折叠态（字符阈值可能误判，如一行超长文本）
+    if (this.collapsed && vp <= COLLAPSE_HEIGHT) {
+      this.collapsed = false;
+      this.setOverflow();
+    }
+    // 展开模式：高度=内容全高，交给外层页面 Scroll 滚动，Web 内不再出现滚动条
+    const h = this.collapsed ? COLLAPSE_HEIGHT : vp;
+    if (h !== this.webHeight) {
+      this.webHeight = h;
+    }
+  }
+
+  /** 延迟复测：展开后图片仍在加载会继续撑高内容，只测一次会留白或把内容裁掉 */
+  private remeasure(delayMs: number): void {
+    setTimeout(() => {
+      if (this.disposed) {
+        return;
+      }
+      this.measureNow();
+    }, delayMs);
   }
 
   /** 链接导航拦截：站内 → 路由；外链 http(s) → 系统浏览器；其余放行 */
@@ -274,6 +310,11 @@ export struct MarkdownView {
       .onClick(() => {
         this.collapsed = false;
         this.webHeight = this.contentHeight;
+        // 展开必须同步放开内滚（否则超出旧高度的内容被裁且滚不动），并按图片加载节奏复测两次
+        this.setOverflow();
+        this.measureNow();
+        this.remeasure(700);
+        this.remeasure(2000);
       })
     }
     .width('100%')
@@ -286,9 +327,16 @@ export struct MarkdownView {
       if (this.html === '') {
         this.fallbackBlock()
       } else {
-        Web({ src: 'about:blank', controller: this.controller })
+        // renderMode：async 下组件宽/高上限 7680 物理像素，长 README 超限会白屏 → 整篇铺开必须同步渲染
+        Web({
+          src: 'about:blank',
+          controller: this.controller,
+          renderMode: this.autoHeight ? RenderMode.SYNC_RENDER : RenderMode.ASYNC_RENDER
+        })
           .width('100%')
+          // FIT_CONTENT 下实际高度由内容决定（height 属性不生效，保留仅供非自适应分支取实测值）
           .height(this.webHeight)
+          .layoutMode(this.autoHeight ? WebLayoutMode.FIT_CONTENT : WebLayoutMode.NONE)
           .darkMode(WebDarkMode.Off)
           .javaScriptProxy({
             object: this.bridge,

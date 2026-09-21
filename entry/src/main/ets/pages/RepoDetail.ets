@@ -911,6 +911,8 @@ export struct RepoDetailView {
             html: this.readmeResult.html,
             fallbackText: this.detail?.readmeText ?? '',
             collapse: false,
+            // README 整篇铺开（高度自适应、无 Web 内滚）：页面只保留外层一条滚动条
+            autoHeight: true,
             imgBase: `https://raw.githubusercontent.com/${this.owner}/${this.name}/${this.detail?.defaultBranchRefName ?? 'main'}/`,
             linkBase: `https://github.com/${this.owner}/${this.name}/blob/${this.detail?.defaultBranchRefName ?? 'main'}/`,
             onNavigate: (name: string, param: string) => this.navigateLink(name, param)

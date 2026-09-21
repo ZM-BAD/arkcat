@@ -41,7 +41,7 @@
 | 8 | 交互 | 代码块 | 复制按钮（点击复制 → pasteboard，Web 侧 JS 与 ArkTS 桥或右上角浮层按钮） | ✅ | 无 | 官方移动端为全屏代码视图，我们暂以浮层复制为主，跳转 CodeViewer 作备注项 |
 | 9 | 交互 | 深链头部 | 文件路径/提及/引用样式由官方 HTML 与 CSS 自带，无需额外解析 | ✅ | 无 | 关键卖点：零解析 |
 | 10 | 主题 | 暗黑适配 | 注入 CSS 变量/媒体查询，跟随 ThemeMode 三态（system/light/dark）；ArkWeb 底色与页面一致（md-bg 变量） | ✅ | 无 | css + token 映射写在组件内 |
-| 11 | 性能 | 长文折叠 | 超长内容（> 500 字符且超 240vp）默认折叠腰部，点击「展开全部」；避免整页 web 卡顿 | ⚠️ | 无 | 阈值 500 字符（240vp）可配（collapse=false 关闭折叠）；README 场景全量加载，无「展开全部」按钮 |
+| 11 | 性能 | 长文折叠 | 超长内容（> 500 字符且超 240vp）默认折叠腰部，点击「展开全部」；避免整页 web 卡顿 | ⚠️ | 无 | 阈值 500 字符（240vp）可配（collapse=false 关闭折叠）；README 场景全量加载 + 高度自适应，无「展开全部」按钮 |
 | 12 | 兜底 | 降级渲染 | HTML 拉取失败/网络异常 → 降级纯文本（bodyText / 原文）展示 + 重试按钮 | ✅ | 无 | 错误处理必须逐处接入 |
 | 13 | 安全 | HTML 消毒 | 官方管线输出已消毒；POST /markdown 同理；不引入额外 sanitize 依赖 | ✅ | 无 | 若启用 lv 本地渲染则需自备转义（备注） |
 | 14 | 能力 | 数学公式/自定义表情 | 官方 bodyHTML 不渲染 LaTeX 等扩展语法，保持与官方一致（不实现） | ❌ | 无 | 与官方差异：不做扩展；Mermaid 等不渲染（见五） |
@@ -84,7 +84,7 @@ query IssueDetail($owner: String!, $name: String!, $number: Int!) {
 | ---- | ------ | ------------------- |
 | 公式 / Mermaid / 自定义注解 | 官方 GFM 渲染管线不输出这类 HTML，官方 App 同样不渲染 | 保持与官方一致，不做扩展渲染 |
 | 站内链接全量路由 | 页面路由表有限（已实现页面为主） | 维护一张正则映射表：`/o/r`、`/o/r/issues\|pulls/{n}`、`/o/r/blob/{path}` 等命中即路由；未命中交系统浏览器 |
-| 长文性能 | 单篇超大正文（>500 字符）ArkWeb 内存开销 | 评论/Issue 场景默认折叠 + 展开；README 场景全量加载（collapse=false），按内容高度撑开整页 |
+| 长文性能 | 单篇超大正文（>500 字符）ArkWeb 内存开销 | 评论/Issue 场景默认折叠 + 展开（展开即放开 Web 内滚并按图片加载节奏复测高度）；README 场景全量加载（`collapse=false` + `autoHeight`），高度由引擎按内容自适应，页面只留外层一条滚动条 |
 | 图片防盗链 | 某些仓库图片外链域名可能 403 | 依赖 Web 引擎默认行为 + 错误占位；不做代理转发（保持端侧不引入服务） |
 | `POST /markdown` 未认证限流 | REST 免认证端为 60 req/h（与 OAuth token 同一配额） | 仅预览用，配合节流；优先使用 bodyHTML |
 | ArkWeb 降级场景（低端机） | —— | 若真机性能不达标，切换 lv-markdown-in（纯 ArkUI，API 12 起，MIT）——备选方案需在 040 验收前决策并归档 |
@@ -112,7 +112,8 @@ query IssueDetail($owner: String!, $name: String!, $number: Int!) {
 - **本 Spec 为本批（040-051）第一个开发任务**（2026-09-02 与用户确认）。基线样式约束（颜色/图标/字号 token 强制、页面骨架复用、分域 polish 收口策略）见 handoff「关键约定」；观感标准：README/正文渲染**直接对齐官方 `.markdown-body`**（不适用「先糙后美」，本 Spec 开发时即达标）。
 - **选型依据（2026-09-02 调研）**：官方 App 移动端 = 服务端 GFM→HTML（GraphQL `bodyHTML`）经客户端 Web 呈现；ArkWeb + 官方 HTML = 我们与官方同管线，零解析差异；`github-markdown-css`（8923★/MIT）仅作样式底稿，颜色必须换用我们 `resources/base|dark/color.json` 的 Primer token 覆盖。
 - **选型拍板（2026-09-03）**：用户确认**主方案（ArkWeb + 官方 HTML 管线）**，备选 `@luvi/lv-markdown-in` 不再作为前置决策项，仅当 ArkWeb 真机性能明显不达标时再单独评估（数据色板集中 `utils/MarkdownPalette.ets`，门禁白名单同 CodeTheme/LanguageColors 先例）。
-- **实测发现（2026-09-03 模拟器验证，已固化进实现）**：① `onControllerAttached` 后立即 `loadData` 会被 Web 引擎丢弃（文档不加载/URL 停 about:blank），**延迟 300ms 再加载**；② README/contents 的 HTML 媒体类型（`application/vnd.github.html` / `html+json`）**一律返回纯 HTML 流，不存在 JSON 信封**（对 readme/contents/org profile 三个端点实测），统一 `vnd.github.html` 直取 body、**无分支解析**；③ 折叠态需 `body.style.overflow=hidden` 禁 Web 内滚（否则嵌套滚动会把「展开全部」卷走）；④ 复制按钮 = onPageEnd 注入 JS（`__mdReady` 防重）+ `javaScriptProxy` 桥（桥对象仅方法，label 走模块级变量）；⑤ 官方 HTML 的**相对路径不重写**（README 内 `frontend/public/logo.png`、`docs/x.webp`、`README_zh.md` 均原样保留；web 页面是 img→raw、a→blob 绝对化），MarkdownView 注入 `buildFixRelativeJs` 按 GitHub 网页行为重写（owner/repo/默认分支由调用方经 imgBase/linkBase 传入）；README 展开态=内容全高（交由外层页面 Scroll；超大高度会白屏）。
+- **实测发现（2026-09-03 模拟器验证，已固化进实现）**：① `onControllerAttached` 后立即 `loadData` 会被 Web 引擎丢弃（文档不加载/URL 停 about:blank），**延迟 300ms 再加载**；② README/contents 的 HTML 媒体类型（`application/vnd.github.html` / `html+json`）**一律返回纯 HTML 流，不存在 JSON 信封**（对 readme/contents/org profile 三个端点实测），统一 `vnd.github.html` 直取 body、**无分支解析**；③ 折叠态需 `body.style.overflow=hidden` 禁 Web 内滚（否则嵌套滚动会把「展开全部」卷走）；④ 复制按钮 = onPageEnd 注入 JS（`__mdReady` 防重）+ `javaScriptProxy` 桥（桥对象仅方法，label 走模块级变量）；⑤ 官方 HTML 的**相对路径不重写**（README 内 `frontend/public/logo.png`、`docs/x.webp`、`README_zh.md` 均原样保留；web 页面是 img→raw、a→blob 绝对化），MarkdownView 注入 `buildFixRelativeJs` 按 GitHub 网页行为重写（owner/repo/默认分支由调用方经 imgBase/linkBase 传入）；README 展开态=内容全高（交由外层页面 Scroll）。
+- **高度模式（README 整篇铺开）**：ArkWeb **异步渲染下 Web 组件宽/高上限 7680 物理像素**（约 2000+ vp，稍长的 README 就会超）——超限结果是白屏或退回「一屏高度 + Web 内滚」，也是 README 内出现滚动条、滚动条底部内容被裁的根因。故 README 走 `autoHeight`：`layoutMode(WebLayoutMode.FIT_CONTENT)` 让高度随内容自适应（该模式下组件高度不受 `height` 属性控制，`webHeight` 仅作非自适应分支的兜底值）+ `RenderMode.SYNC_RENDER` 同步渲染（上限提到 500,000 物理像素，是自适应长文的前置条件）+ 文档自带 `width=device-width` viewport；autoHeight 下折叠不生效。**渲染模式在 Web 创建时固定、不能动态切换**，所以它是创建期参数（`autoHeight`）而非随折叠态变化的运行时开关。其余调用点仍是「实测内容高 + 折叠/展开」（折叠高度固定 240vp，与自适应互斥），展开时同步放开 Web 内滚并按图片加载节奏复测两次——图片晚于 onPageEnd 加载会让单次测量偏小，旧实现里表现为底部被裁且滚不动。同步渲染的代价（官方规格）：无 DSS 合成、不支持转场动画、性能开销高于异步渲染。
 - **待实机确认**：Dark 主题 CSS 变量切换（模拟器 token 无 user scope 无法进设置，逻辑=buildSetThemeJs 换 body class）；站内链接路由（routeOf 已单测全覆盖，外开实机验证通过）。
 - **Discussion 描述接入点**：Spec 019 当前仅列表页（无讨论详情/正文渲染），故 040 未接入；MarkdownView 已按通用组件设计，讨论详情实现时直接喂 `bodyHTML` 即可。
 - 备选纯 ArkUI 库 `@luvi/lv-markdown-in`（gitee 88star、60 版本、2026-08-15 还在发版、API 12 起、MIT）——优点无 Web 引擎开销；缺点本地解析与官方管线存在差异（如任务列表/表格细节）、需自调样式。决断点：真机（Pura 90 Pro）上 ArkWeb 首屏延迟 > 300ms 或出现明显滚动掉帧时启用。

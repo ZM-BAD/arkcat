@@ -1,0 +1,96 @@
+# 构建输出
+build/
+/.hvigor/
+/node_modules/
+/oh_modules/
+entry/oh_modules/
+graphql/oh_modules/
+/local.properties
+entry/.test/
+# DevEco Previewer 产物（IDE 生成，机器本地）
+entry/.preview/
+graphql/.preview/
+
+# 编辑器
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# 安装包
+*.hap
+*.app
+
+# 日志
+*.log
+
+# 本地配置（不含签名）
+*.p12
+*.cer
+**/signing/
+
+# AI Skills（项目本地，体积大，不入库）
+skills/
+.claude/
+.codegenie/
+.deveco/
+.qoder/
+# ZCode 技能接线（软链指向 .claude/skills，机器本地）
+.zcode/
+
+# LoopX 状态（本地目标/证据，不入库）
+.loopx/
+.codex/goals/
+
+# Handoff（本地交接文档，不入库）
+/handoff.md
+
+# ZCode 会话调试截图（不入库）
+.zcode-tmp/
+
+# 宿主单元测试构建产物（scripts/ut）
+.ut/
+
+# Playwright MCP 调试产物（机器本地）
+.playwright-mcp/
+
+# Code review 报告（本地工作文档，不入库；规则文件 docs/primer-review-rules.md 除外）
+/docs/code-review-*.md
+
+# 品牌草稿（Logo 设计工作稿 + 走查证据，未定稿前不入库）
+/docs/brand-draft/
+
+# hvigor 生成物（HAR 模块根，构建时自动重建）
+graphql/BuildProfile.ets
+
+# ===== ↑ 以上同步自 .gitignore（「从 .gitignore 同步」只重写以上部分）=====
+.git/
+.hg/
+.svn/
+node_modules/
+bower_components/
+jspm_packages/
+__pycache__/
+site-packages/
+venv/
+coverage/
+htmlcov/
+lcov-report/
+cmakefiles/
+cmake-build-*/
+bazel-*/
+pods/
+deriveddata/
+storybook-static/
+playwright-report/
+test-results/
+allure-results/
+allure-report/
+cdk.out/
+*.egg-info/
+*.dist-info/
+eggs/
+pip-wheel-metadata/
+wheels/
+# ----- ↑ 以上为 ZCode 默认排除规则（自定义规则请写在本行下方，不会被同步/恢复改动）-----
+# 自定义规则写在下方（本行提示可删除）
