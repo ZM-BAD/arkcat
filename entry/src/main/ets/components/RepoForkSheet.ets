@@ -11,9 +11,10 @@ import { RepoService } from '../services/RepoService';
 import { isValidRepoName, REPO_NAME_MAX } from '../models/RepoCreateModels';
 import { resText } from '../utils/I18n';
 import { OctIcon } from './OctIcon';
+import { common } from '@kit.AbilityKit';
 
-/** Learn more 落地页：GitHub 官方 fork 文档（官方实际目标页未能核对，Spec 075 §五） */
-const FORK_DOCS_URL = 'https://docs.github.com/en/get-started/quickstart/fork-a-repo';
+/** Learn more 目标页（2026-09-22 用户指定）：GitHub 分支管理文档 */
+const FORK_DOCS_URL = 'https://docs.github.com/en/pull-requests/how-tos/commit-changes/managing-branches-within-your-repository';
 
 @ComponentV2
 export struct RepoForkSheet {
@@ -24,7 +25,6 @@ export struct RepoForkSheet {
   /** 上游描述与默认分支（详情查询同批带回，分支名随仓库，禁止写死） */
   @Param description: string = '';
   @Param defaultBranch: string = 'main';
-  @Param pathStack: NavPathStack = new NavPathStack();
   /** 创建成功：壳外关弹层 + toast */
   @Event onCreated: () => void = (): void => { };
   /** ✕：关弹层 */
@@ -62,13 +62,19 @@ export struct RepoForkSheet {
       });
   }
 
-  private stringOf(res: Resource): string {
-    return resText(this.getUIContext(), res);
-  }
-
+  /** Learn more：拉起系统浏览器（viewData want，与个人页主页链接行 / MarkdownView 外链同口径），不在应用内打开 */
   private openDocs(): void {
-    this.pathStack.pushPathByName('inAppBrowser',
-      `${this.stringOf($r('app.string.repo_fork_docs_title'))}|${FORK_DOCS_URL}`);
+    const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext | undefined;
+    if (ctx === undefined) {
+      return;
+    }
+    ctx.startAbility({
+      action: 'ohos.want.action.viewData',
+      entities: ['entity.system.browsable'],
+      uri: FORK_DOCS_URL
+    }).catch(() => {
+      // 无应用接住时静默，不打断弹层
+    });
   }
 
   build() {

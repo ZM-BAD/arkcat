@@ -25,14 +25,14 @@ GraphQL Mutation 类型无 fork 字段（见 006 §五），故本页写入通�
 6. Repository description 区：灰色标签 + 上游描述（次级色多行只读；上游无描述则整区隐藏）
 7. 分隔线
 8. Additional settings 区：灰色标签 + 行「Copy the `默认分支` branch only」+ Switch（默认开，行主体与 Switch 兄弟拆分防冒泡）
-9. 开关说明：Contribute back to `{owner}/{repo}` by adding your own branch. + Learn more（蓝字，App 内浏览器打开官方 fork 文档）
+9. 开关说明：Contribute back to `{owner}/{repo}` by adding your own branch. + Learn more（蓝字，**拉起系统浏览器**打开 GitHub 分支管理文档，不在应用内打开）
 10. 提交失败：名称区下方行内 danger 文案（`Fork 失败：<友好原因>`），弹层保持打开
 
 ---
 
 ## 三、元素清单
 
-可行性：8/10 可行（2 项降级见 §五）
+可行性：9/10 可行（1 项降级见 §五）
 
 | # | 位置 | 元素 | 功能 | 可行性 | 接口 | 备注 |
 | --- | ------ | ------ | ------ | -------- | ------ | ------ |
@@ -43,7 +43,7 @@ GraphQL Mutation 类型无 fork 字段（见 006 §五），故本页写入通�
 | 5 | 名称区 | 空名行内错误 | 拦截空名提交 | ✅ | — | 同 070：CREATE 恒可点，空名走行内 danger 不提交 |
 | 6 | 描述区 | 标签 + 上游描述（只读） | 展示将继承的描述 | ⚠️ | REST fork 无 description 参数 | 值继承上游，不可编辑 |
 | 7 | 设置区 | `Copy the <默认分支> branch only` + Switch | 仅复制默认分支 | ✅ | `default_branch_only` | 分支名=详情查询 `defaultBranchRef.name` |
-| 8 | 设置区 | 贡献说明 + Learn more | 打开官方 fork 文档 | ⚠️ | — | 官方落地页无法核对，取 GitHub fork 文档页 |
+| 8 | 设置区 | 贡献说明 + Learn more | 打开 GitHub 分支管理文档 | ✅ | — | 目标页 2026-09-22 用户指定；**拉起系统浏览器**（viewData want），不走应用内浏览器 |
 | 9 | 顶栏 CREATE | 提交 fork | 创建复刻 | ✅ | REST `POST /repos/{owner}/{repo}/forks` | 成功关弹层 + toast；失败行内文案 |
 | 10 | 弹层 | 提交防重入 | 连点不重复提交 | ✅ | — | creating 门闩（弹层关闭即销毁重置） |
 
@@ -70,7 +70,6 @@ body: { "name": "<fork 名>", "default_branch_only": true | false }
 | ---- | ------ | ------------------- |
 | 组织 fork | fork API 的 organization 参数需先有可选组织列表 | 副标题固定「in your personal account」，本期不做组织选择 |
 | 描述不可编辑 | REST fork 无 description 参数（建库后需另发 PATCH） | 只读展示上游描述（官方截图该字段为次级色且无计数，同只读形态） |
-| Learn more 落地页 | 官方实际目标页无法核对 | 打开 GitHub 官方 fork 文档（docs.github.com/en/get-started/quickstart/fork-a-repo） |
 | 名称非法字符 | 与官方 422 口径未逐字对齐 | 沿用 070：仅拦空名/超长，其余服务端 422 经 friendlyError 出文案 |
 | 创建后动线 | 官方是否跳转新 fork 未核实 | 关弹层 + toast「Fork 已创建」（沿用 006 既有口径） |
 
@@ -91,4 +90,5 @@ body: { "name": "<fork 名>", "default_branch_only": true | false }
 
 - 2026-09-22：本页是 fork 写入通道修复（006 §七）之后的官方流程对齐——原实现点 fork 直接提交，官方为「先出 New fork 页，再点 CREATE」。
 - 默认分支名随仓库检测（有 main 用 main，无 main 用 master 或其他默认分支），禁止写死。
+- 2026-09-22：Learn more 打开方式与目标页按用户指定定案——**拉起系统浏览器**（`viewData` want，与个人页主页链接行 / MarkdownView 外链同口径，非应用内浏览器），目标页=GitHub 分支管理文档 `docs.github.com/en/pull-requests/how-tos/commit-changes/managing-branches-within-your-repository`。
 - 弹层骨架复用建仓弹层（070）与仓库详情单 bindSheet + sheetKind 分派（045/006）；弹层内容关闭即销毁，重开回到默认值。

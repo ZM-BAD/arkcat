@@ -265,7 +265,6 @@ export struct RepoDetailView {
       name: this.name,
       description: this.detail !== null ? this.detail.description : '',
       defaultBranch: this.detail !== null ? this.detail.defaultBranchRefName : 'main',
-      pathStack: this.pathStack,
       onCreated: (): void => {
         this.sheetKind = '';
         promptAction.showToast({ message: $r('app.string.repo_fork_created_toast') });

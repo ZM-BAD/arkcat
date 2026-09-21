@@ -357,10 +357,6 @@
       "value": "了解更多"
     },
     {
-      "name": "repo_fork_docs_title",
-      "value": "复刻仓库"
-    },
-    {
       "name": "repo_unstar_title",
       "value": "取消星标 %1$s"
     },

@@ -357,10 +357,6 @@
       "value": "Learn more"
     },
     {
-      "name": "repo_fork_docs_title",
-      "value": "Fork a repository"
-    },
-    {
       "name": "repo_unstar_title",
       "value": "Unstar %1$s"
     },
