@@ -13,6 +13,7 @@ import { WorkService } from '../services/WorkService';
 import { WorkUserList } from '../models/WorkModels';
 import { StarredListSheet, STARRED_SUGGESTIONS } from '../components/StarredListSheet';
 import { RepoNotificationsSheet } from '../components/RepoNotificationsSheet';
+import { RepoForkSheet } from '../components/RepoForkSheet';
 import { MarkdownService, MarkdownFetchResult } from '../services/MarkdownService';
 import { StateView } from '../components/StateView';
 import { friendlyError } from '../services/GitHttpClient';
@@ -235,6 +236,29 @@ export struct RepoDetailView {
     })
   }
 
+  /**
+   * New fork 弹层（Spec 075）：上游元数据取详情查询结果（描述/默认分支），零额外请求；
+   * 提交与失败文案都在弹层内，本页只负责开关与成功 toast。
+   */
+  @Builder
+  forkSheet() {
+    RepoForkSheet({
+      token: this.token,
+      owner: this.owner,
+      name: this.name,
+      description: this.detail !== null ? this.detail.description : '',
+      defaultBranch: this.detail !== null ? this.detail.defaultBranchRefName : 'main',
+      pathStack: this.pathStack,
+      onCreated: (): void => {
+        this.sheetKind = '';
+        promptAction.showToast({ message: $r('app.string.repo_fork_created_toast') });
+      },
+      onDismiss: (): void => {
+        this.sheetKind = '';
+      }
+    })
+  }
+
   /** Bell 点击（Spec 045）：PROTECTED 为机构强制订阅（API 禁改），其余弹 Notifications 面板 */
   private onBell(): void {
     const detail = this.detail;
@@ -437,27 +461,17 @@ export struct RepoDetailView {
     return resText(this.getUIContext(), res);
   }
 
+  /** fork 圆钮：本人仓库置灰提示，其余打开 New fork 弹层（Spec 075，提交在弹层内） */
   private onFork(): void {
     // 本人仓库官方禁 fork：按钮置灰，点击仅提示
     if (this.isOwnRepo) {
       promptAction.showToast({ message: this.stringOf($r('app.string.repo_fork_own_toast')) });
       return;
     }
-    if (this.detail === null || this.owner === '' || this.name === '' || this.busy) {
+    if (this.detail === null) {
       return;
     }
-    this.busy = true;
-    RepoService.createFork(this.token, this.owner, this.name)
-      .then(() => {
-        promptAction.showToast({ message: $r('app.string.repo_fork_created_toast') });
-      })
-      .catch((e: Error) => {
-        const reason = friendlyError(this.getUIContext(), e);
-        promptAction.showToast({ message: this.fmt($r('app.string.repo_fork_failed'), reason) });
-      })
-      .finally(() => {
-        this.busy = false;
-      });
+    this.sheetKind = 'fork';
   }
 
   private openIssues(): void {
@@ -1016,11 +1030,13 @@ export struct RepoDetailView {
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
     // !! 双向绑定：拖拽/遮罩/回退关闭时框架回写 false，否则再点列表钮无法重新打开
-    .bindSheet(this.sheetKind !== '', this.sheetKind === 'watch' ? this.watchSheet() : this.listSheet(), {
-      // Notifications 面板为近全屏档（官方实机图同构；抓取条在内容里自绘，Spec 045）
-      height: this.sheetKind === 'watch' ? SheetSize.LARGE : 300,
-      detents: this.sheetKind === 'watch' ? [SheetSize.MEDIUM, SheetSize.LARGE] : [300, SheetSize.LARGE],
-      backgroundColor: this.sheetKind === 'watch' ? $r('app.color.card_background') : $r('app.color.bg_page'),
+    .bindSheet(this.sheetKind !== '',
+      this.sheetKind === 'watch' ? this.watchSheet()
+        : (this.sheetKind === 'fork' ? this.forkSheet() : this.listSheet()), {
+      // Notifications / New fork 面板为近全屏档（官方实机图同构；抓取条在内容里自绘，Spec 045/075）
+      height: this.sheetKind === 'list' ? 300 : SheetSize.LARGE,
+      detents: this.sheetKind === 'list' ? [300, SheetSize.LARGE] : [SheetSize.MEDIUM, SheetSize.LARGE],
+      backgroundColor: this.sheetKind === 'list' ? $r('app.color.bg_page') : $r('app.color.card_background'),
       // 关闭钮/标题均自绘；外点自动关闭
       showClose: false,
       dragBar: false,

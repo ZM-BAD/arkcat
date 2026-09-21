@@ -53,6 +53,7 @@ import {
   PickerItem, NewRepoForm
 } from '../../entry/src/main/ets/models/RepoCreateModels';
 import { mapUserProfile } from '../../entry/src/main/ets/models/ProfileModels';
+import { buildForkBody } from '../../entry/src/main/ets/models/RepoSocialModels';
 import {
   checkGroupKey, groupChecks, conclusionKey, durationText,
   mapRestJob, mapRestRun
@@ -2165,6 +2166,20 @@ test('Spec 070 mapTemplateRepos/mapViewerId：isTemplate 过滤与字段提取',
   assert.equal(items[0].key, 'R1');
   assert.equal(items[0].label, 'tpl');
   assert.equal(mapViewerId(data), 'U1');
+});
+
+test('Spec 075 buildForkBody：fork 名 JSON 转义 + default_branch_only 开关', () => {
+  const on = JSON.parse(buildForkBody('demo', true)) as Record<string, Object>;
+  assert.equal(on['name'], 'demo');
+  assert.equal(on['default_branch_only'], true);
+
+  // 关闭「仅复制默认分支」时为显式 false，字段不省略
+  const off = JSON.parse(buildForkBody('demo', false)) as Record<string, Object>;
+  assert.equal(off['default_branch_only'], false);
+
+  // 名字含引号/反斜杠走转义，body 仍可解析且值原样还原
+  const escaped = JSON.parse(buildForkBody('a"b\\c', true)) as Record<string, Object>;
+  assert.equal(escaped['name'], 'a"b\\c');
 });
 
 test('Spec 070 filterPickerItems/mapCreatedRepo：搜索过滤与建仓结果映射', () => {

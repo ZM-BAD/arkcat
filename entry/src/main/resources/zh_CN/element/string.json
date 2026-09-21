@@ -317,6 +317,50 @@
       "value": "无法 Fork 自己的仓库。"
     },
     {
+      "name": "repo_fork_new_title",
+      "value": "新建复刻"
+    },
+    {
+      "name": "repo_fork_scope_hint",
+      "value": "将在你的个人账号下创建复刻"
+    },
+    {
+      "name": "repo_fork_name_label",
+      "value": "仓库名称（必填）"
+    },
+    {
+      "name": "repo_fork_name_hint",
+      "value": "默认与上游仓库同名；可自定义名称以便区分。"
+    },
+    {
+      "name": "repo_fork_desc_label",
+      "value": "仓库描述"
+    },
+    {
+      "name": "repo_fork_settings_label",
+      "value": "附加设置"
+    },
+    {
+      "name": "repo_fork_branch_only_pre",
+      "value": "仅复制 "
+    },
+    {
+      "name": "repo_fork_branch_only_post",
+      "value": " 分支"
+    },
+    {
+      "name": "repo_fork_contribute_fmt",
+      "value": "通过添加自己的分支向 %1$s 贡献。"
+    },
+    {
+      "name": "repo_fork_learn_more",
+      "value": "了解更多"
+    },
+    {
+      "name": "repo_fork_docs_title",
+      "value": "复刻仓库"
+    },
+    {
       "name": "repo_unstar_title",
       "value": "取消星标 %1$s"
     },

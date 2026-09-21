@@ -7,7 +7,7 @@ import { aliasField, aliasQueryDocument, withFallback } from 'graphql';
 import { contributorCount } from './ExploreService';
 import { Json, JsonMap } from '../utils/Json';
 import { RepoDetail, mapRepoDetail, RepoStarState, mapRepoStarState } from '../models/RepoDetailModels';
-import { StargazerPage, ForkPage, PeoplePage, mapStargazerPage, mapForkPage, mapWatcherPage, mapContributorPage } from '../models/RepoSocialModels';
+import { StargazerPage, ForkPage, PeoplePage, mapStargazerPage, mapForkPage, mapWatcherPage, mapContributorPage, buildForkBody } from '../models/RepoSocialModels';
 import { LicenseInfo, mapLicenseInfo } from '../models/RepoLicenseModels';
 import { FRAG_PAGE_INFO, FRAG_VIEWER_LOGIN } from './GqlFragments';
 
@@ -163,11 +163,13 @@ export class RepoService {
   }
 
   /**
-   * Fork 仓库（Spec 006 元素 6）：GraphQL Mutation 类型无 fork 字段（introspection 实测 undefinedField），
-   * 写入走 REST `POST /repos/{owner}/{repo}/forks`——无 body，202 Accepted 即成功，403/404/422 经 ApiError 上抛。
+   * Fork 仓库（Spec 006 元素 6 / Spec 075）：GraphQL Mutation 类型无 fork 字段（introspection 实测 undefinedField），
+   * 写入走 REST `POST /repos/{owner}/{repo}/forks`——body 带 fork 名与「仅复制默认分支」开关，
+   * 202 Accepted 即成功，403/404/422 经 ApiError 上抛。
    */
-  static async createFork(token: string, owner: string, name: string): Promise<void> {
-    ensureOk(await restPost(`/repos/${owner}/${name}/forks`, token, ''));
+  static async createFork(token: string, owner: string, name: string, forkName: string,
+    defaultBranchOnly: boolean): Promise<void> {
+    ensureOk(await restPost(`/repos/${owner}/${name}/forks`, token, buildForkBody(forkName, defaultBranchOnly)));
   }
 
   /**

@@ -149,3 +149,12 @@ export function mapContributorPage(restNodes: JsonMap[], meta: Map<string, JsonM
     endCursor: `${page + 1}`
   };
 }
+
+/** POST /repos/{owner}/{repo}/forks body 组装（Spec 075）：fork 名走 JSON 转义，开关=「仅复制默认分支」 */
+export function buildForkBody(forkName: string, defaultBranchOnly: boolean): string {
+  const body: Record<string, Object> = {
+    'name': forkName,
+    'default_branch_only': defaultBranchOnly
+  };
+  return JSON.stringify(body);
+}
