@@ -82,3 +82,4 @@ query UserOrganizations($login: String!, $first: Int = 25, $after: String) {
 - Profile 查询瘦身：移除 `contributionsCollection`、`repositories(first:30)`、`starredRepositories(first:30)` 内嵌列表字段（改由列表页按需分页）；保留 pinned/计数/跟随状态字段。
 - i18n 新增：`org_list_title`、`profile_repositories`（已有）、`org_list_empty` 等。
 - Starred 列表展示顺序（2026-09-13 定案）：`starredRepositories` 查询显式传 `orderBy: { field: STARRED_AT, direction: DESC }`，最新加星的在前。不传 `orderBy` 时 GitHub 默认返回最早加星在前（实测：最早 star 的仓库排第一），与期望相反，故必须显式声明。
+- 2026-09-22：导航行**右侧计数不刷新**修复——原实现行由共用 `@Builder navRow(...)` 渲染且计数**按值传参**，V2 中该参数不参与依赖收集（转译产物里 `Text.create` 只读局部 `count`，调用处也不在任何 observe 闭包内），计数冻结在首帧，下拉刷新/回页重取都改不动它。修法=行改为独立组件 `ProfileNavRow`（`@Param count`），计数读取落在子组件自身渲染闭包内，`updateStateVarsOfChildByElmtId` 负责把新值推下去；五个计数行（含 073 的 Sponsoring/Projects）统一受益。
