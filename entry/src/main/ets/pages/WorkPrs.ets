@@ -302,7 +302,12 @@ export struct WorkPrsView {
             resetTick: this.resetTick,
             stateOptions: this.stateOptions(),
             scopeOptions: this.scopeOptions(),
-            onQueryChange: (s: WorkFilterState): void => this.onQueryChange(s)
+            onQueryChange: (s: WorkFilterState): void => this.onQueryChange(s),
+            // Spec 074：漏斗「Create Shortcut」携当前筛选直达创建页
+            shortcutKind: 'prs',
+            onCreateShortcut: (prefill: string): void => {
+              this.pathStack.pushPathByName('shortcutCreate', prefill);
+            }
           })
 
           if (this.shownPrs().length > 0) {

@@ -185,6 +185,14 @@
       "value": "#6E40C9"
     },
     {
+      "name": "shortcut_red_bg",
+      "value": "#33FFEBE9"
+    },
+    {
+      "name": "shortcut_red_fg",
+      "value": "#F85149"
+    },
+    {
       "name": "tab_active_bg",
       "value": "#33DDF4FF"
     },

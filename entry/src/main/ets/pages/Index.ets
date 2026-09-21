@@ -21,6 +21,9 @@ import { SearchOverviewView } from './SearchOverview';
 import { SearchResultsView } from './SearchResults';
 import { OctIcon } from '../components/OctIcon';
 import { EditMyWorkView } from './EditMyWork';
+import { FavoritesEditView } from './FavoritesEdit';
+import { ShortcutsView } from './Shortcuts';
+import { ShortcutCreateView } from './ShortcutCreate';
 import { WorkIssuesView } from './WorkIssues';
 import { WorkPrsView } from './WorkPrs';
 import { DiscussionsView } from './Discussions';
@@ -73,7 +76,7 @@ import { AppLockOverlay, AppLockSettingsView } from './AppLock';
 const TAB_BAR_HIDDEN_ROUTES: string[] = [
   'settings', 'notificationSettings', 'codeOptions', 'accounts', 'tokenSetup', 'achievementDetail',
   'openSourceLibraries', 'settingsAbout', 'inAppBrowser', 'repoDiscussions', 'appLock',
-  'issueForm', 'prForm', 'prCompare', 'branchPicker', 'repoPicker', 'templatePicker'
+  'issueForm', 'prForm', 'prCompare', 'branchPicker', 'repoPicker', 'templatePicker', 'favoritesEdit'
 ];
 
 @Entry
@@ -157,6 +160,14 @@ struct Index {
   @State searchKeyword: string = '';
   /** My Work 配置变更计数器：Edit My Work SAVE 后递增，泵到 HomeView 触发重渲染 */
   @State homeWorkVersion: number = 0;
+  /** Spec 050：Favorites 编辑页 SAVE 后递增，泵到 HomeView 触发重渲染 */
+  @State homeFavoritesVersion: number = 0;
+  /** Spec 074：Shortcuts 管理页/创建页 SAVE 后递增，泵到 HomeView 与管理页（store 单例为真源） */
+  @State homeShortcutsVersion: number = 0;
+  /** Spec 074：创建页预填参数（Work 漏斗携筛选 JSON；onReady 晚于子组件 aboutToAppear，经 @Monitor 应用） */
+  @State shortcutPrefill: string = '';
+  /** Spec 074：选仓库页 pop 回 tick，ShortcutCreate 消费 RepoPickResult 回传槽（onPop 不触发，坑库定案） */
+  @State shortcutRepoTick: number = 0;
   /** PrFiles 回页刷新计数器：Code Options 返回后递增，重读行号等设置 */
   @State prFilesTick: number = 0;
   /** prCompare 返回 tick：分支选择页（branchPicker）pop 回后消费回传槽（Spec 043） */
@@ -761,6 +772,73 @@ struct Index {
         onSaved: (): void => {
           this.homeWorkVersion += 1;
         }
+      })
+    }
+    .hideTitleBar(true)
+  }
+
+  @Builder
+  favoritesEditDestination() {
+    NavDestination() {
+      FavoritesEditView({
+        token: this.token,
+        pathStack: this.pathStack,
+        onSaved: (): void => {
+          this.homeFavoritesVersion += 1;
+        }
+      })
+    }
+    .hideTitleBar(true)
+  }
+
+  /** Spec 074：Shortcuts 管理页（官方两截图均带底部 Tab，不进 TAB_BAR_HIDDEN_ROUTES） */
+  @Builder
+  shortcutsDestination() {
+    NavDestination() {
+      ShortcutsView({
+        token: this.token,
+        pathStack: this.pathStack,
+        onSaved: (): void => {
+          this.homeShortcutsVersion += 1;
+        }
+      })
+    }
+    .hideTitleBar(true)
+  }
+
+  /** Spec 074：Create Shortcut 编辑页（路由参数 = 预填 JSON，空串为默认态） */
+  @Builder
+  shortcutCreateDestination() {
+    NavDestination() {
+      ShortcutCreateView({
+        token: this.token,
+        pathStack: this.pathStack,
+        prefill: this.shortcutPrefill,
+        repoTick: this.shortcutRepoTick,
+        onSaved: (): void => {
+          this.homeShortcutsVersion += 1;
+        }
+      })
+    }
+    .onReady((context: NavDestinationContext) => {
+      this.shortcutPrefill = context.pathInfo.param as string;
+    })
+    .onShown(() => {
+      // 选仓库页（shortcutRepoPicker）pop 回时触发；首显也触发，回传槽为空则视图内忽略
+      this.shortcutRepoTick += 1;
+    })
+    .hideTitleBar(true)
+  }
+
+  /** Spec 074：Choose a repository 选仓库页（创建页 Scope 菜单 → Choose Repository；
+   *  官方截图带底部 Tab，不进 TAB_BAR_HIDDEN_ROUTES，与 issue 动线 repoPicker 分路由） */
+  @Builder
+  shortcutRepoPickerDestination() {
+    NavDestination() {
+      RepoPickerView({
+        token: this.token,
+        pathStack: this.pathStack,
+        pRole: 'shortcut'
       })
     }
     .hideTitleBar(true)
@@ -1517,6 +1595,12 @@ struct Index {
       this.searchResultsDestination()
     } else if (name === 'editMyWork') {
       this.editMyWorkDestination()
+    } else if (name === 'favoritesEdit') {
+      this.favoritesEditDestination()
+    } else if (name === 'shortcuts') {
+      this.shortcutsDestination()
+    } else if (name === 'shortcutCreate') {
+      this.shortcutCreateDestination()
     } else if (name === 'workIssues') {
       this.workIssuesDestination()
     } else if (name === 'workPrs') {
@@ -1552,6 +1636,8 @@ struct Index {
       this.templatePickerDestination()
     } else if (name === 'repoPicker') {
       this.repoPickerDestination()
+    } else if (name === 'shortcutRepoPicker') {
+      this.shortcutRepoPickerDestination()
     } else if (name === 'prCompare') {
       this.prCompareDestination()
     } else if (name === 'branchPicker') {
@@ -1607,6 +1693,8 @@ struct Index {
           token: this.token,
           pathStack: this.pathStack,
           workVersion: this.homeWorkVersion,
+          favoritesVersion: this.homeFavoritesVersion,
+          shortcutsVersion: this.homeShortcutsVersion,
           onViewer: (avatarUrl: string): void => {
             // Spec 060：底栏 tab4 头像复用 Home 的 viewer 探针结果（全应用只发一次 viewer 查询）
             this.viewerAvatarUrl = avatarUrl;

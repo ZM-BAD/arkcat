@@ -305,6 +305,26 @@
       "value": "ADD FAVORITES"
     },
     {
+      "name": "favorites_selected",
+      "value": "Selected"
+    },
+    {
+      "name": "favorites_select_repositories",
+      "value": "Select Repositories"
+    },
+    {
+      "name": "favorites_search_hint",
+      "value": "Search Repositories"
+    },
+    {
+      "name": "a11y_remove",
+      "value": "Remove"
+    },
+    {
+      "name": "a11y_add",
+      "value": "Add"
+    },
+    {
       "name": "home_shortcuts",
       "value": "Shortcuts"
     },
@@ -319,6 +339,66 @@
     {
       "name": "home_shortcuts_get_started",
       "value": "GET STARTED"
+    },
+    {
+      "name": "shortcut_create_title",
+      "value": "Create Shortcut"
+    },
+    {
+      "name": "shortcuts_saved",
+      "value": "Saved Shortcuts"
+    },
+    {
+      "name": "shortcuts_no_saved",
+      "value": "No saved Shortcuts"
+    },
+    {
+      "name": "shortcuts_create_shortcut",
+      "value": "CREATE SHORTCUT"
+    },
+    {
+      "name": "shortcuts_suggested",
+      "value": "Suggested Shortcuts"
+    },
+    {
+      "name": "shortcuts_scope",
+      "value": "Scope"
+    },
+    {
+      "name": "shortcuts_type",
+      "value": "Type"
+    },
+    {
+      "name": "shortcuts_all_repositories",
+      "value": "ALL REPOSITORIES"
+    },
+    {
+      "name": "shortcuts_scope_menu_all",
+      "value": "All Repositories"
+    },
+    {
+      "name": "shortcuts_scope_menu_choose",
+      "value": "Choose Repository"
+    },
+    {
+      "name": "shortcut_sugg_mentioned",
+      "value": "Mentioned"
+    },
+    {
+      "name": "shortcut_sugg_assigned",
+      "value": "Assigned"
+    },
+    {
+      "name": "shortcut_sugg_review_requested",
+      "value": "Review requested"
+    },
+    {
+      "name": "shortcut_sugg_repo_summary",
+      "value": "Open, Created-desc"
+    },
+    {
+      "name": "shortcut_discussions_unsupported",
+      "value": "Discussions search is not available yet (no public API)"
     },
     {
       "name": "home_feature_coming",

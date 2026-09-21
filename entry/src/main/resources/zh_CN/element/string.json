@@ -305,6 +305,26 @@
       "value": "添加收藏"
     },
     {
+      "name": "favorites_selected",
+      "value": "已选"
+    },
+    {
+      "name": "favorites_select_repositories",
+      "value": "选择仓库"
+    },
+    {
+      "name": "favorites_search_hint",
+      "value": "搜索仓库"
+    },
+    {
+      "name": "a11y_remove",
+      "value": "移除"
+    },
+    {
+      "name": "a11y_add",
+      "value": "添加"
+    },
+    {
       "name": "home_shortcuts",
       "value": "快捷入口"
     },
@@ -319,6 +339,66 @@
     {
       "name": "home_shortcuts_get_started",
       "value": "开始使用"
+    },
+    {
+      "name": "shortcut_create_title",
+      "value": "创建快捷方式"
+    },
+    {
+      "name": "shortcuts_saved",
+      "value": "已保存的快捷方式"
+    },
+    {
+      "name": "shortcuts_no_saved",
+      "value": "暂无已保存的快捷方式"
+    },
+    {
+      "name": "shortcuts_create_shortcut",
+      "value": "创建快捷方式"
+    },
+    {
+      "name": "shortcuts_suggested",
+      "value": "推荐的快捷方式"
+    },
+    {
+      "name": "shortcuts_scope",
+      "value": "范围"
+    },
+    {
+      "name": "shortcuts_type",
+      "value": "类型"
+    },
+    {
+      "name": "shortcuts_all_repositories",
+      "value": "全部仓库"
+    },
+    {
+      "name": "shortcuts_scope_menu_all",
+      "value": "全部仓库"
+    },
+    {
+      "name": "shortcuts_scope_menu_choose",
+      "value": "选择仓库"
+    },
+    {
+      "name": "shortcut_sugg_mentioned",
+      "value": "已提及"
+    },
+    {
+      "name": "shortcut_sugg_assigned",
+      "value": "已分配"
+    },
+    {
+      "name": "shortcut_sugg_review_requested",
+      "value": "已请求审核"
+    },
+    {
+      "name": "shortcut_sugg_repo_summary",
+      "value": "开启，创建时间降序"
+    },
+    {
+      "name": "shortcut_discussions_unsupported",
+      "value": "暂不支持搜索 Discussions（无公开 API）"
     },
     {
       "name": "home_feature_coming",
