@@ -185,16 +185,56 @@
       "value": "通知"
     },
     {
-      "name": "repo_watch_subscribe",
-      "value": "订阅"
+      "name": "repo_watch_participating",
+      "value": "参与和 @提及"
+    },
+    {
+      "name": "repo_watch_participating_desc",
+      "value": "仅当参与或 @提及你时，才接收此仓库的通知。"
+    },
+    {
+      "name": "repo_watch_all",
+      "value": "全部活动"
+    },
+    {
+      "name": "repo_watch_all_desc",
+      "value": "接收此仓库的所有通知。"
     },
     {
       "name": "repo_watch_ignore",
       "value": "忽略"
     },
     {
-      "name": "repo_watch_unsubscribe",
-      "value": "取消订阅"
+      "name": "repo_watch_ignore_desc",
+      "value": "永不接收通知。"
+    },
+    {
+      "name": "repo_watch_custom",
+      "value": "自定义"
+    },
+    {
+      "name": "repo_watch_custom_desc",
+      "value": "在「参与和 @提及」之外，额外选择你想接收通知的事件。"
+    },
+    {
+      "name": "repo_watch_custom_issues",
+      "value": "议题"
+    },
+    {
+      "name": "repo_watch_custom_pulls",
+      "value": "拉取请求"
+    },
+    {
+      "name": "repo_watch_custom_releases",
+      "value": "版本发布"
+    },
+    {
+      "name": "repo_watch_custom_security",
+      "value": "安全警报"
+    },
+    {
+      "name": "repo_watch_custom_readonly",
+      "value": "自定义事件仅支持在 GitHub 网页端设置"
     },
     {
       "name": "repo_watch_protected",

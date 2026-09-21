@@ -12,6 +12,7 @@ import { RepoSubService } from '../services/RepoSubService';
 import { WorkService } from '../services/WorkService';
 import { WorkUserList } from '../models/WorkModels';
 import { StarredListSheet, STARRED_SUGGESTIONS } from '../components/StarredListSheet';
+import { RepoNotificationsSheet } from '../components/RepoNotificationsSheet';
 import { MarkdownService, MarkdownFetchResult } from '../services/MarkdownService';
 import { StateView } from '../components/StateView';
 import { friendlyError } from '../services/GitHttpClient';
@@ -48,6 +49,10 @@ export struct RepoDetailView {
   @Local sheetKind: string = '';
   /** 当前账号订阅态（Spec 045 Bell 四态：NONE/SUBSCRIBED/IGNORED/PROTECTED；独立状态便于 mutation 回执直更） */
   @Local viewerSubscription: string = '';
+  /** 面板写入进行中（与 star/fork 的 busy 解耦：避免无关请求把点按静默吞掉） */
+  @Local watchSaving: boolean = false;
+  /** 面板写入失败原因（面板内可见反馈；'' = 无错误。Custom 段展开态由面板组件自持） */
+  @Local watchError: string = '';
   /** README 官方 HTML（REST /readme html+json；null=未加载） */
   @Local readmeResult: MarkdownFetchResult | null = null;
 
@@ -217,48 +222,20 @@ export struct RepoDetailView {
     })
   }
 
-  /** Watch 订阅弹层（Spec 045）：三选单选列表，当前态行尾蓝勾 */
+  /** Notifications 面板（Spec 045，官方实机同构）：面板体见 RepoNotificationsSheet（选中态走 @Param 刷新） */
   @Builder
   watchSheet() {
-    Column() {
-      Row() {
-        Text($r('app.string.repo_watch_sheet_title'))
-          .fontSize($r('app.float.body_font_size'))
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.text_primary'))
-        Blank()
+    RepoNotificationsSheet({
+      viewerSubscription: this.viewerSubscription,
+      errorText: this.watchError,
+      onPick: (state: string): void => this.setWatchSubscription(state),
+      onClose: (): void => {
+        this.sheetKind = '';
       }
-      .width('100%')
-      .height(48)
-      .padding({ left: 16, right: 16 })
-
-      this.watchOption($r('app.string.repo_watch_subscribe'), 'SUBSCRIBED')
-      this.watchOption($r('app.string.repo_watch_ignore'), 'IGNORED')
-      this.watchOption($r('app.string.repo_watch_unsubscribe'), 'UNSUBSCRIBED')
-    }
-    .width('100%')
-    .padding({ top: 8, bottom: 16 })
+    })
   }
 
-  /** 弹层单行：标签 + 当前态蓝勾；点击即提交并收起（$r 静态字面量在调用处给出） */
-  @Builder
-  watchOption(label: Resource, state: string) {
-    Row() {
-      Text(label)
-        .fontSize($r('app.float.body_font_size'))
-        .fontColor($r('app.color.text_primary'))
-      Blank()
-      if (this.viewerSubscription === state) {
-        OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 16, iconColor: $r('app.color.link_blue') })
-      }
-    }
-    .width('100%')
-    .height(48)
-    .padding({ left: 16, right: 16 })
-    .onClick((): void => this.setWatchSubscription(state))
-  }
-
-  /** Bell 点击（Spec 045）：PROTECTED 为机构强制订阅（API 禁改），其余弹三选 */
+  /** Bell 点击（Spec 045）：PROTECTED 为机构强制订阅（API 禁改），其余弹 Notifications 面板 */
   private onBell(): void {
     const detail = this.detail;
     if (detail === null || this.busy) {
@@ -268,26 +245,28 @@ export struct RepoDetailView {
       promptAction.showToast({ message: $r('app.string.repo_watch_protected') });
       return;
     }
+    // 面板每次从关闭态拉起（Custom 展开态在面板组件内，天然回到官方默认收起）
+    this.watchError = '';
     this.sheetKind = 'watch';
   }
 
-  /** 提交订阅变更：mutation 回执直接驱动 Bell 四态；成功后收起弹层 + toast */
+  /** 提交订阅变更：mutation 回执驱动 Bell 四态与单选圆钮；失败在面板内落一行原因（toast 会被近全屏弹层遮挡） */
   private setWatchSubscription(state: string): void {
     const detail = this.detail;
-    if (detail === null || this.busy) {
+    if (detail === null || detail.repoId === '' || this.watchSaving) {
       return;
     }
-    this.busy = true;
+    this.watchSaving = true;
+    this.watchError = '';
     RepoService.setWatchSubscription(this.token, detail.repoId, state)
       .then((next: string): void => {
-        this.busy = false;
+        this.watchSaving = false;
         this.viewerSubscription = next !== '' ? next : state;
-        this.sheetKind = '';
         promptAction.showToast({ message: $r('app.string.repo_watch_updated') });
       })
       .catch((e: Error): void => {
-        this.busy = false;
-        promptAction.showToast({ message: friendlyError(this.getUIContext(), e) });
+        this.watchSaving = false;
+        this.watchError = friendlyError(this.getUIContext(), e);
       });
   }
 
@@ -1036,11 +1015,13 @@ export struct RepoDetailView {
     .backgroundColor($r('app.color.bg_page'))
     // !! 双向绑定：拖拽/遮罩/回退关闭时框架回写 false，否则再点列表钮无法重新打开
     .bindSheet(this.sheetKind !== '', this.sheetKind === 'watch' ? this.watchSheet() : this.listSheet(), {
-      height: 300,
-      detents: [300, SheetSize.LARGE],
-      backgroundColor: $r('app.color.bg_page'),
+      // Notifications 面板为近全屏档（官方实机图同构；抓取条在内容里自绘，Spec 045）
+      height: this.sheetKind === 'watch' ? SheetSize.LARGE : 300,
+      detents: this.sheetKind === 'watch' ? [SheetSize.MEDIUM, SheetSize.LARGE] : [300, SheetSize.LARGE],
+      backgroundColor: this.sheetKind === 'watch' ? $r('app.color.card_background') : $r('app.color.bg_page'),
       // 关闭钮/标题均自绘；外点自动关闭
       showClose: false,
+      dragBar: false,
       // 交互关闭（下滑/遮罩）后复位，否则表达式恒 true 再点拉不起来（Inbox review A1 同款）
       onDisappear: (): void => {
         this.sheetKind = '';

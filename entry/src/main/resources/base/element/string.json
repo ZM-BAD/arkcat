@@ -185,16 +185,56 @@
       "value": "Notifications"
     },
     {
-      "name": "repo_watch_subscribe",
-      "value": "Subscribe"
+      "name": "repo_watch_participating",
+      "value": "Participating and @mentions"
+    },
+    {
+      "name": "repo_watch_participating_desc",
+      "value": "Only receive notifications from this repository when participating or @mentioned."
+    },
+    {
+      "name": "repo_watch_all",
+      "value": "All Activity"
+    },
+    {
+      "name": "repo_watch_all_desc",
+      "value": "Get notified of all notifications on this repository."
     },
     {
       "name": "repo_watch_ignore",
       "value": "Ignore"
     },
     {
-      "name": "repo_watch_unsubscribe",
-      "value": "Unsubscribe"
+      "name": "repo_watch_ignore_desc",
+      "value": "Never be notified."
+    },
+    {
+      "name": "repo_watch_custom",
+      "value": "Custom"
+    },
+    {
+      "name": "repo_watch_custom_desc",
+      "value": "Select events you want to be notified of in addition to participating and @mentions."
+    },
+    {
+      "name": "repo_watch_custom_issues",
+      "value": "Issues"
+    },
+    {
+      "name": "repo_watch_custom_pulls",
+      "value": "Pull Requests"
+    },
+    {
+      "name": "repo_watch_custom_releases",
+      "value": "Releases"
+    },
+    {
+      "name": "repo_watch_custom_security",
+      "value": "Security Alerts"
+    },
+    {
+      "name": "repo_watch_custom_readonly",
+      "value": "Custom events can only be set on the GitHub website"
     },
     {
       "name": "repo_watch_protected",
