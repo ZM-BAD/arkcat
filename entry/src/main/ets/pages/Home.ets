@@ -8,11 +8,14 @@ import { promptAction } from '@kit.ArkUI';
 import { ViewerBasic } from '../models/GitHubModels';
 import { HomeService } from '../services/HomeService';
 import { friendlyError } from '../services/GitHttpClient';
+import { AccountStore, AccountInfo } from '../services/AccountStore';
 import { StateView } from '../components/StateView';
 import { OctIcon } from '../components/OctIcon';
+import { Avatar } from '../components/Avatar';
 import { AppBar, AppBarAction, AppBarMenuItem } from '../components/AppBar';
 import { NewRepositorySheet } from '../components/NewRepositorySheet';
 import { WorkSection, WorkConfigStore, visibleWorkSections } from '../utils/WorkConfig';
+import { FavoriteRepo, FavoritesStore } from '../utils/Favorites';
 
 /** 标题栏底部渐变阴影（滚动时显示、回顶部消失） */
 const SHADOW_GRADIENT: Array<[ResourceColor, number]> = [
@@ -39,6 +42,10 @@ export struct HomeView {
   @Local newRepoOpen: boolean = false;
   @Local workStore: WorkConfigStore = WorkConfigStore.instance;
   @Param workVersion: number = 0;
+  /** Spec 050：收藏列表镜像——@Local 引用 @ObservedV2 单例时 @Trace 跨组件观察不可靠（08-31 坑），
+   *  与 016 同走「Index 版本泵 + @Monitor 刷镜像」，分支条件读镜像才会在 SAVE 后重评估 */
+  @Local favorites: FavoriteRepo[] = [];
+  @Param favoritesVersion: number = 0;
   /** Spec 060：viewer 探针结果上报（底栏 tab4 头像复用同一次请求，不再单独发 viewer 查询） */
   @Event onViewer: (avatarUrl: string) => void = (avatarUrl: string) => {};
   @Local sectionsVersion: number = 0;
@@ -49,13 +56,34 @@ export struct HomeView {
         // load 完成后再触发一次重渲染（编辑页 SAVE 走 workVersion 参数泵）
         this.sectionsVersion++;
       });
+    this.reloadFavorites();
     this.refresh();
   }
 
   /** Spec 049a：切换账号后 token 更新（@Param 单向同步）→ 用新 token 重拉 */
   @Monitor('token')
   onTokenChanged(): void {
+    this.reloadFavorites();
     this.refresh();
+  }
+
+  /** Spec 050：加载当前账号的 Favorites 分区（端侧存储，切账号互不可见） */
+  private reloadFavorites(): void {
+    const ctx = this.getUIContext().getHostContext();
+    AccountStore.getCurrentAccount(ctx)
+      .then((acc: AccountInfo | null) => FavoritesStore.load(ctx, acc !== null ? acc.login : ''))
+      .then((): void => {
+        this.favorites = FavoritesStore.instance.list.slice();
+      })
+      .catch((): void => {
+        // 读取失败保持现有列表（空列表 = 空态引导）
+      });
+  }
+
+  /** 编辑页 SAVE 泵回（homeFavoritesVersion 递增）：store 单例已是新列表，刷镜像触发重渲染 */
+  @Monitor('favoritesVersion')
+  onFavoritesVersionChanged(): void {
+    this.favorites = FavoritesStore.instance.list.slice();
   }
 
   private refresh(): void {
@@ -226,7 +254,7 @@ export struct HomeView {
   }
 
   @Builder
-  outlineButton(labelRes: Resource) {
+  outlineButton(labelRes: Resource, onTap?: () => void) {
     Button(labelRes)
       // Capsule 类型会忽略 borderRadius（曾渲染成胶囊）；Normal 才走 Primer 6vp 圆角
       .type(ButtonType.Normal)
@@ -237,28 +265,98 @@ export struct HomeView {
       .backgroundColor(Color.Transparent)
       .borderRadius($r('app.float.button_radius'))
       .border({ width: 1, color: $r('app.color.border') })
-      .onClick(() => this.comingSoon())
+      .onClick(() => {
+        if (onTap !== undefined) {
+          onTap();
+        } else {
+          this.comingSoon();
+        }
+      })
   }
 
+  /** Spec 050：收藏仓库行（官方：头像 + owner 灰字 + 仓库名），点击进仓库详情 */
+  @Builder
+  favRow(fav: FavoriteRepo) {
+    Row({ space: 14 }) {
+      Avatar({ url: fav.ownerAvatar, diameter: 40, fallbackIcon: true })
+      Column({ space: 2 }) {
+        Text(fav.ownerLogin)
+          .fontSize($r('app.float.body_font_size'))
+          .fontColor($r('app.color.text_secondary'))
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+        Text(fav.name)
+          .fontSize($r('app.float.body_font_size'))
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.text_primary'))
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .alignItems(HorizontalAlign.Start)
+      .layoutWeight(1)
+    }
+    .width('100%')
+    .height(64)
+    .alignItems(VerticalAlign.Center)
+    .onClick(() => {
+      this.pathStack.pushPathByName('repoDetail', `${fav.ownerLogin}/${fav.name}`);
+    })
+  }
+
+  /** Favorites 区块（Spec 050 双态）：空态=引导文案 + ADD FAVORITES；有值=⋯ 入口 + 收藏行列表 */
   @Builder
   favoritesSection() {
-    Text($r('app.string.home_favorites'))
-      .fontSize($r('app.float.section_title_font_size'))
-      .fontWeight(600)
-      .fontColor($r('app.color.text_primary'))
-      .width('100%')
-      .padding({ top: 16, bottom: 8 })
-
-    Column({ space: 12 }) {
-      Text($r('app.string.home_favorites_empty'))
-        .fontSize($r('app.float.body_font_size'))
-        .fontColor($r('app.color.text_secondary'))
-        .textAlign(TextAlign.Center)
+    if (this.favorites.length === 0) {
+      Text($r('app.string.home_favorites'))
+        .fontSize($r('app.float.section_title_font_size'))
+        .fontWeight(600)
+        .fontColor($r('app.color.text_primary'))
         .width('100%')
-      this.outlineButton($r('app.string.home_favorites_add'))
+        .padding({ top: 16, bottom: 8 })
+
+      Column({ space: 12 }) {
+        Text($r('app.string.home_favorites_empty'))
+          .fontSize($r('app.float.body_font_size'))
+          .fontColor($r('app.color.text_secondary'))
+          .textAlign(TextAlign.Center)
+          .width('100%')
+        this.outlineButton($r('app.string.home_favorites_add'), (): void => {
+          this.pathStack.pushPathByName('favoritesEdit', '');
+        })
+      }
+      .padding(24)
+      .width('100%')
+    } else {
+      Row() {
+        Text($r('app.string.home_favorites'))
+          .fontSize($r('app.float.section_title_font_size'))
+          .fontWeight(600)
+          .fontColor($r('app.color.text_primary'))
+        Blank()
+        Stack() {
+          OctIcon({
+            res: $r('app.media.oct_kebab_horizontal_16'),
+            iconSize: 18,
+            iconColor: $r('app.color.text_secondary')
+          })
+        }
+        .width(44)
+        .height(44)
+        .accessibilityDescription($r('app.string.a11y_more'))
+        .focusable(true)
+        .onClick((): void => {
+          this.pathStack.pushPathByName('favoritesEdit', '');
+        })
+        .padding(4)
+      }
+      .width('100%')
+      .padding({ top: 16, bottom: 4 })
+
+      ForEach(this.favorites, (fav: FavoriteRepo) => {
+        this.favRow(fav)
+      // key 带 favoritesVersion：编辑页 SAVE 泵回后强制重渲染（同 016 workVersion）
+      }, (fav: FavoriteRepo) => `${fav.ownerLogin}/${fav.name}_${this.favoritesVersion}`)
     }
-    .padding(24)
-    .width('100%')
   }
 
   /** Shortcuts 圆形图标：浅色圆底 + 深色字形（bg/fg 走语义色 token）；8 枚紧贴居中排布 */

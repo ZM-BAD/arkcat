@@ -31,8 +31,12 @@ import {
   mapTimeline, actorDisplayLogin, phraseSegments,
   mapRepoForm, mapEditable, mapIssueTemplates, mapBranchRefs, mapPickerRepos, filterReposByKeyword,
   mapBranchNamesPage, mergeComparePage, parseCompareBaseSha, parseTreeEntries, countTreeDiff,
-  pickerRepoFullName, parseContactLinks, parseIssueFormMeta
+  pickerRepoFullName, parseContactLinks, parseIssueFormMeta, PickerRepo
 } from '../../entry/src/main/ets/models/RepoSubModels';
+import {
+  favoritesKey, favoriteId, favoritesToStorage, favoritesFromStorage,
+  addFavorite, removeFavorite, moveFavorite, filterCandidates, isSearchable, FavoriteRepo
+} from '../../entry/src/main/ets/utils/Favorites';
 import {
   issueTitleError, canSubmitIssue, validatePrHeads, defaultBaseBranch,
   parseFormRoute, filterBranches, orderBranches, ISSUE_TITLE_MAX
@@ -2338,4 +2342,81 @@ test('Spec 048 mapPrDetail 富行扩展：CheckRun/StatusContext 归一与 check
   assert.equal(pr.checks[2].checkRunId, 0);
   assert.equal(pr.checks[2].detailsUrl, 'https://travis-ci.org/1');
   assert.equal(pr.checks[2].appLogo, '');
+});
+
+// —— Spec 050：Home Favorites 收藏（utils/Favorites） ——
+
+test('Spec 050 favoritesKey：按账号分区', () => {
+  assert.notEqual(favoritesKey('alice'), favoritesKey('bob'));
+  assert.equal(favoritesKey('alice'), 'favorites_v1_alice');
+});
+
+test('Spec 050 favorites 序列化往返与坏数据兜底', () => {
+  const list: FavoriteRepo[] = [
+    { ownerLogin: 'ZM-BAD', name: 'arkcat', ownerAvatar: 'https://a/1.png', addedAt: 1 },
+    { ownerLogin: 'ZM-BAD', name: 'headroom', ownerAvatar: '', addedAt: 2 }
+  ];
+  const back = favoritesFromStorage(favoritesToStorage(list));
+  assert.equal(back.length, 2);
+  assert.equal(back[0].name, 'arkcat');
+  assert.equal(back[0].ownerAvatar, 'https://a/1.png');
+  assert.equal(back[1].ownerAvatar, '');
+
+  // 坏数据：非 JSON / 非数组回退空数组；缺字段与重复条目剔除，保持顺序（大小写归一去重）
+  assert.deepEqual(favoritesFromStorage('not json'), []);
+  assert.deepEqual(favoritesFromStorage('{"a":1}'), []);
+  const dirty = favoritesFromStorage(JSON.stringify([
+    { ownerLogin: '', name: 'x', ownerAvatar: '', addedAt: 0 },
+    { ownerLogin: 'a', name: '', ownerAvatar: '', addedAt: 0 },
+    { ownerLogin: 'a', name: 'ok', ownerAvatar: '', addedAt: 3 },
+    { ownerLogin: 'A', name: 'OK', ownerAvatar: '', addedAt: 4 },
+    { ownerLogin: 'b', name: 'ok2', ownerAvatar: '', addedAt: 5 }
+  ]));
+  assert.equal(dirty.length, 2);
+  assert.equal(dirty[0].name, 'ok');
+  assert.equal(dirty[1].name, 'ok2');
+});
+
+test('Spec 050 addFavorite 幂等去重、removeFavorite 定位删除', () => {
+  let list: FavoriteRepo[] = [];
+  list = addFavorite(list, { ownerLogin: 'a', name: 'one', ownerAvatar: '', addedAt: 1 });
+  list = addFavorite(list, { ownerLogin: 'b', name: 'two', ownerAvatar: '', addedAt: 2 });
+  // 大小写不同的同仓库不重复入列；新项追加末尾
+  list = addFavorite(list, { ownerLogin: 'A', name: 'ONE', ownerAvatar: '', addedAt: 3 });
+  assert.equal(list.length, 2);
+  assert.equal(list[1].name, 'two');
+  assert.equal(favoriteId('A', 'ONE'), 'a/one');
+
+  list = removeFavorite(list, 'a', 'one');
+  assert.equal(list.length, 1);
+  assert.equal(list[0].ownerLogin, 'b');
+  // 移除不存在的条目：原序返回
+  assert.equal(removeFavorite(list, 'x', 'y').length, 1);
+});
+
+test('Spec 050 moveFavorite 落位与越界原样', () => {
+  const list: FavoriteRepo[] = [
+    { ownerLogin: 'a', name: '1', ownerAvatar: '', addedAt: 1 },
+    { ownerLogin: 'b', name: '2', ownerAvatar: '', addedAt: 2 },
+    { ownerLogin: 'c', name: '3', ownerAvatar: '', addedAt: 3 }
+  ];
+  const moved = moveFavorite(list, 0, 2);
+  assert.deepEqual(moved.map((f: FavoriteRepo): string => f.name), ['2', '3', '1']);
+  // 越界/原位：原序副本
+  assert.deepEqual(moveFavorite(list, -1, 2).map((f: FavoriteRepo): string => f.name), ['1', '2', '3']);
+  assert.deepEqual(moveFavorite(list, 1, 1).map((f: FavoriteRepo): string => f.name), ['1', '2', '3']);
+});
+
+test('Spec 050 filterCandidates 剔除已收藏 + isSearchable', () => {
+  const favorites: FavoriteRepo[] = [{ ownerLogin: 'a', name: 'one', ownerAvatar: '', addedAt: 1 }];
+  const candidates: PickerRepo[] = [
+    { id: 'R1', ownerLogin: 'a', ownerAvatar: '', name: 'one' },
+    { id: 'R2', ownerLogin: 'b', ownerAvatar: '', name: 'two' }
+  ];
+  const left = filterCandidates(candidates, favorites);
+  assert.equal(left.length, 1);
+  assert.equal(left[0].name, 'two');
+
+  assert.equal(isSearchable('  '), false);
+  assert.equal(isSearchable(' arkcat '), true);
 });

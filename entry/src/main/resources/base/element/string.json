@@ -305,6 +305,26 @@
       "value": "ADD FAVORITES"
     },
     {
+      "name": "favorites_selected",
+      "value": "Selected"
+    },
+    {
+      "name": "favorites_select_repositories",
+      "value": "Select Repositories"
+    },
+    {
+      "name": "favorites_search_hint",
+      "value": "Search Repositories"
+    },
+    {
+      "name": "a11y_remove",
+      "value": "Remove"
+    },
+    {
+      "name": "a11y_add",
+      "value": "Add"
+    },
+    {
       "name": "home_shortcuts",
       "value": "Shortcuts"
     },

@@ -21,6 +21,7 @@ import { SearchOverviewView } from './SearchOverview';
 import { SearchResultsView } from './SearchResults';
 import { OctIcon } from '../components/OctIcon';
 import { EditMyWorkView } from './EditMyWork';
+import { FavoritesEditView } from './FavoritesEdit';
 import { WorkIssuesView } from './WorkIssues';
 import { WorkPrsView } from './WorkPrs';
 import { DiscussionsView } from './Discussions';
@@ -73,7 +74,7 @@ import { AppLockOverlay, AppLockSettingsView } from './AppLock';
 const TAB_BAR_HIDDEN_ROUTES: string[] = [
   'settings', 'notificationSettings', 'codeOptions', 'accounts', 'tokenSetup', 'achievementDetail',
   'openSourceLibraries', 'settingsAbout', 'inAppBrowser', 'repoDiscussions', 'appLock',
-  'issueForm', 'prForm', 'prCompare', 'branchPicker', 'repoPicker', 'templatePicker'
+  'issueForm', 'prForm', 'prCompare', 'branchPicker', 'repoPicker', 'templatePicker', 'favoritesEdit'
 ];
 
 @Entry
@@ -157,6 +158,8 @@ struct Index {
   @State searchKeyword: string = '';
   /** My Work 配置变更计数器：Edit My Work SAVE 后递增，泵到 HomeView 触发重渲染 */
   @State homeWorkVersion: number = 0;
+  /** Spec 050：Favorites 编辑页 SAVE 后递增，泵到 HomeView 触发重渲染 */
+  @State homeFavoritesVersion: number = 0;
   /** PrFiles 回页刷新计数器：Code Options 返回后递增，重读行号等设置 */
   @State prFilesTick: number = 0;
   /** prCompare 返回 tick：分支选择页（branchPicker）pop 回后消费回传槽（Spec 043） */
@@ -760,6 +763,20 @@ struct Index {
         pathStack: this.pathStack,
         onSaved: (): void => {
           this.homeWorkVersion += 1;
+        }
+      })
+    }
+    .hideTitleBar(true)
+  }
+
+  @Builder
+  favoritesEditDestination() {
+    NavDestination() {
+      FavoritesEditView({
+        token: this.token,
+        pathStack: this.pathStack,
+        onSaved: (): void => {
+          this.homeFavoritesVersion += 1;
         }
       })
     }
@@ -1517,6 +1534,8 @@ struct Index {
       this.searchResultsDestination()
     } else if (name === 'editMyWork') {
       this.editMyWorkDestination()
+    } else if (name === 'favoritesEdit') {
+      this.favoritesEditDestination()
     } else if (name === 'workIssues') {
       this.workIssuesDestination()
     } else if (name === 'workPrs') {
@@ -1607,6 +1626,7 @@ struct Index {
           token: this.token,
           pathStack: this.pathStack,
           workVersion: this.homeWorkVersion,
+          favoritesVersion: this.homeFavoritesVersion,
           onViewer: (avatarUrl: string): void => {
             // Spec 060：底栏 tab4 头像复用 Home 的 viewer 探针结果（全应用只发一次 viewer 查询）
             this.viewerAvatarUrl = avatarUrl;

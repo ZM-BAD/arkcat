@@ -305,6 +305,26 @@
       "value": "添加收藏"
     },
     {
+      "name": "favorites_selected",
+      "value": "已选"
+    },
+    {
+      "name": "favorites_select_repositories",
+      "value": "选择仓库"
+    },
+    {
+      "name": "favorites_search_hint",
+      "value": "搜索仓库"
+    },
+    {
+      "name": "a11y_remove",
+      "value": "移除"
+    },
+    {
+      "name": "a11y_add",
+      "value": "添加"
+    },
+    {
       "name": "home_shortcuts",
       "value": "快捷入口"
     },
