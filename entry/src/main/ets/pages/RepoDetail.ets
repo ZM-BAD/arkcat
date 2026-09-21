@@ -207,6 +207,23 @@ export struct RepoDetailView {
     ];
   }
 
+  /**
+   * 弹层内容分派（单个 bindSheet 内切换内容，规避同组件多 bindSheet 失效）。
+   * !! bindSheet 内容槽必须直传本单层构建函数：曾写成嵌套三元 + 折行括号，ArkUI 认不出构建函数，
+   * 把内容当普通 UI 就地渲染到页面顶端（收藏列表串到顶栏上，2026-09-22 实机事故）。同款先例见
+   * PrDetail.sheetBuilder / Discussions.overlaySheet。
+   */
+  @Builder
+  repoSheet() {
+    if (this.sheetKind === 'watch') {
+      this.watchSheet()
+    } else if (this.sheetKind === 'fork') {
+      this.forkSheet()
+    } else {
+      this.listSheet()
+    }
+  }
+
   /** 列表成员 sheet（单个 bindSheet 引用，避免多 bindSheet 失效） */
   @Builder
   listSheet() {
@@ -1030,9 +1047,7 @@ export struct RepoDetailView {
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
     // !! 双向绑定：拖拽/遮罩/回退关闭时框架回写 false，否则再点列表钮无法重新打开
-    .bindSheet(this.sheetKind !== '',
-      this.sheetKind === 'watch' ? this.watchSheet()
-        : (this.sheetKind === 'fork' ? this.forkSheet() : this.listSheet()), {
+    .bindSheet(this.sheetKind !== '', this.repoSheet(), {
       // Notifications / New fork 面板为近全屏档（官方实机图同构；抓取条在内容里自绘，Spec 045/075）
       height: this.sheetKind === 'list' ? 300 : SheetSize.LARGE,
       detents: this.sheetKind === 'list' ? [300, SheetSize.LARGE] : [SheetSize.MEDIUM, SheetSize.LARGE],
