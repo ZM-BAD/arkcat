@@ -165,6 +165,22 @@
       "value": "Can't open this notification"
     },
     {
+      "name": "inbox_snackbar_done",
+      "value": "Mark as done"
+    },
+    {
+      "name": "inbox_snackbar_undo",
+      "value": "UNDO"
+    },
+    {
+      "name": "inbox_resubscribed",
+      "value": "Subscription restored"
+    },
+    {
+      "name": "inbox_all_read",
+      "value": "Already all read"
+    },
+    {
       "name": "repo_watch_sheet_title",
       "value": "Notifications"
     },

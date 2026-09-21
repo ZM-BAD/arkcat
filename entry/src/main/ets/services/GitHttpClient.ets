@@ -121,12 +121,17 @@ export async function restPatch(path: string, token: string, body: string = ''):
   return toRawResponse(resp);
 }
 
-/** REST PUT（全部通知标已读等无 body 写操作） */
-export async function restPut(path: string, token: string): Promise<RawResponse> {
+/** REST PUT（全部通知标已读等写操作；body 非空时按 JSON 下发） */
+export async function restPut(path: string, token: string, body: string = ''): Promise<RawResponse> {
+  const headers = baseHeaders(token);
+  if (body !== '') {
+    headers['Content-Type'] = 'application/json';
+  }
   const resp = await HttpClient.request({
     'method': http.RequestMethod.PUT,
     'url': `${GITHUB_API}${path}`,
-    'headers': baseHeaders(token)
+    'headers': headers,
+    'body': body !== '' ? body : undefined
   });
   return toRawResponse(resp);
 }

@@ -129,6 +129,14 @@ export class NotificationsService {
     await restDelete(`/notifications/threads/${threadId}/subscription`, token);
   }
 
+  /**
+   * 恢复线程订阅（UNDO 右滑退订；2026-09-22 gh 实测 PUT ignored=false → GET subscribed:true）。
+   * 反向（退订）走 DELETE subscription——PUT ignored=true 实测无效，两端点不对称。
+   */
+  static async resubscribeThread(token: string, threadId: string): Promise<void> {
+    await restPut(`/notifications/threads/${threadId}/subscription`, token, '{"ignored": false}');
+  }
+
   /** 全部通知标已读（PUT；多选全选 + ● 的单发优化路径，Spec 045） */
   static async markAllRead(token: string): Promise<void> {
     await restPut('/notifications', token);

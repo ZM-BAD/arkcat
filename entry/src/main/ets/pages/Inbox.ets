@@ -70,6 +70,15 @@ export struct InboxView {
   @Local batching: boolean = false;
   /** 滑动复位代次：右滑 Unsubscribe 行保留，代次自增令该行 key 变化以收起展开态 */
   @Local swipeEpoch: number = 0;
+  /** Snackbar（Spec 045 走查反馈④）：滑动操作后的底部浮条，文案 + UNDO；'' = 隐藏 */
+  @Local snackbarText: string = '';
+  /** UNDO 动作类型：'done'（本地恢复行）/ 'unsub'（服务端恢复订阅）/ '' 无 UNDO */
+  @Local snackbarAction: string = '';
+  /** UNDO 目标行（非状态属性：恢复逻辑用，不驱动 UI） */
+  private snackbarItem: NotificationItem | null = null;
+  /** UNDO 目标行在 rawItems 的原下标（done 恢复原位用） */
+  private snackbarIndex: number = -1;
+  private snackbarTimer: number = -1;
 
   aboutToAppear(): void {
     this.refresh();
@@ -334,29 +343,38 @@ export struct InboxView {
     if (this.selectMode) {
       return;
     }
-    this.selectMode = true;
-    this.selectedIds = [item.threadId];
+    this.getUIContext().animateTo({ duration: 250, curve: Curve.EaseInOut }, (): void => {
+      this.selectMode = true;
+      this.selectedIds = [item.threadId];
+    });
   }
 
   /** 退出多选（× 或取消全选后） */
   private exitSelectMode(): void {
-    this.selectMode = false;
-    this.selectedIds = [];
+    if (!this.selectMode) {
+      return;
+    }
+    this.getUIContext().animateTo({ duration: 250, curve: Curve.EaseInOut }, (): void => {
+      this.selectMode = false;
+      this.selectedIds = [];
+    });
   }
 
-  /** 多选态点行切换选中；清空即退出多选 */
+  /** 多选态点行切换选中；清空即退出多选（勾选圈显隐随 animateTo 过渡） */
   private toggleSelect(item: NotificationItem): void {
     const idx = this.selectedIds.indexOf(item.threadId);
-    if (idx >= 0) {
-      const next = this.selectedIds.slice();
-      next.splice(idx, 1);
-      this.selectedIds = next;
-    } else {
-      this.selectedIds = this.selectedIds.concat([item.threadId]);
-    }
-    if (this.selectedIds.length === 0) {
-      this.exitSelectMode();
-    }
+    this.getUIContext().animateTo({ duration: 200, curve: Curve.EaseInOut }, (): void => {
+      if (idx >= 0) {
+        const next = this.selectedIds.slice();
+        next.splice(idx, 1);
+        this.selectedIds = next;
+      } else {
+        this.selectedIds = this.selectedIds.concat([item.threadId]);
+      }
+      if (this.selectedIds.length === 0) {
+        this.selectMode = false;
+      }
+    });
   }
 
   private onCardTap(item: NotificationItem): void {
@@ -413,29 +431,32 @@ export struct InboxView {
     promptAction.showToast({ message: this.fmt($r('app.string.inbox_batch_failed'), `${failed}`) });
   }
 
-  /** ● 批量已读/未读：按选中集主导态取反（有未读→全标已读；全已读→标回未读） */
+  /**
+   * ● 批量已读（单向）：REST 标回未读实测无效（2026-09-22 gh 实测，PATCH unread=true 205 但
+   * 服务端恒 false），故 ● 仅标已读；选中集全为已读时 toast 提示。
+   */
   private async batchToggleRead(): Promise<void> {
     if (this.batching) {
       return;
     }
-    const targets = this.selectionTargets();
+    const targets = this.selectionTargets().filter((t: NotificationItem): boolean => t.unread);
     if (targets.length === 0) {
+      promptAction.showToast({ message: $r('app.string.inbox_all_read') });
       return;
     }
-    const makeUnread = targets.every((t: NotificationItem): boolean => !t.unread);
     this.batching = true;
     try {
-      if (!makeUnread && this.isFullSelection() && this.viewIsPlainInbox()) {
+      if (this.isFullSelection() && this.viewIsPlainInbox()) {
         // 全选且无筛选：单发 PUT /notifications（官方「mark all as read」语义）
         await NotificationsService.markAllRead(this.token);
         this.markLocalRead(targets.map((t: NotificationItem): string => t.threadId), false);
       } else {
         const okIds = await this.runPerThread(targets, (t: NotificationItem): Promise<void> =>
-          NotificationsService.markThreadRead(this.token, t.threadId, makeUnread));
+          NotificationsService.markThreadRead(this.token, t.threadId));
         if (okIds.length < targets.length) {
           this.batchFailedToast(targets.length - okIds.length);
         }
-        this.markLocalRead(okIds, makeUnread);
+        this.markLocalRead(okIds, false);
       }
       AppStorage.setOrCreate('inboxUnreadTick', Date.now());
       this.exitSelectMode();
@@ -470,24 +491,86 @@ export struct InboxView {
 
   // ───────────── Spec 045：行滑动 ─────────────
 
-  /** 左滑 Done：行移除（与多选 ✓ 同落库路径） */
+  /**
+   * Snackbar（走查反馈④）：操作后底部浮条「文案 + UNDO」，4s 自动消失。
+   * done 的撤销为本地恢复（REST 无撤销 done 端点，2026-09-22 实测 done 为终态，
+   * 刷新后以服务端为准）；unsub 的撤销走服务端 PUT subscription（实测可恢复）。
+   */
+  private showSnackbar(text: string, action: string, item: NotificationItem, index: number): void {
+    if (this.snackbarTimer !== -1) {
+      clearTimeout(this.snackbarTimer);
+    }
+    this.getUIContext().animateTo({ duration: 200, curve: Curve.EaseInOut }, (): void => {
+      this.snackbarText = text;
+      this.snackbarAction = action;
+    });
+    this.snackbarItem = item;
+    this.snackbarIndex = index;
+    this.snackbarTimer = setTimeout((): void => this.hideSnackbar(), 4000);
+  }
+
+  private hideSnackbar(): void {
+    if (this.snackbarTimer !== -1) {
+      clearTimeout(this.snackbarTimer);
+      this.snackbarTimer = -1;
+    }
+    this.getUIContext().animateTo({ duration: 200, curve: Curve.EaseInOut }, (): void => {
+      this.snackbarText = '';
+      this.snackbarAction = '';
+    });
+    this.snackbarItem = null;
+    this.snackbarIndex = -1;
+  }
+
+  /** UNDO：done=行插回原位 + 静默同步已读；unsub=服务端恢复订阅 */
+  private onSnackbarUndo(): void {
+    const item = this.snackbarItem;
+    const kind = this.snackbarAction;
+    const index = this.snackbarIndex;
+    this.hideSnackbar();
+    if (item === null) {
+      return;
+    }
+    if (kind === 'done') {
+      const at = Math.min(Math.max(index, 0), this.rawItems.length);
+      this.rawItems.splice(at, 0, item);
+      this.applyFilters();
+      NotificationsService.markThreadRead(this.token, item.threadId).catch((_e: Error) => {
+        // 撤销仅为本地恢复（done 服务端终态），同步失败不提示
+      });
+    } else if (kind === 'unsub') {
+      NotificationsService.resubscribeThread(this.token, item.threadId)
+        .then((): void => {
+          promptAction.showToast({ message: $r('app.string.inbox_resubscribed') });
+        })
+        .catch((_e: Error) => {
+          this.batchFailedToast(1);
+        });
+    }
+  }
+
+  /** 左滑 Done：行移除 + Snackbar（UNDO 本地恢复） */
   private swipeDoneAction(item: NotificationItem): void {
+    const index = this.rawItems.findIndex((it: NotificationItem): boolean => it.threadId === item.threadId);
     NotificationsService.markThreadDone(this.token, item.threadId)
       .then((): void => {
         this.removeLocalThreads([item.threadId]);
         AppStorage.setOrCreate('inboxUnreadTick', Date.now());
+        this.showSnackbar(resText(this.getUIContext(), $r('app.string.inbox_snackbar_done')),
+          'done', item, index);
       })
       .catch((_e: Error) => {
         this.batchFailedToast(1);
       });
   }
 
-  /** 右滑 Unsubscribe：退订线程（行保留），代次自增令该行收起展开态 */
+  /** 右滑 Unsubscribe：退订（行保留）+ Snackbar（UNDO 服务端恢复订阅） */
   private swipeUnsubscribeAction(item: NotificationItem): void {
     NotificationsService.unsubscribeThread(this.token, item.threadId)
       .then((): void => {
-        promptAction.showToast({ message: $r('app.string.inbox_unsubscribed') });
         this.swipeEpoch += 1;
+        this.showSnackbar(resText(this.getUIContext(), $r('app.string.inbox_unsubscribed')),
+          'unsub', item, -1);
       })
       .catch((_e: Error) => {
         this.batchFailedToast(1);
@@ -588,28 +671,60 @@ export struct InboxView {
     .height(48)
     .padding({ left: 4, right: 4 })
     .margin({ top: 8 })
+    // 多选顶栏插入/退出的淡入淡出（走查反馈②；插入删除发生在 animateTo 闭包内）
+    .transition(TransitionEffect.OPACITY.animation({ duration: 250, curve: Curve.EaseInOut }))
   }
 
-  /** 左滑 Done 滑块（官方：饱和绿全高色块 + 居中白勾，无文字；动作由 onAction 过阈值触发） */
+  /** 左滑 Done 滑块（走查反馈⑤：底色随滑动露出，勾固定贴卡片右缘不随滑动移动） */
   @Builder
   swipeDoneBlock() {
-    Stack() {
+    Row() {
+      Blank()
       OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 24, iconColor: Color.White })
+        .margin({ right: 24 })
     }
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.success_btn_bg'))
   }
 
-  /** 右滑 Unsubscribe 滑块（官方：灰底全高色块 + 居中白斜线铃铛，无文字） */
+  /** 右滑 Unsubscribe 滑块（灰底全高色块 + 斜线铃铛固定贴卡片左缘，无文字） */
   @Builder
   swipeUnsubscribeBlock() {
-    Stack() {
+    Row() {
       OctIcon({ res: $r('app.media.oct_bell_slash_16'), iconSize: 24, iconColor: Color.White })
+        .margin({ left: 24 })
+      Blank()
     }
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.text_secondary'))
+  }
+
+  /** 底部 Snackbar（走查反馈④）：深底白字文案 + 右侧蓝色 UNDO，4s 自动消失 */
+  @Builder
+  snackbarBar() {
+    Row({ space: 16 }) {
+      Text(this.snackbarText)
+        .fontSize($r('app.float.body_font_size'))
+        .fontColor($r('app.color.card_background'))
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .layoutWeight(1)
+      Text($r('app.string.inbox_snackbar_undo'))
+        .fontSize($r('app.float.body_font_size'))
+        .fontWeight(FontWeight.Medium)
+        .fontColor($r('app.color.link_blue'))
+        .onClick((): void => this.onSnackbarUndo())
+    }
+    .alignItems(VerticalAlign.Center)
+    .width('100%')
+    .height(48)
+    .padding({ left: 16, right: 16 })
+    .borderRadius(8)
+    .backgroundColor($r('app.color.text_primary'))
+    .margin({ left: 16, right: 16, bottom: 16 })
+    .transition(TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.EaseInOut }))
   }
 
   /** 弹层分派（单个 bindSheet 内切换内容，规避同组件多 bindSheet 失效） */
@@ -678,7 +793,8 @@ export struct InboxView {
   }
 
   build() {
-    Column() {
+    Stack({ alignContent: Alignment.Bottom }) {
+      Column() {
       if (this.selectMode) {
         this.selectionBar()
       } else {
@@ -691,7 +807,11 @@ export struct InboxView {
               menu: [
                 {
                   value: $r('app.string.inbox_menu_refresh'),
-                  action: (): void => this.refresh()
+                  action: (): void => {
+                    // 顶部转圈反馈（走查反馈①）：⋮ Refresh 与下拉刷新同通道
+                    this.isRefreshing = true;
+                    this.refresh();
+                  }
                 }
               ]
             })
@@ -699,6 +819,7 @@ export struct InboxView {
         })
           // 原顶栏自带 top:8 呼吸空间（组件行高统一 48，不内置页级间距）
           .margin({ top: 8 })
+          .transition(TransitionEffect.OPACITY.animation({ duration: 250, curve: Curve.EaseInOut }))
       }
 
       PageShadowBar({ show: this.scrollShadow })
@@ -706,7 +827,7 @@ export struct InboxView {
         // 四个筛选 chip 内联渲染：@Builder 传值/$$ 引用参数均不随状态刷新（V2 坑，见 memory），
         // 文本/激活态直接读 @Local 才能随筛选变化实时更新。
         // 外层 Row：漏斗徽标固定最左、不随 chip 横向滑动；chips 段单独横向滑动
-        // 多选态整条隐藏（官方同构，Spec 045）
+        // 多选态整条隐藏（官方同构，Spec 045）；随多选切换淡入淡出
         if (!this.selectMode) {
         Row({ space: 8 }) {
           // 漏斗徽标：激活筛选组数（Issues/PR 列表同款；无激活时隐藏），点开菜单可一键清除
@@ -806,6 +927,7 @@ export struct InboxView {
           .align(Alignment.Start)
         }
         .padding({ left: 16, right: 16, bottom: 8 })
+        .transition(TransitionEffect.OPACITY.animation({ duration: 250, curve: Curve.EaseInOut }))
         }
 
       Refresh({ refreshing: $$this.isRefreshing }) {
@@ -853,6 +975,13 @@ export struct InboxView {
         this.isRefreshing = true;
         this.refresh();
       })
+      }
+      .width('100%')
+      .height('100%')
+      // Snackbar 覆盖层（走查反馈④）：悬浮于内容之上、tab 栏之上
+      if (this.snackbarAction !== '') {
+        this.snackbarBar()
+      }
     }
     .width('100%')
     .height('100%')

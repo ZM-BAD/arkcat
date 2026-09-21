@@ -97,12 +97,15 @@ export struct InboxNotifyCard {
     return `${this.notifTypeLabel(item.subjectType)} · ${item.reason}`;
   }
 
-  /** 多选态行首勾选圈：选中=accent 实心白勾圆（官方同构）；未选=描边空心圈（octicons 无素圈资源，自绘） */
+  /** 多选态行首勾选圈：选中=accent 实心白勾圆（官方同构）；未选=描边空心圈（octicons 无素圈资源，自绘）。
+   * 无参 @Builder——V2 下 @Builder 普通参数不随状态刷新（坑库），必须读 this.selected。 */
   @Builder
-  selectBadge(selected: boolean) {
-    if (selected) {
+  selectBadge() {
+    if (this.selected) {
       OctIcon({ res: $r('app.media.oct_check_circle_fill_16'), iconSize: 24, iconColor: $r('app.color.link_blue') })
         .margin({ top: 1 })
+        // 选中/取消的显隐过渡（Spec 045 走查反馈②）
+        .transition(TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.EaseInOut }))
     } else {
       Stack()
         .width(22)
@@ -110,6 +113,7 @@ export struct InboxNotifyCard {
         .margin({ top: 2 })
         .borderRadius(11)
         .border({ width: 1.5, color: $r('app.color.border') })
+        .transition(TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.EaseInOut }))
     }
   }
 
@@ -118,7 +122,7 @@ export struct InboxNotifyCard {
     Row({ space: 8 }) {
       // 多选态行首勾选圈（类型图标右移让位，官方同构）
       if (this.selectMode) {
-        this.selectBadge(this.selected)
+        this.selectBadge()
       }
       // 左上角：通知类型图标（带色，PR 已合并为紫色 merge）；未读状态由标题加粗表达
       Stack() {
@@ -174,8 +178,9 @@ export struct InboxNotifyCard {
     .width('100%')
     .padding($r('app.float.card_padding'))
     .borderRadius($r('app.float.card_radius'))
-    // 选中行整行浅蓝底（chip_active_bg=Primer accent subtle，官方多选同款）
+    // 选中行整行浅蓝底（chip_active_bg=Primer accent subtle，官方多选同款）；底色切换带过渡
     .backgroundColor(this.selected ? $r('app.color.chip_active_bg') : $r('app.color.card_background'))
+    .animation({ duration: 200, curve: Curve.EaseInOut })
     .margin({ bottom: 8 })
     .onClick((): void => this.onTap(item))
     .gesture(LongPressGesture({ repeat: false })
