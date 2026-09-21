@@ -141,16 +141,52 @@
       "value": "Refresh"
     },
     {
-      "name": "inbox_marked_read",
-      "value": "Marked as read"
+      "name": "inbox_n_selected",
+      "value": "%1$s selected"
     },
     {
-      "name": "inbox_mark_failed",
-      "value": "Mark failed: %1$s"
+      "name": "inbox_select_all",
+      "value": "Select all"
     },
     {
-      "name": "inbox_detail_coming",
-      "value": "Detail page will be available in a future spec"
+      "name": "inbox_deselect_all",
+      "value": "Deselect all"
+    },
+    {
+      "name": "inbox_batch_failed",
+      "value": "%1$s failed"
+    },
+    {
+      "name": "inbox_unsubscribed",
+      "value": "Unsubscribed"
+    },
+    {
+      "name": "inbox_no_detail",
+      "value": "Can't open this notification"
+    },
+    {
+      "name": "repo_watch_sheet_title",
+      "value": "Notifications"
+    },
+    {
+      "name": "repo_watch_subscribe",
+      "value": "Subscribe"
+    },
+    {
+      "name": "repo_watch_ignore",
+      "value": "Ignore"
+    },
+    {
+      "name": "repo_watch_unsubscribe",
+      "value": "Unsubscribe"
+    },
+    {
+      "name": "repo_watch_protected",
+      "value": "Subscription is managed by your organization"
+    },
+    {
+      "name": "repo_watch_updated",
+      "value": "Subscription updated"
     },
     {
       "name": "notif_type_issue",

@@ -1703,7 +1703,7 @@ struct Index {
       }
 
       TabContent() {
-        InboxView({ token: this.token })
+        InboxView({ token: this.token, pathStack: this.pathStack })
       }
 
       TabContent() {

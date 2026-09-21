@@ -1,6 +1,8 @@
 /**
  * Inbox 通知卡片（Spec 002）：仓库+编号 / 标题粗体（未读）/ 类型图标+摘要 / 右侧相对时间。
- * 纯展示组件，点击经 onMarkRead 上抛；图标判定与时间格式化等工具函数随卡片迁入。
+ * 展示组件，交互经回调上抛：tap=已读+跳转（Spec 045）、长按=进多选、多选态点行=切换选中。
+ * 多选态行首加圆形勾选圈（选中=accent 实心白勾 + 整行浅蓝底，官方同构）；图标判定与
+ * 时间格式化等工具函数随卡片迁入。
  */
 import { NotificationItem, issueNumberFromUrl } from '../models/GitHubModels';
 import { OctIcon } from './OctIcon';
@@ -13,7 +15,11 @@ export struct InboxNotifyCard {
     threadId: '', repoFullName: '', title: '', subjectType: '', reason: '', unread: false, updatedAt: '',
     subjectUrl: '', ownerAvatarUrl: '', prMerged: false
   };
-  @Event onMarkRead: (item: NotificationItem) => void = (item: NotificationItem): void => { };
+  /** 多选模式（Spec 045）：true=行首勾选圈 + tap 切选中（tap 跳转/已读挂起） */
+  @Param selectMode: boolean = false;
+  @Param selected: boolean = false;
+  @Event onTap: (item: NotificationItem) => void = (item: NotificationItem): void => { };
+  @Event onLongPress: (item: NotificationItem) => void = (item: NotificationItem): void => { };
 
   /** subject.type → 本地化标签；未知 key 透传原文（Spec 012） */
   private notifTypeLabel(subjectType: string): string {
@@ -91,9 +97,29 @@ export struct InboxNotifyCard {
     return `${this.notifTypeLabel(item.subjectType)} · ${item.reason}`;
   }
 
+  /** 多选态行首勾选圈：选中=accent 实心白勾圆（官方同构）；未选=描边空心圈（octicons 无素圈资源，自绘） */
+  @Builder
+  selectBadge(selected: boolean) {
+    if (selected) {
+      OctIcon({ res: $r('app.media.oct_check_circle_fill_16'), iconSize: 24, iconColor: $r('app.color.link_blue') })
+        .margin({ top: 1 })
+    } else {
+      Stack()
+        .width(22)
+        .height(22)
+        .margin({ top: 2 })
+        .borderRadius(11)
+        .border({ width: 1.5, color: $r('app.color.border') })
+    }
+  }
+
   @Builder
   notifyCard(item: NotificationItem) {
     Row({ space: 8 }) {
+      // 多选态行首勾选圈（类型图标右移让位，官方同构）
+      if (this.selectMode) {
+        this.selectBadge(this.selected)
+      }
       // 左上角：通知类型图标（带色，PR 已合并为紫色 merge）；未读状态由标题加粗表达
       Stack() {
         OctIcon({ res: this.notifIconRes(item.subjectType, item.prMerged), iconSize: 16, iconColor: this.notifIconColor(item.subjectType, item.prMerged) })
@@ -148,9 +174,12 @@ export struct InboxNotifyCard {
     .width('100%')
     .padding($r('app.float.card_padding'))
     .borderRadius($r('app.float.card_radius'))
-    .backgroundColor($r('app.color.card_background'))
+    // 选中行整行浅蓝底（chip_active_bg=Primer accent subtle，官方多选同款）
+    .backgroundColor(this.selected ? $r('app.color.chip_active_bg') : $r('app.color.card_background'))
     .margin({ bottom: 8 })
-    .onClick((): void => this.onMarkRead(item))
+    .onClick((): void => this.onTap(item))
+    .gesture(LongPressGesture({ repeat: false })
+      .onAction((): void => this.onLongPress(item)))
   }
 
   build() {

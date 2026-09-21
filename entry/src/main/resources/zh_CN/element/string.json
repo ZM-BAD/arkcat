@@ -141,16 +141,52 @@
       "value": "刷新"
     },
     {
-      "name": "inbox_marked_read",
-      "value": "已标记为已读"
+      "name": "inbox_n_selected",
+      "value": "已选 %1$s 项"
     },
     {
-      "name": "inbox_mark_failed",
-      "value": "标记失败：%1$s"
+      "name": "inbox_select_all",
+      "value": "全选"
     },
     {
-      "name": "inbox_detail_coming",
-      "value": "详情页将在后续 Spec 实现"
+      "name": "inbox_deselect_all",
+      "value": "取消全选"
+    },
+    {
+      "name": "inbox_batch_failed",
+      "value": "%1$s 项操作失败"
+    },
+    {
+      "name": "inbox_unsubscribed",
+      "value": "已退订，不再通知"
+    },
+    {
+      "name": "inbox_no_detail",
+      "value": "无法打开该通知"
+    },
+    {
+      "name": "repo_watch_sheet_title",
+      "value": "通知"
+    },
+    {
+      "name": "repo_watch_subscribe",
+      "value": "订阅"
+    },
+    {
+      "name": "repo_watch_ignore",
+      "value": "忽略"
+    },
+    {
+      "name": "repo_watch_unsubscribe",
+      "value": "取消订阅"
+    },
+    {
+      "name": "repo_watch_protected",
+      "value": "订阅由组织管理，无法更改"
+    },
+    {
+      "name": "repo_watch_updated",
+      "value": "订阅已更新"
     },
     {
       "name": "notif_type_issue",

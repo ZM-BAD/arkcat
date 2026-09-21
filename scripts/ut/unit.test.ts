@@ -41,6 +41,7 @@ import {
   shortcutsKey, sameShortcutQuery, shortcutsToStorage, shortcutsFromStorage,
   addShortcut, removeShortcut, moveShortcut, buildShortcutQuery, ShortcutItem
 } from '../../entry/src/main/ets/utils/Shortcuts';
+import { parseSubjectUrl, releaseRouteParam, LinkRoute } from '../../entry/src/main/ets/utils/LinkRouter';
 import {
   issueTitleError, canSubmitIssue, validatePrHeads, defaultBaseBranch,
   parseFormRoute, filterBranches, orderBranches, ISSUE_TITLE_MAX
@@ -2526,4 +2527,45 @@ test('Spec 074 sameShortcutQuery 归一判定（建议隐藏与去重共用）',
   assert.equal(sameShortcutQuery('issues', ' is:open author:@me '), sameShortcutQuery('ISSUES', 'is:open author:@me'));
   assert.notEqual(sameShortcutQuery('issues', 'is:open'), sameShortcutQuery('prs', 'is:open'));
   assert.notEqual(sameShortcutQuery('issues', 'is:open author:@me'), sameShortcutQuery('issues', 'is:closed author:@me'));
+});
+
+test('Spec 045 LinkRouter parseSubjectUrl 四类对象解析', () => {
+  // issue：api 完整 URL → kind/owner/name/number，webUrl 空（走原生详情）
+  const issue = parseSubjectUrl('https://api.github.com/repos/ZM-BAD/arkcat/issues/82');
+  assert.equal(issue.kind, 'issue');
+  assert.equal(issue.owner, 'ZM-BAD');
+  assert.equal(issue.name, 'arkcat');
+  assert.equal(issue.number, 82);
+  assert.equal(issue.webUrl, '');
+  // PR（pulls 单复数兼容）
+  const pr = parseSubjectUrl('/repos/octocat/Hello-World/pulls/7');
+  assert.equal(pr.kind, 'pr');
+  assert.equal(pr.number, 7);
+  const prSingular = parseSubjectUrl('https://api.github.com/repos/a/b/pull/456');
+  assert.equal(prSingular.kind, 'pr');
+  assert.equal(prSingular.number, 456);
+  // discussion：webUrl 换算 github.com（内嵌浏览器打开）
+  const disc = parseSubjectUrl('https://api.github.com/repos/o/r/discussions/31');
+  assert.equal(disc.kind, 'discussion');
+  assert.equal(disc.webUrl, 'https://github.com/o/r/discussions/31');
+  // release：数字 id 保留在 number（页面层换 tag）
+  const rel = parseSubjectUrl('https://api.github.com/repos/o/r/releases/123456');
+  assert.equal(rel.kind, 'release');
+  assert.equal(rel.number, 123456);
+});
+
+test('Spec 045 LinkRouter 非法与未知输入回退 unknown', () => {
+  for (const bad of ['', 'https://github.com/', 'https://api.github.com/repos/o/r', 'repos/o/r/labels/9']) {
+    const route: LinkRoute = parseSubjectUrl(bad);
+    assert.equal(route.kind, 'unknown');
+    assert.equal(route.owner, '');
+    assert.equal(route.number, 0);
+  }
+  // 非数字编号不误匹配
+  assert.equal(parseSubjectUrl('https://api.github.com/repos/o/r/issues/abc').kind, 'unknown');
+});
+
+test('Spec 045 LinkRouter releaseRouteParam 拼 owner/name/tag（tag 可含 /）', () => {
+  assert.equal(releaseRouteParam('o', 'r', 'v1.2.3'), 'o/r/v1.2.3');
+  assert.equal(releaseRouteParam('o', 'r', 'app-v1/beta'), 'o/r/app-v1/beta');
 });

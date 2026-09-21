@@ -3,8 +3,10 @@
  * Inbox▾/Repository▾ 为底部 sheet 面板（官方「Filter notifications by」/「Filter by repository」，
  * 面板组件化于 InboxFilterSheets）：视图单选（Inbox/Saved/Done）+ 类型多选（reason 本地过滤）、
  * 仓库单选列表（头像+计数+搜索）。卡片=仓库+编号 / 标题粗体 / 类型图标+摘要 / 右侧相对时间
- * （组件化于 InboxNotifyCard）；点击标记已读。
- * 详情页为 Spec 030/031 范围，当前点击仅标记已读并提示。
+ * （组件化于 InboxNotifyCard）。
+ * Spec 045：tap=标已读+LinkRouter 跳详情（issue/pr 原生路由、release 换 tag、discussion 内嵌
+ * 浏览器）；长按=多选模式（顶栏 ×/N selected/●/✓/⋮，批量已读/批量 Done）；行滑动=左滑 Done、
+ * 右滑 Unsubscribe（SwipeAction）。
  */
 import { promptAction } from '@kit.ArkUI';
 import { NotificationItem } from '../models/GitHubModels';
@@ -21,15 +23,22 @@ import { InboxNotifyCard } from '../components/InboxNotifyCard';
 import { InboxFilterSheet, InboxRepoSheet } from '../components/InboxFilterSheets';
 import { resText } from '../utils/I18n';
 import { shouldAutoLoadMore, isLimitedRangeEmpty } from '../utils/FilterLoading';
+import { parseSubjectUrl, releaseRouteParam, LinkRoute } from '../utils/LinkRouter';
+import { runBounded } from 'graphql';
 
 type InboxFilter = 'inbox' | 'focused' | 'unread' | 'repo';
 
 /** 通知每页条数（REST /notifications per_page 上限 50；reason 无服务端参数，靠多拉几页缓解假空） */
 const NOTIFICATIONS_PER_PAGE = 50;
 
+/** 批量线程操作的有界并发批量（官方无批量端点，逐线程调用防打满网络栈） */
+const THREAD_BATCH_SIZE = 5;
+
 @ComponentV2
 export struct InboxView {
   @Param token: string = '';
+  /** 跳转详情用主路由栈（Tab 页不在 NavDestination 内，由 Index 注入） */
+  @Param pathStack: NavPathStack = new NavPathStack();
   @Local filter: InboxFilter = 'inbox';
   @Local repoFilter: string = '';
   /** 下拉面板内容（'' | 'filters' | 'repo'）：同一组件只挂一个 bindSheet，内部切换 */
@@ -53,6 +62,14 @@ export struct InboxView {
   /** 滚动顶部阴影（滚动中显示、回顶消失） */
   @Local scrollShadow: boolean = false;
   @Local isRefreshing: boolean = false;
+  /** 多选模式（Spec 045）：顶栏变形 + 行首勾选圈，过滤条隐藏 */
+  @Local selectMode: boolean = false;
+  /** 多选已选 threadId（以当前视图 items 为操作对象） */
+  @Local selectedIds: string[] = [];
+  /** 批量操作进行中（防连点，●/✓ 执行期间禁再次触发） */
+  @Local batching: boolean = false;
+  /** 滑动复位代次：右滑 Unsubscribe 行保留，代次自增令该行 key 变化以收起展开态 */
+  @Local swipeEpoch: number = 0;
 
   aboutToAppear(): void {
     this.refresh();
@@ -64,8 +81,9 @@ export struct InboxView {
     this.refresh();
   }
 
-  /** 拉取后：聚合仓库候选 → 本地链式过滤（视图 → 类型 → 仓库） */
+  /** 拉取后：聚合仓库候选 → 本地链式过滤（视图 → 类型 → 仓库）；重拉即退出多选（选中集已失配） */
   private refresh(): void {
+    this.exitSelectMode();
     this.loading = true;
     this.errorMsg = '';
     this.page = 1;
@@ -226,39 +244,253 @@ export struct InboxView {
     return this.repoFilters.filter((r: InboxRepoFilterItem) => r.fullName.toLowerCase().indexOf(q) >= 0);
   }
 
-  private markRead(item: NotificationItem): void {
+  /**
+   * 本地同步已读态（items 与 rawItems 双份，防切筛选后已读态复活；Spec 045 批量 ● 亦走此）。
+   * threadIds 内的行置为 unread，其余不动；数组重赋值驱动 V2 刷新。
+   */
+  private markLocalRead(threadIds: string[], unread: boolean): void {
+    const hit = (it: NotificationItem): boolean => threadIds.indexOf(it.threadId) >= 0;
+    const mark = (list: NotificationItem[]): NotificationItem[] => {
+      return list.map((it: NotificationItem): NotificationItem => {
+        if (!hit(it)) {
+          return it;
+        }
+        return {
+          threadId: it.threadId,
+          repoFullName: it.repoFullName,
+          title: it.title,
+          subjectType: it.subjectType,
+          reason: it.reason,
+          unread: unread,
+          updatedAt: it.updatedAt,
+          subjectUrl: it.subjectUrl,
+          ownerAvatarUrl: it.ownerAvatarUrl,
+          prMerged: it.prMerged
+        };
+      });
+    };
+    this.rawItems = mark(this.rawItems);
+    this.items = mark(this.items);
+  }
+
+  /** 从本地列表移除线程（批量 Done / 左滑 Done 后行消失） */
+  private removeLocalThreads(threadIds: string[]): void {
+    const gone = (it: NotificationItem): boolean => threadIds.indexOf(it.threadId) >= 0;
+    this.rawItems = this.rawItems.filter((it: NotificationItem): boolean => !gone(it));
+    this.items = this.items.filter((it: NotificationItem): boolean => !gone(it));
+    this.repoFilters = collectRepoFilters(this.rawItems);
+  }
+
+  /** tap 附带的静默已读（失败不打扰跳转；已读行不重复请求） */
+  private quietMarkRead(item: NotificationItem): void {
     if (!item.unread) {
-      promptAction.showToast({ message: $r('app.string.inbox_detail_coming') });
       return;
     }
     NotificationsService.markThreadRead(this.token, item.threadId)
-      .then(() => {
-        // items 与 rawItems 同步标记，防止切筛选后已读态复活（review A5）
-        const mark = (list: NotificationItem[]): NotificationItem[] => {
-          return list.map((it: NotificationItem) => {
-            const copy: NotificationItem = {
-              threadId: it.threadId,
-              repoFullName: it.repoFullName,
-              title: it.title,
-              subjectType: it.subjectType,
-              reason: it.reason,
-              unread: it.threadId === item.threadId ? false : it.unread,
-              updatedAt: it.updatedAt,
-              subjectUrl: it.subjectUrl,
-              ownerAvatarUrl: it.ownerAvatarUrl,
-              prMerged: it.prMerged
-            };
-            return copy;
-          });
-        };
-        this.rawItems = mark(this.rawItems);
-        this.items = mark(this.items);
-        promptAction.showToast({ message: $r('app.string.inbox_marked_read') });
-        // 通知 Index 重算未读蓝点（review A4）
+      .then((): void => {
+        this.markLocalRead([item.threadId], false);
         AppStorage.setOrCreate('inboxUnreadTick', Date.now());
       })
-      .catch((e: Error) => {
-        promptAction.showToast({ message: this.fmt($r('app.string.inbox_mark_failed'), e.message) });
+      .catch((_e: Error) => {
+        // 静默失败：跳转优先，已读态以下拉刷新/服务端为准
+      });
+  }
+
+  /** tap 通知卡（非多选态）：标已读 + LinkRouter 按对象类型跳详情（Spec 045） */
+  private openNotification(item: NotificationItem): void {
+    const route: LinkRoute = parseSubjectUrl(item.subjectUrl);
+    this.quietMarkRead(item);
+    switch (route.kind) {
+      case 'issue':
+        this.pathStack.pushPathByName('issueDetail', `${route.owner}/${route.name}/${route.number}`);
+        break;
+      case 'pr':
+        this.pathStack.pushPathByName('prDetail', `${route.owner}/${route.name}/${route.number}`);
+        break;
+      case 'discussion':
+        // App 无讨论详情页：内嵌浏览器打开网页版（LinkRouter 已换算 github.com 地址）
+        this.pathStack.pushPathByName('inAppBrowser', `${item.repoFullName} #${route.number}|${route.webUrl}`);
+        break;
+      case 'release':
+        // subject.url 是数字 id，ReleaseDetail 路由按 tag：先换 tag，失败降级 Releases 列表页
+        NotificationsService.fetchReleaseTag(this.token, route.owner, route.name, route.number)
+          .then((tag: string): void => {
+            if (tag !== '') {
+              this.pathStack.pushPathByName('releaseDetail', releaseRouteParam(route.owner, route.name, tag));
+            } else {
+              this.pathStack.pushPathByName('repoReleases', `${route.owner}/${route.name}`);
+            }
+          });
+        break;
+      default:
+        promptAction.showToast({ message: $r('app.string.inbox_no_detail') });
+    }
+  }
+
+  // ───────────── Spec 045：多选模式 ─────────────
+
+  /** 长按进入多选：长按行即选中该行（官方同构） */
+  private enterSelectMode(item: NotificationItem): void {
+    if (this.selectMode) {
+      return;
+    }
+    this.selectMode = true;
+    this.selectedIds = [item.threadId];
+  }
+
+  /** 退出多选（× 或取消全选后） */
+  private exitSelectMode(): void {
+    this.selectMode = false;
+    this.selectedIds = [];
+  }
+
+  /** 多选态点行切换选中；清空即退出多选 */
+  private toggleSelect(item: NotificationItem): void {
+    const idx = this.selectedIds.indexOf(item.threadId);
+    if (idx >= 0) {
+      const next = this.selectedIds.slice();
+      next.splice(idx, 1);
+      this.selectedIds = next;
+    } else {
+      this.selectedIds = this.selectedIds.concat([item.threadId]);
+    }
+    if (this.selectedIds.length === 0) {
+      this.exitSelectMode();
+    }
+  }
+
+  private onCardTap(item: NotificationItem): void {
+    if (this.selectMode) {
+      this.toggleSelect(item);
+    } else {
+      this.openNotification(item);
+    }
+  }
+
+  /** ⋮ Select all：全选当前视图 */
+  private selectAll(): void {
+    this.selectedIds = this.items.map((it: NotificationItem): string => it.threadId);
+  }
+
+  /** 当前视图是否已被全选（● 走 PUT 单发的判定之一） */
+  private isFullSelection(): boolean {
+    return this.items.length > 0 && this.selectedIds.length === this.items.length;
+  }
+
+  /** 选中行的当前视图对象（批量操作以视图内数据为准） */
+  private selectionTargets(): NotificationItem[] {
+    return this.items.filter((it: NotificationItem): boolean => this.selectedIds.indexOf(it.threadId) >= 0);
+  }
+
+  /** 无任何筛选时全选才等价「全部通知已读」（PUT /notifications 是账号级操作） */
+  private viewIsPlainInbox(): boolean {
+    return this.filter === 'inbox' && this.inboxView === 'inbox' &&
+      this.reasonKeys.length === 0 && this.repoFilter === '';
+  }
+
+  /** 逐线程调用并收集成功 threadId（runBounded 批内 all，单失败会整体 reject → 逐项捕获） */
+  private async runPerThread(targets: NotificationItem[],
+    call: (item: NotificationItem) => Promise<void>): Promise<string[]> {
+    const ids = await runBounded<NotificationItem, string>(targets, THREAD_BATCH_SIZE,
+      async (item: NotificationItem): Promise<string> => {
+        try {
+          await call(item);
+          return item.threadId;
+        } catch (e) {
+          return '';
+        }
+      });
+    const ok: string[] = [];
+    for (const id of ids) {
+      if (id !== '') {
+        ok.push(id);
+      }
+    }
+    return ok;
+  }
+
+  private batchFailedToast(failed: number): void {
+    promptAction.showToast({ message: this.fmt($r('app.string.inbox_batch_failed'), `${failed}`) });
+  }
+
+  /** ● 批量已读/未读：按选中集主导态取反（有未读→全标已读；全已读→标回未读） */
+  private async batchToggleRead(): Promise<void> {
+    if (this.batching) {
+      return;
+    }
+    const targets = this.selectionTargets();
+    if (targets.length === 0) {
+      return;
+    }
+    const makeUnread = targets.every((t: NotificationItem): boolean => !t.unread);
+    this.batching = true;
+    try {
+      if (!makeUnread && this.isFullSelection() && this.viewIsPlainInbox()) {
+        // 全选且无筛选：单发 PUT /notifications（官方「mark all as read」语义）
+        await NotificationsService.markAllRead(this.token);
+        this.markLocalRead(targets.map((t: NotificationItem): string => t.threadId), false);
+      } else {
+        const okIds = await this.runPerThread(targets, (t: NotificationItem): Promise<void> =>
+          NotificationsService.markThreadRead(this.token, t.threadId, makeUnread));
+        if (okIds.length < targets.length) {
+          this.batchFailedToast(targets.length - okIds.length);
+        }
+        this.markLocalRead(okIds, makeUnread);
+      }
+      AppStorage.setOrCreate('inboxUnreadTick', Date.now());
+      this.exitSelectMode();
+    } finally {
+      this.batching = false;
+    }
+  }
+
+  /** ✓ 批量 Done：逐线程 DELETE，成功项从列表移除（官方无批量端点） */
+  private async batchDone(): Promise<void> {
+    if (this.batching) {
+      return;
+    }
+    const targets = this.selectionTargets();
+    if (targets.length === 0) {
+      return;
+    }
+    this.batching = true;
+    try {
+      const okIds = await this.runPerThread(targets, (t: NotificationItem): Promise<void> =>
+        NotificationsService.markThreadDone(this.token, t.threadId));
+      if (okIds.length < targets.length) {
+        this.batchFailedToast(targets.length - okIds.length);
+      }
+      this.removeLocalThreads(okIds);
+      AppStorage.setOrCreate('inboxUnreadTick', Date.now());
+      this.exitSelectMode();
+    } finally {
+      this.batching = false;
+    }
+  }
+
+  // ───────────── Spec 045：行滑动 ─────────────
+
+  /** 左滑 Done：行移除（与多选 ✓ 同落库路径） */
+  private swipeDoneAction(item: NotificationItem): void {
+    NotificationsService.markThreadDone(this.token, item.threadId)
+      .then((): void => {
+        this.removeLocalThreads([item.threadId]);
+        AppStorage.setOrCreate('inboxUnreadTick', Date.now());
+      })
+      .catch((_e: Error) => {
+        this.batchFailedToast(1);
+      });
+  }
+
+  /** 右滑 Unsubscribe：退订线程（行保留），代次自增令该行收起展开态 */
+  private swipeUnsubscribeAction(item: NotificationItem): void {
+    NotificationsService.unsubscribeThread(this.token, item.threadId)
+      .then((): void => {
+        promptAction.showToast({ message: $r('app.string.inbox_unsubscribed') });
+        this.swipeEpoch += 1;
+      })
+      .catch((_e: Error) => {
+        this.batchFailedToast(1);
       });
   }
 
@@ -293,6 +525,91 @@ export struct InboxView {
     .padding({ left: 8, right: 8 })
     .borderRadius(16)
     .border({ width: 1, color: $r('app.color.border') })
+  }
+
+  /** 多选顶栏（Spec 045 官方同构）：× + N selected + ● 已读/未读 + ✓ Done + ⋮ 全选菜单；
+   * 自绘按 067 数值对齐（行高 48 / 触控区 44×44 / 边距 4+16） */
+  @Builder
+  selectionBar() {
+    Row() {
+      Stack() {
+        OctIcon({ res: $r('app.media.oct_x_16'), iconSize: 20, iconColor: $r('app.color.text_primary') })
+      }
+      .width(44)
+      .height(44)
+      .onClick((): void => this.exitSelectMode())
+
+      Text(this.fmt($r('app.string.inbox_n_selected'), `${this.selectedIds.length}`))
+        .fontSize($r('app.float.title_font_size'))
+        .fontWeight(600)
+        .fontColor($r('app.color.text_primary'))
+        .margin({ left: 4 })
+
+      Blank()
+
+      Stack() {
+        OctIcon({ res: $r('app.media.oct_dot_fill_16'), iconSize: 20, iconColor: $r('app.color.text_primary') })
+      }
+      .width(44)
+      .height(44)
+      .opacity(this.batching ? 0.4 : 1)
+      .onClick((): void => {
+        this.batchToggleRead();
+      })
+
+      Stack() {
+        OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 20, iconColor: $r('app.color.text_primary') })
+      }
+      .width(44)
+      .height(44)
+      .opacity(this.batching ? 0.4 : 1)
+      .onClick((): void => {
+        this.batchDone();
+      })
+
+      Stack() {
+        OctIcon({ res: $r('app.media.oct_kebab_horizontal_16'), iconSize: 20, iconColor: $r('app.color.link_blue') })
+          .rotate({ angle: 90 })
+      }
+      .width(44)
+      .height(44)
+      .bindMenu([
+        {
+          value: $r('app.string.inbox_select_all'),
+          action: (): void => this.selectAll()
+        },
+        {
+          value: $r('app.string.inbox_deselect_all'),
+          action: (): void => this.exitSelectMode()
+        }
+      ])
+    }
+    .width('100%')
+    .height(48)
+    .padding({ left: 4, right: 4 })
+    .margin({ top: 8 })
+  }
+
+  /** 左滑 Done 滑块（官方：饱和绿全高色块 + 居中白勾，无文字；动作由 onAction 过阈值触发） */
+  @Builder
+  swipeDoneBlock() {
+    Stack() {
+      OctIcon({ res: $r('app.media.oct_check_16'), iconSize: 24, iconColor: Color.White })
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor($r('app.color.success_btn_bg'))
+  }
+
+  /** 右滑 Unsubscribe 滑块（官方：灰底全高色块 + 居中白斜线铃铛，无文字） */
+  @Builder
+  swipeUnsubscribeBlock() {
+    Stack() {
+      OctIcon({ res: $r('app.media.oct_bell_slash_16'), iconSize: 24, iconColor: Color.White })
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor($r('app.color.text_secondary'))
   }
 
   /** 弹层分派（单个 bindSheet 内切换内容，规避同组件多 bindSheet 失效） */
@@ -333,31 +650,64 @@ export struct InboxView {
     }
   }
 
+  /** 行滑动配置（Spec 045）：左滑=Done（绿底白勾）、右滑=Unsubscribe（灰底斜线铃铛）；
+   * 多选态返回空配置禁用滑动。ArkUI 的 swipeAction 是 ListItem 属性，builder 用标准箭头形态。 */
+  private swipeOptions(item: NotificationItem): SwipeActionOptions {
+    if (this.selectMode) {
+      return {};
+    }
+    return {
+      // start=右滑露左侧（Unsubscribe）、end=左滑露右侧（Done）
+      end: {
+        builder: (): void => {
+          this.swipeDoneBlock()
+        },
+        onAction: (): void => {
+          this.swipeDoneAction(item)
+        }
+      },
+      start: {
+        builder: (): void => {
+          this.swipeUnsubscribeBlock()
+        },
+        onAction: (): void => {
+          this.swipeUnsubscribeAction(item)
+        }
+      }
+    };
+  }
+
   build() {
     Column() {
-      AppBar({
-        title: $r('app.string.tab_inbox'),
-        actions: [
-          new AppBarAction($r('app.media.oct_kebab_horizontal_16'), (): void => {}, {
-            rotate90: true,
-            a11y: $r('app.string.a11y_more'),
-            menu: [
-              {
-                value: $r('app.string.inbox_menu_refresh'),
-                action: (): void => this.refresh()
-              }
-            ]
-          })
-        ]
-      })
-        // 原顶栏自带 top:8 呼吸空间（组件行高统一 48，不内置页级间距）
-        .margin({ top: 8 })
+      if (this.selectMode) {
+        this.selectionBar()
+      } else {
+        AppBar({
+          title: $r('app.string.tab_inbox'),
+          actions: [
+            new AppBarAction($r('app.media.oct_kebab_horizontal_16'), (): void => {}, {
+              rotate90: true,
+              a11y: $r('app.string.a11y_more'),
+              menu: [
+                {
+                  value: $r('app.string.inbox_menu_refresh'),
+                  action: (): void => this.refresh()
+                }
+              ]
+            })
+          ]
+        })
+          // 原顶栏自带 top:8 呼吸空间（组件行高统一 48，不内置页级间距）
+          .margin({ top: 8 })
+      }
 
       PageShadowBar({ show: this.scrollShadow })
 
         // 四个筛选 chip 内联渲染：@Builder 传值/$$ 引用参数均不随状态刷新（V2 坑，见 memory），
         // 文本/激活态直接读 @Local 才能随筛选变化实时更新。
         // 外层 Row：漏斗徽标固定最左、不随 chip 横向滑动；chips 段单独横向滑动
+        // 多选态整条隐藏（官方同构，Spec 045）
+        if (!this.selectMode) {
         Row({ space: 8 }) {
           // 漏斗徽标：激活筛选组数（Issues/PR 列表同款；无激活时隐藏），点开菜单可一键清除
           if (this.activeFilterCount() > 0) {
@@ -456,37 +806,47 @@ export struct InboxView {
           .align(Alignment.Start)
         }
         .padding({ left: 16, right: 16, bottom: 8 })
+        }
 
       Refresh({ refreshing: $$this.isRefreshing }) {
-        Scroll() {
-          // 独立卡片列表：每张通知自带圆角与间距（同 Pull Requests 列表样式）
-          Column() {
-            if (this.items.length > 0) {
-              ForEach(this.items, (item: NotificationItem) => {
+        // 独立卡片列表（同 Pull Requests 列表样式）；List+ListItem 承载 swipeAction（Spec 045 行滑动）
+        if (this.items.length > 0) {
+          List({ space: 0 }) {
+            ForEach(this.items, (item: NotificationItem) => {
+              ListItem() {
                 InboxNotifyCard({
                   item: item,
-                  onMarkRead: (it: NotificationItem): void => this.markRead(it)
+                  selectMode: this.selectMode,
+                  selected: this.selectedIds.indexOf(item.threadId) >= 0,
+                  onTap: (it: NotificationItem): void => this.onCardTap(it),
+                  onLongPress: (it: NotificationItem): void => this.enterSelectMode(it)
                 })
-              }, (item: NotificationItem) => item.threadId)
-            } else {
-              StateView({
-                loading: this.loading,
-                error: this.errorMsg,
-                empty: !this.loading && this.errorMsg === '',
-                emptyText: this.emptyText(),
-                emptySub: isLimitedRangeEmpty(this.items.length, this.hasMorePages)
-                  ? $r('app.string.filter_loaded_range_hint') : null
-              })
-            }
+              }
+              .swipeAction(this.swipeOptions(item))
+            }, (item: NotificationItem) => `${item.threadId}#${this.swipeEpoch}`)
+          }
+          .width('100%')
+          .height('100%')
+          .padding({ left: 16, right: 16, bottom: 16 })
+          .scrollBar(BarState.Off)
+          .edgeEffect(EdgeEffect.Spring)
+          .onScrollIndex((start: number, _end: number): void => {
+            this.scrollShadow = start > 0;
+          })
+        } else {
+          Column() {
+            StateView({
+              loading: this.loading,
+              error: this.errorMsg,
+              empty: !this.loading && this.errorMsg === '',
+              emptyText: this.emptyText(),
+              emptySub: isLimitedRangeEmpty(this.items.length, this.hasMorePages)
+                ? $r('app.string.filter_loaded_range_hint') : null
+            })
           }
           .padding({ left: 16, right: 16, bottom: 16 })
           .width('100%')
         }
-        .scrollBar(BarState.Off)
-        .align(Alignment.Top)
-        .onScroll((_x: number, y: number): void => {
-          this.scrollShadow = y > 0.001;
-        })
       }
       .layoutWeight(1)
       .onRefreshing((): void => {

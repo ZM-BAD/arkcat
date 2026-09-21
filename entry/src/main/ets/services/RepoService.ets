@@ -52,6 +52,8 @@ query RepositoryDetail($owner: String!, $name: String!) {
     openIssues: issues(states: OPEN) { totalCount }
     openPullRequests: pullRequests(states: OPEN) { totalCount }
     releases { totalCount }
+    # 详情页 Bell 订阅态（Spec 045：NONE/SUBSCRIBED/IGNORED/PROTECTED）
+    viewerSubscription
   }
 }`;
 
@@ -63,6 +65,14 @@ mutation AddStar($starrableId: ID!) {
 const REMOVE_STAR_MUTATION = `
 mutation RemoveStar($starrableId: ID!) {
   removeStar(input: { starrableId: $starrableId }) { starrable { viewerHasStarred } }
+}`;
+
+/** Watch 订阅切换（Spec 045 Bell 弹层；state: SUBSCRIBED/UNSUBSCRIBED/IGNORED） */
+const UPDATE_SUBSCRIPTION_MUTATION = `
+mutation SetWatch($repoId: ID!, $state: SubscriptionState!) {
+  updateSubscription(input: { subscribableId: $repoId, state: $state }) {
+    subscribable { ... on Repository { id viewerSubscription } }
+  }
 }`;
 
 /** Star 态轻量查询（Spec 069 关于页仓库行）：详情大查询的 readme/fileTree/languages 对本页全为冗余 */
@@ -153,6 +163,17 @@ export class RepoService {
   static async createFork(token: string, repoId: string): Promise<void> {
     const variables: Record<string, Object> = { 'repositoryId': repoId };
     await graphql(CREATE_FORK_MUTATION, variables, token);
+  }
+
+  /**
+   * Watch 订阅切换（Spec 045 Bell 弹层），返回服务器回执的订阅态。
+   * state: SUBSCRIBED / UNSUBSCRIBED / IGNORED；PROTECTED 属机构强制，API 禁改（页面侧拦截）。
+   */
+  static async setWatchSubscription(token: string, repoId: string, state: string): Promise<string> {
+    const variables: Record<string, Object> = { 'repoId': repoId, 'state': state };
+    const data = await graphql(UPDATE_SUBSCRIPTION_MUTATION, variables, token);
+    const sub = Json.obj(Json.obj(data, 'updateSubscription') ?? ({} as JsonMap), 'subscribable') ?? ({} as JsonMap);
+    return Json.str(sub, 'viewerSubscription');
   }
 
   /** Stargazers 一页（Spec 053） */
