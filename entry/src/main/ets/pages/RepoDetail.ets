@@ -443,17 +443,17 @@ export struct RepoDetailView {
       promptAction.showToast({ message: this.stringOf($r('app.string.repo_fork_own_toast')) });
       return;
     }
-    const detail = this.detail;
-    if (detail === null || detail.repoId === '' || this.busy) {
+    if (this.detail === null || this.owner === '' || this.name === '' || this.busy) {
       return;
     }
     this.busy = true;
-    RepoService.createFork(this.token, detail.repoId)
+    RepoService.createFork(this.token, this.owner, this.name)
       .then(() => {
         promptAction.showToast({ message: $r('app.string.repo_fork_created_toast') });
       })
       .catch((e: Error) => {
-        promptAction.showToast({ message: this.fmt($r('app.string.repo_fork_failed'), e.message) });
+        const reason = friendlyError(this.getUIContext(), e);
+        promptAction.showToast({ message: this.fmt($r('app.string.repo_fork_failed'), reason) });
       })
       .finally(() => {
         this.busy = false;
