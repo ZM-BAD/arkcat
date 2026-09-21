@@ -11,8 +11,9 @@ repos:
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
-        # oh-package-lock.json5 由 ohpm 管理、不保证尾部换行，常态化误杀——排除
-        exclude: ^oh-package-lock\.json5$
+        # ohpm 管理的 lock 文件（根目录 + entry/，2026-09-22 起）不保证尾部换行，
+        # 入库即按工具原生形态（无尾换行），豁免本钩子——否则每次构建必脏、提交被打断
+        exclude: (^|/)oh-package-lock\.json5$
       - id: check-yaml
       - id: check-json
       - id: check-merge-conflict
