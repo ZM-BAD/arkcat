@@ -39,6 +39,7 @@
 | `WorkFilterSelectSheet` | 多选面板（org/repo，头像行 + 全库真搜索） |
 | `WorkFilterSortSheet` / `SortBySheet` | 排序面板 |
 | `LanguageFilterSheet` / `InboxFilterSheets` / `StarredListSheet` | 语言筛选 / 通知筛选 / 星标列表选择 |
+| `StatusEditSheet` / `StatusEmojiSheet` | 用户状态编辑（Spec 076）：近全屏弹层（emoji 框 + 文案输入 + Busy + Clear after... + CLEAR STATUS）＋ emoji 网格子弹层；本体挂 Profile 页，两个子弹层复用同一嵌套 `bindSheet` 按 `sheetKind` 分派 |
 
 ## 四、筛选体系
 

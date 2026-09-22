@@ -3403,6 +3403,78 @@
     {
       "name": "checks_total_mixed",
       "value": "%s failing and %s successful checks"
+    },
+    {
+      "name": "status_edit_title",
+      "value": "Edit status"
+    },
+    {
+      "name": "status_save",
+      "value": "SAVE"
+    },
+    {
+      "name": "status_emoji_title",
+      "value": "Select an emoji"
+    },
+    {
+      "name": "status_busy",
+      "value": "Busy"
+    },
+    {
+      "name": "status_busy_hint",
+      "value": "When others mention you, assign you, or request your review, GitHub will let them know that you have limited availability."
+    },
+    {
+      "name": "status_clear_after",
+      "value": "Clear after..."
+    },
+    {
+      "name": "status_clear_action",
+      "value": "Clear status"
+    },
+    {
+      "name": "status_characters_remaining",
+      "value": "%s characters remaining"
+    },
+    {
+      "name": "status_character_remaining",
+      "value": "%s character remaining"
+    },
+    {
+      "name": "status_expiry_title",
+      "value": "Select expiration"
+    },
+    {
+      "name": "status_expiry_never",
+      "value": "Never"
+    },
+    {
+      "name": "status_expiry_in30m",
+      "value": "In 30 minutes"
+    },
+    {
+      "name": "status_expiry_in1h",
+      "value": "In 1 hour"
+    },
+    {
+      "name": "status_expiry_in4h",
+      "value": "In 4 hours"
+    },
+    {
+      "name": "status_expiry_today",
+      "value": "Today"
+    },
+    {
+      "name": "status_expiry_thisweek",
+      "value": "This week"
+    },
+    {
+      "name": "status_set_prompt",
+      "value": "Set a status"
+    },
+    {
+      "name": "status_message_placeholder",
+      "value": "Set your status"
     }
   ]
 }

@@ -1,10 +1,9 @@
 /**
- * Profile 头卡（Spec 005 + Spec 034/035）：头像/名称/账号 + 状态行 + bio + 元信息行 + 开发者徽章
- * + followers/following 可点计数 + 勋章行。纯展示组件，跳转经 pathStack 直接执行。
+ * Profile 头卡（Spec 005 + Spec 034/035 + Spec 076）：头像/名称/账号 + 状态行 + bio + 元信息行
+ * + 开发者徽章 + followers/following 可点计数 + 勋章行。纯展示组件，跳转经 pathStack 直接执行。
  */
-import { promptAction } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
-import { UserProfile, isSelfProfile } from '../models/ProfileModels';
+import { UserProfile, isSelfProfile, statusVisible } from '../models/ProfileModels';
 import { OctIcon } from './OctIcon';
 import { resText } from '../utils/I18n';
 import { AccountInfo } from '../services/AccountStore';
@@ -23,6 +22,8 @@ export struct ProfileHeaderCard {
   @Event onAddAccount: () => void = (): void => {};
   /** Follow 按钮点击（切换关注态；请求与 toast 在 Profile 页处理） */
   @Event onToggleFollow: () => void = (): void => {};
+  /** 状态铅笔点击（Spec 076）：打开 Edit status 弹层（弹层挂在 Profile 页上） */
+  @Event onEditStatus: () => void = (): void => {};
   @Local switcherOpen: boolean = false;
 
   /** 拉起系统浏览器/邮件应用（MarkdownView.openExternal 同款 viewData want；mailto: 由系统分发给邮件应用） */
@@ -71,29 +72,98 @@ export struct ProfileHeaderCard {
     }
   }
 
-  /** 状态行：emoji + Focusing 文案 + 最右铅笔（灰）；灰底矩形背景，仅自己主页可编辑入口 */
+  // 状态取值走私有方法：@Builder 内不做可空收窄（V2 闭包收窄会丢，坑 44）
+
+  /** 是否有可展示状态（Spec 076）：文案或 emoji 任一存在，emoji-only 状态同样展示 */
+  private hasStatus(): boolean {
+    return this.profile !== null && statusVisible(this.profile.status);
+  }
+
+  /** 状态 emoji 的文本字形（无则空串） */
+  private statusGlyph(): string {
+    return this.profile !== null && this.profile.status !== null ? this.profile.status.emoji.text : '';
+  }
+
+  /** 状态 emoji 的图片地址（自定义 emoji，无则空串） */
+  private statusImage(): string {
+    return this.profile !== null && this.profile.status !== null ? this.profile.status.emoji.image : '';
+  }
+
+  /** 状态文案（无则空串） */
+  private statusMessage(): string {
+    return this.profile !== null && this.profile.status !== null ? this.profile.status.message : '';
+  }
+
+  /** 状态是否为 Busy（GraphQL indicatesLimitedAvailability）：黄底 amber 文案（Spec 076 §二-A） */
+  private statusBusy(): boolean {
+    return this.profile !== null && this.profile.status !== null && this.profile.status.busy;
+  }
+
+  /** 本人主页（决定状态行是否带编辑入口） */
+  private isSelf(): boolean {
+    return this.profile !== null && isSelfProfile(this.profile.viewerLogin, this.profile.user.login);
+  }
+
+  /** 状态行（Spec 076）：emoji 字形/自定义图 + 文案 + 最右铅笔；灰底圆角矩形。
+   *  本人主页无状态时仍渲染（显示引导语）——编辑器入口只此一处，整行不渲染会让功能不可达（§七）。 */
   @Builder
   statusRow() {
-    if (this.profile !== null && this.profile.statusMessage !== '') {
-      Row() {
-        Text(`${this.profile.statusEmoji} ${this.profile.statusMessage}`)
-          .fontSize($r('app.float.caption_font_size'))
-          .fontColor($r('app.color.text_secondary'))
-          .maxLines(1)
+    if (this.hasStatus() || this.isSelf()) {
+      Row({ space: 6 }) {
+        if (this.hasStatus()) {
+          if (this.statusGlyph() !== '') {
+            Text(this.statusGlyph())
+              .fontSize($r('app.float.sub_text_font_size'))
+              .maxLines(1)
+          } else if (this.statusImage() !== '') {
+            // 非 Unicode 的 GitHub 自定义 emoji（:shipit: 等）无字形可画，走官方 CDN 图
+            Image(this.statusImage())
+              .width(18)
+              .height(18)
+          }
+          if (this.statusMessage() !== '') {
+            Text(this.statusMessage())
+              .fontSize($r('app.float.sub_text_font_size'))
+              .fontColor(this.statusBusy() ? $r('app.color.warning_text') : $r('app.color.text_primary'))
+              .maxLines(1)
+          }
+        } else {
+          // 无状态：smiley 字形占 emoji 位（官方口径，2026-09-22 走查用户指出）
+          Stack() {
+            OctIcon({ res: $r('app.media.oct_smiley_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+          }
+          .width(16)
+          .height(16)
+          Text($r('app.string.status_set_prompt'))
+            .fontSize($r('app.float.sub_text_font_size'))
+            .fontColor($r('app.color.text_secondary'))
+            .maxLines(1)
+        }
         Blank()
-        if (isSelfProfile(this.profile.viewerLogin, this.profile.user.login)) {
-          OctIcon({ res: $r('app.media.oct_pencil_16'), iconSize: 16, iconColor: $r('app.color.text_secondary') })
+        if (this.isSelf()) {
+          OctIcon({
+            res: $r('app.media.oct_pencil_16'),
+            iconSize: 16,
+            iconColor: this.statusBusy() ? $r('app.color.warning_text') : $r('app.color.text_primary')
+          })
             .padding(4)
             .responseRegion({ x: -10, y: -10, width: '183%', height: '183%' })
             .onClick(() => {
-              promptAction.showToast({ message: $r('app.string.home_feature_coming') });
+              this.onEditStatus();
             })
         }
       }
       .width('100%')
-      .padding({ left: 12, right: 4, top: 8, bottom: 8 })
+      .padding({ left: 12, right: 4, top: 10, bottom: 10 })
       .borderRadius(6)
-      .backgroundColor($r('app.color.heat_empty'))
+      // Busy=黄底（官方 busy 态）；常态灰底。描边已按走查口径去掉（2026-09-22，无论是否 busy）
+      .backgroundColor(this.statusBusy() ? $r('app.color.status_busy_bg') : $r('app.color.bg_page'))
+      // 官方为「点状态即改状态」：本人主页整行可点（与铅笔同动作，重复触发无副作用）
+      .onClick(() => {
+        if (this.isSelf()) {
+          this.onEditStatus();
+        }
+      })
     }
   }
 

@@ -265,7 +265,12 @@ export default function logicTest(testsuiteName: string) {
       expect(profile.userId).assertEqual('U1');
       expect(profile.company).assertEqual('@example');
       expect(profile.email).assertEqual('zm@example.com');
-      expect(profile.statusEmoji).assertEqual('🚀');
+      const mappedStatus = profile.status;
+      expect(mappedStatus !== null).assertTrue();
+      if (mappedStatus !== null) {
+        expect(mappedStatus.emoji.text).assertEqual('🚀');
+        expect(mappedStatus.message).assertEqual('building');
+      }
       expect(profile.viewerIsFollowing).assertTrue();
       expect(profile.pinned.length).assertEqual(1);
       expect(profile.pinned[0].ownerLogin).assertEqual('zm_bad');
@@ -947,7 +952,6 @@ export default function logicTest(testsuiteName: string) {
     });
     it('mapPrDetail_subjectId', 0, () => {
       const prAuthor: JsonMap = { 'login': 'a', 'avatarUrl': '' };
-      const commentsWrap: JsonMap = { 'totalCount': 0, 'nodes': [] };
       const filesWrap: JsonMap = { 'totalCount': 0 };
       const commitsWrap: JsonMap = { 'totalCount': 0 };
       const reviewsWrap: JsonMap = { 'totalCount': 0 };
@@ -957,14 +961,14 @@ export default function logicTest(testsuiteName: string) {
         'additions': 0, 'deletions': 0, 'author': prAuthor,
         'headRefName': '', 'baseRefName': '',
         'files': filesWrap, 'commits': commitsWrap,
-        'reviews': reviewsWrap,
-        'comments': commentsWrap
+        'reviews': reviewsWrap
       };
       const repoWrap: JsonMap = { 'pullRequest': node };
       const data: JsonMap = { 'repository': repoWrap };
       const page = mapPrDetail(data);
       expect(page.subjectId).assertEqual('p1');
-      expect(page.comments.length).assertEqual(0);
+      // PrDetailPage 的会话内容已由 comments 迁到 timeline（会话时间轴）：未给 timelineItems 时为空
+      expect(page.timeline.length).assertEqual(0);
     });
     it('oauthPoll_pending', 0, () => {
       const r = parsePollResponse({ 'error': 'authorization_pending' } as JsonMap, 5);

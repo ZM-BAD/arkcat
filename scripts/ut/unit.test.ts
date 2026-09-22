@@ -52,7 +52,10 @@ import {
   filterPickerItems, mapRestCreatedRepo, mapTemplateCreatedRepo,
   PickerItem, NewRepoForm
 } from '../../entry/src/main/ets/models/RepoCreateModels';
-import { mapUserProfile } from '../../entry/src/main/ets/models/ProfileModels';
+import {
+  mapUserProfile, parseStatusEmoji, statusVisible, statusRemainingCount,
+  expiryIsoOf, expiryKeyOf, STATUS_EXPIRY_KEYS, STATUS_MESSAGE_MAX, UserStatus
+} from '../../entry/src/main/ets/models/ProfileModels';
 import { buildForkBody } from '../../entry/src/main/ets/models/RepoSocialModels';
 import {
   checkGroupKey, groupChecks, conclusionKey, durationText,
@@ -2583,4 +2586,143 @@ test('Spec 045 LinkRouter 非法与未知输入回退 unknown', () => {
 test('Spec 045 LinkRouter releaseRouteParam 拼 owner/name/tag（tag 可含 /）', () => {
   assert.equal(releaseRouteParam('o', 'r', 'v1.2.3'), 'o/r/v1.2.3');
   assert.equal(releaseRouteParam('o', 'r', 'app-v1/beta'), 'o/r/app-v1/beta');
+});
+
+// —— Spec 076：用户状态（models/ProfileModels） ——
+
+test('Spec 076 parseStatusEmoji：从 emojiHTML 取 Unicode 字形，短代码不回显成文本', () => {
+  const emoji = parseStatusEmoji(':dart:', '<div>🎯</div>');
+  assert.equal(emoji.text, '🎯');
+  assert.equal(emoji.image, '');
+  // 历史形态：emojiHTML 退化成 <g-emoji> 短代码时不当作字形，走 CDN 兜底
+  const legacy = parseStatusEmoji(':dart:', '<g-emoji>:dart:</g-emoji>');
+  assert.equal(legacy.text, '');
+  assert.equal(legacy.image, 'https://github.githubassets.com/images/icons/emoji/dart.png?v8');
+});
+
+test('Spec 076 parseStatusEmoji：自定义 emoji 取 emojiHTML 内的图片地址', () => {
+  const html = '<img class="emoji" alt=":shipit:" src="https://github.githubassets.com/images/icons/emoji/shipit.png" height="20" width="20">';
+  const emoji = parseStatusEmoji(':shipit:', html);
+  assert.equal(emoji.image, 'https://github.githubassets.com/images/icons/emoji/shipit.png');
+  assert.equal(emoji.text, '');
+});
+
+test('Spec 076 parseStatusEmoji：emojiHTML 缺失时原生字形直用、短代码拼 CDN、空值返回空', () => {
+  const native = parseStatusEmoji('🎯', '');
+  assert.equal(native.text, '🎯');
+  assert.equal(native.image, '');
+  const none = parseStatusEmoji('', '');
+  assert.equal(none.text, '');
+  assert.equal(none.image, '');
+});
+
+test('Spec 076 statusVisible：emoji-only 状态可见，双空与无状态不可见', () => {
+  const emojiOnly: UserStatus = {
+    emoji: { text: '🎯', image: '' }, emojiRaw: ':dart:', message: '', busy: false, expiresAt: '',
+    organizationId: ''
+  };
+  assert.equal(statusVisible(emojiOnly), true);
+  const textOnly: UserStatus = {
+    emoji: { text: '', image: '' }, emojiRaw: '', message: 'Focusing', busy: true, expiresAt: '',
+    organizationId: ''
+  };
+  assert.equal(statusVisible(textOnly), true);
+  const empty: UserStatus = {
+    emoji: { text: '', image: '' }, emojiRaw: '', message: '', busy: false, expiresAt: '',
+    organizationId: ''
+  };
+  assert.equal(statusVisible(empty), false);
+  assert.equal(statusVisible(null), false);
+});
+
+test('Spec 076 statusRemainingCount：80 上限递减且不为负', () => {
+  assert.equal(STATUS_MESSAGE_MAX, 80);
+  assert.equal(statusRemainingCount(''), 80);
+  assert.equal(statusRemainingCount('Focusing'), 72);
+  assert.equal(statusRemainingCount('x'.repeat(79)), 1);
+  assert.equal(statusRemainingCount('x'.repeat(81)), 0);
+});
+
+test('Spec 076 expiryIsoOf：never 省略字段，相对档位按分钟偏移', () => {
+  const now = new Date(2026, 7, 31, 9, 0, 0, 0).getTime();
+  assert.equal(expiryIsoOf('never', now), '');
+  assert.equal(Date.parse(expiryIsoOf('in30m', now)) - now, 30 * MINUTE_MS);
+  assert.equal(Date.parse(expiryIsoOf('in1h', now)) - now, 60 * MINUTE_MS);
+  assert.equal(Date.parse(expiryIsoOf('in4h', now)) - now, 240 * MINUTE_MS);
+});
+
+test('Spec 076 expiryIsoOf：today 落在本地日末，thisweek 落在本地周六且晚于 today', () => {
+  const now = new Date(2026, 7, 31, 9, 0, 0, 0).getTime();
+  const today = new Date(Date.parse(expiryIsoOf('today', now)));
+  assert.equal(today.getDate(), new Date(now).getDate());
+  assert.equal(today.getHours(), 23);
+  assert.equal(today.getMinutes(), 59);
+  const week = new Date(Date.parse(expiryIsoOf('thisweek', now)));
+  assert.equal(week.getDay(), 6);
+  assert.equal(week.getHours(), 23);
+  assert.ok(week.getTime() > today.getTime());
+  // 周六当天设置：顺延一周，不与 today 同刻
+  const saturday = new Date(2026, 7, 29, 10, 0, 0, 0).getTime();
+  assert.equal(new Date(saturday).getDay(), 6);
+  assert.ok(Date.parse(expiryIsoOf('thisweek', saturday)) > Date.parse(expiryIsoOf('today', saturday)));
+});
+
+test('Spec 076 expiryKeyOf：六档往返一致，空/非法/已过期回 never', () => {
+  const now = new Date(2026, 7, 31, 9, 0, 0, 0).getTime();
+  for (const key of STATUS_EXPIRY_KEYS) {
+    assert.equal(expiryKeyOf(expiryIsoOf(key, now), now), key);
+  }
+  assert.equal(expiryKeyOf('', now), 'never');
+  assert.equal(expiryKeyOf('not-a-date', now), 'never');
+  assert.equal(expiryKeyOf(new Date(now - MINUTE_MS).toISOString(), now), 'never');
+  // 外部设置的任意时刻按剩余时长归档
+  assert.equal(expiryKeyOf(new Date(now + 20 * MINUTE_MS).toISOString(), now), 'in30m');
+  assert.equal(expiryKeyOf(new Date(now + 80 * MINUTE_MS).toISOString(), now), 'in1h');
+  assert.equal(expiryKeyOf(new Date(now + 3 * HOUR_MS).toISOString(), now), 'in4h');
+  assert.equal(expiryKeyOf(new Date(now + 5 * DAY_MS).toISOString(), now), 'thisweek');
+});
+
+test('Spec 076 expiryKeyOf：全天任一时点六档往返自洽（today 不被 in4h 窗口抢走）', () => {
+  // 回归：19:30 后今天日末只剩 <4.5 小时，会落进 in4h 的时长窗口；
+  // 若先按时长分档再判日末，「今天」整天误显为 IN 4 HOURS，随后的 SAVE 还会改写真实到期时刻
+  const evening = new Date(2026, 7, 31, 21, 0, 0, 0).getTime();
+  assert.equal(expiryKeyOf(expiryIsoOf('today', evening), evening), 'today');
+  assert.equal(expiryKeyOf(expiryIsoOf('thisweek', evening), evening), 'thisweek');
+  // 全天逐小时采样：每档写入后必须读回同一档
+  for (let hour = 0; hour < 24; hour++) {
+    const now = new Date(2026, 7, 31, hour, 0, 0, 0).getTime();
+    for (const key of STATUS_EXPIRY_KEYS) {
+      assert.equal(expiryKeyOf(expiryIsoOf(key, now), now), key, `${key} 在 ${hour}:00 读回不一致`);
+    }
+  }
+});
+
+test('Spec 076 mapUserProfile：status 四字段落位（emojiHTML 解析），缺省为 null', () => {
+  const withStatus: JsonMap = { viewer: { login: 'ZM-BAD' }, user: {
+    id: 'U1', login: 'alice', name: 'Alice', avatarUrl: '', bio: '',
+    status: {
+      message: 'Focusing', emoji: ':dart:', emojiHTML: '<div>🎯</div>',
+      indicatesLimitedAvailability: true, expiresAt: '2026-09-01T00:00:00Z'
+    },
+    followers: { totalCount: 3 }, following: { totalCount: 4 },
+    pinnedItems: { nodes: [] }, popular: { nodes: [] },
+    repositories: { totalCount: 0 }, starredRepositories: { totalCount: 0 }
+  } };
+  const profile = mapUserProfile(withStatus);
+  assert.ok(profile.status !== null);
+  const status = profile.status as UserStatus;
+  assert.equal(status.message, 'Focusing');
+  assert.equal(status.emoji.text, '🎯');
+  assert.equal(status.emojiRaw, ':dart:');
+  assert.equal(status.busy, true);
+  assert.equal(status.expiresAt, '2026-09-01T00:00:00Z');
+  assert.equal(statusVisible(profile.status), true);
+
+  const withoutStatus: JsonMap = { viewer: { login: 'ZM-BAD' }, user: {
+    id: 'U2', login: 'bob', name: 'Bob', avatarUrl: '', bio: '',
+    followers: { totalCount: 0 }, following: { totalCount: 0 },
+    pinnedItems: { nodes: [] }, popular: { nodes: [] },
+    repositories: { totalCount: 0 }, starredRepositories: { totalCount: 0 }
+  } };
+  assert.equal(mapUserProfile(withoutStatus).status, null);
 });

@@ -18,6 +18,7 @@ import { OctIcon } from '../components/OctIcon';
 import { PageShadowBar } from '../components/PageShadowBar';
 import { ProfileHeaderCard } from '../components/ProfileHeaderCard';
 import { ProfileNavRows } from '../components/ProfileNavRows';
+import { StatusEditSheet } from '../components/StatusEditSheet';
 import { RepoSummary } from '../models/GitHubModels';
 import { UserSummary } from '../models/GitHubModels';
 import { resText } from '../utils/I18n';
@@ -58,6 +59,8 @@ export struct ProfileView {
   @Local isRefreshing: boolean = false;
   /** 勋章图片 URL 列表（官方 CDN，AchievementsService 抓取） */
   @Local achievements: string[] = [];
+  /** Edit status 弹层开关（Spec 076；仅本人主页由铅笔钮打开） */
+  @Local statusSheetOpen: boolean = false;
   /** 请求代际：切号/换 login 后旧响应直接丢弃（防旧账号数据覆盖新账号） */
   /** 请求竞态守卫：旧请求回调按序号丢弃（库原语） */
   private reqSeq: RequestSequencer = new RequestSequencer();
@@ -182,8 +185,7 @@ export struct ProfileView {
           websiteUrl: profile.websiteUrl,
           twitterUsername: profile.twitterUsername,
           email: profile.email,
-          statusEmoji: profile.statusEmoji,
-          statusMessage: profile.statusMessage,
+          status: profile.status,
           viewerIsFollowing: following,
           isDeveloperProgramMember: profile.isDeveloperProgramMember,
           pinned: profile.pinned,
@@ -326,6 +328,9 @@ export struct ProfileView {
                 },
                 onToggleFollow: (): void => {
                   this.toggleFollow();
+                },
+                onEditStatus: (): void => {
+                  this.statusSheetOpen = true;
                 }
               })
 
@@ -366,6 +371,8 @@ export struct ProfileView {
                 .scrollable(ScrollDirection.Horizontal)
                 .width('100%')
                 .scrollBar(BarState.Off)
+                // 卡片总宽不足一屏时 Scroll 默认居中展示内容——官方为靠左（2026-09-22 走查）
+                .align(Alignment.Start)
               }
 
               // 三导航入口（Spec 035：单容器三行，跳独立列表页）
@@ -406,5 +413,31 @@ export struct ProfileView {
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
+    // Spec 076：Edit status 弹层（官方自底部弹出近全屏，抓取条在弹层内容里自绘）
+    .bindSheet(this.statusSheetOpen!!, this.statusSheet(), {
+      height: SheetSize.LARGE,
+      showClose: false,
+      dragBar: false,
+      backgroundColor: $r('app.color.card_background'),
+      onDisappear: (): void => {
+        this.statusSheetOpen = false;
+      }
+    })
+  }
+
+  /** 弹层内容：写入成功关弹层并静默重取主页（状态条即时反映；失败由弹层内 toast 兜底） */
+  @Builder
+  statusSheet() {
+    StatusEditSheet({
+      token: this.token,
+      status: this.profile !== null ? this.profile.status : null,
+      onSaved: (): void => {
+        this.statusSheetOpen = false;
+        this.refresh(true);
+      },
+      onDismiss: (): void => {
+        this.statusSheetOpen = false;
+      }
+    })
   }
 }
