@@ -60,9 +60,15 @@ jobs:
             HEAD="${{ github.sha }}"
           fi
 
-          # 首次推送（before 全零）或 force push（before 不在链上）：
-          # 无法确定真实范围，退化为只校验本次 HEAD 提交
+          # 以下三种情况退化为只校验本次 HEAD 提交：
+          #   ① 首次推送（before 全零）
+          #   ② force push（before 不在链上，无法确定真实范围）
+          #   ③ 推送到 main——按约定 main 只接收发布用的 FF，携带的提交都已在各自
+          #      PR / develop 阶段被增量校验过；此处重扫区间只会重复报出已入库、
+          #      已无法回改的历史问题（2026-09-22：main 首次 FF 时被 09-19 的一条
+          #      非 Conventional 提交卡红，即此场景）
           if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ] \
+             || [ "${{ github.ref }}" = "refs/heads/main" ] \
              || ! git merge-base --is-ancestor "$BASE" "$HEAD" 2>/dev/null; then
             git log -1 --format=%B "$HEAD" > /tmp/commit-msg.txt
             npx commitlint --edit /tmp/commit-msg.txt
