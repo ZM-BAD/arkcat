@@ -119,6 +119,6 @@ removeAll(): Promise<void>                      # Sign out all
   2. 编辑态：EDIT→DONE；当前勾浅色（置灰不可点）；每行右侧红色登出图标（单账号登出）；页尾红色 `SIGN OUT ALL ACCOUNTS` 行；ADD ACCOUNT 隐藏。
   3. `+ ADD ACCOUNT` → 全屏 Sign In 页（黑色 GitHub 圆标 + 黑底白字 `SIGN IN TO GITHUB.COM` + 白底黑字 Enterprise + Terms/Privacy 蓝链 + Trouble signing in?）——**我们的等价物是 TokenSetup 页**（PAT 输入/OAuth），登录落地页与添加账号复用同一页。
 - **走查 09-08 定案（App 壳）**：底栏仅在 **Settings 及其下级页面**（Accounts / Notification Options / Code Options / Add account）隐藏，其余二级页保留——`Index.ets` 用 `uiObserver.on('navDestinationSwitch')` 按目标路由名驱动 `hideTabBar`（另有 052 徽章详情模态页沿用隐藏）。编辑态行内**无铅笔**（官方无别名编辑）。
-- 官方 Actions（2026-08 各版本）多账号入口 = Settings → Accounts + 长按 Profile tab；我们对齐为 Settings → Accounts + **头像长按**（位置自定义见 [[starraft-replication-standard]]）。
+- 官方 Actions（2026-08 各版本）多账号入口 = Settings → Accounts + 长按 Profile tab；我们对齐为 Settings → Accounts + **头像长按**。
 - 多账号是后续所有扩展（050 收藏、搜索历史）的隔离前提，建议 049a 尽早合入。
 - 影响面：`TokenStore.ets` → `AccountStore.ets`；调用点仅 4 处（TokenSetup×2 / Index / Settings）；`Index.ets @State token` 与各页 `@Param token` 透传面（46 文件）无需逐个改——切换只改 Index 层 token，@Param 单向同步自动更新。

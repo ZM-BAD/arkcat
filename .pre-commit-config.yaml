@@ -49,6 +49,13 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
+      - id: signing-config
+        name: 禁止 build-profile.json5 携带本机签名信息（绝对路径/非空 signingConfigs）
+        entry: bash scripts/check-signing-config.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
       - id: hardcoded-colors
         name: 禁止 UI 硬编码颜色（走 color.json / PrimerTokens）
         entry: python3 scripts/check-hardcoded-colors.py

@@ -1,20 +1,6 @@
 {
   app: {
-    signingConfigs: [
-      {
-        "name": "default",
-        "type": "HarmonyOS",
-        "material": {
-          "certpath": "/Users/zm_bad/.ohos/config/default_arkcat_dFCPhZfNyoRWRAUSeh7aPjdGNTK0tCnGTE3yUgVwglQ=.cer",
-          "keyAlias": "debugKey",
-          "keyPassword": "0000001BBCD1E0AF91FB07B3E3EFFD16FEBA6F461CAD86F04BE2D218A582DEB8D68113DAEE649441DC77E3",
-          "profile": "/Users/zm_bad/.ohos/config/default_arkcat_dFCPhZfNyoRWRAUSeh7aPjdGNTK0tCnGTE3yUgVwglQ=.p7b",
-          "signAlg": "SHA256withECDSA",
-          "storeFile": "/Users/zm_bad/.ohos/config/default_arkcat_dFCPhZfNyoRWRAUSeh7aPjdGNTK0tCnGTE3yUgVwglQ=.p12",
-          "storePassword": "0000001B3256511F13D9F53C19EE5091B2DE1A8677582C2E0B6390618DCF690223C9C7239604807806B90C"
-        }
-      }
-    ],
+    signingConfigs: [],
     products: [
       {
         name: 'default',
@@ -27,7 +13,6 @@
             useNormalizedOHMUrl: true,
           },
         },
-        signingConfig: 'default',
       },
     ],
     buildModeSet: [
