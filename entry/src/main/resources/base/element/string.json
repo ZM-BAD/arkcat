@@ -2369,6 +2369,10 @@
       "value": "Clear all filters"
     },
     {
+      "name": "filter_fewer_or_reset_hint",
+      "value": "Use fewer filters or reset all filters"
+    },
+    {
       "name": "filter_loaded_range_hint",
       "value": "No matches among the loaded items"
     },

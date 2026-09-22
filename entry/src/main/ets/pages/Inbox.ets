@@ -15,6 +15,7 @@ import {
   InboxRepoFilterItem, InboxReasonKey
 } from '../services/NotificationsService';
 import { StateView } from '../components/StateView';
+import { WorkEmptyView } from '../components/WorkEmptyView';
 import { friendlyError } from '../services/GitHttpClient';
 import { OctIcon } from '../components/OctIcon';
 import { AppBar, AppBarAction } from '../components/AppBar';
@@ -949,7 +950,9 @@ export struct InboxView {
           }
           .width('100%')
           .height('100%')
-          .padding({ left: 16, right: 16, bottom: 16 })
+          // 底部不留内边距：List 的 padding 内缩滚动视口（非内容尾部留白），
+          // 带 bottom 会在 tab 栏上方常驻一条灰带、内容提前被裁断；尾部呼吸靠卡片自身 8 间距
+          .padding({ left: 16, right: 16 })
           .scrollBar(BarState.Off)
           .edgeEffect(EdgeEffect.Spring)
           .onScrollIndex((start: number, _end: number): void => {
@@ -957,14 +960,24 @@ export struct InboxView {
           })
         } else {
           Column() {
-            StateView({
-              loading: this.loading,
-              error: this.errorMsg,
-              empty: !this.loading && this.errorMsg === '',
-              emptyText: this.emptyText(),
-              emptySub: isLimitedRangeEmpty(this.items.length, this.hasMorePages)
-                ? $r('app.string.filter_loaded_range_hint') : null
-            })
+            if (this.loading || this.errorMsg !== '') {
+              // 加载/错误态仍走 StateView（WorkEmptyView 只管空态）
+              StateView({
+                loading: this.loading,
+                error: this.errorMsg,
+                onRetry: (): void => this.refresh()
+              })
+            } else {
+              // 空态：有激活筛选时给 RESET ALL FILTERS（与 WorkIssues/WorkPrs/TopRepositories 同一口径），
+              // 未筛选的真·无通知不给按钮；RESET 与漏斗菜单 Clear all filters 共用 clearAllFilters
+              WorkEmptyView({
+                iconText: '🐱',
+                title: this.emptyText(),
+                subtitle: this.emptySubText(),
+                button: this.activeFilterCount() > 0 ? $r('app.string.work_reset_all_filters') : null,
+                onButton: (): void => this.clearAllFilters()
+              })
+            }
           }
           .padding({ left: 16, right: 16, bottom: 16 })
           .width('100%')
@@ -1008,5 +1021,15 @@ export struct InboxView {
       return $r('app.string.inbox_done_empty');
     }
     return $r('app.string.inbox_empty');
+  }
+
+  /** 空态副文案：有激活筛选 → 「减少筛选条件或重置所有筛选」（与 RESET 按钮同现）；
+   *  无筛选时才退回「已加载范围无匹配」提示（说明还有没加载到的分页） */
+  private emptySubText(): Resource | null {
+    if (this.activeFilterCount() > 0) {
+      return $r('app.string.filter_fewer_or_reset_hint');
+    }
+    return isLimitedRangeEmpty(this.items.length, this.hasMorePages)
+      ? $r('app.string.filter_loaded_range_hint') : null;
   }
 }
