@@ -1,7 +1,7 @@
 # ArkCat 隐私政策 / ArkCat Privacy Policy
 
 > 适用应用：ArkCat（包名 `me.zmbad.arkcat`）
-> 生效日期：2026-09-10 ｜ 最后更新：2026-09-10
+> 生效日期：2026-09-10 ｜ 最后更新：2026-09-22
 > 本应用是开源的第三方客户端，**不是 GitHub 官方应用**，与 GitHub, Inc. 无隶属或合作关系。
 
 ---
@@ -21,7 +21,7 @@ ArkCat 由个人开发者 **周铭** 开发与维护。如对本政策有疑问�
 
 | 信息类型 | 具体内容 | 用途 | 存放位置 |
 | --- | --- | --- | --- |
-| GitHub 访问令牌 | 你自行创建的 Personal Access Token 或设备授权令牌 | 代表你调用 GitHub API | 设备本地，经系统 AssetStoreKit 加密存储 |
+| GitHub 访问令牌 | 登录时由 GitHub 官方 OAuth 设备授权流程颁发的令牌（全程不输入 GitHub 密码） | 代表你调用 GitHub API | 设备本地，经系统 AssetStoreKit 加密存储 |
 | 账号展示信息 | 登录名、头像、显示名 | 在界面展示当前账号 | 设备本地缓存 |
 | 应用设置 | 主题、语言、工作区偏好 | 保持你的使用偏好 | 设备本地（应用私有目录） |
 
@@ -37,7 +37,20 @@ ArkCat 由个人开发者 **周铭** 开发与维护。如对本政策有疑问�
 
 本应用不申请位置、相机、麦克风、通讯录、日历、存储等敏感权限。
 
-### 四、信息的对外传输与跨境
+### 四、我们向你申请的 GitHub 授权范围
+
+登录时，我们按实现功能所需的最小范围向你申请以下 GitHub 授权（OAuth scope）。你可以在 GitHub 网站的 Settings → Applications 中随时查看或撤销：
+
+| 授权范围 | 含义 |
+| --- | --- |
+| `repo` | 读取你账号下**公开及私有**仓库的数据（代码、议题、合并请求、发布等）；仅在你的设备上展示，不另存、不回传 |
+| `read:user`、`user` | 读取你的账号资料（登录名、头像、显示名），并支持关注 / 取消关注其他用户 |
+| `notifications` | 读取与处理你的通知（已读、完成、退订） |
+| `read:org` | 读取你所属组织的信息 |
+
+除上述范围外，本应用无法访问你的其他任何数据；GitHub 密码始终不会经过本应用。
+
+### 五、信息的对外传输与跨境
 
 你的设备会直接访问以下域名，它们均由 GitHub, Inc. 运营，**服务器位于中华人民共和国境外**：
 
@@ -51,11 +64,11 @@ ArkCat 由个人开发者 **周铭** 开发与维护。如对本政策有疑问�
 
 除 GitHub 外，本应用不与任何第三方共享、出售或转让你的信息。
 
-### 五、第三方 SDK
+### 六、第三方 SDK
 
 本应用**未集成任何第三方 SDK**（无统计、无广告、无推送、无支付、无第三方登录 SDK）。
 
-### 六、数据安全与保存期限
+### 七、数据安全与保存期限
 
 - 令牌使用 HarmonyOS 系统提供的 AssetStoreKit 加密存储；其他数据存放于应用私有目录，其他应用无法读取；
 - 上述数据**仅保存在你的设备上，直至你主动删除**；
@@ -63,7 +76,7 @@ ArkCat 由个人开发者 **周铭** 开发与维护。如对本政策有疑问�
 - 卸载应用会清除全部本地数据；
 - 开发者无法访问你设备上的任何数据。
 
-### 七、你的权利
+### 八、你的权利
 
 | 权利 | 如何行使 |
 | --- | --- |
@@ -72,15 +85,15 @@ ArkCat 由个人开发者 **周铭** 开发与维护。如对本政策有疑问�
 | 注销账号 | 本应用不提供自有账号体系，无需注销 |
 | 咨询与投诉 | 通过本政策第一条的联系方式 |
 
-### 八、未成年人保护
+### 九、未成年人保护
 
 本应用面向软件开发者，**不面向 14 周岁以下儿童**，也不会主动收集儿童个人信息。若你是未成年人，请在监护人陪同下阅读本政策并使用本应用。
 
-### 九、政策更新
+### 十、政策更新
 
 本政策可能随功能调整而更新。更新后我们会在本页面公布并更新「最后更新」日期；涉及你权利的重大变更，我们会在应用内以显著方式提示。
 
-### 十、适用范围
+### 十一、适用范围
 
 本政策仅适用于 ArkCat 应用本身。你在使用过程中访问的 GitHub 平台内容，适用 GitHub 自己的隐私声明。
 
@@ -101,7 +114,7 @@ ArkCat is developed and maintained by an individual developer, **Zhou Ming**. Fo
 
 | Type | Details | Purpose | Where it lives |
 | --- | --- | --- | --- |
-| GitHub access token | The Personal Access Token you create yourself, or a device-flow token | To call the GitHub API on your behalf | On-device, encrypted with the system AssetStoreKit |
+| GitHub access token | A token issued through GitHub's official OAuth device authorisation flow (you never enter your GitHub password in the app) | To call the GitHub API on your behalf | On-device, encrypted with the system AssetStoreKit |
 | Account display info | Login name, avatar, display name | To show the current account in the UI | Cached on-device |
 | App settings | Theme, language, workspace preferences | To keep your preferences | On-device, app-private directory |
 
@@ -117,7 +130,20 @@ ArkCat requests exactly one system permission:
 
 The app does not request location, camera, microphone, contacts, calendar or storage permissions.
 
-### 4. Data transfer and cross-border transfer
+### 4. GitHub authorisation scopes we request
+
+When you sign in, we request the minimum GitHub scopes (OAuth) needed to deliver the features below. You can review or revoke them at any time under Settings → Applications on GitHub:
+
+| Scope | What it means |
+| --- | --- |
+| `repo` | Read the data of your **public and private** repositories (code, issues, pull requests, releases); shown only on your device, never stored elsewhere or sent back |
+| `read:user`, `user` | Read your profile (login name, avatar, display name), and follow / unfollow other users |
+| `notifications` | Read and act on your notifications (mark read, done, unsubscribe) |
+| `read:org` | Read the organisations you belong to |
+
+Beyond these scopes the app cannot access any of your other data, and your GitHub password never passes through the app.
+
+### 5. Data transfer and cross-border transfer
 
 Your device connects directly to the following domains, all operated by GitHub, Inc., whose **servers are located outside mainland China**:
 
@@ -131,11 +157,11 @@ Because those servers are located outside mainland China, **by using ArkCat you 
 
 Apart from GitHub, ArkCat does not share, sell or transfer your information to any third party.
 
-### 5. Third-party SDKs
+### 6. Third-party SDKs
 
 ArkCat **integrates no third-party SDKs** (no analytics, advertising, push, payment or third-party login SDK).
 
-### 6. Security and retention
+### 7. Security and retention
 
 - Your token is encrypted with HarmonyOS AssetStoreKit; other data is stored in the app-private directory and is not readable by other apps;
 - All of the above **remains only on your device until you delete it**;
@@ -143,7 +169,7 @@ ArkCat **integrates no third-party SDKs** (no analytics, advertising, push, paym
 - Uninstalling the app clears all local data;
 - The developer cannot access any data on your device.
 
-### 7. Your rights
+### 8. Your rights
 
 | Right | How to exercise it |
 | --- | --- |
@@ -152,14 +178,14 @@ ArkCat **integrates no third-party SDKs** (no analytics, advertising, push, paym
 | Account deletion | ArkCat has no account system of its own, so there is nothing to delete |
 | Questions and complaints | Use the contact details in section 1 |
 
-### 8. Children
+### 9. Children
 
 ArkCat targets software developers and is **not directed at children under 14**. We do not knowingly collect personal information from children. If you are a minor, please read this policy with your guardian before using the app.
 
-### 9. Changes to this policy
+### 10. Changes to this policy
 
 This policy may be updated as the app evolves. We will publish updates on this page and revise the "Last updated" date; material changes affecting your rights will be highlighted in the app.
 
-### 10. Scope
+### 11. Scope
 
 This policy applies to the ArkCat app only. Content you access on GitHub is governed by GitHub's own privacy statement.

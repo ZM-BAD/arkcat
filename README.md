@@ -50,7 +50,7 @@
 - 设计系统：**GitHub Primer**（官方令牌与规范，见 [DESIGN.md](DESIGN.md)）
 - 状态管理：V2（`@ComponentV2` / `@Local`，API 18+）
 - **架构：纯端侧直连 GitHub GraphQL API**，无 BFF/后端服务
-- 认证方式：**GitHub OAuth Device Flow**（主登录路径）+ PAT 兼容（客户端本地存储）
+- 认证方式：**GitHub OAuth Device Flow**（设备码授权登录，令牌本地加密存储）
 - 路由：**Navigation**（`NavPathStack` + `navDestination`；二级页自绘 AppBar）
 - GraphQL Client：协议中立的可复用 HAR 库（[`graphql/`](graphql/)，使用规范见 [docs/graphql-usage.md](docs/graphql-usage.md)）
 

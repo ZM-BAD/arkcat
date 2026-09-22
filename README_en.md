@@ -50,7 +50,7 @@
 - Design System: **GitHub Primer** (official tokens & rules, see [DESIGN.md](DESIGN.md))
 - State Management: V2 (`@ComponentV2` / `@Local`, API 18+)
 - **Architecture: Client-side direct connection to GitHub GraphQL API**, no BFF/backend
-- Auth: **GitHub OAuth Device Flow** (primary login) with PAT compatibility (stored locally)
+- Auth: **GitHub OAuth Device Flow** (device-code sign-in; token encrypted on-device)
 - Routing: **Navigation** (`NavPathStack` + `navDestination`; secondary pages use self-drawn AppBar)
 - GraphQL Client: Protocol-neutral reusable HAR library ([`graphql/`](graphql/), usage guide in [docs/graphql-usage.md](docs/graphql-usage.md))
 
