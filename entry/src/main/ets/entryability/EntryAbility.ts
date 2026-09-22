@@ -17,7 +17,7 @@ export default class EntryAbility extends UIAbility {
     // Spec 066：App Lock 开关进 AppStorage（Index 遮罩经 @StorageLink 渲染锁定态；
     // 开着则启动即锁定）。同步读避免晚于 loadContent 首帧闪切
     try {
-      const pref = preferences.getPreferencesSync(this.context, { name: 'arkcat_settings' });
+      const pref = preferences.getPreferencesSync(this.context, { name: PREFS_NAME });
       const enabled = normalizeAppLockPref(pref.getSync(KEY_APP_LOCK, '') as string);
       AppStorage.setOrCreate(APP_LOCK_ENABLED_KEY, enabled);
       AppStorage.setOrCreate(APP_LOCK_LOCKED_KEY, enabled);

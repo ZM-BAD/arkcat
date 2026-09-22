@@ -316,4 +316,18 @@ statusCheckRollup { state }
 }`,
     variables: {"query": "hypit in:name", "first": 1}
   },
+  {
+    // Spec 076 用户状态：status 选择集（emojiHTML 取字形 / indicatesLimitedAvailability=Busy / expiresAt 到期）。
+    // 只验这一层：生产 PROFILE_QUERY 的其余字段含 email（需 read:user scope），gh CLI token 默认没有，
+    // 整条文档在这里跑会 INSUFFICIENT_SCOPES；status 子树是本次新增、也是要防漂移的部分。
+    // 写入侧 changeUserStatus 不入本清单——本脚本会真实执行文档，写 mutation 会改动账号状态；
+    // 其输入字段以 __type(name:"ChangeUserStatusInput") introspection 核准（Spec 076 §五）。
+    name: 'USER_STATUS_QUERY',
+    query: `query UserStatus($login: String!) {
+  user(login: $login) {
+    status { message emoji emojiHTML indicatesLimitedAvailability expiresAt }
+  }
+}`,
+    variables: {"login": "ZM-BAD"}
+  },
 ];

@@ -295,6 +295,10 @@
     {
       "name": "text_on_fill",
       "value": "#FFFFFF"
+    },
+    {
+      "name": "status_busy_bg",
+      "value": "#26BB8009"
     }
   ]
 }

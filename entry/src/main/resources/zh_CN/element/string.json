@@ -3403,6 +3403,78 @@
     {
       "name": "checks_total_mixed",
       "value": "%s 个失败和 %s 个成功的检查"
+    },
+    {
+      "name": "status_edit_title",
+      "value": "编辑状态"
+    },
+    {
+      "name": "status_save",
+      "value": "保存"
+    },
+    {
+      "name": "status_emoji_title",
+      "value": "选择表情"
+    },
+    {
+      "name": "status_busy",
+      "value": "忙碌"
+    },
+    {
+      "name": "status_busy_hint",
+      "value": "当他人提及你、指派你或请求你评审时，GitHub 会告知对方你的可用性受限。"
+    },
+    {
+      "name": "status_clear_after",
+      "value": "清除时间"
+    },
+    {
+      "name": "status_clear_action",
+      "value": "清除状态"
+    },
+    {
+      "name": "status_characters_remaining",
+      "value": "剩余 %s 个字符"
+    },
+    {
+      "name": "status_character_remaining",
+      "value": "剩余 %s 个字符"
+    },
+    {
+      "name": "status_expiry_title",
+      "value": "选择过期时间"
+    },
+    {
+      "name": "status_expiry_never",
+      "value": "从不"
+    },
+    {
+      "name": "status_expiry_in30m",
+      "value": "30 分钟后"
+    },
+    {
+      "name": "status_expiry_in1h",
+      "value": "1 小时后"
+    },
+    {
+      "name": "status_expiry_in4h",
+      "value": "4 小时后"
+    },
+    {
+      "name": "status_expiry_today",
+      "value": "今天"
+    },
+    {
+      "name": "status_expiry_thisweek",
+      "value": "本周"
+    },
+    {
+      "name": "status_set_prompt",
+      "value": "设置状态"
+    },
+    {
+      "name": "status_message_placeholder",
+      "value": "设置你的状态"
     }
   ]
 }
