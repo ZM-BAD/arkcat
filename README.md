@@ -9,6 +9,16 @@
 
 ---
 
+## 📱 应用截图
+
+| Home 工作区 | 仓库详情 | Pull Requests | 个人主页 |
+| ----------- | ------------ | -------------- | ---------- |
+| <img src="assets/screenshots/home.jpg" width="200" alt="Home 工作区（My Work / Favorites）"> | <img src="assets/screenshots/repo-detail.jpg" width="200" alt="仓库详情页"> | <img src="assets/screenshots/pull-requests.jpg" width="200" alt="Pull Requests 列表"> | <img src="assets/screenshots/profile.jpg" width="200" alt="个人主页"> |
+
+> 截图为 HarmonyOS 真机实际渲染效果，未经修饰。
+
+---
+
 ## 📋 项目概述
 
 | 项目 | 说明 |

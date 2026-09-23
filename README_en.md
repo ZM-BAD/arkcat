@@ -9,6 +9,16 @@
 
 ---
 
+## 📱 Screenshots
+
+| Home Workspace | Repository | Pull Requests | Profile |
+| ------ | ------------ | -------------- | --------- |
+| <img src="assets/screenshots/home.jpg" width="200" alt="Home workspace (My Work / Favorites)"> | <img src="assets/screenshots/repo-detail.jpg" width="200" alt="Repository detail"> | <img src="assets/screenshots/pull-requests.jpg" width="200" alt="Pull request list"> | <img src="assets/screenshots/profile.jpg" width="200" alt="User profile"> |
+
+> Screenshots captured on a real HarmonyOS device, no retouching applied.
+
+---
+
 ## 📋 Project Overview
 
 | Item | Description |
