@@ -86,6 +86,116 @@ for file in $SPEC_FILES; do
     fi
 done
 
+# ──────────────────────────────────────────────
+# 以下为 2026-09-24 新增的三项检查。三者共同针对同一类盲区：
+# 上文第 1~6 项校验的都是 spec 的「形状」（文件名/标题/章节/计数），
+# 不校验任何**声明是否为真**——状态取值、索引同步、验收勾选都无人看守，
+# 于是 045 功能已上线却仍标 draft、046 状态行与自身正文矛盾、
+# specs/README.md 漏 076 等漂移可以在门禁全绿的情况下长期存在。
+# ──────────────────────────────────────────────
+
+# 提取 spec 自身的状态值与 BFS Level（容错：允许「✅ implemented」「implemented（备注）」等写法）
+spec_status() {
+    sed -n 's/^> 状态:[[:space:]]*//p' "$1" | head -1 \
+        | sed -E 's/^✅[[:space:]]*//' | grep -oE '^[a-zA-Z]+' | head -1 || true
+}
+spec_bfs() {
+    sed -n 's/^> BFS Level:[[:space:]]*//p' "$1" | head -1 | grep -oE '[0-9]+' | head -1 || true
+}
+# 取第六章（TDD 验收标准）正文，供勾选统计使用
+spec_section6() {
+    awk '/^## 六、/{f=1;next} /^## 七、/{f=0} f' "$1"
+}
+
+# ──────────────────────────────────────────────
+# 7. 状态行合法性：取值必须落在模板定义的枚举内
+# ──────────────────────────────────────────────
+STATUS_ENUM_RE='^(draft|reviewing|approved|implemented|deprecated)$'
+
+echo ""
+echo "🔍 检查状态行合法性..."
+for file in $SPEC_FILES; do
+    filename=$(basename "$file")
+    status_line=$(grep -m1 '^> 状态:' "$file" || true)
+    if [ -z "$status_line" ]; then
+        echo "  ❌ $filename — 缺少 '> 状态:' 字段"
+        ERRORS=$((ERRORS + 1))
+        continue
+    fi
+    status_val=$(spec_status "$file")
+    if ! echo "$status_val" | grep -qE "$STATUS_ENUM_RE"; then
+        echo "  ❌ $filename — 状态值非法：'${status_val}'"
+        echo "     （应为 draft | reviewing | approved | implemented | deprecated）"
+        ERRORS=$((ERRORS + 1))
+    fi
+done
+
+# ──────────────────────────────────────────────
+# 8. README 索引比对：文件必须在索引中有行，且状态一致
+#    （BFS Level 不一致只告警——specs/README.md 自述该列为 2026-08
+#      初始分析的历史参考，后续 spec 未重新统计，故不作阻断）
+# ──────────────────────────────────────────────
+README_INDEX="$SPEC_DIR/README.md"
+
+echo ""
+echo "🔍 检查 README 索引同步..."
+if [ ! -f "$README_INDEX" ]; then
+    echo "  ❌ 缺少 $README_INDEX"
+    ERRORS=$((ERRORS + 1))
+else
+    # 反向：索引里有行但文件不存在
+    while IFS= read -r linked; do
+        [ -z "$linked" ] && continue
+        if [ ! -f "$SPEC_DIR/$linked" ]; then
+            echo "  ❌ README 索引指向不存在的文件：$linked"
+            ERRORS=$((ERRORS + 1))
+        fi
+    done <<< "$(grep -oE '\]\([0-9]{3}-[a-z0-9-]+\.md\)' "$README_INDEX" | tr -d ']()' | sort -u)"
+
+    for file in $SPEC_FILES; do
+        filename=$(basename "$file")
+        row=$(grep -F "]($filename)" "$README_INDEX" | head -1 || true)
+        if [ -z "$row" ]; then
+            echo "  ❌ $filename — README 索引中缺少该 spec 的行"
+            ERRORS=$((ERRORS + 1))
+            continue
+        fi
+        idx_status=$(echo "$row" | awk -F'|' '{gsub(/[ \t]/,"",$6); print $6}')
+        idx_bfs=$(echo "$row" | awk -F'|' '{print $5}' | grep -oE '[0-9]+' | head -1 || true)
+        f_status=$(spec_status "$file")
+        f_bfs=$(spec_bfs "$file")
+
+        if [ -n "$f_status" ] && [ "$idx_status" != "$f_status" ]; then
+            echo "  ❌ $filename — 状态不一致：文件 '${f_status}' vs 索引 '${idx_status}'"
+            ERRORS=$((ERRORS + 1))
+        fi
+        if [ -n "$f_bfs" ] && [ -n "$idx_bfs" ] && [ "$idx_bfs" != "$f_bfs" ]; then
+            echo "  ⚠️  $filename — BFS Level 不一致：文件 '${f_bfs}' vs 索引 '${idx_bfs}'"
+            WARNINGS=$((WARNINGS + 1))
+        fi
+    done
+fi
+
+# ──────────────────────────────────────────────
+# 9. 验收勾选可见性：implemented 的 spec 若第六章验收一条未勾，
+#    说明「完成」无法被验收标准自证（只告警——勾选与状态一样靠人工维护）
+# ──────────────────────────────────────────────
+echo ""
+echo "🔍 检查验收勾选（第六章 TDD 验收标准）..."
+for file in $SPEC_FILES; do
+    filename=$(basename "$file")
+    [ "$(spec_status "$file")" = "implemented" ] || continue
+    total=$(spec_section6 "$file" | grep -cE '^[[:space:]]*- \[[ xX]\]' || true)
+    total=${total:-0}
+    [ "$total" -gt 0 ] || continue
+    checked=$(spec_section6 "$file" | grep -cE '^[[:space:]]*- \[[xX]\]' || true)
+    checked=${checked:-0}
+    if [ "$checked" -eq 0 ]; then
+        echo "  ⚠️  $filename — 状态 implemented，但第六章验收 $total 条全部未勾选"
+        WARNINGS=$((WARNINGS + 1))
+    fi
+done
+
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "检查完成: $ERRORS 个错误, $WARNINGS 个警告"

@@ -58,7 +58,7 @@
 | 045 | [notifications-subscriptions.md](045-notifications-subscriptions.md) | 通知与订阅增强（Inbox 高级 + 仓库 Watch） | Level 3 | draft |
 | 046 | [search-full.md](046-search-full.md) | 搜索全类型与最近搜索（Search 六类详情） | Level 3 | implemented |
 | 047 | [releases-detail-download.md](047-releases-detail-download.md) | Release 详情与资产下载 | Level 3 | implemented |
-| 048 | [actions-checks.md](048-actions-checks.md) | Actions/Checks 状态检查（Check runs 列表/详情/重跑） | Level 3 | approved |
+| 048 | [actions-checks.md](048-actions-checks.md) | Actions/Checks 状态检查（Check runs 列表/详情/重跑） | Level 3 | implemented |
 | 049 | [multi-account-security.md](049-multi-account-security.md) | 多账号与安全（049a 账号管理器已实现；App Lock 拆出至 066） | Level 3 | implemented |
 | 050 | [home-favorites-shortcuts.md](050-home-favorites-shortcuts.md) | Home 个性化（Favorites 收藏；Shortcuts 拆分至 074） | Level 3 | implemented |
 | 051 | [accessibility-multidevice.md](051-accessibility-multidevice.md) | 无障碍与多设备适配（横向规范） | Level 4 | draft |
@@ -84,8 +84,9 @@
 | 071 | [branch-picker-contribute.md](071-branch-picker-contribute.md) | 分支行 Choose Branch + CONTRIBUTE 复用 prCompare | Level 3 | implemented |
 | 072 | [profile-popular-fallback.md](072-profile-popular-fallback.md) | 主页 Popular 兜底区（无 Pin 时 star 降序前 6） | Level 3 | implemented |
 | 073 | [profile-nav-sponsoring-projects.md](073-profile-nav-sponsoring-projects.md) | 主页导航行 Sponsoring/Projects 增补 | Level 3 | implemented |
-| 074 | [shortcuts.md](074-shortcuts.md) | Home Shortcuts 快捷方式（已保存搜索：管理页 + 创建页 + 端侧存储） | Level 3 | approved |
+| 074 | [shortcuts.md](074-shortcuts.md) | Home Shortcuts 快捷方式（已保存搜索：管理页 + 创建页 + 端侧存储） | Level 3 | implemented |
 | 075 | [fork-create.md](075-fork-create.md) | New fork 弹层（点 fork 先出页、CREATE 才写入；REST fork 通道） | Level 2 | implemented |
+| 076 | [user-status.md](076-user-status.md) | 用户状态（Profile 状态条 + Edit status 弹层） | Level 2 | approved |
 
 ## 覆盖率
 
