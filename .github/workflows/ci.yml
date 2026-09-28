@@ -141,13 +141,10 @@ jobs:
   # ──────────────────────────────────────────
   # Job 4: HarmonyOS 构建（macOS；签名材料在本机 ~/.ohos/config 不进 CI →
   # ci-build.sh 剥除 signingConfigs，产出可装模拟器的 unsigned HAP）
-  # ⚠️ 禁用中：私有仓库 macOS runner 计费 ×10（2000 分钟/月免费额度≈30 次 push）；
-  #    仓库 public 后恢复（删掉 job 顶部 if:false 即可）——恢复点见 handoff.md
   # ──────────────────────────────────────────
   harmony-build:
     name: HarmonyOS Build (debug HAP)
     runs-on: macos-latest
-    if: false  # 私仓 runner 计费暂停；仓库转 public 后恢复
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -243,13 +240,11 @@ jobs:
   # ──────────────────────────────────────────
   # Job 8: 官方 Local Test（macOS 专属：hvigorw test 暂不支持 Linux）
   # Hypium + 真实 ArkTS 语义，产出可按文件统计的覆盖率报告
-  # ⚠️ 禁用中：私仓计费 ×10；2026-09-12 已实测首跑全绿（setup 102s / test 16s），
-  #    仓库 public 后恢复（删掉 if: false 即可）
+  # （2026-09-12 实测首跑全绿：setup 102s / test 16s）
   # ──────────────────────────────────────────
   official-local-test:
     name: Official Local Test (macOS)
     runs-on: macos-latest
-    if: false  # 私仓 runner 计费暂停；仓库转 public 后恢复（首跑已验证通过）
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -291,14 +286,12 @@ jobs:
   # 与 Job 8 同一套 hvigorw test + Hypium 覆盖率流程
   # setup-ohos 的 Windows 支持要求 CLI tools > 6.1.1.280（本 job 用 26.0.0.821 ✅）；
   # Windows 版 CLI tools 经 PATH 提供 hvigorw.bat / ohpm.bat（PowerShell 按 PATHEXT 解析）
-  # ⚠️ 禁用中：私仓 Windows runner 计费 ×2；2026-09-12 已实测首跑全绿
-  #    （无缓存 setup 8m38s / test 1m38s / SDK 缓存保存约 15m，二次起走缓存提速），
-  #    仓库 public 后随 Job 8 一同恢复
+  # （2026-09-12 实测首跑全绿：无缓存 setup 8m38s / test 1m38s / SDK 缓存保存约 15m，
+  #   二次起走缓存提速）
   # ──────────────────────────────────────────
   official-local-test-windows:
     name: Official Local Test (Windows)
     runs-on: windows-latest
-    if: false  # 私仓 runner 计费暂停；仓库转 public 后恢复（首跑已验证通过）
     steps:
       - name: Checkout
         uses: actions/checkout@v7

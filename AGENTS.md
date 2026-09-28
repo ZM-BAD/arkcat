@@ -75,9 +75,9 @@
 | UI 硬编码字号/字重（fontSize 字面量、FontWeight.Bold/700） | pre-commit + CI | ✅ 是 |
 | 宿主单元测试（node:test） | pre-commit + CI | ✅ 是 |
 | Primer 样式 Review（[docs/primer-review-rules.md](docs/primer-review-rules.md)） | Code Review（人工走查，机械条目逐步下沉 scripts/） | ✅ 是（评审退回） |
-| HarmonyOS 构建 | 本地 | 本地阻断 |
+| HarmonyOS 构建 | 本地 + CI（harmony-build） | ✅ 是 |
 
-CI（GitHub Actions）：**spec-lint** / **commit-lint** / **structure-check**（含 Spec 编号连续）/ **hardcoded-colors**（含字号检查）/ **gitleaks** / **unit-tests**；**harmony-build**、**official-local-test**、**official-local-test-windows** 当前 `if: false` 禁用（私仓 runner 计费，macOS/Windows 流水线均暂停，仓库转 public 后恢复，构建暂由本地兜底）。
+CI（GitHub Actions）：**spec-lint** / **commit-lint** / **structure-check**（含 Spec 编号连续）/ **hardcoded-colors**（含字号检查）/ **gitleaks** / **unit-tests** / **harmony-build** / **official-local-test** / **official-local-test-windows**（2026-09-29 仓库转 public，macOS/Windows job 全量恢复）。
 
 ---
 
