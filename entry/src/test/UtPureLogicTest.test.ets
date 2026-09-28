@@ -31,8 +31,8 @@ function jsonMap(): JsonMap {
 function prRow(id: string, authorLogin: string, assignees: string[]): RepoPrItem {
   return {
     id: id, number: 1, title: 't', state: 'OPEN', merged: false, isDraft: false, createdAt: '',
-    labels: [], commentCount: 0, reviewCount: 0, checksState: '', authorLogin: authorLogin,
-    authorAvatar: '', assignees: assignees
+    labels: [], commentCount: 0, reviewCount: 0, checksState: '', checksCount: 0, authorLogin: authorLogin,
+    authorAvatar: '', assignees: assignees, milestoneTitle: ''
   };
 }
 
