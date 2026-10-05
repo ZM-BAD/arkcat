@@ -79,7 +79,7 @@
 | 066 | [app-lock.md](066-app-lock.md) | App Lock（设备凭据锁定：Toggle 子页 + 后台回前台/冷启动系统认证） | Level 3 | implemented |
 | 067 | [appbar-unification.md](067-appbar-unification.md) | 统一 App Bar 组件（行高 48/内边距 16/中心距 44/图标 20） | Level 2 | implemented |
 | 068 | [filter-interaction.md](068-filter-interaction.md) | 筛选交互统一约定（dirty 徽标/RESET ALL FILTERS/面板规范，全库跨页） | Level — | implemented |
-| 069 | [settings-about.md](069-settings-about.md) | Settings About 行与关于页（备案号/Star 引导仓库行，静态零网络） | Level 2 | implemented |
+| 069 | [settings-about.md](069-settings-about.md) | Settings About 行与关于页（Star 引导仓库行/版权行，静态零网络） | Level 2 | implemented |
 | 070 | [create-repository.md](070-create-repository.md) | New Repository 两步弹层（General/Options） | Level 3 | implemented |
 | 071 | [branch-picker-contribute.md](071-branch-picker-contribute.md) | 分支行 Choose Branch + CONTRIBUTE 复用 prCompare | Level 3 | implemented |
 | 072 | [profile-popular-fallback.md](072-profile-popular-fallback.md) | 主页 Popular 兜底区（无 Pin 时 star 降序前 6） | Level 3 | implemented |

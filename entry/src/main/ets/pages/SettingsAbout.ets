@@ -1,7 +1,7 @@
 /**
  * 关于页（Spec 069）：Settings → More Options → About。
  * 头部展示 App 图标/名称/版本号；Star 引导文案 + 仓库行（star 钮点击跳转本仓库详情页，行内不加星）；
- * 底部备案号（死值直出）+ 版权行。下拉刷新重拉 star 态，其余零网络请求。
+ * 底部版权行。下拉刷新重拉 star 态，其余零网络请求。
  */
 import { bundleManager } from '@kit.AbilityKit';
 import { AppBar } from '../components/AppBar';
@@ -186,20 +186,12 @@ export struct SettingsAboutView {
             // 仓库行：star 钮是唯一可点区域，点击跳转详情页
             this.starRow()
 
-            // 备案号死值直出（不走 i18n，用户 2026-09-17 定案）；纯文本居中，置版权行上方
-            Text('ICP备案号：浙ICP备2026075163号-1A')
-              .fontSize($r('app.float.caption_font_size'))
-              .fontColor($r('app.color.text_secondary'))
-              .width('100%')
-              .textAlign(TextAlign.Center)
-              .margin({ top: 24 })
-
             Text($r('app.string.about_copyright'))
               .fontSize($r('app.float.caption_font_size'))
               .fontColor($r('app.color.text_secondary'))
               .width('100%')
               .textAlign(TextAlign.Center)
-              .margin({ top: 6, bottom: 24 })
+              .margin({ top: 24, bottom: 24 })
           }
           .padding({ left: 16, right: 16 })
           .width('100%')

@@ -324,7 +324,7 @@ export struct SettingsView {
           // 第三方无合法提交管道且语义错位（App 自身问题应走仓库 Discussions），偏离理由记 spec 014 §七
           this.row($r('app.string.settings_privacy'), '', () => this.pathStack.pushPathByName('inAppBrowser', 'Privacy Policy|https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement'))
           this.row($r('app.string.settings_open_source'), '', () => this.pathStack.pushPathByName('openSourceLibraries', ''))
-          // Spec 069：About 行（备案信息/快速 Star/贡献者）；Sign Out 保持组尾（官方序不变）
+          // Spec 069：About 行（Star 引导/仓库行/版权行）；Sign Out 保持组尾（官方序不变）
           this.row($r('app.string.settings_about'), '', () => this.pathStack.pushPathByName('settingsAbout', ''))
           this.row($r('app.string.settings_sign_out'), '', () => this.signOut())
         }

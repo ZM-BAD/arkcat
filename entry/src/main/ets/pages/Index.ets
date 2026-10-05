@@ -505,7 +505,7 @@ struct Index {
     .hideTitleBar(true)
   }
 
-  /** Spec 069：关于页（Settings → About；Star 引导 + 仓库行 + 备案信息） */
+  /** Spec 069：关于页（Settings → About；Star 引导 + 仓库行 + 版权行） */
   @Builder
   settingsAboutDestination() {
     NavDestination() {

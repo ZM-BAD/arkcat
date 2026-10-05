@@ -45,7 +45,7 @@
 
 **Core Principle**: Users who've used the official GitHub APP will open ArkCat and immediately feel "this is a reskin", but underneath it's all native Pure HarmonyOS ArkUI components.
 
-> **Compliance first**: the recreation is carried out within the bounds of Chinese laws and app-store requirements (ICP filing, content compliance); compliance-driven deviations are documented per feature in [`specs/`](specs/).
+> **Compliance first**: the recreation is carried out within the bounds of Chinese laws and app-store requirements (content compliance); compliance-driven deviations are documented per feature in [`specs/`](specs/).
 
 ---
 
